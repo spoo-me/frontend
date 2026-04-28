@@ -1,19 +1,31 @@
-import { Button } from "@/components/ui/button"
+import { Header } from "@/components/layout/header"
+import { Footer } from "@/components/layout/footer"
+import { Hero } from "@/components/sections/hero"
+import { Features } from "@/components/sections/features"
+import { DashboardPreview } from "@/components/sections/dashboard-preview"
+import { ConnectedApps } from "@/components/sections/connected-apps"
+import { Developer } from "@/components/sections/developer"
+import { Testimonials } from "@/components/sections/testimonials"
+import { SelfHost } from "@/components/sections/self-host"
+import { Stats } from "@/components/sections/stats"
+import { CTA } from "@/components/sections/cta"
 
-export default function Page() {
+export default function HomePage() {
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
-    </div>
+    <>
+      <Header />
+      <main className="overflow-hidden">
+        <Hero />
+        <DashboardPreview />
+        <Features />
+        <ConnectedApps />
+        <Developer />
+        <Testimonials />
+        <SelfHost />
+        <Stats />
+        <CTA />
+      </main>
+      <Footer />
+    </>
   )
 }
