@@ -19,6 +19,7 @@
     "@tsparticles/slim": "^3.9.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "cobe": "^2.0.1",
     "lucide-react": "^1.11.0",
     "mini-svg-data-uri": "^1.4.4",

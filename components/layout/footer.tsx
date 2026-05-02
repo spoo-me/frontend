@@ -4,6 +4,7 @@ import { Logo } from "@/components/shared/logo"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { footerLinks, siteConfig } from "@/lib/site-config"
 import { StatusBadge } from "./status-badge"
+import { ThemeToggle } from "./theme-toggle"
 
 export function Footer() {
   const sections: {
@@ -86,6 +87,12 @@ export function Footer() {
           ))}
         </div>
 
+        <div className="border-border/40 mt-12 flex items-center justify-between border-t pt-5">
+          <p className="text-muted-foreground/70 text-xs">
+            © {new Date().getFullYear()} spoo.me — open source under Apache 2.0
+          </p>
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Giant wordmark */}
