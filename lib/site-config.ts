@@ -55,13 +55,13 @@ export const productLinks: NavLink[] = [
   {
     title: "Link shortener",
     href: "/#features",
-    description: "API-first short links with custom aliases",
+    description: "API-first short links",
     iconKey: "link",
   },
   {
     title: "Analytics",
     href: "/#analytics",
-    description: "Per-link click insights, geo, referrer, UTM",
+    description: "Click, geo and referrer insights",
     iconKey: "lineChart",
   },
   {

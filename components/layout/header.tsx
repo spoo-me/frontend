@@ -382,7 +382,7 @@ function ProductMenu() {
   const promo = productLinks.find((l) => l.iconKey === "server")!
   return (
     <MenuShell
-      widthClass="w-[44rem]"
+      widthClass="w-[54rem]"
       footer={
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">New to spoo?</span>
@@ -398,7 +398,7 @@ function ProductMenu() {
         </div>
       }
     >
-      <div className="grid grid-cols-[1fr_15rem] gap-2">
+      <div className="grid grid-cols-[1fr_16rem] gap-2">
         <MenuBox label="Capabilities">
           <div className="grid grid-cols-2 gap-0.5">
             {main.map((l) => (
@@ -511,14 +511,38 @@ function CardItem({ link }: { link: NavLink }) {
       className="group relative flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-foreground/[0.04]"
       style={{ "--accent": accent } as React.CSSProperties}
     >
-      <div className="border-border/60 bg-muted/30 ring-foreground/[0.04] group-hover:border-[color:var(--accent)]/40 group-hover:bg-[color:var(--accent)]/10 flex size-9 shrink-0 items-center justify-center rounded-md border shadow-sm shadow-black/30 ring-1 ring-inset transition-colors">
-        <Icon className="text-foreground/85 group-hover:text-[color:var(--accent)] size-4 transition-colors" />
+      <div className="relative shrink-0">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -inset-2 rounded-xl opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-70"
+          style={{ background: `radial-gradient(closest-side, ${accent}66, transparent 70%)` }}
+        />
+        <div className="border-border/60 bg-muted/30 ring-foreground/[0.04] relative flex size-9 items-center justify-center overflow-hidden rounded-md border shadow-sm shadow-black/30 ring-1 ring-inset">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            style={{
+              backgroundImage: `linear-gradient(140deg, ${accent}26 0%, transparent 55%), linear-gradient(to bottom, color-mix(in srgb, ${accent} 6%, transparent), color-mix(in srgb, ${accent} 16%, transparent))`,
+            }}
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -top-4 -right-4 size-10 rounded-full opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100"
+            style={{ background: `radial-gradient(closest-side, ${accent}88, transparent)` }}
+          />
+          <span
+            aria-hidden
+            className="shimmer-border pointer-events-none absolute inset-0 rounded-md opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            style={{ ["--shimmer-color" as never]: accent }}
+          />
+          <Icon className="text-foreground/85 group-hover:text-[color:var(--accent)] relative size-4 transition-colors duration-200" />
+        </div>
       </div>
       <div className="min-w-0 flex-1 pt-0.5">
         <div className="text-foreground inline-flex items-center gap-1 text-sm font-medium leading-tight">
           {link.title}
           {external && (
-            <ArrowUpRight className="text-muted-foreground group-hover:text-[color:var(--accent)] size-3 transition-all group-hover:-translate-y-px group-hover:translate-x-px" />
+            <ArrowUpRight className="text-muted-foreground group-hover:text-foreground size-3 transition-all group-hover:-translate-y-px group-hover:translate-x-px" />
           )}
         </div>
         {link.description && (
