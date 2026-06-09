@@ -10,7 +10,6 @@ import {
   Globe2,
   Home,
   Key,
-  Layers,
   LineChart,
   Link2,
   QrCode,
@@ -27,14 +26,9 @@ import { cn } from "@/lib/utils"
 
 export function DashboardPreview() {
   return (
-    <section id="analytics" className="relative py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
+      <div>
         <SectionHeading
-          eyebrow={
-            <>
-              <Layers className="size-3" /> Advanced analytics
-            </>
-          }
           title={
             <>
               Click insights without{" "}
@@ -58,13 +52,13 @@ export function DashboardPreview() {
 
         <Callouts />
       </div>
-    </section>
+    </div>
   )
 }
 
 function DashboardMock() {
   return (
-    <div className="border-border/70 bg-card/40 supports-[backdrop-filter]:bg-card/30 relative overflow-hidden rounded-2xl border shadow-[0_30px_80px_-40px_rgba(0,0,0,0.10)] backdrop-blur dark:shadow-2xl dark:shadow-black/40">
+    <div className="border-border/70 bg-card/40 relative overflow-hidden rounded-2xl border shadow-[0_2px_2px_rgba(0,0,0,0.04),0_8px_8px_-8px_rgba(0,0,0,0.04)] dark:shadow-none dark:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
       {/* Browser chrome */}
       <div className="border-border/60 bg-muted/30 flex items-center gap-3 border-b px-4 py-2.5">
         <div className="flex items-center gap-1.5">
@@ -324,8 +318,8 @@ function Chart() {
         >
           <defs>
             <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="rgba(244,63,94,0.14)" />
-              <stop offset="100%" stopColor="rgba(244,63,94,0)" />
+              <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="var(--brand)" stopOpacity="0" />
             </linearGradient>
           </defs>
           {/* Gridlines */}
@@ -353,7 +347,7 @@ function Chart() {
           <motion.path
             d={path}
             fill="none"
-            stroke="rgb(244,63,94)"
+            stroke="var(--brand)"
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -363,8 +357,8 @@ function Chart() {
             transition={{ duration: 1.4, ease: "easeInOut" }}
           />
           {/* Peak marker */}
-          <circle cx={peakX} cy={peakY} r={4.5} fill="rgb(244,63,94)" />
-          <circle cx={peakX} cy={peakY} r={9} fill="rgb(244,63,94)" opacity={0.2} />
+          <circle cx={peakX} cy={peakY} r={4.5} fill="var(--brand)" />
+          <circle cx={peakX} cy={peakY} r={9} fill="var(--brand)" opacity={0.2} />
           {/* X axis */}
           {[0, 6, 12, 18, 23].map((hr) => (
             <text
@@ -399,7 +393,7 @@ function Panel({
 }: {
   title: string
   rows: PanelRow[]
-  accent?: "foreground" | "rose"
+  accent?: "foreground" | "brand"
 }) {
   return (
     <div className="border-border/60 bg-background/40 overflow-hidden rounded-xl border">
@@ -424,7 +418,7 @@ function Panel({
                 transition={{ duration: 0.9, delay: i * 0.07, ease: "easeOut" }}
                 className={cn(
                   "h-full rounded-full",
-                  accent === "rose" ? "bg-rose-500/70" : "bg-foreground/80",
+                  accent === "brand" ? "bg-brand/70" : "bg-foreground/80",
                 )}
               />
             </div>

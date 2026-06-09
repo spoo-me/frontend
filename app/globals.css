@@ -7,6 +7,8 @@
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
+    --color-brand: var(--brand);
+    --color-live: var(--live);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -119,6 +121,9 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    /* Accent lock: violet = brand (aurora, charts, rare emphasis), emerald = live/success semantic only */
+    --brand: oklch(0.541 0.281 293.009);
+    --live: oklch(0.596 0.145 163.225);
 }
 
 .dark {
@@ -153,6 +158,8 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --brand: oklch(0.606 0.25 292.717);
+    --live: oklch(0.765 0.177 163.223);
 }
 
 @layer base {
@@ -165,6 +172,34 @@
   html {
     @apply font-sans;
     }
+}
+
+/* Micro-label — the one way small caps labels are set, everywhere */
+@utility label-mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Dot grid — single systematized size; callers control opacity + mask */
+@utility pattern-dots {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--color-border) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+}
+
+/* Diagonal hatch — engineering-drawing gutter texture */
+@utility pattern-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-border) 0 1px,
+    transparent 1px 7px
+  );
 }
 
 /* Shimmer border — static conic sheen on opposing corners, used by nav icon boxes */

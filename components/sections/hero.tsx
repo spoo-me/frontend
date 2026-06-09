@@ -40,7 +40,7 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
+      <div className="relative w-full px-5 sm:px-9">
         <motion.div
           initial="hidden"
           animate="visible"

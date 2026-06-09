@@ -31,12 +31,12 @@ export function SelfHostClient() {
   }
 
   return (
-    <section id="self-host" className="relative py-32 sm:py-48">
+    <div className="relative px-5 py-24 sm:px-9 sm:py-32">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 [background-image:radial-gradient(circle_at_1px_1px,var(--color-border)_1.2px,transparent_0)] [background-size:22px_22px] opacity-80 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,black,transparent)]"
+        className="pattern-dots pointer-events-none absolute inset-0 -z-10 opacity-60 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,black,transparent)]"
       />
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <div>
         <SectionHeading
           align="center"
           title={
@@ -125,6 +125,6 @@ export function SelfHostClient() {
           </p>
         </motion.div>
       </div>
-    </section>
+    </div>
   )
 }

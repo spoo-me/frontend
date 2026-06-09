@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { ArrowUpRight, LineChart } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
 import { NumberTicker } from "@/components/ui/number-ticker"
 import { SectionHeading } from "@/components/shared/section-heading"
@@ -43,18 +43,13 @@ const supporting: Item[] = [
 
 export function Stats() {
   return (
-    <section aria-label="By the numbers" className="relative py-20 sm:py-28">
+    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 [background-image:radial-gradient(circle_at_1px_1px,var(--color-border)_1px,transparent_0)] [background-size:28px_28px] opacity-30 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,black,transparent)]"
+        className="pattern-dots pointer-events-none absolute inset-0 -z-10 opacity-30 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,black,transparent)]"
       />
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <div>
         <SectionHeading
-          eyebrow={
-            <>
-              <LineChart className="size-3" /> By the numbers
-            </>
-          }
           title={
             <>
               Trusted at scale,{" "}
@@ -96,9 +91,7 @@ export function Stats() {
                   M+
                 </span>
               </div>
-              <div className="text-foreground mt-3 text-sm font-semibold uppercase tracking-[0.18em]">
-                clicks served
-              </div>
+              <div className="label-mono text-foreground mt-3">clicks served</div>
               <div className="text-muted-foreground mt-1 text-sm">
                 across every region, in real time
               </div>
@@ -127,9 +120,7 @@ export function Stats() {
 
               const labelBlock = (
                 <div>
-                  <div className="text-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-                    {item.label}
-                  </div>
+                  <div className="label-mono text-foreground">{item.label}</div>
                   <div className="text-muted-foreground mt-1 text-xs">{item.sub}</div>
                 </div>
               )
@@ -168,6 +159,6 @@ export function Stats() {
           </ul>
         </motion.div>
       </div>
-    </section>
+    </div>
   )
 }

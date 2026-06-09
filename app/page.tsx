@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { PageFrame, Section } from "@/components/shared/section-shell"
 import { Hero } from "@/components/sections/hero"
 import { Features } from "@/components/sections/features"
 import { DashboardPreview } from "@/components/sections/dashboard-preview"
@@ -15,15 +16,33 @@ export default function HomePage() {
     <>
       <Header />
       <main className="overflow-hidden">
-        <Hero />
-        <DashboardPreview />
-        <Features />
-        <ConnectedApps />
-        <Developer />
-        <Testimonials />
-        <SelfHost />
-        <Stats />
-        <CTA />
+        <PageFrame>
+          <Hero />
+          <Section caption="Analytics" id="analytics">
+            <DashboardPreview />
+          </Section>
+          <Section caption="Features" id="features">
+            <Features />
+          </Section>
+          <Section caption="Ecosystem" id="apps">
+            <ConnectedApps />
+          </Section>
+          <Section caption="Developers" id="developers">
+            <Developer />
+          </Section>
+          <Section caption="Builders">
+            <Testimonials />
+          </Section>
+          <Section caption="Self-host" id="self-host">
+            <SelfHost />
+          </Section>
+          <Section caption="Scale">
+            <Stats />
+          </Section>
+          <Section caption="Get started">
+            <CTA />
+          </Section>
+        </PageFrame>
       </main>
       <Footer />
     </>

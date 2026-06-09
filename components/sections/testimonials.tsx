@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { motion } from "motion/react"
-import { ArrowUpRight, MessageSquareQuote } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
 import { SectionHeading } from "@/components/shared/section-heading"
 import { cn } from "@/lib/utils"
@@ -14,19 +14,9 @@ export function Testimonials() {
   const featured = testimonials.slice(0, 1)
 
   return (
-    <section aria-label="Testimonials" className="relative py-20 sm:py-28">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 [background-image:radial-gradient(circle_at_1px_1px,var(--color-border)_1px,transparent_0)] [background-size:28px_28px] opacity-30 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,black,transparent)]"
-      />
-
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
+      <div>
         <SectionHeading
-          eyebrow={
-            <>
-              <MessageSquareQuote className="size-3" /> Loved by builders
-            </>
-          }
           title={
             <>
               Real teams, shipping with{" "}
@@ -57,7 +47,7 @@ export function Testimonials() {
           </div>
         )}
       </div>
-    </section>
+    </div>
   )
 }
 
@@ -163,7 +153,7 @@ function PlaceholderCard({ delay }: { delay: number }) {
       {/* Inner dotted-grid texture — matches site bg pattern */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle_at_1px_1px,var(--color-border)_1px,transparent_0)] [background-size:18px_18px] opacity-50 [mask-image:radial-gradient(ellipse_80%_70%_at_70%_30%,black,transparent)]"
+        className="pattern-dots pointer-events-none absolute inset-0 opacity-50 [mask-image:radial-gradient(ellipse_80%_70%_at_70%_30%,black,transparent)]"
       />
       {/* Soft cool glow — counterweights the warm yellow card */}
       <span

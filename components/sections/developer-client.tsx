@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
-import { ArrowUpRight, Check, Copy, Terminal } from "lucide-react"
+import { ArrowUpRight, Check, Copy } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -33,14 +33,9 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
   }
 
   return (
-    <section id="developers" className="relative py-20 sm:py-28">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
+      <div>
         <SectionHeading
-          eyebrow={
-            <>
-              <Terminal className="size-3" /> Developer-first
-            </>
-          }
           title={
             <>
               An API your team will{" "}
@@ -170,6 +165,6 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
           </motion.div>
         </div>
       </div>
-    </section>
+    </div>
   )
 }

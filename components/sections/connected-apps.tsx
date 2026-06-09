@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useInView } from "motion/react"
-import { ArrowUpRight, Boxes } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
@@ -51,14 +51,9 @@ export function ConnectedApps() {
   const inView = useInView(ref, { once: true, amount: 0.2 })
 
   return (
-    <section id="apps" className="relative py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
+      <div>
         <SectionHeading
-          eyebrow={
-            <>
-              <Boxes className="size-3" /> The ecosystem
-            </>
-          }
           title={
             <>
               spoo lives{" "}
@@ -121,7 +116,7 @@ export function ConnectedApps() {
                 <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
                   everywhere
                 </span>
-                <span className="text-rose-500">.</span>
+                <span className="text-brand">.</span>
               </h3>
               <p className="text-muted-foreground mx-auto mt-4 max-w-sm text-sm leading-relaxed">
                 Sixteen official and community clients, all speaking the same REST API —
@@ -141,6 +136,6 @@ export function ConnectedApps() {
           </Button>
         </div>
       </div>
-    </section>
+    </div>
   )
 }
