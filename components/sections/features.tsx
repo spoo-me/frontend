@@ -19,7 +19,7 @@ import type { LucideIcon } from "lucide-react"
 import { BentoCard, BentoGrid } from "@/components/magicui/bento-grid"
 import { AnimatedList } from "@/components/magicui/animated-list"
 import { Skeleton } from "@/components/ui/skeleton"
-import SimpleQr, { encodeData } from "simple-qrbtf"
+import { BaseQr, encodeData } from "simple-qrbtf"
 import { SectionHeading } from "@/components/shared/section-heading"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
@@ -60,14 +60,31 @@ const notifications: NotificationProps[] = [
 
 const QRCodeDemo = () => {
   const qrData = encodeData({ text: "https://spoo.me/ga" })
-  const qrCodeSvgSolid = SimpleQr.solid({ qrcode: qrData })
+  const svg = BaseQr({
+    qrcode: qrData,
+    otherColor: "currentColor",
+    posColor: "currentColor",
+  })
 
   return (
-    <div className="absolute left-6 top-[-10px] origin-top scale-90 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)] group-hover:scale-100">
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
       <div
-        className="border-border/60 bg-muted/40 rounded-lg border p-4"
-        dangerouslySetInnerHTML={{ __html: qrCodeSvgSolid }}
+        aria-hidden
+        className="pattern-dots absolute inset-x-4 top-2 h-44 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
       />
+      <div className="relative mt-5 flex justify-center">
+        <div className="border-border/70 bg-card -rotate-3 rounded-xl border p-3 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
+          <div
+            aria-label="QR code for spoo.me/ga"
+            role="img"
+            className="text-foreground/90 size-[5.5rem] [&_svg]:size-full"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+          <div className="text-muted-foreground mt-2 text-center font-mono text-[10px]">
+            spoo.me/ga
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -85,7 +102,7 @@ const DomainBackground = () => {
         aria-hidden
         className="pattern-dots absolute inset-x-4 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
       />
-      <div className="relative mt-8 flex justify-center">
+      <div className="relative mt-8 flex justify-center [mask-image:linear-gradient(to_right,transparent,black_18%,black_82%,transparent)]">
         {cards.map((c) => (
           <div
             key={c.host}
@@ -169,7 +186,7 @@ const ExpiryTimeline = () => {
     { time: "in 30 days", label: "expires", card: false },
   ]
   return (
-    <div className="absolute inset-x-6 top-6 [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
+    <div className="absolute inset-x-6 top-6 transition-transform duration-300 group-hover:-translate-y-1 [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
       <ul className="border-border/80 ml-1.5 flex flex-col gap-3.5 border-l border-dashed pl-4">
         {stops.map((s) => (
           <li key={s.label} className="relative">
@@ -183,7 +200,7 @@ const ExpiryTimeline = () => {
             />
             <div className="text-muted-foreground/70 font-mono text-[10px]">{s.time}</div>
             {s.card ? (
-              <div className="border-border/70 bg-card mt-1 inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)]">
+              <div className="border-border/70 bg-card group-hover:border-border mt-1 inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] transition-colors duration-300">
                 <span className="text-foreground font-mono text-xs font-medium">
                   {s.label}
                 </span>
@@ -244,31 +261,39 @@ const Notification = ({ name, description, icon: Icon, time }: NotificationProps
   )
 }
 
-/* Alias picker — crop-mark selection brackets around the chosen alias, ghost wordmark behind */
+/* Alias picker — floating input artifact with crop-mark selection + suggestion chips */
 const AliasDemo = () => {
   return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
-      <span
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_20%,#000_100%)]">
+      <div
         aria-hidden
-        className="text-foreground/[0.04] pointer-events-none absolute -top-7 right-2 font-mono text-[6.5rem] leading-none font-semibold tracking-tighter select-none"
-      >
-        /go
-      </span>
-      <div className="absolute top-9 left-6 flex items-center gap-1.5 font-mono text-sm">
-        <span className="text-muted-foreground/70">spoo.me/</span>
-        {/* crop-mark selection frame */}
-        <span className="relative px-2.5 py-1">
-          <span aria-hidden className="border-foreground/50 absolute top-0 left-0 size-2 border-t border-l" />
-          <span aria-hidden className="border-foreground/50 absolute top-0 right-0 size-2 border-t border-r" />
-          <span aria-hidden className="border-foreground/50 absolute bottom-0 left-0 size-2 border-b border-l" />
-          <span aria-hidden className="border-foreground/50 absolute right-0 bottom-0 size-2 border-r border-b" />
-          <span className="text-foreground font-medium">spring-launch</span>
-        </span>
-        <span className="bg-foreground/70 animate-blink-cursor h-4 w-px" />
-      </div>
-      <div className="text-muted-foreground/80 absolute top-[5.5rem] left-6 flex items-center gap-1.5 font-mono text-[11px]">
-        <span className="bg-live size-1.5 rounded-full" />
-        alias available
+        className="pattern-dots absolute inset-x-10 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_30%,black,transparent)]"
+      />
+      <div className="relative mt-7 flex flex-col items-center gap-2.5">
+        <div className="border-border/70 bg-card flex items-center gap-1 rounded-xl border px-4 py-2.5 font-mono text-sm shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-0.5">
+          <span className="text-muted-foreground/70">spoo.me/</span>
+          {/* crop-mark selection frame */}
+          <span className="relative px-2 py-0.5">
+            <span aria-hidden className="border-foreground/50 absolute top-0 left-0 size-1.5 border-t border-l" />
+            <span aria-hidden className="border-foreground/50 absolute top-0 right-0 size-1.5 border-t border-r" />
+            <span aria-hidden className="border-foreground/50 absolute bottom-0 left-0 size-1.5 border-b border-l" />
+            <span aria-hidden className="border-foreground/50 absolute right-0 bottom-0 size-1.5 border-r border-b" />
+            <span className="text-foreground font-medium">spring-launch</span>
+          </span>
+          <span className="bg-foreground/70 animate-blink-cursor h-4 w-px" />
+        </div>
+        <div className="flex items-center gap-2 font-mono text-[10px]">
+          <span className="border-live/30 text-live bg-live/10 inline-flex items-center gap-1.5 rounded-md border px-2 py-1">
+            <span className="bg-live size-1 rounded-full" />
+            available
+          </span>
+          <span className="border-border/60 text-muted-foreground/50 rounded-md border px-2 py-1 line-through">
+            launch
+          </span>
+          <span className="border-border/60 text-muted-foreground/50 rounded-md border px-2 py-1 line-through">
+            spring
+          </span>
+        </div>
       </div>
     </div>
   )
