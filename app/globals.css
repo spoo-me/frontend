@@ -316,6 +316,20 @@
     font-weight: var(--shiki-dark-font-weight) !important;
     text-decoration: var(--shiki-dark-text-decoration) !important;
 }
+/* Line-numbered code — gutter counters on shiki output */
+.code-numbered .shiki code {
+  counter-reset: line;
+}
+.code-numbered .shiki .line::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 1.25rem;
+  text-align: right;
+  color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+}
+
 .shiki-host-inline .shiki,
 .shiki-host-inline .shiki code,
 .shiki-host-inline .shiki .line {

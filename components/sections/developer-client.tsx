@@ -21,6 +21,15 @@ const DEVICON_MAP: Record<string, string> = {
   cpp: "cplusplus",
 }
 
+/* Tabs read as files, like an editor */
+const FILE_NAMES: Record<string, string> = {
+  python: "shorten.py",
+  ts: "shorten.ts",
+  rust: "shorten.rs",
+  go: "shorten.go",
+  curl: "shorten.sh",
+}
+
 export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
   const [active, setActive] = React.useState(samples[0].id)
   const [copied, setCopied] = React.useState(false)
@@ -48,35 +57,54 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
         />
 
         <div className="mt-12 grid gap-10 lg:grid-cols-[1.4fr_1fr]">
-          {/* Code playground */}
+          {/* Code playground — editor file-tabs fused into the panel */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.5 }}
-            className="border-border/60 bg-card dark:bg-zinc-950 shadow-card relative overflow-hidden rounded-xl border dark:shadow-2xl dark:shadow-black/40"
+            className="relative self-start [--code-surface:var(--card)] dark:[--code-surface:#09090b]"
           >
-            {/* Subtle inner glow — gives terminal depth */}
-            <span
-              aria-hidden
-              className="pointer-events-none absolute -top-32 left-1/2 -z-0 h-64 w-[120%] -translate-x-1/2 rounded-full bg-emerald-500/5 blur-3xl dark:bg-emerald-400/[0.04]"
-            />
-            <div className="border-border/60 relative flex items-center gap-1 overflow-x-auto border-b px-2 py-1.5">
+            {/* File tabs */}
+            <div className="flex items-end gap-0.5 overflow-x-auto px-3">
               {samples.map((s) => {
                 const Icon = s.iconKey ? BrandIcons[s.iconKey] : null
+                const isActive = active === s.id
                 return (
                   <button
                     key={s.id}
                     onClick={() => setActive(s.id)}
+                    aria-selected={isActive}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition",
-                      active === s.id
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground",
+                      "relative inline-flex shrink-0 items-center gap-1.5 rounded-t-lg border px-3 py-2 font-mono text-xs transition-colors",
+                      isActive
+                        ? "border-border/60 text-foreground z-10 -mb-px border-b-transparent bg-[var(--code-surface)]"
+                        : "text-muted-foreground hover:text-foreground border-transparent",
                     )}
                   >
+                    {/* Wedge flares — the tab pours into the panel */}
+                    {isActive && (
+                      <>
+                        <span
+                          aria-hidden
+                          className="absolute -left-2 bottom-0 size-2"
+                          style={{
+                            background:
+                              "radial-gradient(circle at 0 0, transparent 0.5rem, var(--code-surface) 0.5rem)",
+                          }}
+                        />
+                        <span
+                          aria-hidden
+                          className="absolute -right-2 bottom-0 size-2"
+                          style={{
+                            background:
+                              "radial-gradient(circle at 100% 0, transparent 0.5rem, var(--code-surface) 0.5rem)",
+                          }}
+                        />
+                      </>
+                    )}
                     {Icon ? <Icon className="size-3" /> : null}
-                    {s.label}
+                    {FILE_NAMES[s.id] ?? s.label}
                   </button>
                 )
               })}
@@ -84,24 +112,38 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                 onClick={copy}
                 size="icon-xs"
                 variant="ghost"
-                className="ml-auto"
+                className="mb-1.5 ml-auto shrink-0"
                 aria-label="Copy code"
               >
                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
               </Button>
             </div>
-            <div className="relative overflow-hidden">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={sample.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="shiki-host overflow-x-auto p-5 text-[13px] leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: sample.html }}
+
+            {/* Code panel */}
+            <div className="border-border/60 shadow-card relative overflow-hidden rounded-xl border bg-[var(--code-surface)] dark:shadow-2xl dark:shadow-black/40">
+              {/* Subtle inner glow — gives terminal depth */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -top-32 left-1/2 z-0 h-64 w-[120%] -translate-x-1/2 rounded-full bg-emerald-500/5 blur-3xl dark:bg-emerald-400/[0.04]"
+              />
+              <div className="relative overflow-hidden">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={sample.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="shiki-host code-numbered min-h-[22rem] overflow-x-auto px-5 py-6 pb-10 text-[13px] leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: sample.html }}
+                  />
+                </AnimatePresence>
+                {/* Bottom fade — soft termination */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[var(--code-surface)] to-transparent"
                 />
-              </AnimatePresence>
+              </div>
             </div>
           </motion.div>
 
