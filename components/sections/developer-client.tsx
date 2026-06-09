@@ -65,8 +65,8 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
             transition={{ duration: 0.5 }}
             className="relative self-start [--code-surface:var(--card)] dark:[--code-surface:#09090b]"
           >
-            {/* File tabs */}
-            <div className="flex items-end gap-0.5 overflow-x-auto px-3">
+            {/* File tabs — no overflow container here, it would trap the -mb-px fusion */}
+            <div className="flex flex-wrap items-end gap-0.5 px-3">
               {samples.map((s) => {
                 const Icon = s.iconKey ? BrandIcons[s.iconKey] : null
                 const isActive = active === s.id
@@ -108,19 +108,19 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                   </button>
                 )
               })}
-              <Button
-                onClick={copy}
-                size="icon-xs"
-                variant="ghost"
-                className="mb-1.5 ml-auto shrink-0"
-                aria-label="Copy code"
-              >
-                {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
-              </Button>
             </div>
 
             {/* Code panel */}
             <div className="border-border/60 shadow-card relative overflow-hidden rounded-xl border bg-[var(--code-surface)] dark:shadow-2xl dark:shadow-black/40">
+              <Button
+                onClick={copy}
+                size="icon-xs"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground absolute top-2.5 right-2.5 z-10"
+                aria-label="Copy code"
+              >
+                {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+              </Button>
               {/* Subtle inner glow — gives terminal depth */}
               <span
                 aria-hidden
@@ -134,7 +134,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="shiki-host code-numbered min-h-[22rem] overflow-x-auto px-5 py-6 pb-10 text-[13px] leading-relaxed"
+                    className="shiki-host code-numbered h-[22rem] overflow-auto px-5 py-6 pb-10 text-[13px] leading-relaxed [scrollbar-width:thin]"
                     dangerouslySetInnerHTML={{ __html: sample.html }}
                   />
                 </AnimatePresence>

@@ -3,9 +3,9 @@ import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
+import { LegalSidebar } from "@/components/sections/legal-sidebar"
 import { legalDocs, type LegalDoc } from "@/lib/legal-content"
 import { upcomingPolicies } from "@/lib/legal-meta"
-import { cn } from "@/lib/utils"
 
 export function LegalDocPage({ doc }: { doc: LegalDoc }) {
   return (
@@ -25,33 +25,14 @@ export function LegalDocPage({ doc }: { doc: LegalDoc }) {
                   >
                     Legal
                   </Link>
-                  <nav aria-label="Legal documents" className="mt-6">
-                    <ul className="flex flex-col gap-3.5">
-                      {legalDocs.map((d) => (
-                        <li key={d.slug}>
-                          <Link
-                            href={`/${d.slug}`}
-                            aria-current={d.slug === doc.slug ? "page" : undefined}
-                            className={cn(
-                              "block text-sm leading-snug transition-colors",
-                              d.slug === doc.slug
-                                ? "text-foreground font-medium"
-                                : "text-muted-foreground hover:text-foreground",
-                            )}
-                          >
-                            {d.title}
-                          </Link>
-                        </li>
-                      ))}
-                      {upcomingPolicies.map((title) => (
-                        <li key={title}>
-                          <span className="text-muted-foreground/40 block cursor-default text-sm leading-snug">
-                            {title}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
+                  <div className="mt-6">
+                    <LegalSidebar
+                      docs={legalDocs.map((d) => ({ slug: d.slug, title: d.title }))}
+                      upcoming={upcomingPolicies}
+                      activeSlug={doc.slug}
+                      toc={doc.toc}
+                    />
+                  </div>
                 </div>
               </aside>
 
