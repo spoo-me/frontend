@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { motion } from "motion/react"
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -42,12 +43,17 @@ export function ThemeToggle() {
             onClick={() => setTheme(value)}
             className={cn(
               "relative inline-flex size-7 items-center justify-center rounded-full transition-colors",
-              isActive
-                ? "ring-border/80 text-foreground bg-muted/60 shadow-soft ring-1 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                : "text-muted-foreground hover:text-foreground",
+              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Icon className="size-3.5" />
+            {isActive && (
+              <motion.span
+                layoutId="theme-thumb"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                className="ring-border/80 bg-muted/60 shadow-soft absolute inset-0 rounded-full ring-1 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+              />
+            )}
+            <Icon className="relative z-10 size-3.5" />
           </button>
         )
       })}
