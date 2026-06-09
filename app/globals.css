@@ -218,6 +218,68 @@
   );
 }
 
+/* Legal prose — styles the verbatim policy HTML from lib/legal-content.ts */
+.legal-prose h2 {
+  color: var(--foreground);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2.75rem;
+  margin-bottom: 0.875rem;
+  scroll-margin-top: 6rem;
+}
+.legal-prose h2:first-child {
+  margin-top: 0;
+}
+.legal-prose h3 {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+.legal-prose p {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+.legal-prose ul,
+.legal-prose ol {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.legal-prose ul {
+  list-style: disc;
+}
+.legal-prose ol {
+  list-style: decimal;
+}
+.legal-prose li::marker {
+  color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+}
+.legal-prose strong,
+.legal-prose b {
+  color: var(--foreground);
+  font-weight: 500;
+}
+.legal-prose a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in oklab, var(--foreground) 30%, transparent);
+  transition: text-decoration-color 150ms;
+}
+.legal-prose a:hover {
+  text-decoration-color: var(--foreground);
+}
+
 /* Shimmer border — static conic sheen on opposing corners, used by nav icon boxes */
 .shimmer-border {
   background: conic-gradient(

@@ -42,23 +42,19 @@ export function AuthLayout({
 
       <p className="text-muted-foreground/70 text-center text-xs">
         By continuing, you agree to our{" "}
-        <a
-          href="https://spoo.me/tos"
-          target="_blank"
-          rel="noreferrer"
+        <Link
+          href="/terms"
           className="hover:text-foreground underline underline-offset-4 transition-colors"
         >
           Terms of Service
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="https://spoo.me/privacy"
-          target="_blank"
-          rel="noreferrer"
+        <Link
+          href="/privacy"
           className="hover:text-foreground underline underline-offset-4 transition-colors"
         >
           Privacy Policy
-        </a>
+        </Link>
         .
       </p>
     </div>

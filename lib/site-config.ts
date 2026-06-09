@@ -261,5 +261,7 @@ export const footerLinks = {
     { label: "Login", href: "/login" },
     { label: "Sign up", href: "/signup" },
     { label: "Contact", href: "/contact" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
   ],
 } as const
