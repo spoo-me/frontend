@@ -4,14 +4,16 @@ import { ArrowLeft } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
+import { LegalToc } from "@/components/sections/legal-toc"
 import type { LegalDoc } from "@/lib/legal-content"
 
 export function LegalDocPage({ doc }: { doc: LegalDoc }) {
   return (
     <>
       <Header />
-      <main className="overflow-hidden pt-20">
-        <PageFrame>
+      {/* No overflow-hidden here — it would break the sticky TOC */}
+      <main className="pt-20">
+        <PageFrame className="overflow-visible">
           <Section caption="Legal">
             <div className="lg:divide-border/60 grid lg:grid-cols-[17rem_1fr] lg:divide-x">
               {/* TOC rail */}
@@ -27,20 +29,7 @@ export function LegalDocPage({ doc }: { doc: LegalDoc }) {
                   <div className="label-mono text-muted-foreground/70 mt-8 mb-3">
                     On this page
                   </div>
-                  <nav aria-label="Table of contents">
-                    <ul className="border-border/40 flex max-h-[60vh] flex-col gap-1 overflow-y-auto border-l pr-2 [scrollbar-width:thin]">
-                      {doc.toc.map((item) => (
-                        <li key={item.id}>
-                          <a
-                            href={`#${item.id}`}
-                            className="text-muted-foreground hover:text-foreground hover:border-foreground/40 -ml-px block border-l border-transparent py-1 pl-3 text-[13px] leading-snug transition-colors"
-                          >
-                            {item.title}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
+                  <LegalToc toc={doc.toc} />
                 </div>
               </aside>
 
