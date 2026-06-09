@@ -70,7 +70,7 @@ export default function AboutPage() {
   return (
     <>
       <Header />
-      <main className="overflow-hidden">
+      <main className="overflow-hidden pt-16">
         <PageFrame>
         {/* Hero */}
         <section className="pt-28 pb-12 sm:pt-32 sm:pb-16">

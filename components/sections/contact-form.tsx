@@ -42,6 +42,23 @@ export function ContactForm() {
         </Field>
       </div>
 
+      <Field label="Company website" htmlFor="website" optional>
+        <div className="border-input shadow-soft focus-within:border-ring focus-within:ring-ring/50 flex h-10 items-center rounded-lg border bg-transparent transition-colors focus-within:ring-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+          <span className="text-muted-foreground/70 border-input border-r px-2.5 font-mono text-[13px] select-none">
+            https://
+          </span>
+          <input
+            id="website"
+            name="website"
+            type="text"
+            inputMode="url"
+            autoComplete="url"
+            placeholder="acme.dev"
+            className="placeholder:text-muted-foreground h-full w-full bg-transparent px-2.5 text-sm outline-none"
+          />
+        </div>
+      </Field>
+
       <Field label="Topic" htmlFor="topic">
         <div className="relative">
           <select
@@ -89,16 +106,23 @@ export function ContactForm() {
 function Field({
   label,
   htmlFor,
+  optional,
   children,
 }: {
   label: string
   htmlFor: string
+  optional?: boolean
   children: React.ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={htmlFor} className="text-foreground text-sm font-medium">
         {label}
+        {optional && (
+          <span className="text-muted-foreground/70 ml-1.5 text-xs font-normal">
+            (optional)
+          </span>
+        )}
       </label>
       {children}
     </div>

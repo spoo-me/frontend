@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { Server } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
@@ -18,7 +19,7 @@ export default function PricingPage() {
   return (
     <>
       <Header />
-      <main className="overflow-hidden">
+      <main className="overflow-hidden pt-16">
         <PageFrame>
           <Section caption="Pricing">
             <div className="px-5 pt-28 pb-20 sm:px-9">
@@ -61,9 +62,7 @@ export default function PricingPage() {
                   </p>
                 </div>
                 <Button asChild variant="outline">
-                  <a href="https://spoo.me/contact" target="_blank" rel="noreferrer">
-                    Get in touch
-                  </a>
+                  <Link href="/contact">Get in touch</Link>
                 </Button>
               </div>
             </div>

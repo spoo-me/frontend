@@ -229,10 +229,9 @@ export const companyLegalLinks: NavLink[] = [
   },
   {
     title: "Contact",
-    href: "https://spoo.me/contact",
+    href: "/contact",
     description: "Reach the team",
     iconKey: "mail",
-    external: true,
   },
 ]
 
@@ -261,6 +260,6 @@ export const footerLinks = {
     { label: "GitHub", href: siteConfig.links.github, external: true },
     { label: "Login", href: "/login" },
     { label: "Sign up", href: "/signup" },
-    { label: "Contact", href: "https://spoo.me/contact", external: true },
+    { label: "Contact", href: "/contact" },
   ],
 } as const

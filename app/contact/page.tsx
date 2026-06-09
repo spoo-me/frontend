@@ -33,7 +33,7 @@ export default function ContactPage() {
   return (
     <>
       <Header />
-      <main className="overflow-hidden">
+      <main className="overflow-hidden pt-16">
         <PageFrame>
           <Section caption="Contact">
             <div className="lg:divide-border/60 grid lg:grid-cols-[1fr_1.2fr] lg:divide-x">
