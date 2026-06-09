@@ -121,11 +121,6 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
               >
                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
               </Button>
-              {/* Subtle inner glow — gives terminal depth */}
-              <span
-                aria-hidden
-                className="pointer-events-none absolute -top-32 left-1/2 z-0 h-64 w-[120%] -translate-x-1/2 rounded-full bg-emerald-500/5 blur-3xl dark:bg-emerald-400/[0.04]"
-              />
               <div className="relative overflow-hidden">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
