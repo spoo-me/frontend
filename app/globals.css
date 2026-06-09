@@ -167,13 +167,13 @@
     }
 }
 
-/* Shimmer border — static conic sheen, used by nav icon boxes */
+/* Shimmer border — static conic sheen on opposing corners, used by nav icon boxes */
 .shimmer-border {
   background: conic-gradient(
     from 135deg,
     transparent 0deg,
-    var(--shimmer-color, #fff) 60deg,
-    transparent 130deg,
+    var(--shimmer-color, #fff) 70deg,
+    transparent 140deg,
     transparent 220deg,
     var(--shimmer-color, #fff) 290deg,
     transparent 360deg
@@ -183,7 +183,7 @@
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  padding: 1px;
+  padding: 1.5px;
 }
 
 /* Shiki dual-theme: swap colors on .dark, transparent bg in both */

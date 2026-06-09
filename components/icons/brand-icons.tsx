@@ -11,6 +11,7 @@ import {
   SiDiscord,
   SiGithub,
   SiGo,
+  SiGooglechrome,
   SiInstagram,
   SiN8N,
   SiProducthunt,
@@ -46,6 +47,7 @@ const deviconImg =
   )
 
 const ChromeColor = deviconImg("chrome")
+const PythonColor = deviconImg("python")
 const SlackColor = deviconImg("slack")
 
 // react-icons returns IconType which renders an <svg>; wrap to accept SVGProps cleanly.
@@ -53,10 +55,23 @@ const wrap =
   (Cmp: React.ComponentType<{ className?: string }>) =>
   (props: IconProps) => <Cmp className={props.className} />
 
+// Dual-icon: monochrome default, color devicon on group-hover.
+const dual =
+  (
+    Mono: React.ComponentType<{ className?: string }>,
+    Color: React.ComponentType<{ className?: string }>,
+  ) =>
+  ({ className }: IconProps) => (
+    <span className={`relative inline-flex shrink-0 ${className ?? ""}`}>
+      <Mono className="size-full transition-opacity duration-200 group-hover:opacity-0" />
+      <Color className="absolute inset-0 size-full opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+    </span>
+  )
+
 export const BrandIcons = {
   github:     wrap(SiGithub),
   raycast:    wrap(SiRaycast),
-  chrome:     ChromeColor,
+  chrome:     dual(wrap(SiGooglechrome), ChromeColor),
   windows:    Windows,
   apple:      wrap(SiApple),
   android:    wrap(SiAndroid),
@@ -68,7 +83,7 @@ export const BrandIcons = {
   linkedin:   wrap(FaLinkedinIn),
   producthunt: wrap(SiProducthunt),
   mobile:     wrap(Smartphone),
-  python:     wrap(SiPython),
+  python:     dual(wrap(SiPython), PythonColor),
   typescript: wrap(SiTypescript),
   rust:       wrap(SiRust),
   go:         wrap(SiGo),
