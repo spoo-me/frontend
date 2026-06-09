@@ -41,9 +41,9 @@ export function ThemeToggle() {
             aria-checked={isActive}
             aria-label={label}
             suppressHydrationWarning
-            onClick={(e) => {
+            onClick={() => {
               if (value === active) return
-              themeTransition(() => setTheme(value), { x: e.clientX, y: e.clientY })
+              themeTransition(() => setTheme(value))
             }}
             className={cn(
               "relative inline-flex size-7 items-center justify-center rounded-full transition-colors",

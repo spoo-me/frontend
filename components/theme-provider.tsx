@@ -9,37 +9,19 @@ type VTDocument = Document & {
 }
 
 /**
- * Theme switch with a View Transitions circle reveal expanding from `origin`
- * (defaults to viewport center). Falls back to an instant switch when the API
- * is unavailable or the user prefers reduced motion.
+ * Theme switch wrapped in a View Transition — the browser cross-fades the
+ * whole page between themes (duration tuned in globals.css). Falls back to an
+ * instant switch when the API is unavailable or the user prefers reduced motion.
  */
-function themeTransition(apply: () => void, origin?: { x: number; y: number }) {
+function themeTransition(apply: () => void) {
   const doc = document as VTDocument
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
   if (!doc.startViewTransition || reduce) {
     apply()
     return
   }
-  const x = origin?.x ?? window.innerWidth / 2
-  const y = origin?.y ?? window.innerHeight / 2
-  const r = Math.hypot(
-    Math.max(x, window.innerWidth - x),
-    Math.max(y, window.innerHeight - y),
-  )
-  const vt = doc.startViewTransition(() => {
+  doc.startViewTransition(() => {
     flushSync(apply)
-  })
-  vt.ready.then(() => {
-    document.documentElement.animate(
-      {
-        clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`],
-      },
-      {
-        duration: 550,
-        easing: "cubic-bezier(0.32, 0.72, 0, 1)",
-        pseudoElement: "::view-transition-new(root)",
-      },
-    )
   })
 }
 
@@ -51,7 +33,7 @@ function ThemeProvider({
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
-      enableSystem={false}
+      enableSystem
       disableTransitionOnChange
       {...props}
     >

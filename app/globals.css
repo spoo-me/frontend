@@ -178,18 +178,11 @@
     }
 }
 
-/* Theme switch — the circle reveal owns the animation; disable the default
-   cross-fade and keep the new snapshot on top */
+/* Theme switch — subtle whole-page cross-fade between themes */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-::view-transition-old(root) {
-  z-index: 1;
-}
-::view-transition-new(root) {
-  z-index: 2;
+  animation-duration: 240ms;
+  animation-timing-function: ease-out;
 }
 
 /* Micro-label — the one way small caps labels are set, everywhere */
