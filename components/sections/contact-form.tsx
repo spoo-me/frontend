@@ -1,23 +1,29 @@
 "use client"
 
 import * as React from "react"
-import { Send } from "lucide-react"
+import { ChevronDown, Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
+const topics = [
+  "General question",
+  "Bug report",
+  "Feature idea",
+  "Billing",
+  "Partnership",
+  "Security",
+] as const
+
 export function ContactForm() {
   return (
-    <form
-      onSubmit={(e) => e.preventDefault()}
-      className="border-border/60 bg-card/40 flex flex-col gap-6 rounded-2xl border p-7 sm:p-9"
-    >
+    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
       <div>
-        <h3 className="text-foreground text-xl font-semibold tracking-tight sm:text-2xl">
+        <h2 className="text-foreground text-lg font-semibold tracking-tight">
           Send us a message
-        </h3>
-        <p className="text-muted-foreground mt-1.5 text-sm">
-          For everything that doesn&apos;t fit a channel above. We respond within a business day.
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Fill out the form and we&apos;ll get back to you within 24 hours.
         </p>
       </div>
 
@@ -36,13 +42,25 @@ export function ContactForm() {
         </Field>
       </div>
 
-      <Field label="Subject" htmlFor="subject">
-        <Input
-          id="subject"
-          name="subject"
-          placeholder="What's this about?"
-          className="h-10"
-        />
+      <Field label="Topic" htmlFor="topic">
+        <div className="relative">
+          <select
+            id="topic"
+            name="topic"
+            defaultValue="General question"
+            className="border-input shadow-soft focus-visible:border-ring focus-visible:ring-ring/50 h-10 w-full appearance-none rounded-lg border bg-transparent px-2.5 text-sm outline-none transition-colors focus-visible:ring-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] [&>option]:bg-background"
+          >
+            {topics.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            aria-hidden
+            className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
+          />
+        </div>
       </Field>
 
       <Field label="Message" htmlFor="message">
@@ -51,12 +69,12 @@ export function ContactForm() {
           name="message"
           rows={6}
           placeholder="Tell us what's on your mind…"
-          className="border-border/60 bg-background/30 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors focus-visible:ring-3 dark:bg-input/30"
+          className="border-input shadow-soft placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus-visible:ring-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
         />
       </Field>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <p className="text-muted-foreground text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <p className="text-muted-foreground max-w-[16rem] text-xs leading-relaxed">
           By sending, you agree to our privacy policy. We never share your message.
         </p>
         <Button type="submit" size="lg" className="h-10 px-4">
@@ -79,10 +97,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label
-        htmlFor={htmlFor}
-        className="text-foreground text-xs font-semibold uppercase tracking-[0.16em]"
-      >
+      <label htmlFor={htmlFor} className="text-foreground text-sm font-medium">
         {label}
       </label>
       {children}

@@ -1,61 +1,32 @@
 import type { Metadata } from "next"
-import {
-  ArrowUpRight,
-  Bug,
-  Mail,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react"
+import { CircleCheck } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
-import { PageFrame } from "@/components/shared/section-shell"
-import { SectionHeading } from "@/components/shared/section-heading"
+import { PageFrame, Section } from "@/components/shared/section-shell"
 import { ContactForm } from "@/components/sections/contact-form"
-import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
 export const metadata: Metadata = {
-  title: "Contact, get in touch",
+  title: "Contact, talk to a human",
   description:
-    "Talk to the team behind spoo.me. Discord for community, GitHub for bugs, email for everything else.",
+    "Questions, bug reports, feedback, partnerships. Every message is read by someone who can actually do something about it.",
 }
 
+const promises = [
+  "Replies within 24 hours, usually much faster",
+  "Read by maintainers, not ticket bots",
+  "Bug reports go straight to the issue tracker",
+  "No newsletters, no follow-up spam",
+]
+
 const channels = [
-  {
-    icon: BrandIcons.discord,
-    title: "Join the Discord",
-    description:
-      "The fastest way to reach us. Maintainers, contributors, and power users all hang out here.",
-    href: siteConfig.links.discord,
-    cta: "Open Discord",
-    external: true,
-  },
-  {
-    icon: Bug,
-    title: "Report a bug",
-    description:
-      "Found something broken? File an issue on GitHub with steps to reproduce. Triaged within 48h.",
-    href: `${siteConfig.links.github}/issues/new`,
-    cta: "Open an issue",
-    external: true,
-  },
-  {
-    icon: ShieldCheck,
-    title: "Security disclosure",
-    description:
-      "Spotted a vulnerability? Email us privately. Coordinated disclosure, with credit and thanks for responsible reports.",
-    href: "mailto:security@spoo.me",
-    cta: "security@spoo.me",
-  },
-  {
-    icon: Sparkles,
-    title: "Press & partnerships",
-    description:
-      "Writing about spoo, integrating with us, or sponsoring the project? Drop a note and we'll route it.",
-    href: "mailto:hello@spoo.me",
-    cta: "hello@spoo.me",
-  },
+  { label: "General", value: "hello@spoo.me", href: "mailto:hello@spoo.me" },
+  { label: "Security", value: "security@spoo.me", href: "mailto:security@spoo.me" },
+  { label: "Discord", value: "spoo.me/discord", href: siteConfig.links.discord, external: true },
+  { label: "GitHub", value: "@spoo-me", href: siteConfig.links.githubOrg, external: true },
+  { label: "X / Twitter", value: "@spoo_me", href: siteConfig.links.x, external: true },
+  { label: "Docs", value: "docs.spoo.me", href: siteConfig.links.docs, external: true },
 ]
 
 export default function ContactPage() {
@@ -64,91 +35,75 @@ export default function ContactPage() {
       <Header />
       <main className="overflow-hidden">
         <PageFrame>
-        {/* Hero */}
-        <section className="pt-28 pb-12 sm:pt-32 sm:pb-16">
-          <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
-            <SectionHeading
-              eyebrow={
-                <>
-                  <Mail className="size-3" /> Contact
-                </>
-              }
-              title={
-                <>
+          <Section caption="Contact">
+            <div className="lg:divide-border/60 grid lg:grid-cols-[1fr_1.2fr] lg:divide-x">
+              {/* Left — pitch */}
+              <div className="px-5 pt-28 pb-10 sm:px-9 lg:pb-20">
+                <h1 className="text-foreground text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
                   Talk to{" "}
                   <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
                     a human.
                   </span>
-                </>
-              }
-              description="Every message is read by someone who can actually do something about it. Send a note below, or pick a faster channel."
-            />
-          </div>
-        </section>
+                </h1>
+                <p className="text-muted-foreground mt-5 max-w-md text-base leading-relaxed sm:text-lg">
+                  Questions, bug reports, feedback, partnership ideas. Every message
+                  lands in front of someone who can act on it.
+                </p>
 
-        {/* Form */}
-        <section className="pb-20 sm:pb-24">
-          <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
-            <ContactForm />
-          </div>
-        </section>
+                <ul className="mt-8 flex flex-col gap-3">
+                  {promises.map((p) => (
+                    <li key={p} className="text-foreground/90 flex items-center gap-2.5 text-sm">
+                      <CircleCheck className="text-live size-4 shrink-0" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
 
-        {/* Channels */}
-        <section className="pb-24 sm:pb-32">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-8">
-              <h2 className="text-foreground text-2xl font-semibold tracking-tight sm:text-3xl">
-                Other ways to reach us
-              </h2>
-              <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
-                Faster than the form for most things.
-              </p>
+                <p className="text-muted-foreground mt-10 text-sm">
+                  Found a vulnerability?{" "}
+                  <a
+                    href="mailto:security@spoo.me"
+                    className="text-foreground font-mono text-[13px] font-medium hover:underline"
+                  >
+                    security@spoo.me
+                  </a>{" "}
+                  for coordinated disclosure.
+                </p>
+              </div>
+
+              {/* Right — form */}
+              <div className="px-5 pb-20 sm:px-9 lg:pt-28">
+                <div className="mx-auto max-w-xl">
+                  <ContactForm />
+                </div>
+              </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {channels.map((c) => (
-                <ChannelCard key={c.title} {...c} />
-              ))}
+          </Section>
+
+          {/* Channel grid — label-over-value cells with shared hairlines */}
+          <Section caption="Channels">
+            <div className="px-5 py-16 sm:px-9 sm:py-20">
+              <div className="border-border/60 bg-border/60 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border sm:grid-cols-2 lg:grid-cols-3">
+                {channels.map((c) => (
+                  <a
+                    key={c.label}
+                    href={c.href}
+                    target={c.external ? "_blank" : undefined}
+                    rel={c.external ? "noreferrer" : undefined}
+                    className="group bg-background hover:bg-muted/20 flex flex-col gap-2 p-7 transition-colors duration-300 sm:p-9"
+                  >
+                    <span className="label-mono text-muted-foreground">{c.label}</span>
+                    <span className="text-foreground group-hover:underline text-lg font-medium tracking-tight underline-offset-4">
+                      {c.value}
+                    </span>
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </Section>
         </PageFrame>
       </main>
       <Footer />
     </>
-  )
-}
-
-function ChannelCard({
-  icon: Icon,
-  title,
-  description,
-  href,
-  cta,
-  external,
-}: {
-  icon: React.ElementType
-  title: string
-  description: string
-  href: string
-  cta: string
-  external?: boolean
-}) {
-  return (
-    <a
-      href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
-      className="group border-border/60 bg-card/40 hover:bg-card/60 flex flex-col gap-3 rounded-2xl border p-6 transition-colors"
-    >
-      <div className="flex items-center justify-between">
-        <div className="border-border/60 bg-muted/30 flex size-10 items-center justify-center rounded-md border">
-          <Icon className="text-foreground/85 size-4" />
-        </div>
-        <ArrowUpRight className="text-muted-foreground/60 group-hover:text-foreground size-4 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-      </div>
-      <div className="text-foreground text-base font-semibold leading-tight">{title}</div>
-      <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-      <div className="text-foreground mt-1 text-xs font-mono">{cta}</div>
-    </a>
   )
 }
