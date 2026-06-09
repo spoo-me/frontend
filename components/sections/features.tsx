@@ -1,352 +1,290 @@
 "use client"
 
-import { useState, lazy, Suspense } from "react"
-import {
-  BarChart,
-  Code,
-  Globe,
-  QrCode,
-  Timer,
-  Bell,
-  Settings,
-  Tag,
-} from "lucide-react"
+import * as React from "react"
+import { motion } from "motion/react"
+import { Bell, Check, Timer, Webhook, X } from "lucide-react"
+import { BaseQr, encodeData } from "simple-qrbtf"
 
-import { BentoCard, BentoGrid } from "@/components/magicui/bento-grid"
-import { AnimatedList } from "@/components/magicui/animated-list"
-import { SparklesCore } from "@/components/ui/sparkles"
-import { Calendar } from "@/components/ui/calendar"
-import { Skeleton } from "@/components/ui/skeleton"
-import SimpleQr, { encodeData } from "simple-qrbtf"
-import { Wand2 } from "lucide-react"
 import { SectionHeading } from "@/components/shared/section-heading"
-
-const WorldMap = lazy(() => import("@/components/ui/world-map"))
-
-interface NotificationProps {
-  name: string
-  description: string
-  icon: string
-  color: string
-  time: string
-}
-
-const notifications = [
-  {
-    name: "Link clicked",
-    description: "Your link was clicked 100 times",
-    time: "15m ago",
-    icon: "📈",
-    color: "#9C4EFF",
-  },
-  {
-    name: "Threshold reached",
-    description: "Your campaign reached 1000 clicks",
-    time: "1h ago",
-    icon: "🎯",
-    color: "#00C9A7",
-  },
-  {
-    name: "New location",
-    description: "Traffic from a new country detected",
-    time: "3h ago",
-    icon: "🌎",
-    color: "#FFB800",
-  },
-  {
-    name: "Conversion goal",
-    description: "Conversion rate increased by 15%",
-    time: "5h ago",
-    icon: "🚀",
-    color: "#FF3D71",
-  },
-]
-
-const QRCodeDemo = () => {
-  const qrData = encodeData({ text: "https://spoo.me/ga" })
-  const qrCodeSvgSolid = SimpleQr.solid({ qrcode: qrData })
-
-  return (
-    <div className="absolute left-6 top-[-10px] origin-top scale-90 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)] group-hover:scale-100">
-      <div
-        className="p-4 rounded-lg shadow-md back"
-        dangerouslySetInnerHTML={{ __html: qrCodeSvgSolid }}
-      />
-    </div>
-  )
-}
-
-const DomainBackground = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden">
-      <SparklesCore
-        id="tsparticles"
-        background="transparent"
-        minSize={0.6}
-        maxSize={1.4}
-        particleDensity={70}
-        className="w-full h-full"
-        particleColor="#8A63D2"
-      />
-    </div>
-  )
-}
-
-const APIDemo = () => {
-  return (
-    <div className="absolute right-10 top-10 origin-top scale-90 rounded-md border transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] group-hover:scale-100">
-      <div className="w-full max-w-xs bg-card/70 backdrop-blur-sm p-3 rounded-lg shadow-md border border-border/50">
-        <div className="flex items-center mb-2">
-          <div className="w-2 h-2 rounded-full bg-red-500 mr-1"></div>
-          <div className="w-2 h-2 rounded-full bg-yellow-500 mr-1"></div>
-          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-        </div>
-        <div className="text-xs font-mono bg-background/80 p-2 rounded text-green-500">
-          <div>
-            fetch(<span className="text-blue-400">&apos;api/shorten&apos;</span>,{"{"}
-          </div>
-          <div className="pl-4">
-            method: <span className="text-yellow-500">&apos;POST&apos;</span>,
-          </div>
-          <div className="pl-4">body: JSON.stringify({"{"}</div>
-          <div className="pl-8">
-            url: <span className="text-yellow-500">&apos;https://...&apos;</span>
-          </div>
-          <div className="pl-4">{"}"})</div>
-          <div>{"}"});</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const CustomizationDemo = () => {
-  const [activeColor, setActiveColor] = useState(0)
-  const colors = ["#8A63D2", "#3694FF", "#FF7A50", "#00D0BF"]
-
-  return (
-    <div className="absolute left-4 top-8 scale-90 transition-all duration-300 ease-out group-hover:scale-100 [mask-image:linear-gradient(to_top,transparent_60%,#000_100%)] inset-0 flex justify-center p-4">
-      <div className="flex flex-col items-center">
-        <div className="w-40 h-12 bg-card shadow-md rounded-md mb-3 flex items-center justify-center border border-muted relative">
-          <div
-            className="absolute inset-x-0 -top-1 h-1 rounded-t-md"
-            style={{ backgroundColor: colors[activeColor] }}
-          ></div>
-          <span className="text-sm font-medium">yourlink.co/brand</span>
-        </div>
-        <div className="flex space-x-2">
-          {colors.map((color, index) => (
-            <button
-              key={index}
-              className={`w-6 h-6 rounded-full border-2 transition-all ${activeColor === index ? "scale-110 border-white" : "border-transparent"}`}
-              style={{ backgroundColor: color }}
-              onClick={() => setActiveColor(index)}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const AnalyticsChart = () => {
-  return (
-    <div className="absolute right-1 top-2 h-[300px] w-full scale-75 border-none transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_10%,#000_100%)] group-hover:scale-90">
-      <div className="flex items-end space-x-2">
-        <Suspense
-          fallback={
-            <Skeleton className="h-[300px] w-full bg-card rounded-lg" />
-          }
-        >
-          <WorldMap
-            dots={[
-              { start: { lat: 64.2008, lng: -149.4937 }, end: { lat: 34.0522, lng: -118.2437 } },
-              { start: { lat: 64.2008, lng: -149.4937 }, end: { lat: -15.7975, lng: -47.8919 } },
-              { start: { lat: -15.7975, lng: -47.8919 }, end: { lat: 38.7223, lng: -9.1393 } },
-              { start: { lat: 51.5074, lng: -0.1278 }, end: { lat: 28.6139, lng: 77.209 } },
-              { start: { lat: 28.6139, lng: 77.209 }, end: { lat: 43.1332, lng: 131.9113 } },
-              { start: { lat: 28.6139, lng: 77.209 }, end: { lat: -1.2921, lng: 36.8219 } },
-            ]}
-          />
-        </Suspense>
-      </div>
-    </div>
-  )
-}
-
-const Notification = ({
-  name,
-  description,
-  icon,
-  color,
-  time,
-}: NotificationProps) => {
-  return (
-    <figure className="relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl p-4 bg-white dark:bg-transparent dark:backdrop-blur-md dark:border dark:border-white/10 shadow-md transition-all duration-200 hover:scale-[102%]">
-      <div className="flex flex-row items-center gap-3">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{ backgroundColor: color }}
-        >
-          <span className="text-lg">{icon}</span>
-        </div>
-        <div className="flex flex-col overflow-hidden">
-          <figcaption className="flex flex-row items-center whitespace-pre text-sm font-medium">
-            <span>{name}</span>
-            <span className="mx-1">·</span>
-            <span className="text-xs text-muted-foreground">{time}</span>
-          </figcaption>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
-      </div>
-    </figure>
-  )
-}
-
-const NotificationsList = () => {
-  return (
-    <div className="absolute inset-0 flex flex-col items-center p-4 overflow-hidden scale-90 border-none transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_30%)] group-hover:scale-100">
-      <AnimatedList delay={2000}>
-        {notifications.map((item, idx) => (
-          <Notification key={idx} {...item} />
-        ))}
-      </AnimatedList>
-    </div>
-  )
-}
+import { cn } from "@/lib/utils"
 
 export function Features() {
-  const features = [
+  return (
+    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
+      <SectionHeading
+        title={
+          <>
+            Everything you need.{" "}
+            <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              Nothing you don&apos;t.
+            </span>
+          </>
+        }
+        description="Built by developers shipping production traffic. Every feature has a reason it exists."
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="border-border/60 bg-border/60 mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <Cell
+          className="sm:col-span-2"
+          title="Custom domains"
+          description="Branded short links on your own domain. Point a CNAME, verify once, ship go.you.dev links."
+        >
+          <DomainsDemo />
+        </Cell>
+        <Cell
+          title="QR codes"
+          description="Every link ships with a QR code. Brand colors and logo included."
+        >
+          <QrDemo />
+        </Cell>
+        <Cell
+          title="Link rules"
+          description="Passwords, expiry dates, click limits. Set them per link, change them anytime."
+        >
+          <RulesDemo />
+        </Cell>
+        <Cell
+          title="Alerts & webhooks"
+          description="Standard Webhooks events for everything. Get pinged the moment a threshold hits."
+        >
+          <AlertsDemo />
+        </Cell>
+        <Cell
+          title="Bot protection"
+          description="Crawlers are filtered before they pollute your analytics. Real clicks only."
+        >
+          <BotsDemo />
+        </Cell>
+      </motion.div>
+    </div>
+  )
+}
+
+function Cell({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title: string
+  description: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "group bg-background hover:bg-muted/20 relative flex flex-col justify-between gap-6 p-6 transition-colors duration-300 sm:p-7",
+        className,
+      )}
+    >
+      <div className="relative h-40 overflow-hidden">{children}</div>
+      <div>
+        <h3 className="text-foreground text-sm font-semibold tracking-tight">{title}</h3>
+        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+/* Custom domains — verify flow + branded links, ghost wordmark behind */
+function DomainsDemo() {
+  return (
+    <div className="flex h-full flex-col justify-center gap-3">
+      {/* Ghost blueprint — oversized faded domain behind the demo */}
+      <span
+        aria-hidden
+        className="text-foreground/[0.035] pointer-events-none absolute -top-6 -right-2 -rotate-2 font-mono text-[7rem] leading-none font-semibold tracking-tighter select-none"
+      >
+        go.
+      </span>
+
+      <div className="border-border/60 bg-background relative flex max-w-md items-center gap-2 rounded-lg border px-3 py-2 font-mono text-sm">
+        <span className="text-muted-foreground/60">https://</span>
+        <span className="text-foreground">go.acme.dev</span>
+        <span className="bg-foreground/70 animate-blink-cursor h-4 w-px" />
+        <span className="text-live ml-auto inline-flex items-center gap-1.5 text-[11px]">
+          <Check className="size-3" />
+          CNAME verified
+        </span>
+      </div>
+
+      <ul className="flex max-w-md flex-col gap-1.5 font-mono text-[11px]">
+        {[
+          { path: "go.acme.dev/launch", clicks: "12,408 clicks" },
+          { path: "go.acme.dev/docs", clicks: "3,291 clicks" },
+        ].map((row) => (
+          <li
+            key={row.path}
+            className="text-muted-foreground flex items-center justify-between gap-3 px-3"
+          >
+            <span className="truncate">{row.path}</span>
+            <span className="text-muted-foreground/60 shrink-0 tabular-nums">
+              {row.clicks}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/* QR — live-rendered, theme-aware via currentColor */
+function QrDemo() {
+  const svg = React.useMemo(() => {
+    const qr = encodeData({ text: "https://spoo.me/ga" })
+    return BaseQr({
+      qrcode: qr,
+      otherColor: "currentColor",
+      posColor: "currentColor",
+    })
+  }, [])
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-2.5">
+      <div
+        aria-label="QR code for spoo.me/ga"
+        role="img"
+        className="text-foreground/80 group-hover:text-foreground size-28 transition-all duration-300 group-hover:scale-[1.03] [&_svg]:size-full"
+        dangerouslySetInnerHTML={{ __html: svg }}
+      />
+      <span className="text-muted-foreground font-mono text-[11px]">spoo.me/ga</span>
+    </div>
+  )
+}
+
+/* Link rules — toggleable switches, the middle one actually works */
+function RulesDemo() {
+  const [expires, setExpires] = React.useState(true)
+
+  const rules: Array<{
+    label: string
+    value: string
+    on: boolean
+    onClick?: () => void
+  }> = [
+    { label: "password", value: "••••••••", on: true },
     {
-      Icon: Globe,
-      name: "Custom Domains",
-      description:
-        "Use your own domain for branded short links that build trust and recognition.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-1",
-      background: <DomainBackground />,
+      label: "expires",
+      value: "in 30 days",
+      on: expires,
+      onClick: () => setExpires((v) => !v),
     },
-    {
-      Icon: QrCode,
-      name: "QR Code Generation",
-      description:
-        "Generate custom QR codes for your shortened links with brand colors and logos.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-1",
-      background: <QRCodeDemo />,
-    },
-    {
-      Icon: Tag,
-      name: "Custom Link Aliases",
-      description:
-        "Create memorable, branded short links with custom aliases that reflect your brand or campaign.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-2",
-      background: (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
-      ),
-    },
-    {
-      Icon: BarChart,
-      name: "Advanced Analytics",
-      description:
-        "Get detailed insights on clicks, locations, devices, and referrers to optimize your links.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-2",
-      background: <AnalyticsChart />,
-    },
-    {
-      Icon: Timer,
-      name: "Link Expiration",
-      description:
-        "Set expiration dates for temporary promotions or time-sensitive content.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-1",
-      background: (
-        <Calendar
-          mode="single"
-          selected={new Date(2022, 4, 11, 12, 0, 0)}
-          className="absolute right-0 top-10 origin-top scale-75 rounded-md border transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] group-hover:scale-90"
-        />
-      ),
-    },
-    {
-      Icon: Code,
-      name: "Developer API",
-      description:
-        "Integrate link management into your applications with our RESTful API.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-1",
-      background: <APIDemo />,
-    },
-    {
-      Icon: Tag,
-      name: "UTM Builder",
-      description:
-        "Create and manage UTM parameters for campaign tracking without the hassle.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-1",
-      background: (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
-      ),
-    },
-    {
-      Icon: Bell,
-      name: "Analytics Alerts",
-      description:
-        "Get notified when your links reach specific performance thresholds.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-2",
-      background: <NotificationsList />,
-    },
-    {
-      Icon: Settings,
-      name: "Customization",
-      description:
-        "Personalize link behavior, redirects, and appearance to match your brand.",
-      href: "#",
-      cta: "Learn more",
-      className: "col-span-3 lg:col-span-1",
-      background: <CustomizationDemo />,
-    },
+    { label: "max clicks", value: "1,000", on: true },
   ]
 
   return (
-    <section id="features" className="relative py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow={
-            <>
-              <Wand2 className="size-3" /> Features
-            </>
-          }
-          title={
-            <>
-              Everything you need.{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
-                Nothing you don&apos;t.
-              </span>
-            </>
-          }
-          description="Built by developers shipping production traffic — every feature has a reason it exists."
-        />
+    <div className="flex h-full flex-col justify-center gap-2">
+      {rules.map((rule) => (
+        <button
+          key={rule.label}
+          type="button"
+          onClick={rule.onClick}
+          disabled={!rule.onClick}
+          aria-pressed={rule.on}
+          className={cn(
+            "border-border/60 flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors",
+            rule.onClick && "hover:border-border cursor-pointer",
+          )}
+        >
+          <span className="label-mono text-muted-foreground w-20 shrink-0">
+            {rule.label}
+          </span>
+          <span
+            className={cn(
+              "font-mono text-xs tabular-nums transition-colors",
+              rule.on ? "text-foreground" : "text-muted-foreground/50 line-through",
+            )}
+          >
+            {rule.value}
+          </span>
+          <span
+            className={cn(
+              "relative ml-auto h-4 w-7 rounded-full transition-colors duration-200",
+              rule.on ? "bg-foreground" : "bg-muted",
+            )}
+          >
+            <span
+              className={cn(
+                "bg-background absolute top-0.5 size-3 rounded-full transition-all duration-200",
+                rule.on ? "left-3.5" : "left-0.5",
+              )}
+            />
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
 
-        <div className="mx-auto mt-12 max-w-6xl">
-          <BentoGrid className="grid-cols-1 lg:grid-cols-4 auto-rows-[18rem]">
-            {features.map((feature, index) => (
-              <BentoCard key={index} index={index} {...feature} />
-            ))}
-          </BentoGrid>
+/* Alerts — webhook event feed in the product's real event vocabulary */
+function AlertsDemo() {
+  const events = [
+    { icon: Bell, name: "clicks.threshold", meta: "2m" },
+    { icon: Webhook, name: "link.created", meta: "1h" },
+    { icon: Timer, name: "link.expired", meta: "3h" },
+  ]
+  return (
+    <div className="flex h-full flex-col justify-center gap-2">
+      {events.map((e, i) => (
+        <motion.div
+          key={e.name}
+          initial={{ opacity: 0, x: 8 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.15 + i * 0.1 }}
+          className="border-border/60 flex items-center gap-2.5 rounded-lg border px-3 py-2"
+        >
+          <span className="border-border/60 bg-muted/40 text-foreground flex size-6 shrink-0 items-center justify-center rounded-md border">
+            <e.icon className="size-3" />
+          </span>
+          <code className="text-foreground/90 font-mono text-[11px]">{e.name}</code>
+          <span className="text-muted-foreground/60 ml-auto font-mono text-[11px]">
+            {e.meta}
+          </span>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+/* Bot protection — verdict rows */
+function BotsDemo() {
+  const rows = [
+    { ua: "Chrome 126 · macOS", counted: true },
+    { ua: "curl/8.4", counted: false },
+    { ua: "python-requests", counted: false },
+  ]
+  return (
+    <div className="flex h-full flex-col justify-center gap-2">
+      {rows.map((row) => (
+        <div
+          key={row.ua}
+          className="border-border/60 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 font-mono text-[11px]"
+        >
+          <span className={cn(row.counted ? "text-foreground" : "text-muted-foreground/60")}>
+            {row.ua}
+          </span>
+          {row.counted ? (
+            <span className="text-live inline-flex items-center gap-1">
+              <Check className="size-3" /> counted
+            </span>
+          ) : (
+            <span className="text-muted-foreground/60 inline-flex items-center gap-1">
+              <X className="size-3" /> filtered
+            </span>
+          )}
         </div>
-      </div>
-    </section>
+      ))}
+      <p className="text-muted-foreground/70 px-1 font-mono text-[10px] tabular-nums">
+        12,408 bots filtered in the last 30 days
+      </p>
+    </div>
   )
 }

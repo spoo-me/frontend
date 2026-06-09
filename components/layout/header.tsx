@@ -74,21 +74,11 @@ function iconFor(key: string): React.ElementType {
   return lucideMap[key] ?? BrandIcons[key as BrandIconKey] ?? ArrowUpRight
 }
 
+/**
+ * Accent lock: only third-party logos keep their brand identity color
+ * (content, not chrome). All first-party icons fall back to spoo violet.
+ */
 const accentMap: Record<string, string> = {
-  link: "#8B5CF6",
-  lineChart: "#00D0BF",
-  qr: "#FFB800",
-  globe: "#3694FF",
-  server: "#10B981",
-  code: "#F472B6",
-  rocket: "#FB923C",
-  fileText: "#94A3B8",
-  activity: "#10B981",
-  users: "#A78BFA",
-  star: "#FBBF24",
-  shield: "#60A5FA",
-  palette: "#F472B6",
-  mail: "#22D3EE",
   discord: "#5865F2",
   telegram: "#26A5E4",
   windows: "#00A4EF",
