@@ -92,9 +92,19 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="auth-email" className="text-foreground text-sm font-medium">
-            Email
-          </label>
+          <div className="flex items-baseline justify-between">
+            <label htmlFor="auth-email" className="text-foreground text-sm font-medium">
+              Email
+            </label>
+            {mode === "login" && (
+              <Link
+                href="/forgot-password"
+                className="text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
+              >
+                Forgot password?
+              </Link>
+            )}
+          </div>
           <Input
             id="auth-email"
             type="email"

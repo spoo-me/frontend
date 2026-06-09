@@ -2,11 +2,12 @@ import Link from "next/link"
 
 import { Logo } from "@/components/shared/logo"
 
-type Mode = "login" | "signup"
+type Mode = "login" | "signup" | "forgot"
 
 const crossLink: Record<Mode, { label: string; href: string }> = {
   login: { label: "Sign up", href: "/signup" },
   signup: { label: "Sign in", href: "/login" },
+  forgot: { label: "Sign in", href: "/login" },
 }
 
 export function AuthLayout({
