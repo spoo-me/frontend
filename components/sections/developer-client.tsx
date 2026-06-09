@@ -54,7 +54,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.5 }}
-            className="border-border/60 bg-card dark:bg-zinc-950 relative overflow-hidden rounded-xl border shadow-lg shadow-black/5 dark:shadow-2xl dark:shadow-black/40"
+            className="border-border/60 bg-card dark:bg-zinc-950 shadow-card relative overflow-hidden rounded-xl border dark:shadow-2xl dark:shadow-black/40"
           >
             {/* Subtle inner glow — gives terminal depth */}
             <span

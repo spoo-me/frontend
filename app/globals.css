@@ -51,6 +51,11 @@
     --shadow-soft:
       0 1px 2px rgb(0 0 0 / 0.06),
       0 3px 6px -3px rgb(0 0 0 / 0.08);
+    /* Card-tier shadow — tight definition + large diffused lift, fuses with hairlines */
+    --shadow-card:
+      0 1px 2px rgb(0 0 0 / 0.03),
+      0 8px 16px -4px rgb(0 0 0 / 0.04),
+      0 24px 48px -12px rgb(0 0 0 / 0.07);
     --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
     --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
   @keyframes shimmer-slide {

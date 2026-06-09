@@ -58,7 +58,7 @@ export function DashboardPreview() {
 
 function DashboardMock() {
   return (
-    <div className="border-border/70 bg-card/40 relative overflow-hidden rounded-2xl border shadow-[0_2px_2px_rgba(0,0,0,0.04),0_8px_8px_-8px_rgba(0,0,0,0.04)] dark:shadow-none dark:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <div className="border-border/70 bg-card/40 shadow-card relative overflow-hidden rounded-2xl border dark:shadow-none dark:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.04)]">
       {/* Browser chrome */}
       <div className="border-border/60 bg-muted/30 flex items-center gap-3 border-b px-4 py-2.5">
         <div className="flex items-center gap-1.5">

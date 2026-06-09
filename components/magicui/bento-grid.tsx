@@ -54,7 +54,7 @@ const BentoCard = ({
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, delay: (index % 4) * 0.06 }}
       className={cn(
-        "group border-border/60 bg-card/40 hover:border-border/90 relative col-span-3 flex flex-col justify-between overflow-hidden rounded-xl border transition-colors",
+        "group border-border/60 bg-card/40 hover:border-border/90 shadow-card relative col-span-3 flex flex-col justify-between overflow-hidden rounded-xl border transition-colors dark:shadow-none",
         className,
       )}
     >

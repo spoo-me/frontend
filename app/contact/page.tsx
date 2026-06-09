@@ -83,7 +83,7 @@ export default function ContactPage() {
           {/* Channel grid — label-over-value cells with shared hairlines */}
           <Section caption="Channels">
             <div className="px-5 py-16 sm:px-9 sm:py-20">
-              <div className="border-border/60 bg-border/60 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border sm:grid-cols-2 lg:grid-cols-3">
+              <div className="border-border/60 bg-border/60 shadow-card grid grid-cols-1 gap-px overflow-hidden rounded-2xl border sm:grid-cols-2 lg:grid-cols-3 dark:shadow-none">
                 {channels.map((c) => (
                   <a
                     key={c.label}

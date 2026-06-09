@@ -122,7 +122,7 @@ export function PricingTiers() {
             className={cn(
               "relative flex flex-col p-7",
               t.highlight &&
-                "border-border/80 bg-card lg:-my-5 lg:rounded-2xl lg:border lg:shadow-[0_24px_64px_-32px_rgba(0,0,0,0.6)] lg:!border-l",
+                "border-border/80 bg-card lg:shadow-card lg:-my-5 lg:rounded-2xl lg:border lg:!border-l dark:lg:shadow-[0_24px_64px_-32px_rgba(0,0,0,0.6)]",
             )}
           >
             {t.highlight && (
@@ -334,7 +334,7 @@ export function PricingTable() {
               <Link href="/signup">Start free</Link>
             </Button>
           </div>
-          <div className="bg-card border-border/60 rounded-b-xl border-x border-b p-4 shadow-[0_24px_48px_-32px_rgba(0,0,0,0.6)]">
+          <div className="bg-card border-border/60 shadow-card rounded-b-xl border-x border-b p-4 dark:shadow-[0_24px_48px_-32px_rgba(0,0,0,0.6)]">
             <Button asChild size="sm" className="w-full">
               <Link href="/signup?plan=pro">Start Pro trial</Link>
             </Button>

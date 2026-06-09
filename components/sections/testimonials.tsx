@@ -62,7 +62,7 @@ function QuoteCard({ item, delay }: { item: Testimonial; delay: number }) {
     >
       <Link
         href={`/testimonials/${item.slug}`}
-        className="border-border/60 bg-card/30 hover:border-border/90 group relative flex h-full flex-col gap-7 overflow-hidden rounded-2xl border p-7 transition-colors sm:p-9"
+        className="border-border/60 bg-card/30 hover:border-border/90 shadow-card group relative flex h-full flex-col gap-7 overflow-hidden rounded-2xl border p-7 transition-colors sm:p-9 dark:shadow-none"
       >
         {/* Brand-color radial glow — bottom-right inner glow */}
         <span
