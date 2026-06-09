@@ -178,6 +178,20 @@
     }
 }
 
+/* Theme switch — the circle reveal owns the animation; disable the default
+   cross-fade and keep the new snapshot on top */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
 /* Micro-label — the one way small caps labels are set, everywhere */
 @utility label-mono {
   font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;

@@ -5,6 +5,7 @@ import { motion } from "motion/react"
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
+import { themeTransition } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
 type Mode = "system" | "light" | "dark"
@@ -40,7 +41,10 @@ export function ThemeToggle() {
             aria-checked={isActive}
             aria-label={label}
             suppressHydrationWarning
-            onClick={() => setTheme(value)}
+            onClick={(e) => {
+              if (value === active) return
+              themeTransition(() => setTheme(value), { x: e.clientX, y: e.clientY })
+            }}
             className={cn(
               "relative inline-flex size-7 items-center justify-center rounded-full transition-colors",
               isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
