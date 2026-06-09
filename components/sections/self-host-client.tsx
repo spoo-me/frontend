@@ -89,7 +89,7 @@ export function SelfHostClient() {
           <div
             ref={terminalRef}
             className={cn(
-              "border-border/60 bg-background dark:bg-zinc-950 ring-offset-background flex items-center gap-3 rounded-xl border px-4 py-3 font-mono text-sm shadow-sm transition-all duration-500",
+              "border-border/60 bg-background dark:bg-zinc-950 ring-offset-background shadow-soft flex items-center gap-3 rounded-xl border px-4 py-3 font-mono text-sm transition-all duration-500 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
               pulse &&
                 "shadow-[0_0_0_4px_rgba(16,185,129,0.18),0_0_30px_rgba(16,185,129,0.25)] border-emerald-500/60",
             )}

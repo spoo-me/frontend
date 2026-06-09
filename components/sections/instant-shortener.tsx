@@ -85,7 +85,7 @@ export function InstantShortener() {
   }
 
   return (
-    <div className="border-border/60 bg-background/45 relative w-full rounded-xl border p-1 shadow-sm backdrop-blur-md">
+    <div className="border-border/60 bg-background/45 shadow-soft relative w-full rounded-xl border p-1 backdrop-blur-md dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <AnimatePresence mode="wait">
         {state.kind === "success" ? (
           <motion.div

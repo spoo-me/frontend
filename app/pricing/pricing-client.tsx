@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { AnimatePresence, motion } from "motion/react"
 import { Check, Minus } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -72,10 +73,12 @@ const tiers = [
 
 export function PricingTiers() {
   const [cadence, setCadence] = React.useState<Cadence>("annually")
+  // annual = cheaper = digits roll down; monthly = digits roll up
+  const dir = cadence === "annually" ? -1 : 1
 
   return (
     <div>
-      {/* Billing toggle */}
+      {/* Billing toggle — sliding thumb */}
       <div className="flex flex-col items-center gap-2">
         <div
           role="radiogroup"
@@ -89,13 +92,20 @@ export function PricingTiers() {
               aria-checked={cadence === c}
               onClick={() => setCadence(c)}
               className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors",
+                "relative rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors",
                 cadence === c
-                  ? "bg-background text-foreground border-border/60 border shadow-sm"
+                  ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {c}
+              {cadence === c && (
+                <motion.span
+                  layoutId="cadence-thumb"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  className="bg-background border-border/60 shadow-soft absolute inset-0 rounded-full border dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                />
+              )}
+              <span className="relative z-10">{c}</span>
             </button>
           ))}
         </div>
@@ -125,8 +135,28 @@ export function PricingTiers() {
             </h3>
             <p className="text-muted-foreground mt-1 text-sm">{t.tagline}</p>
             <div className="mt-6 flex items-baseline gap-1.5">
-              <span className="text-foreground text-4xl font-semibold tabular-nums">
-                ${t.price[cadence]}
+              <span className="text-foreground flex items-baseline text-4xl font-semibold tabular-nums">
+                $
+                <span className="inline-block overflow-hidden">
+                  <AnimatePresence mode="popLayout" initial={false} custom={dir}>
+                    <motion.span
+                      key={t.price[cadence]}
+                      custom={dir}
+                      variants={{
+                        enter: (d: number) => ({ y: d * 28, opacity: 0, filter: "blur(3px)" }),
+                        center: { y: 0, opacity: 1, filter: "blur(0px)" },
+                        exit: (d: number) => ({ y: d * -28, opacity: 0, filter: "blur(3px)" }),
+                      }}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                      className="inline-block"
+                    >
+                      {t.price[cadence]}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
               </span>
               <span className="text-muted-foreground text-sm">
                 / month{cadence === "annually" && t.price.annually > 0 ? ", billed yearly" : ""}

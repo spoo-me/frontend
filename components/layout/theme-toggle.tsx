@@ -43,7 +43,7 @@ export function ThemeToggle() {
             className={cn(
               "relative inline-flex size-7 items-center justify-center rounded-full transition-colors",
               isActive
-                ? "ring-border/80 text-foreground bg-muted/60 ring-1"
+                ? "ring-border/80 text-foreground bg-muted/60 shadow-soft ring-1 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
