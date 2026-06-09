@@ -72,15 +72,15 @@ const QRCodeDemo = () => {
         aria-hidden
         className="pattern-dots absolute inset-x-4 top-2 h-44 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
       />
-      <div className="relative mt-5 flex justify-center">
-        <div className="border-border/70 bg-card -rotate-3 rounded-xl border p-3 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
+      <div className="relative mt-4 flex justify-center">
+        <div className="border-border/70 bg-card -rotate-3 rounded-xl border p-2.5 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
           <div
             aria-label="QR code for spoo.me/ga"
             role="img"
-            className="text-foreground/90 size-[5.5rem] [&_svg]:size-full"
+            className="text-foreground/90 size-16 [&_svg]:size-full"
             dangerouslySetInnerHTML={{ __html: svg }}
           />
-          <div className="text-muted-foreground mt-2 text-center font-mono text-[10px]">
+          <div className="text-muted-foreground mt-1.5 text-center font-mono text-[9px]">
             spoo.me/ga
           </div>
         </div>
@@ -102,7 +102,7 @@ const DomainBackground = () => {
         aria-hidden
         className="pattern-dots absolute inset-x-4 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
       />
-      <div className="relative mt-8 flex justify-center [mask-image:linear-gradient(to_right,transparent,black_18%,black_82%,transparent)]">
+      <div className="relative mt-6 flex justify-center [mask-image:linear-gradient(to_right,transparent,black_18%,black_82%,transparent)]">
         {cards.map((c) => (
           <div
             key={c.host}
@@ -343,8 +343,6 @@ export function Features() {
       name: "Custom Domains",
       description:
         "Use your own domain for branded short links that build trust and recognition.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
       background: <DomainBackground />,
     },
@@ -353,8 +351,6 @@ export function Features() {
       name: "QR Code Generation",
       description:
         "Generate custom QR codes for your shortened links with brand colors and logos.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
       background: <QRCodeDemo />,
     },
@@ -363,8 +359,6 @@ export function Features() {
       name: "Custom Link Aliases",
       description:
         "Create memorable, branded short links with custom aliases that reflect your brand or campaign.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-2",
       background: <AliasDemo />,
     },
@@ -373,8 +367,6 @@ export function Features() {
       name: "Advanced Analytics",
       description:
         "Get detailed insights on clicks, locations, devices, and referrers to optimize your links.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-2",
       background: <AnalyticsChart />,
     },
@@ -383,8 +375,6 @@ export function Features() {
       name: "Link Expiration",
       description:
         "Set expiration dates for temporary promotions or time-sensitive content.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
       background: <ExpiryTimeline />,
     },
@@ -393,8 +383,6 @@ export function Features() {
       name: "Developer API",
       description:
         "Integrate link management into your applications with our RESTful API.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
       background: <APIDemo />,
     },
@@ -403,8 +391,6 @@ export function Features() {
       name: "UTM Builder",
       description:
         "Create and manage UTM parameters for campaign tracking without the hassle.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
       background: <UtmDemo />,
     },
@@ -413,8 +399,6 @@ export function Features() {
       name: "Analytics Alerts",
       description:
         "Get notified when your links reach specific performance thresholds.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-2",
       background: <NotificationsList />,
     },
@@ -423,8 +407,6 @@ export function Features() {
       name: "Customization",
       description:
         "Personalize link behavior, redirects, and appearance to match your brand.",
-      href: "#",
-      cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
       background: <CustomizationDemo />,
     },

@@ -1,10 +1,8 @@
 "use client"
 
-import { ArrowRightIcon } from "@radix-ui/react-icons"
 import { motion, useInView } from "motion/react"
 import { ComponentPropsWithoutRef, ReactNode, useRef } from "react"
 
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface BentoGridProps extends ComponentPropsWithoutRef<"div"> {
@@ -18,8 +16,8 @@ interface BentoCardProps {
   background: ReactNode
   Icon: React.ElementType
   description: string
-  href: string
-  cta: string
+  href?: string
+  cta?: string
   index?: number
 }
 
@@ -43,8 +41,6 @@ const BentoCard = ({
   background,
   Icon,
   description,
-  href,
-  cta,
   index = 0,
 }: BentoCardProps) => {
   const ref = useRef<HTMLDivElement>(null)
@@ -63,27 +59,14 @@ const BentoCard = ({
       )}
     >
       <div>{inView ? background : null}</div>
-      <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 p-5 transition-all duration-300 group-hover:-translate-y-8">
-        <Icon className="text-muted-foreground size-5 origin-left transform-gpu transition-all duration-300 ease-in-out" />
+      <div className="pointer-events-none z-10 flex flex-col gap-1 p-5">
+        <Icon className="text-muted-foreground size-5" />
         <h3 className="text-foreground mt-2 text-base font-semibold tracking-tight">
           {name}
         </h3>
         <p className="text-muted-foreground max-w-lg text-sm leading-relaxed">
           {description}
         </p>
-      </div>
-
-      <div
-        className={cn(
-          "pointer-events-none absolute bottom-0 z-10 flex w-full translate-y-6 transform-gpu flex-row items-center px-3 pb-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100",
-        )}
-      >
-        <Button variant="ghost" asChild size="sm" className="pointer-events-auto h-7 px-2 text-xs">
-          <a href={href}>
-            {cta}
-            <ArrowRightIcon className="ms-1 h-3 w-3 rtl:rotate-180" />
-          </a>
-        </Button>
       </div>
       <div className="pointer-events-none absolute inset-0 transform-gpu transition-all duration-300 group-hover:bg-foreground/[.02]" />
     </motion.div>
