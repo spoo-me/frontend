@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { legalDocs } from "@/lib/legal-content"
+import { upcomingPolicies } from "@/lib/legal-meta"
 
 export const metadata: Metadata = {
   title: "Legal",
@@ -18,15 +19,11 @@ const live = legalDocs.map((d) => ({
   href: `/${d.slug}`,
 }))
 
-const placeholders = [
-  "Acceptable Use Policy",
-  "Cookie Policy",
-  "Data Processing Agreement",
-  "Disclaimer",
-  "Refund Policy",
-  "Security Policy",
-  "Service Level Agreement",
-].map((title) => ({ title, meta: "coming soon", href: null }))
+const placeholders = upcomingPolicies.map((title) => ({
+  title,
+  meta: "coming soon",
+  href: null,
+}))
 
 // Alphabetical, like a real policy index
 const entries = [...live, ...placeholders].sort((a, b) =>
