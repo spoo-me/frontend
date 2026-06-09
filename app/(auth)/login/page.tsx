@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <AuthLayout>
+    <AuthLayout mode="login">
       <AuthForm mode="login" />
     </AuthLayout>
   )

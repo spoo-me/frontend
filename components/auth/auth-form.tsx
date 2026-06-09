@@ -3,33 +3,51 @@
 import * as React from "react"
 import Link from "next/link"
 import { motion } from "motion/react"
-import { ArrowRight, Mail } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BrandIcons } from "@/components/icons/brand-icons"
 
 type Mode = "login" | "signup"
 
-const copy: Record<Mode, { title: string; sub: string; cta: string; alt: string; altLink: string; altHref: string }> = {
+const copy: Record<
+  Mode,
+  {
+    title: string
+    titleEm: string
+    sub: string
+    cta: string
+    alt: string
+    altLink: string
+    altHref: string
+  }
+> = {
   login: {
-    title: "Welcome back",
-    sub: "Sign in to your spoo.me workspace",
-    cta: "Sign in",
+    title: "Welcome",
+    titleEm: "back.",
+    sub: "Sign in to your spoo.me workspace.",
+    cta: "Continue with email",
     alt: "Don't have an account?",
     altLink: "Create one",
     altHref: "/signup",
   },
   signup: {
-    title: "Create an account",
-    sub: "Free forever. No credit card. No upsells.",
-    cta: "Create account",
+    title: "Create your",
+    titleEm: "account.",
+    sub: "Start free. Upgrade when your links do.",
+    cta: "Continue with email",
     alt: "Already have an account?",
     altLink: "Sign in",
     altHref: "/login",
   },
 }
+
+const providers = [
+  { id: "google", label: "Google", Icon: GoogleIcon },
+  { id: "github", label: "GitHub", Icon: BrandIcons.github },
+  { id: "discord", label: "Discord", Icon: BrandIcons.discord },
+] as const
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const c = copy[mode]
@@ -39,106 +57,78 @@ export function AuthForm({ mode }: { mode: Mode }) {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setPending(true)
-    setTimeout(() => {
-      window.location.href = `https://spoo.me/${mode}?email=${encodeURIComponent(email)}`
-    }, 600)
+    window.location.href = `https://spoo.me/${mode}?email=${encodeURIComponent(email)}`
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="border-border/60 bg-card/40 w-full max-w-sm space-y-6 rounded-2xl border p-7 backdrop-blur"
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="space-y-7"
     >
-      <div className="space-y-1.5 text-center">
-        <h1 className="text-foreground text-xl font-semibold tracking-tight">
-          {c.title}
+      <div className="space-y-2">
+        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
+          {c.title}{" "}
+          <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+            {c.titleEm}
+          </span>
         </h1>
         <p className="text-muted-foreground text-sm">{c.sub}</p>
       </div>
 
-      <div className="grid gap-2">
-        <OAuthButton provider="google" mode={mode} />
-        <OAuthButton provider="github" mode={mode} />
+      <div className="grid grid-cols-3 gap-2">
+        {providers.map(({ id, label, Icon }) => (
+          <Button key={id} asChild variant="outline" className="h-10 w-full">
+            <a href={`https://spoo.me/oauth/${id}`} rel="noreferrer" aria-label={`Continue with ${label}`}>
+              <Icon className="size-4" data-icon="inline-start" />
+              {label}
+            </a>
+          </Button>
+        ))}
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="bg-border h-px flex-1" />
-        <span className="text-muted-foreground text-[11px] uppercase tracking-wider">
-          or
+      <div className="flex items-center gap-3" role="separator" aria-label="or continue with email">
+        <span className="bg-border/60 h-px flex-1" />
+        <span className="label-mono text-muted-foreground/70 text-[10px]">
+          or continue with
         </span>
-        <span className="bg-border h-px flex-1" />
+        <span className="bg-border/60 h-px flex-1" />
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-3">
-        <label className="space-y-1.5 block">
-          <span className="text-foreground text-xs font-medium">Email</span>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="auth-email" className="text-foreground text-sm font-medium">
+            Email
+          </label>
           <Input
+            id="auth-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
             autoComplete="email"
+            autoFocus
             required
-            className="h-9"
+            className="h-10"
           />
-        </label>
-        <Button type="submit" className="h-9 w-full" disabled={pending || !email}>
-          <Mail className="size-3.5" data-icon="inline-start" />
-          {pending ? "Sending magic link…" : c.cta}
-          <ArrowRight className="size-3.5" data-icon="inline-end" />
+        </div>
+        <Button type="submit" className="h-10 w-full" disabled={pending || !email}>
+          {pending ? "Redirecting…" : c.cta}
+          {!pending && <ArrowRight className="size-4" data-icon="inline-end" />}
         </Button>
       </form>
 
-      <p className="text-muted-foreground text-center text-xs">
+      <p className="text-muted-foreground text-sm">
         {c.alt}{" "}
         <Link
           href={c.altHref}
-          className="text-foreground underline-offset-4 hover:underline"
+          className="text-foreground font-medium underline-offset-4 hover:underline"
         >
           {c.altLink}
         </Link>
       </p>
-
-      {mode === "signup" && (
-        <p className="text-muted-foreground/70 text-center text-[10px] leading-relaxed">
-          By continuing you agree to our{" "}
-          <a href="https://spoo.me/legal/terms" className="underline-offset-4 hover:underline">
-            terms
-          </a>{" "}
-          and{" "}
-          <a href="https://spoo.me/legal/privacy" className="underline-offset-4 hover:underline">
-            privacy policy
-          </a>
-          .
-        </p>
-      )}
     </motion.div>
-  )
-}
-
-function OAuthButton({
-  provider,
-  mode,
-}: {
-  provider: "google" | "github"
-  mode: Mode
-}) {
-  const label = provider === "google" ? "Google" : "GitHub"
-  const Icon = provider === "github" ? BrandIcons.github : GoogleIcon
-
-  return (
-    <Button
-      asChild
-      variant="outline"
-      className={cn("h-9 w-full justify-center")}
-    >
-      <a href={`https://spoo.me/${mode}/${provider}`} rel="noreferrer">
-        <Icon className="size-3.5" data-icon="inline-start" />
-        Continue with {label}
-      </a>
-    </Button>
   )
 }
 
