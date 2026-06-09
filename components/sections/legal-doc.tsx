@@ -43,7 +43,7 @@ export function LegalDocPage({ doc }: { doc: LegalDoc }) {
                   All legal
                 </Link>
                 <header className="mt-6 max-w-2xl lg:mt-0">
-                  <h1 className="text-foreground text-3xl font-semibold tracking-tight sm:text-4xl">
+                  <h1 className="text-foreground text-4xl font-semibold tracking-tight sm:text-5xl">
                     {doc.title}
                   </h1>
                   <p className="label-mono text-muted-foreground mt-3">
