@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowUpRight, MessageSquareQuote } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { PageFrame } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { testimonials } from "@/lib/testimonials"
 import { TestimonialAvatar } from "./_components/avatar"
@@ -20,19 +21,15 @@ export default function TestimonialsIndexPage() {
     <>
       <Header />
       <main className="overflow-hidden">
+        <PageFrame>
         <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 [background-image:radial-gradient(circle_at_1px_1px,var(--color-border)_1px,transparent_0)] [background-size:28px_28px] opacity-30 [mask-image:radial-gradient(ellipse_60%_40%_at_50%_30%,black,transparent)]"
+            className="pattern-dots pointer-events-none absolute inset-0 -z-10 opacity-30 [mask-image:radial-gradient(ellipse_60%_40%_at_50%_30%,black,transparent)]"
           />
 
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading
-              eyebrow={
-                <>
-                  <MessageSquareQuote className="size-3" /> Customer stories
-                </>
-              }
               title={
                 <>
                   Built by us, shaped by{" "}
@@ -128,6 +125,7 @@ export default function TestimonialsIndexPage() {
             </a>
           </div>
         </section>
+        </PageFrame>
       </main>
       <Footer />
     </>

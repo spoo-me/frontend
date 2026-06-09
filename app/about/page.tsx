@@ -3,6 +3,7 @@ import { ArrowUpRight, Building2 } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { PageFrame } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Button } from "@/components/ui/button"
 import { BrandIcons } from "@/components/icons/brand-icons"
@@ -69,7 +70,8 @@ export default function AboutPage() {
   return (
     <>
       <Header />
-      <main>
+      <main className="overflow-hidden">
+        <PageFrame>
         {/* Hero */}
         <section className="pt-28 pb-12 sm:pt-32 sm:pb-16">
           <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
@@ -87,7 +89,7 @@ export default function AboutPage() {
                   </span>
                 </>
               }
-              description="spoo.me is open-source link infrastructure — every component, every endpoint, every native client is free to read, run, and self-host. This is what we&apos;re building, and why."
+              description="spoo.me is open-source link infrastructure. Every component, every endpoint, every native client is free to read, run, and self-host. This is what we&apos;re building, and why."
             />
           </div>
         </section>
@@ -215,6 +217,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
+        </PageFrame>
       </main>
       <Footer />
     </>

@@ -9,13 +9,14 @@ import {
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { PageFrame } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { ContactForm } from "@/components/sections/contact-form"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
 export const metadata: Metadata = {
-  title: "Contact — get in touch",
+  title: "Contact, get in touch",
   description:
     "Talk to the team behind spoo.me. Discord for community, GitHub for bugs, email for everything else.",
 }
@@ -43,7 +44,7 @@ const channels = [
     icon: ShieldCheck,
     title: "Security disclosure",
     description:
-      "Spotted a vulnerability? Email us privately. Coordinated disclosure — credit + thanks for responsible reports.",
+      "Spotted a vulnerability? Email us privately. Coordinated disclosure, with credit and thanks for responsible reports.",
     href: "mailto:security@spoo.me",
     cta: "security@spoo.me",
   },
@@ -61,7 +62,8 @@ export default function ContactPage() {
   return (
     <>
       <Header />
-      <main>
+      <main className="overflow-hidden">
+        <PageFrame>
         {/* Hero */}
         <section className="pt-28 pb-12 sm:pt-32 sm:pb-16">
           <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
@@ -79,7 +81,7 @@ export default function ContactPage() {
                   </span>
                 </>
               }
-              description="Every message is read by someone who can actually do something about it. Send a note below — or pick a faster channel."
+              description="Every message is read by someone who can actually do something about it. Send a note below, or pick a faster channel."
             />
           </div>
         </section>
@@ -109,6 +111,7 @@ export default function ContactPage() {
             </div>
           </div>
         </section>
+        </PageFrame>
       </main>
       <Footer />
     </>

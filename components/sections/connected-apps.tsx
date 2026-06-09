@@ -62,7 +62,7 @@ export function ConnectedApps() {
               </span>
             </>
           }
-          description="Not a website you bookmark — a constellation of clients on every desktop, browser, and chat platform, all orbiting the same core API."
+          description="Not a website you bookmark. A constellation of clients on every desktop, browser, and chat platform, all orbiting the same core API."
         />
 
         <div className="mx-auto mt-14 max-w-6xl">
@@ -119,8 +119,8 @@ export function ConnectedApps() {
                 <span className="text-brand">.</span>
               </h3>
               <p className="text-muted-foreground mx-auto mt-4 max-w-sm text-sm leading-relaxed">
-                Sixteen official and community clients, all speaking the same REST API —
-                pick your surface and stay in flow.
+                Sixteen official and community clients, all speaking the same REST API.
+                Pick your surface and stay in flow.
               </p>
             </div>
            </div>

@@ -89,7 +89,7 @@ function QuoteCard({ item, delay }: { item: Testimonial; delay: number }) {
             </div>
           </div>
           <div
-            className="text-foreground/70 max-w-[55%] truncate text-right font-mono text-[11px] font-semibold uppercase tracking-[0.16em]"
+            className="label-mono text-foreground/70 max-w-[55%] truncate text-right"
             title={item.company.name}
           >
             {item.company.name}
@@ -168,9 +168,7 @@ function PlaceholderCard({ delay }: { delay: number }) {
         >
           +
         </div>
-        <div className="text-foreground/70 font-mono text-[11px] font-semibold uppercase tracking-[0.16em]">
-          Your team here
-        </div>
+        <div className="label-mono text-foreground/70">Your team here</div>
       </header>
 
       <div className="text-muted-foreground relative flex-1 text-pretty text-xl leading-relaxed sm:text-2xl">

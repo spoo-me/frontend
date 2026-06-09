@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowUpRight, Boxes } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { PageFrame, Section } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
 import { connectedApps, type ConnectedApp } from "@/lib/apps-data"
@@ -46,14 +47,11 @@ export default function AppsPage() {
   return (
     <>
       <Header />
-      <main className="pt-28 pb-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <main className="overflow-hidden">
+        <PageFrame>
+          <Section caption="Ecosystem">
+            <div className="px-5 pt-28 pb-20 sm:px-9">
           <SectionHeading
-            eyebrow={
-              <>
-                <Boxes className="size-3" /> Ecosystem
-              </>
-            }
             title={
               <>
                 One link platform.{" "}
@@ -62,7 +60,7 @@ export default function AppsPage() {
                 </span>
               </>
             }
-            description="Pick the surface where you actually work — every client talks to the same API."
+            description="Pick the surface where you actually work. Every client talks to the same API."
           />
 
           <div className="mt-16 space-y-16">
@@ -94,7 +92,9 @@ export default function AppsPage() {
               )
             })}
           </div>
-        </div>
+            </div>
+          </Section>
+        </PageFrame>
       </main>
       <Footer />
     </>

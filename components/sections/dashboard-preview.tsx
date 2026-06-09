@@ -37,7 +37,7 @@ export function DashboardPreview() {
               </span>
             </>
           }
-          description="A real analytics product, included free in every link. No third-party scripts, no cookie banners — yours by default."
+          description="A real analytics product, included free in every link. No third-party scripts, no cookie banners. Yours by default."
         />
 
         <motion.div
@@ -469,7 +469,7 @@ function Callouts() {
       icon: LineChart,
       title: "Per-link dashboards",
       description:
-        "Open any short link, get a complete time series — clicks, uniques, conversion windows.",
+        "Open any short link, get a complete time series: clicks, uniques, conversion windows.",
     },
     {
       icon: Filter,

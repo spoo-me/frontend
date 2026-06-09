@@ -1,16 +1,17 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRight, Check, Heart, Server } from "lucide-react"
+import { ArrowRight, Check, Server } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { PageFrame, Section } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Button } from "@/components/ui/button"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
 export const metadata: Metadata = {
-  title: "Pricing — free forever",
+  title: "Pricing, free forever",
   description:
     "spoo.me is free for everyone, forever. Self-host for full control or sponsor the project to fund development.",
 }
@@ -74,7 +75,7 @@ const tiers = [
       "Priority issue triage",
       "Direct line to maintainers",
       "Roadmap input",
-      "Warm fuzzy feeling 💛",
+      "Warm fuzzy feeling included",
     ],
   },
 ]
@@ -83,14 +84,11 @@ export default function PricingPage() {
   return (
     <>
       <Header />
-      <main className="pt-28 pb-24">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <main className="overflow-hidden">
+        <PageFrame>
+          <Section caption="Pricing">
+            <div className="px-5 pt-28 pb-24 sm:px-9">
           <SectionHeading
-            eyebrow={
-              <>
-                <Heart className="size-3" /> Pricing
-              </>
-            }
             title={
               <>
                 Free for you,{" "}
@@ -99,7 +97,7 @@ export default function PricingPage() {
                 </span>
               </>
             }
-            description="spoo.me has no premium tier and no plan to add one. The whole platform — analytics, API, every native client — is free. Open source, self-hostable, sustainable."
+            description="spoo.me has no premium tier and no plan to add one. The whole platform (analytics, API, every native client) is free. Open source, self-hostable, sustainable."
           />
 
           <div className="mt-14 grid gap-4 lg:grid-cols-3">
@@ -180,7 +178,9 @@ export default function PricingPage() {
               </a>
             </Button>
           </div>
-        </div>
+            </div>
+          </Section>
+        </PageFrame>
       </main>
       <Footer />
     </>

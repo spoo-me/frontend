@@ -58,7 +58,7 @@ export function Stats() {
               </span>
             </>
           }
-          description="Real traffic, real uptime, real community — the metrics that make spoo dependable."
+          description="Real traffic, real uptime, real community. The metrics that make spoo dependable."
         />
 
         <motion.div

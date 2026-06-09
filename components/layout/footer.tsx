@@ -66,9 +66,7 @@ export function Footer() {
           </div>
           {sections.map((section) => (
             <div key={section.title} className="space-y-3">
-              <h4 className="text-foreground/90 font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
-                {section.title}
-              </h4>
+              <h4 className="label-mono text-foreground/90">{section.title}</h4>
               <ul className="space-y-2">
                 {section.links.map((link) => (
                   <li key={link.href}>
@@ -89,7 +87,7 @@ export function Footer() {
 
         <div className="border-border/40 mt-12 flex items-center justify-between border-t pt-5">
           <p className="text-muted-foreground/70 text-xs">
-            © {new Date().getFullYear()} spoo.me — open source under Apache 2.0
+            © {new Date().getFullYear()} spoo.me, open source under Apache 2.0
           </p>
           <ThemeToggle />
         </div>
