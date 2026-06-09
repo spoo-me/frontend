@@ -20,7 +20,7 @@ export default function TestimonialsIndexPage() {
   return (
     <>
       <Header />
-      <main className="overflow-hidden pt-16">
+      <main className="overflow-hidden pt-20">
         <PageFrame>
         <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28">
           <div

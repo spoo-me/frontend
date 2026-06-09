@@ -19,7 +19,7 @@ export default function PricingPage() {
   return (
     <>
       <Header />
-      <main className="overflow-hidden pt-16">
+      <main className="overflow-hidden pt-20">
         <PageFrame>
           <Section caption="Pricing">
             <div className="px-5 pt-28 pb-20 sm:px-9">

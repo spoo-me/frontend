@@ -47,7 +47,7 @@ export default function AppsPage() {
   return (
     <>
       <Header />
-      <main className="overflow-hidden pt-16">
+      <main className="overflow-hidden pt-20">
         <PageFrame>
           <Section caption="Ecosystem">
             <div className="px-5 pt-28 pb-20 sm:px-9">

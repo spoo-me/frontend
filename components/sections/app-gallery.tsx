@@ -61,7 +61,7 @@ export function AppGallery({
                 key={src}
                 type="button"
                 onClick={() => setIndex(i)}
-                className="group border-border/60 bg-card/40 hover:border-border focus-visible:ring-ring relative aspect-[4/3] w-[78%] shrink-0 snap-start overflow-hidden rounded-xl border transition focus-visible:ring-2 focus-visible:outline-none sm:w-[60%] md:w-[44%] lg:w-[32%]"
+                className="group border-border/60 bg-card/40 hover:border-border focus-visible:ring-ring shadow-card relative aspect-[4/3] w-[78%] shrink-0 snap-start overflow-hidden rounded-xl border transition focus-visible:ring-2 focus-visible:outline-none sm:w-[60%] md:w-[44%] lg:w-[32%] dark:shadow-none"
                 aria-label={`Expand ${appName} screenshot`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
