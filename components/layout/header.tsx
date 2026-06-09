@@ -188,19 +188,6 @@ export function Header() {
                   </NavigationMenuLink>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <a
-                      href={siteConfig.links.docs}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-muted-foreground hover:text-foreground hover:bg-muted/0 inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium"
-                    >
-                      Docs
-                      <ArrowUpRight className="size-3" />
-                    </a>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
@@ -587,15 +574,6 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           >
             Pricing
           </Link>
-          <a
-            href={siteConfig.links.docs}
-            target="_blank"
-            rel="noreferrer"
-            className="text-foreground hover:bg-muted/50 flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium"
-          >
-            Docs
-            <ArrowUpRight className="size-3.5 opacity-60" />
-          </a>
         </div>
 
         <div className="mt-4 flex flex-col gap-2">
