@@ -15,7 +15,6 @@ const copy: Record<
   Mode,
   {
     title: string
-    titleEm: string
     sub: string
     cta: string
     alt: string
@@ -24,8 +23,7 @@ const copy: Record<
   }
 > = {
   login: {
-    title: "Welcome",
-    titleEm: "back.",
+    title: "Welcome back",
     sub: "Sign in to your spoo.me workspace.",
     cta: "Continue with email",
     alt: "Don't have an account?",
@@ -33,8 +31,7 @@ const copy: Record<
     altHref: "/signup",
   },
   signup: {
-    title: "Create your",
-    titleEm: "account.",
+    title: "Create your account",
     sub: "Start free. Upgrade when your links do.",
     cta: "Continue with email",
     alt: "Already have an account?",
@@ -67,12 +64,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
       transition={{ duration: 0.45, ease: "easeOut" }}
       className="space-y-7"
     >
-      <div className="space-y-2">
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          {c.title}{" "}
-          <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
-            {c.titleEm}
-          </span>
+      <div className="space-y-2 text-center">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+          {c.title}
         </h1>
         <p className="text-muted-foreground text-sm">{c.sub}</p>
       </div>
@@ -119,7 +113,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         </Button>
       </form>
 
-      <p className="text-muted-foreground text-sm">
+      <p className="text-muted-foreground text-center text-sm">
         {c.alt}{" "}
         <Link
           href={c.altHref}
