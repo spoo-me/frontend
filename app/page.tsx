@@ -18,28 +18,28 @@ export default function HomePage() {
       <main className="overflow-hidden">
         <PageFrame>
           <Hero />
-          <Section caption="Analytics" id="analytics">
+          <Section num="01" caption="Analytics" id="analytics">
             <DashboardPreview />
           </Section>
-          <Section caption="Features" id="features">
+          <Section num="02" caption="Features" id="features">
             <Features />
           </Section>
-          <Section caption="Ecosystem" id="apps">
+          <Section num="03" caption="Ecosystem" id="apps">
             <ConnectedApps />
           </Section>
-          <Section caption="Developers" id="developers">
+          <Section num="04" caption="Developers" id="developers">
             <Developer />
           </Section>
-          <Section caption="Builders">
+          <Section num="05" caption="Builders">
             <Testimonials />
           </Section>
-          <Section caption="Self-host" id="self-host">
+          <Section num="06" caption="Self-host" id="self-host">
             <SelfHost />
           </Section>
-          <Section caption="Scale">
+          <Section num="07" caption="Scale">
             <Stats />
           </Section>
-          <Section caption="Get started">
+          <Section num="08" caption="Get started">
             <CTA />
           </Section>
         </PageFrame>

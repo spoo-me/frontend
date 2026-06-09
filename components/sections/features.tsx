@@ -5,17 +5,19 @@ import {
   BarChart,
   Code,
   Globe,
+  Globe2,
   QrCode,
   Timer,
   Bell,
   Settings,
   Tag,
+  TrendingUp,
+  Webhook,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 import { BentoCard, BentoGrid } from "@/components/magicui/bento-grid"
 import { AnimatedList } from "@/components/magicui/animated-list"
-import { SparklesCore } from "@/components/ui/sparkles"
-import { Calendar } from "@/components/ui/calendar"
 import { Skeleton } from "@/components/ui/skeleton"
 import SimpleQr, { encodeData } from "simple-qrbtf"
 import { SectionHeading } from "@/components/shared/section-heading"
@@ -25,39 +27,34 @@ const WorldMap = lazy(() => import("@/components/ui/world-map"))
 interface NotificationProps {
   name: string
   description: string
-  icon: string
-  color: string
+  icon: LucideIcon
   time: string
 }
 
-const notifications = [
+const notifications: NotificationProps[] = [
   {
-    name: "Link clicked",
-    description: "Your link was clicked 100 times",
-    time: "15m ago",
-    icon: "📈",
-    color: "#9C4EFF",
+    name: "clicks.threshold",
+    description: "spring/launch crossed 1,000 clicks",
+    time: "2m",
+    icon: TrendingUp,
   },
   {
-    name: "Threshold reached",
-    description: "Your campaign reached 1000 clicks",
-    time: "1h ago",
-    icon: "🎯",
-    color: "#00C9A7",
+    name: "geo.new_country",
+    description: "First click from Japan detected",
+    time: "1h",
+    icon: Globe2,
   },
   {
-    name: "New location",
-    description: "Traffic from a new country detected",
-    time: "3h ago",
-    icon: "🌎",
-    color: "#FFB800",
+    name: "webhook.delivered",
+    description: "POST /hooks/slack returned 200",
+    time: "3h",
+    icon: Webhook,
   },
   {
-    name: "Conversion goal",
-    description: "Conversion rate increased by 15%",
-    time: "5h ago",
-    icon: "🚀",
-    color: "#FF3D71",
+    name: "link.expired",
+    description: "spring-promo reached its end date",
+    time: "5h",
+    icon: Timer,
   },
 ]
 
@@ -75,18 +72,34 @@ const QRCodeDemo = () => {
   )
 }
 
+/* Fanned mini link-cards on a dotted patch — branded domains as physical artifacts */
 const DomainBackground = () => {
+  const cards = [
+    { host: "go.acme.dev", path: "/launch", rot: "-rotate-6", z: "z-10" },
+    { host: "l.berlin.cafe", path: "/menu", rot: "rotate-1", z: "z-20" },
+    { host: "spoo.me", path: "/ga", rot: "rotate-6", z: "z-30" },
+  ]
   return (
-    <div className="absolute inset-0 overflow-hidden">
-      <SparklesCore
-        id="tsparticles"
-        background="transparent"
-        minSize={0.6}
-        maxSize={1.4}
-        particleDensity={70}
-        className="w-full h-full"
-        particleColor="#8B5CF6"
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)]">
+      <div
+        aria-hidden
+        className="pattern-dots absolute inset-x-4 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
       />
+      <div className="relative mt-8 flex justify-center">
+        {cards.map((c) => (
+          <div
+            key={c.host}
+            className={`border-border/70 bg-card relative -ml-4 w-[7.5rem] origin-bottom rounded-lg border p-3 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 first:ml-0 group-hover:-translate-y-1 ${c.rot} ${c.z}`}
+          >
+            <div className="text-foreground truncate font-mono text-[10px] font-medium">
+              {c.host}
+            </div>
+            <div className="text-muted-foreground font-mono text-[10px]">{c.path}</div>
+            <div className="bg-brand/50 mt-2.5 h-1 w-3/4 rounded-full" />
+            <div className="bg-muted mt-1 h-1 w-1/2 rounded-full" />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -148,6 +161,44 @@ const CustomizationDemo = () => {
   )
 }
 
+/* Lifecycle timeline with dashed spine — created → live threshold → expiry */
+const ExpiryTimeline = () => {
+  const stops = [
+    { time: "mar 14", label: "link created", card: false },
+    { time: "apr 02", label: "+1,000 clicks", card: true },
+    { time: "in 30 days", label: "expires", card: false },
+  ]
+  return (
+    <div className="absolute inset-x-6 top-6 [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
+      <ul className="border-border/80 ml-1.5 flex flex-col gap-3.5 border-l border-dashed pl-4">
+        {stops.map((s) => (
+          <li key={s.label} className="relative">
+            <span
+              aria-hidden
+              className={`absolute -left-[21.5px] top-1.5 size-2 rounded-full border ${
+                s.card
+                  ? "border-brand bg-brand/40"
+                  : "border-border bg-background"
+              }`}
+            />
+            <div className="text-muted-foreground/70 font-mono text-[10px]">{s.time}</div>
+            {s.card ? (
+              <div className="border-border/70 bg-card mt-1 inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)]">
+                <span className="text-foreground font-mono text-xs font-medium">
+                  {s.label}
+                </span>
+                <span className="bg-live relative inline-flex size-1.5 rounded-full" />
+              </div>
+            ) : (
+              <div className="text-foreground mt-0.5 text-xs font-medium">{s.label}</div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 const AnalyticsChart = () => {
   return (
     <div className="absolute right-1 top-2 h-[300px] w-full scale-75 border-none transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_10%,#000_100%)] group-hover:scale-90">
@@ -174,32 +225,77 @@ const AnalyticsChart = () => {
   )
 }
 
-const Notification = ({
-  name,
-  description,
-  icon,
-  color,
-  time,
-}: NotificationProps) => {
+const Notification = ({ name, description, icon: Icon, time }: NotificationProps) => {
   return (
-    <figure className="border-border/60 bg-card/60 relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border p-4 backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
+    <figure className="border-border/60 bg-card/80 relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border p-3 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
       <div className="flex flex-row items-center gap-3">
-        <div
-          className="border-border/60 flex h-10 w-10 items-center justify-center rounded-xl border"
-          style={{ backgroundColor: `${color}2e` }}
-        >
-          <span className="text-lg">{icon}</span>
+        <div className="border-border/60 bg-muted/40 flex size-9 shrink-0 items-center justify-center rounded-lg border">
+          <Icon className="text-foreground size-4" />
         </div>
-        <div className="flex flex-col overflow-hidden">
-          <figcaption className="flex flex-row items-center whitespace-pre text-sm font-medium">
-            <span>{name}</span>
-            <span className="mx-1">·</span>
-            <span className="text-xs text-muted-foreground">{time}</span>
+        <div className="flex min-w-0 flex-col overflow-hidden">
+          <figcaption className="flex items-baseline gap-2 whitespace-pre">
+            <code className="text-foreground font-mono text-xs font-medium">{name}</code>
+            <span className="text-muted-foreground/60 font-mono text-[10px]">{time}</span>
           </figcaption>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground truncate text-xs">{description}</p>
         </div>
       </div>
     </figure>
+  )
+}
+
+/* Alias picker — crop-mark selection brackets around the chosen alias, ghost wordmark behind */
+const AliasDemo = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
+      <span
+        aria-hidden
+        className="text-foreground/[0.04] pointer-events-none absolute -top-7 right-2 font-mono text-[6.5rem] leading-none font-semibold tracking-tighter select-none"
+      >
+        /go
+      </span>
+      <div className="absolute top-9 left-6 flex items-center gap-1.5 font-mono text-sm">
+        <span className="text-muted-foreground/70">spoo.me/</span>
+        {/* crop-mark selection frame */}
+        <span className="relative px-2.5 py-1">
+          <span aria-hidden className="border-foreground/50 absolute top-0 left-0 size-2 border-t border-l" />
+          <span aria-hidden className="border-foreground/50 absolute top-0 right-0 size-2 border-t border-r" />
+          <span aria-hidden className="border-foreground/50 absolute bottom-0 left-0 size-2 border-b border-l" />
+          <span aria-hidden className="border-foreground/50 absolute right-0 bottom-0 size-2 border-r border-b" />
+          <span className="text-foreground font-medium">spring-launch</span>
+        </span>
+        <span className="bg-foreground/70 animate-blink-cursor h-4 w-px" />
+      </div>
+      <div className="text-muted-foreground/80 absolute top-[5.5rem] left-6 flex items-center gap-1.5 font-mono text-[11px]">
+        <span className="bg-live size-1.5 rounded-full" />
+        alias available
+      </div>
+    </div>
+  )
+}
+
+/* UTM chips on a hatched patch */
+const UtmDemo = () => {
+  const params = ["utm_source=launch", "utm_medium=qr", "utm_campaign=spring"]
+  return (
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)]">
+      <div
+        aria-hidden
+        className="pattern-hatch absolute inset-x-4 top-2 h-36 opacity-50 [mask-image:radial-gradient(ellipse_80%_90%_at_50%_30%,black,transparent)]"
+      />
+      <div className="relative mt-7 flex flex-col items-center gap-2">
+        {params.map((p, i) => (
+          <code
+            key={p}
+            className={`border-border/70 bg-card text-foreground/90 rounded-md border px-2.5 py-1 font-mono text-[10px] shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:-translate-y-0.5 ${
+              i === 1 ? "translate-x-6" : i === 2 ? "-translate-x-4" : ""
+            }`}
+          >
+            {p}
+          </code>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -245,9 +341,7 @@ export function Features() {
       href: "#",
       cta: "Learn more",
       className: "col-span-3 lg:col-span-2",
-      background: (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
-      ),
+      background: <AliasDemo />,
     },
     {
       Icon: BarChart,
@@ -267,13 +361,7 @@ export function Features() {
       href: "#",
       cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
-      background: (
-        <Calendar
-          mode="single"
-          selected={new Date(2022, 4, 11, 12, 0, 0)}
-          className="absolute right-0 top-10 origin-top scale-75 rounded-md border transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] group-hover:scale-90"
-        />
-      ),
+      background: <ExpiryTimeline />,
     },
     {
       Icon: Code,
@@ -293,9 +381,7 @@ export function Features() {
       href: "#",
       cta: "Learn more",
       className: "col-span-3 lg:col-span-1",
-      background: (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
-      ),
+      background: <UtmDemo />,
     },
     {
       Icon: Bell,

@@ -50,11 +50,14 @@ function Tick({ className }: { className?: string }) {
 export function Section({
   id,
   caption,
+  num,
   children,
   className,
 }: {
   id?: string
   caption?: string
+  /** chapter number rendered as a bracketed mono prefix: [01] */
+  num?: string
   children: React.ReactNode
   className?: string
 }) {
@@ -64,6 +67,11 @@ export function Section({
       <Tick className="-top-[4.5px] -right-[4.5px]" />
       {caption && (
         <span className="label-mono text-muted-foreground bg-background absolute top-0 left-5 -translate-y-1/2 px-2 sm:left-9">
+          {num && (
+            <span className="text-muted-foreground/50">
+              [<span className="text-muted-foreground/80">{num}</span>]{" "}
+            </span>
+          )}
           {caption}
         </span>
       )}
