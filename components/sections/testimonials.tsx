@@ -32,12 +32,13 @@ export function Testimonials() {
         />
       </Band>
 
-      {/* Quote mosaic — breakout band: cards absorb the double-rail strip
-          (±24px past the frame, z above the rails so no lines cross them);
-          the hatched flanks run from the viewport edge flush to the cards */}
+      {/* Quote mosaic — breakout band: cards span the viewport minus fixed
+          5rem hatch flanks, riding z-20 above the rails so no lines cross
+          them. pt-px (not mt-px — margin collapse) lets the container's
+          border tint draw the top line across the breakout span. */}
       <Band rule>
         <GutterHatch area="outer" />
-        <div className="bg-border relative z-20 mt-px grid grid-cols-1 gap-px lg:grid-cols-12 min-[1300px]:-mx-6">
+        <div className="bg-border relative z-20 grid grid-cols-1 gap-px pt-px lg:grid-cols-12 min-[1400px]:mx-[calc(50%-50vw+5rem)]">
           {featured.map((t) => (
             <QuoteCard key={t.slug} item={t} />
           ))}

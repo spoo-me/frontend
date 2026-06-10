@@ -148,19 +148,21 @@ export function GutterHatch({
   className?: string
 }) {
   if (area === "outer") {
+    // Fixed 5rem flanks at the viewport edges — sized to sit flush against
+    // a breakout band spanning calc(100vw - 10rem)
     return (
       <>
         <span
           aria-hidden
           className={cn(
-            "pattern-hatch pointer-events-none absolute inset-y-0 right-[calc(100%+1.5rem)] left-[calc(50%-50vw)] hidden opacity-60 min-[1300px]:block",
+            "pattern-hatch pointer-events-none absolute inset-y-0 left-[calc(50%-50vw)] w-20 hidden opacity-60 min-[1400px]:block",
             className,
           )}
         />
         <span
           aria-hidden
           className={cn(
-            "pattern-hatch pointer-events-none absolute inset-y-0 left-[calc(100%+1.5rem)] right-[calc(50%-50vw)] hidden opacity-60 min-[1300px]:block",
+            "pattern-hatch pointer-events-none absolute inset-y-0 right-[calc(50%-50vw)] w-20 hidden opacity-60 min-[1400px]:block",
             className,
           )}
         />
