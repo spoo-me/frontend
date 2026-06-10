@@ -196,10 +196,6 @@ export function DoneStep({
           ))}
         </div>
       </div>
-
-      <p className="label-mono text-muted-foreground/50 mt-8 text-[10px]">
-        press ↵ to finish
-      </p>
     </div>
   )
 }

@@ -1,20 +1,21 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import { ArrowRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import type { OnboardingPath } from "@/lib/onboarding"
 
-const BARS = [38, 62, 45, 80, 58, 92, 70]
+const BARS = [38, 62, 45, 80, 58, 92, 70, 64, 84]
 
-function LinksPreview({ active }: { active: boolean }) {
+/* The stage illustrations ARE the product — enlarged, floating panels. */
+
+function LinksIllustration({ active }: { active: boolean }) {
   return (
-    <div className="border-border/60 bg-muted/20 mt-4 rounded-lg border p-3 text-left">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-foreground/90 truncate font-mono text-[11px]">
+    <div className="border-border/60 bg-card shadow-card w-64 rounded-xl border p-4 text-left">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-foreground/90 truncate font-mono text-xs">
           spoo.me/launch
         </span>
         <span className="flex items-center gap-1.5">
@@ -27,40 +28,44 @@ function LinksPreview({ active }: { active: boolean }) {
           </span>
         </span>
       </div>
-      <div className="mt-2.5 flex h-9 items-end gap-1" aria-hidden>
+      <div className="mt-3 flex h-14 items-end gap-1" aria-hidden>
         {BARS.map((h, i) => (
           <span
             key={i}
             style={{ height: `${h}%` }}
             className={cn(
-              "flex-1 rounded-[2px] transition-colors duration-300",
+              "flex-1 rounded-[2px] transition-colors duration-500",
               active ? "bg-brand/70" : "bg-border",
             )}
           />
         ))}
       </div>
+      <div className="text-muted-foreground/70 mt-2.5 flex items-center justify-between font-mono text-[9px] tabular-nums">
+        <span>last 7 days</span>
+        <span className="text-live">+38%</span>
+      </div>
     </div>
   )
 }
 
-function ApiPreview({ active }: { active: boolean }) {
+function ApiIllustration({ active }: { active: boolean }) {
   return (
-    <div className="border-border/60 bg-muted/20 mt-4 rounded-lg border p-3 text-left font-mono text-[11px] leading-5">
+    <div className="border-border/60 bg-card shadow-card w-64 rounded-xl border p-4 text-left font-mono text-xs leading-6">
       <div>
-        <span className={cn(active ? "text-brand" : "text-muted-foreground")}>
+        <span className={cn("transition-colors duration-500", active ? "text-brand" : "text-muted-foreground")}>
           POST
         </span>{" "}
         <span className="text-foreground/90">/api/v1/shorten</span>
       </div>
       <div className="text-muted-foreground/80">
-        {"{"} url: <span className="text-foreground/70">&quot;https://…&quot;</span>{" "}
-        {"}"}
+        {"{"} url: <span className="text-foreground/70">&quot;https://…&quot;</span> {"}"}
       </div>
-      <div className="mt-1.5 flex items-center gap-1.5">
-        <span className="text-live">201</span>
-        <span className="label-mono text-muted-foreground/60 text-[9px] tabular-nums">
-          38ms
-        </span>
+      <div className="border-border/50 mt-2 border-t pt-2">
+        <span className="text-live">201 Created</span>
+        <span className="text-muted-foreground/60 ml-2 text-[10px]">38ms</span>
+      </div>
+      <div className="text-muted-foreground/80">
+        short_url: <span className="text-foreground/70">&quot;spoo.me/x9Tz&quot;</span>
       </div>
     </div>
   )
@@ -69,28 +74,43 @@ function ApiPreview({ active }: { active: boolean }) {
 const PATHS: {
   value: OnboardingPath
   label: string
-  description: string
-  icon3d: string
+  description: React.ReactNode
   cta: string
-  preview: (props: { active: boolean }) => React.ReactNode
+  illustration: (props: { active: boolean }) => React.ReactNode
 }[] = [
   {
     value: "links",
     label: "Manage links",
-    description: "Shorten, organize, and track everything from the dashboard.",
-    icon3d: "/icons-3d/link_3D.png",
+    description: (
+      <>
+        <U>Short links</U>, <U>QR codes</U>, and <U>real-time analytics</U> —
+        organized from one dashboard.
+      </>
+    ),
     cta: "Continue with links",
-    preview: LinksPreview,
+    illustration: LinksIllustration,
   },
   {
     value: "api",
     label: "Build with the API",
-    description: "Keys, SDKs, and webhooks wired into your own stack.",
-    icon3d: "/icons-3d/api_3D.png",
+    description: (
+      <>
+        <U>REST API</U>, <U>typed SDKs</U>, and <U>webhooks</U> wired straight
+        into your own stack.
+      </>
+    ),
     cta: "Continue with the API",
-    preview: ApiPreview,
+    illustration: ApiIllustration,
   },
 ]
+
+function U({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="decoration-border text-foreground/80 underline underline-offset-4">
+      {children}
+    </span>
+  )
+}
 
 export function PathStep({
   onChoose,
@@ -114,7 +134,7 @@ export function PathStep({
   }, [focus, onChoose])
 
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="flex w-full flex-col items-center text-center">
       <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
         How will you use spoo.me?
       </h1>
@@ -122,58 +142,57 @@ export function PathStep({
         We&apos;ll tailor the next step. Everything stays available either way.
       </p>
 
-      <div className="mt-10 grid w-full max-w-xl gap-3 sm:grid-cols-2">
+      <div className="mt-12 grid w-full max-w-3xl gap-4 sm:grid-cols-2">
         {PATHS.map((p) => {
-          const Preview = p.preview
+          const Illustration = p.illustration
           const isFocused = focus === p.value
           return (
             <div
               key={p.value}
               onMouseEnter={() => setFocus(p.value)}
               className={cn(
-                "group flex flex-col rounded-xl border p-5 text-left transition-all",
-                isFocused
-                  ? "border-ring ring-ring/30 shadow-soft bg-card ring-2"
-                  : "border-border/60 hover:border-border bg-card/50",
+                "bg-card/40 flex flex-col rounded-2xl border p-7 transition-colors duration-300",
+                isFocused ? "border-ring/60" : "border-border/60",
               )}
             >
-              <div className="flex items-center gap-3">
-                <Image
-                  src={p.icon3d}
-                  alt=""
-                  width={40}
-                  height={40}
+              {/* Stage — the product itself is the illustration */}
+              <div className="pattern-dots relative flex h-44 items-center justify-center rounded-xl">
+                <div
+                  aria-hidden
                   className={cn(
-                    "size-10 object-contain transition-all duration-300",
-                    isFocused
-                      ? "scale-105 drop-shadow-[0_4px_12px_rgba(139,92,246,0.35)]"
-                      : "opacity-80 grayscale-[35%]",
+                    "bg-brand/10 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
+                    isFocused ? "opacity-100" : "opacity-0",
                   )}
                 />
-                <span className="text-foreground text-sm font-semibold">
-                  {p.label}
-                </span>
+                <div
+                  className={cn(
+                    "relative transition-transform duration-500",
+                    isFocused && "-translate-y-1",
+                  )}
+                >
+                  <Illustration active={isFocused} />
+                </div>
               </div>
-              <span className="text-muted-foreground mt-3 text-[13px] leading-relaxed">
+
+              <h2 className="text-foreground mt-7 text-base font-semibold">
+                {p.label}
+              </h2>
+              <p className="text-muted-foreground mx-auto mt-2 max-w-60 flex-1 text-[13px] leading-relaxed">
                 {p.description}
-              </span>
-              <Preview active={isFocused} />
+              </p>
+
               <Button
                 onClick={() => onChoose(p.value)}
                 variant={isFocused ? "default" : "outline"}
-                className="mt-4 h-9 w-full"
+                className="mt-7 h-10 w-full"
               >
                 {p.cta}
-                <ArrowRight className="size-3.5" data-icon="inline-end" />
+                <ArrowRight className="size-4" data-icon="inline-end" />
               </Button>
             </div>
           )
         })}
       </div>
-
-      <p className="label-mono text-muted-foreground/50 mt-8 text-[10px]">
-        ← → to choose · ↵ to continue
-      </p>
     </div>
   )
 }

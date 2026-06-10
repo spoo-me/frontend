@@ -151,9 +151,6 @@ export function ApiStep({
                 Continue
                 <ArrowRight className="size-4" data-icon="inline-end" />
               </Button>
-              <p className="label-mono text-muted-foreground/50 mt-3 text-[10px]">
-                press ↵ to continue
-              </p>
             </div>
           </motion.div>
         ) : (

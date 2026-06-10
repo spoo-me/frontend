@@ -106,9 +106,6 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
           Browse all apps <ArrowUpRight className="size-3" />
         </Link>
       </div>
-      <p className="label-mono text-muted-foreground/50 mt-4 text-[10px]">
-        press ↵ to continue
-      </p>
     </div>
   )
 }
