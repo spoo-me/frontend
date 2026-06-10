@@ -70,7 +70,7 @@ export function SelfHostClient() {
         </div>
       </Band>
 
-      {/* Diagram band — dotted patch under the deploy artifact */}
+      {/* Deploy band — diagram + docker one-liner share the cell */}
       <Band rule className="px-5 py-16 sm:px-9 sm:py-20">
         <div
           aria-hidden
@@ -85,16 +85,13 @@ export function SelfHostClient() {
         >
           <DeployDiagram onDockerClick={focusTerminal} />
         </motion.div>
-      </Band>
 
-      {/* Terminal band */}
-      <Band rule className="px-5 py-12 sm:px-9 sm:py-14">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="mx-auto max-w-xl"
+          className="relative mx-auto mt-16 max-w-xl"
         >
           <div
             ref={terminalRef}
@@ -138,3 +135,4 @@ export function SelfHostClient() {
     </>
   )
 }
+

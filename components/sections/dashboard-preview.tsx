@@ -21,7 +21,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
-import { Band } from "@/components/shared/section-shell"
+import { Band, GutterHatch } from "@/components/shared/section-shell"
 import { siteConfig } from "@/lib/site-config"
 import { cn } from "@/lib/utils"
 
@@ -45,8 +45,10 @@ export function DashboardPreview() {
         />
       </Band>
 
-      {/* Mock band — the dashboard pours under the next rule, hard-cropped */}
+      {/* Mock band — the dashboard pours under the next rule, hard-cropped;
+          hatched gutters activate the margin beside the artifact */}
       <Band rule className="overflow-hidden px-5 pt-10 sm:px-12 sm:pt-14">
+        <GutterHatch />
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -56,6 +58,19 @@ export function DashboardPreview() {
         >
           <DashboardMock />
         </motion.div>
+        {/* Peek affordance — fade over the crop, live demo floats on it */}
+        <div
+          aria-hidden
+          className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t to-transparent"
+        />
+        <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2">
+          <Button asChild variant="outline" size="sm">
+            <a href={siteConfig.app.dashboard} target="_blank" rel="noreferrer">
+              See live demo
+              <ArrowUpRight className="size-3.5" data-icon="inline-end" />
+            </a>
+          </Button>
+        </div>
       </Band>
 
       <Callouts />
@@ -498,47 +513,28 @@ function Callouts() {
     },
   ]
   return (
-    <>
-      {/* Callout cells — shared-hairline lattice, one cell per claim */}
-      <Band rule>
-        <div className="bg-border/60 grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4">
-          {callouts.map((c, i) => (
-            <motion.div
-              key={c.title}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
-              className="bg-background flex flex-col gap-3 p-6 sm:p-7"
-            >
-              <span className="border-border/60 bg-muted/30 text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md border">
-                <c.icon className="size-3.5" />
-              </span>
-              <div>
-                <h4 className="text-foreground text-sm font-semibold tracking-tight">
-                  {c.title}
-                </h4>
-                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                  {c.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </Band>
-
-      {/* Table-footer row */}
-      <Band rule className="flex items-center justify-between px-5 py-4 sm:px-9">
-        <span className="label-mono text-muted-foreground/60 hidden sm:block">
-          app.spoo.me
-        </span>
-        <Button asChild variant="outline" size="sm">
-          <a href={siteConfig.app.dashboard} target="_blank" rel="noreferrer">
-            See live demo
-            <ArrowUpRight className="size-3.5" data-icon="inline-end" />
-          </a>
-        </Button>
-      </Band>
-    </>
+    /* Callout cells — shared-hairline lattice, one cell per claim */
+    <Band rule>
+      <div className="bg-border grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4">
+        {callouts.map((c) => (
+          <div
+            key={c.title}
+            className="bg-background flex flex-col gap-3 p-6 sm:p-7"
+          >
+            <span className="border-border/60 bg-muted/30 text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md border">
+              <c.icon className="size-3.5" />
+            </span>
+            <div>
+              <h4 className="text-foreground text-sm font-semibold tracking-tight">
+                {c.title}
+              </h4>
+              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                {c.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Band>
   )
 }

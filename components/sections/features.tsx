@@ -21,7 +21,7 @@ import { AnimatedList } from "@/components/magicui/animated-list"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BaseQr, encodeData } from "simple-qrbtf"
 import { SectionHeading } from "@/components/shared/section-heading"
-import { Band } from "@/components/shared/section-shell"
+import { Band, GutterHatch } from "@/components/shared/section-shell"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
 
@@ -434,6 +434,7 @@ export function Features() {
 
       {/* Bento fused into the lattice — cells share hairlines, edge-to-rail */}
       <Band rule>
+        <GutterHatch />
         <BentoGrid className="grid-cols-1 lg:grid-cols-4 auto-rows-[18rem]">
           {features.map((feature, index) => (
             <BentoCard key={index} index={index} {...feature} />

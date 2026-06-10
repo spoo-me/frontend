@@ -63,7 +63,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
 
       {/* Split band — playground and SDK list separated by a band-local hairline */}
       <Band rule>
-        <div className="divide-border/60 grid divide-y lg:grid-cols-[1.4fr_1fr] lg:divide-x lg:divide-y-0">
+        <div className="divide-border grid divide-y lg:grid-cols-[1.4fr_1fr] lg:divide-x lg:divide-y-0">
           {/* Code playground — editor file-tabs fused into the panel */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}

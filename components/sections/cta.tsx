@@ -5,7 +5,7 @@ import { motion } from "motion/react"
 import { ArrowRight, Zap } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Band } from "@/components/shared/section-shell"
+import { Band, GutterHatch } from "@/components/shared/section-shell"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
@@ -13,14 +13,7 @@ export function CTA() {
   return (
     <Band className="px-6 py-24 text-center sm:py-32">
       {/* Hatched gutters — the drafting margin fills in beside the closing band */}
-      <span
-        aria-hidden
-        className="pattern-hatch pointer-events-none absolute inset-y-0 -left-6 hidden w-6 opacity-60 min-[1300px]:block"
-      />
-      <span
-        aria-hidden
-        className="pattern-hatch pointer-events-none absolute inset-y-0 -right-6 hidden w-6 opacity-60 min-[1300px]:block"
-      />
+      <GutterHatch />
 
       {/* Aurora echo — mirrors the hero glow; clipped to a box wider than the
           frame so the bloom visibly bleeds across the rails */}

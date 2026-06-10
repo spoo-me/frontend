@@ -1,6 +1,6 @@
 "use client"
 
-import { motion, useInView } from "motion/react"
+import { useInView } from "motion/react"
 import { ComponentPropsWithoutRef, ReactNode, useRef } from "react"
 
 import { cn } from "@/lib/utils"
@@ -24,13 +24,14 @@ interface BentoCardProps {
 /**
  * Lattice bento — cells share hairlines via the gap-px trick: the grid's
  * border-tint background shows through 1px gaps between opaque cells.
+ * Full-strength border so short gap segments stay crisp between busy cells.
  * Outer edges stay open; the frame's rails and rules provide them.
  */
 const BentoGrid = ({ children, className, ...props }: BentoGridProps) => {
   return (
     <div
       className={cn(
-        "bg-border/60 grid w-full auto-rows-[22rem] grid-cols-3 gap-px",
+        "bg-border grid w-full auto-rows-[22rem] grid-cols-3 gap-px",
         className,
       )}
       {...props}
@@ -46,22 +47,17 @@ const BentoCard = ({
   background,
   Icon,
   description,
-  index = 0,
 }: BentoCardProps) => {
   const ref = useRef<HTMLDivElement>(null)
+  // Gate only the demo mount (lazy world map etc.) — the cell itself is
+  // static: lattice cells don't fade or slide, they're part of the sheet.
   const inView = useInView(ref, { once: true, amount: 0.2 })
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      // Opacity-only reveal — cells sit on a shared lattice, they don't slide
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.5, delay: (index % 4) * 0.06 }}
       className={cn(
-        // Opaque cell on the lattice — the gap-px grid draws the hairlines
-        "group bg-background relative col-span-3 flex flex-col justify-between overflow-hidden",
+        "group bg-background relative col-span-1 flex flex-col justify-between overflow-hidden",
         className,
       )}
     >
@@ -76,7 +72,7 @@ const BentoCard = ({
         </p>
       </div>
       <div className="pointer-events-none absolute inset-0 transform-gpu transition-all duration-300 group-hover:bg-foreground/[.02]" />
-    </motion.div>
+    </div>
   )
 }
 

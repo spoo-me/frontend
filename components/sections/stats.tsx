@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react"
 
 import { NumberTicker } from "@/components/ui/number-ticker"
 import { SectionHeading } from "@/components/shared/section-heading"
-import { Band } from "@/components/shared/section-shell"
+import { Band, GutterHatch } from "@/components/shared/section-shell"
 import { Globe } from "@/components/magicui/globe"
 import { siteConfig, stats } from "@/lib/site-config"
 
@@ -68,6 +68,7 @@ export function Stats() {
 
       {/* Stat lattice — globe cell + giant-number cells, edge-to-rail */}
       <Band rule>
+        <GutterHatch />
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -106,7 +107,7 @@ export function Stats() {
           </div>
 
           {/* Supporting stats: 3-up stacked column */}
-          <ul className="border-border/60 bg-background grid grid-cols-1 grid-rows-3 border-t lg:border-t-0 lg:border-l">
+          <ul className="border-border bg-background grid grid-cols-1 grid-rows-3 border-t lg:border-t-0 lg:border-l">
             {supporting.map((item, i) => {
               const numberBlock = (
                 <div className="flex items-baseline">
@@ -134,7 +135,7 @@ export function Stats() {
 
               const className =
                 "group relative flex items-center justify-between gap-6 px-7 py-6 sm:px-10 " +
-                (i > 0 ? "border-border/60 border-t " : "") +
+                (i > 0 ? "border-border border-t " : "") +
                 (item.href ? "hover:bg-muted/30 transition-colors " : "")
 
               if (item.href) {

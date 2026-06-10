@@ -128,6 +128,33 @@ export function Section({
 }
 
 /**
+ * Gutter hatch — fills the drafting margin (between inner and outer rails)
+ * with the diagonal engineering hatch. Reserve for bands carrying a major
+ * artifact (dashboard mock, stat lattice, CTA) so the margin "activates"
+ * beside the page's heaviest moments.
+ */
+export function GutterHatch({ className }: { className?: string }) {
+  return (
+    <>
+      <span
+        aria-hidden
+        className={cn(
+          "pattern-hatch pointer-events-none absolute inset-y-0 -left-6 hidden w-6 opacity-60 min-[1300px]:block",
+          className,
+        )}
+      />
+      <span
+        aria-hidden
+        className={cn(
+          "pattern-hatch pointer-events-none absolute inset-y-0 -right-6 hidden w-6 opacity-60 min-[1300px]:block",
+          className,
+        )}
+      />
+    </>
+  )
+}
+
+/**
  * Band — one full-width row of the frame. Bands stack inside a Section;
  * each draws its own full-bleed top rule (skip on the first, the Section
  * already drew it). Subdivide a band with grid + `gap-px bg-border/60`

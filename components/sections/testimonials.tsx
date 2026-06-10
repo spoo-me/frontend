@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { motion } from "motion/react"
 import { ArrowUpRight } from "lucide-react"
 
 import { SectionHeading } from "@/components/shared/section-heading"
@@ -35,41 +34,20 @@ export function Testimonials() {
 
       {/* Quote mosaic — cells share hairlines on the lattice */}
       <Band rule>
-        <div className="bg-border/60 grid grid-cols-1 gap-px lg:grid-cols-12">
-          {featured.map((t, i) => (
-            <QuoteCard key={t.slug} item={t} delay={0.05 + i * 0.08} />
+        <div className="bg-border grid grid-cols-1 gap-px lg:grid-cols-12">
+          {featured.map((t) => (
+            <QuoteCard key={t.slug} item={t} />
           ))}
-          <PlaceholderCard delay={0.05 + featured.length * 0.08} />
+          <PlaceholderCard showAllStories={testimonials.length > 1} />
         </div>
       </Band>
-
-      {testimonials.length > 1 && (
-        <Band rule className="flex items-center justify-between px-5 py-4 sm:px-9">
-          <span className="label-mono text-muted-foreground/60 hidden sm:block">
-            From production
-          </span>
-          <Link
-            href="/testimonials"
-            className="text-muted-foreground hover:text-foreground group inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-          >
-            Read all stories
-            <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </Link>
-        </Band>
-      )}
     </>
   )
 }
 
-function QuoteCard({ item, delay }: { item: Testimonial; delay: number }) {
+function QuoteCard({ item }: { item: Testimonial }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.5, delay }}
-      className="bg-background lg:col-span-7"
-    >
+    <div className="bg-background lg:col-span-7">
       <Link
         href={`/testimonials/${item.slug}`}
         className="hover:bg-foreground/[0.02] group relative flex h-full flex-col gap-7 overflow-hidden p-7 transition-colors sm:p-9"
@@ -117,7 +95,7 @@ function QuoteCard({ item, delay }: { item: Testimonial; delay: number }) {
           <ArrowUpRight className="size-3.5 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>
       </Link>
-    </motion.div>
+    </div>
   )
 }
 
@@ -148,16 +126,11 @@ function Avatar({ item }: { item: Testimonial }) {
   )
 }
 
-function PlaceholderCard({ delay }: { delay: number }) {
+function PlaceholderCard({ showAllStories }: { showAllStories: boolean }) {
   return (
-    <motion.a
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.5, delay }}
-      href="mailto:hi@spoo.me?subject=spoo.me%20testimonial"
+    <div
       className={cn(
-        "group bg-background hover:bg-foreground/[0.02] relative flex h-full flex-col gap-7 overflow-hidden p-7 transition-colors sm:p-9 lg:col-span-5",
+        "bg-background relative flex h-full flex-col overflow-hidden lg:col-span-5",
       )}
     >
       {/* Inner dotted-grid texture — matches site bg pattern */}
@@ -168,47 +141,62 @@ function PlaceholderCard({ delay }: { delay: number }) {
       {/* Soft cool glow — counterweights the warm yellow card */}
       <span
         aria-hidden
-        className="bg-foreground/5 group-hover:bg-foreground/10 pointer-events-none absolute -bottom-24 -left-24 size-72 rounded-full opacity-60 blur-3xl transition-colors duration-500"
+        className="bg-foreground/5 pointer-events-none absolute -bottom-24 -left-24 size-72 rounded-full opacity-60 blur-3xl"
       />
 
-      <header className="relative flex items-center gap-3">
-        <div
-          aria-hidden
-          className="border-border/60 text-muted-foreground/70 flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed font-mono text-sm"
-        >
-          +
-        </div>
-        <div className="label-mono text-foreground/70">Your team here</div>
-      </header>
-
-      <div className="text-muted-foreground relative flex-1 text-pretty text-xl leading-relaxed sm:text-2xl">
-        <span aria-hidden className="text-muted-foreground/40">“</span>
-        Using spoo in production?{" "}
-        <span className="text-foreground/70">
-          Tell us how it fits into your stack.
-        </span>
-        <span aria-hidden className="text-muted-foreground/40">”</span>
-      </div>
-
-      {/* Faux brand-name chips — hint at "your logo here" */}
-      <div className="relative flex flex-wrap gap-1.5">
-        {["YOUR LOGO", "TEAM", "BRAND"].map((label, i) => (
-          <span
-            key={label}
-            className="border-border/60 text-muted-foreground/60 rounded-md border border-dashed px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]"
-            style={{ opacity: 1 - i * 0.25 }}
+      <a
+        href="mailto:hi@spoo.me?subject=spoo.me%20testimonial"
+        className="group hover:bg-foreground/[0.02] relative flex flex-1 flex-col gap-7 p-7 transition-colors sm:p-9 sm:pb-7"
+      >
+        <header className="relative flex items-center gap-3">
+          <div
+            aria-hidden
+            className="border-border/60 text-muted-foreground/70 flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed font-mono text-sm"
           >
-            {label}
-          </span>
-        ))}
-      </div>
+            +
+          </div>
+          <div className="label-mono text-foreground/70">Your team here</div>
+        </header>
 
-      <div className="relative flex items-center gap-1.5">
-        <span className="text-foreground/80 group-hover:text-foreground text-sm font-semibold transition-colors">
-          Submit a testimonial
-        </span>
-        <ArrowUpRight className="text-muted-foreground/60 group-hover:text-foreground size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-      </div>
-    </motion.a>
+        <div className="text-muted-foreground relative flex-1 text-pretty text-xl leading-relaxed sm:text-2xl">
+          <span aria-hidden className="text-muted-foreground/40">“</span>
+          Using spoo in production?{" "}
+          <span className="text-foreground/70">
+            Tell us how it fits into your stack.
+          </span>
+          <span aria-hidden className="text-muted-foreground/40">”</span>
+        </div>
+
+        {/* Faux brand-name chips — hint at "your logo here" */}
+        <div className="relative flex flex-wrap gap-1.5">
+          {["YOUR LOGO", "TEAM", "BRAND"].map((label, i) => (
+            <span
+              key={label}
+              className="border-border/60 text-muted-foreground/60 rounded-md border border-dashed px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{ opacity: 1 - i * 0.25 }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <div className="relative flex items-center gap-1.5">
+          <span className="text-foreground/80 group-hover:text-foreground text-sm font-semibold transition-colors">
+            Submit a testimonial
+          </span>
+          <ArrowUpRight className="text-muted-foreground/60 group-hover:text-foreground size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </div>
+      </a>
+
+      {showAllStories && (
+        <Link
+          href="/testimonials"
+          className="group border-border/60 text-muted-foreground hover:text-foreground relative inline-flex items-center gap-1.5 border-t border-dashed px-7 py-3.5 text-xs font-medium transition-colors sm:px-9"
+        >
+          Read all stories
+          <ArrowUpRight className="size-3.5 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </Link>
+      )}
+    </div>
   )
 }
