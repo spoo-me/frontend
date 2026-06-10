@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
 
 import { SectionHeading } from "@/components/shared/section-heading"
-import { Band, ColGuides } from "@/components/shared/section-shell"
+import { Band, GutterHatch } from "@/components/shared/section-shell"
 import { cn } from "@/lib/utils"
 import { testimonials, type Testimonial } from "@/lib/testimonials"
 import { QuoteText } from "@/app/testimonials/_components/quote-text"
@@ -15,10 +15,8 @@ export function Testimonials() {
 
   return (
     <>
-      {/* Header band — the 7/12 split above (developer) and below (mosaic)
-          threads through as a single construction guide */}
+      {/* Header band */}
       <Band className="px-5 py-20 sm:px-9 sm:py-24">
-        <ColGuides at={[58.333]} />
         <SectionHeading
           num="05"
           caption="Builders"
@@ -34,18 +32,15 @@ export function Testimonials() {
         />
       </Band>
 
-      {/* Quote mosaic — cells share hairlines on the lattice; the leftover
-          column is a hatched filler, marking the empty slot as deliberate */}
+      {/* Quote mosaic — cells share hairlines and span the full lattice;
+          hatch lives in the gutter only, never inside the lattice */}
       <Band rule>
+        <GutterHatch />
         <div className="bg-border grid grid-cols-1 gap-px lg:grid-cols-12">
           {featured.map((t) => (
             <QuoteCard key={t.slug} item={t} />
           ))}
           <PlaceholderCard showAllStories={testimonials.length > 1} />
-          <div
-            aria-hidden
-            className="pattern-hatch bg-background hidden opacity-60 lg:block lg:col-span-1"
-          />
         </div>
       </Band>
     </>
@@ -137,7 +132,7 @@ function PlaceholderCard({ showAllStories }: { showAllStories: boolean }) {
   return (
     <div
       className={cn(
-        "bg-background relative flex h-full flex-col overflow-hidden lg:col-span-4",
+        "bg-background relative flex h-full flex-col overflow-hidden lg:col-span-5",
       )}
     >
       {/* Inner dotted-grid texture — matches site bg pattern */}

@@ -21,7 +21,7 @@ import { AnimatedList } from "@/components/magicui/animated-list"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BaseQr, encodeData } from "simple-qrbtf"
 import { SectionHeading } from "@/components/shared/section-heading"
-import { Band, ColGuides, GutterHatch } from "@/components/shared/section-shell"
+import { Band, GutterHatch } from "@/components/shared/section-shell"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
 
@@ -415,9 +415,8 @@ export function Features() {
 
   return (
     <>
-      {/* Header band — column guides thread the lattice rhythm through */}
+      {/* Header band */}
       <Band className="px-5 py-20 sm:px-9 sm:py-24">
-        <ColGuides />
         <SectionHeading
           num="02"
           caption="Features"

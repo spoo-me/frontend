@@ -58,23 +58,24 @@ export function PageFrame({
 }) {
   return (
     <div className={cn("relative mx-auto w-full max-w-[1200px]", className)}>
-      {/* Inner rails — solid */}
+      {/* Inner rails — solid. z-10: opaque cells flush against the frame
+          edge must never swallow the rail line (paint order). */}
       <span
         aria-hidden
-        className="border-border/60 pointer-events-none absolute inset-y-0 left-0 hidden border-l sm:block"
+        className="border-border/60 pointer-events-none absolute inset-y-0 left-0 z-10 hidden border-l sm:block"
       />
       <span
         aria-hidden
-        className="border-border/60 pointer-events-none absolute inset-y-0 right-0 hidden border-r sm:block"
+        className="border-border/60 pointer-events-none absolute inset-y-0 right-0 z-10 hidden border-r sm:block"
       />
       {/* Outer rails — dashed, the drafting-margin gutter */}
       <span
         aria-hidden
-        className="border-border/40 pointer-events-none absolute inset-y-0 -left-6 hidden border-l border-dashed min-[1300px]:block"
+        className="border-border/40 pointer-events-none absolute inset-y-0 -left-6 z-10 hidden border-l border-dashed min-[1300px]:block"
       />
       <span
         aria-hidden
-        className="border-border/40 pointer-events-none absolute inset-y-0 -right-6 hidden border-r border-dashed min-[1300px]:block"
+        className="border-border/40 pointer-events-none absolute inset-y-0 -right-6 z-10 hidden border-r border-dashed min-[1300px]:block"
       />
       {/* Frame opening */}
       <Rule />
@@ -153,29 +154,6 @@ export function GutterHatch({ className }: { className?: string }) {
         )}
       />
     </>
-  )
-}
-
-/**
- * Column guides — dashed construction lines carrying the lattice's column
- * rhythm through an empty band (header cells between two lattices). They
- * reach in from both rules and dissolve mid-band, so the grid keeps its
- * thread without running lines behind the typography.
- */
-export function ColGuides({ at = [25, 50, 75] }: { at?: number[] }) {
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute inset-0 hidden lg:block [mask-image:linear-gradient(to_bottom,black,transparent_38%,transparent_62%,black)]"
-    >
-      {at.map((p) => (
-        <span
-          key={p}
-          className="border-border/50 absolute inset-y-0 border-l border-dashed"
-          style={{ left: `${p}%` }}
-        />
-      ))}
-    </span>
   )
 }
 
