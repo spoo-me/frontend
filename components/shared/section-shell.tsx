@@ -31,7 +31,8 @@ export function Tick({ className }: { className?: string }) {
     <span
       aria-hidden
       className={cn(
-        "pointer-events-none absolute z-10 hidden size-[9px] sm:block",
+        // z-30: drafting marks sit above everything, including breakout bands
+        "pointer-events-none absolute z-30 hidden size-[9px] sm:block",
         className,
       )}
     >
