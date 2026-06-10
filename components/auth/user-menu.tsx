@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/components/auth/auth-context"
-import type { AuthUser } from "@/lib/spoo-api"
+import type { AuthUser } from "@/lib/api"
 
 export function userInitials(user: AuthUser): string {
   const source = user.user_name?.trim() || user.email

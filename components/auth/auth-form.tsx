@@ -11,14 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { useAuth } from "@/components/auth/auth-context"
-import {
-  login,
-  PASSWORD_RULES,
-  passwordSatisfies,
-  register,
-  safeNext,
-  SpooApiError,
-} from "@/lib/spoo-api"
+import { login, register, SpooApiError } from "@/lib/api"
+import { PASSWORD_RULES, passwordSatisfies, safeNext } from "@/lib/validation"
 
 type Mode = "login" | "signup"
 

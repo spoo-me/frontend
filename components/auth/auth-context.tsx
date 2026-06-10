@@ -1,8 +1,17 @@
 "use client"
 
 import * as React from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { logout as apiLogout, me, type AuthUser } from "@/lib/spoo-api"
+import { logout as apiLogout, me, type AuthUser } from "@/lib/api"
+
+/**
+ * Session state lives in TanStack Query (single source of truth, focus
+ * revalidation for free); this context is the ergonomic wrapper every
+ * surface consumes via useAuth().
+ */
+
+export const SESSION_KEY = ["session", "me"] as const
 
 type AuthState = {
   user: AuthUser | null
@@ -18,34 +27,49 @@ type AuthState = {
 const AuthContext = React.createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<AuthUser | null>(null)
-  const [loading, setLoading] = React.useState(true)
+  const queryClient = useQueryClient()
+
+  const { data, isPending, refetch } = useQuery({
+    queryKey: SESSION_KEY,
+    queryFn: async () => {
+      try {
+        const { user } = await me()
+        return user
+      } catch {
+        return null // signed out is data, not an error — keeps retries off
+      }
+    },
+    staleTime: 5 * 60_000,
+  })
 
   const refresh = React.useCallback(async () => {
-    try {
-      const { user } = await me()
-      setUser(user)
-      return user
-    } catch {
-      setUser(null)
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    const { data } = await refetch()
+    return data ?? null
+  }, [refetch])
 
-  React.useEffect(() => {
-    void refresh()
-  }, [refresh])
+  const setUser = React.useCallback(
+    (user: AuthUser | null) => {
+      queryClient.setQueryData(SESSION_KEY, user)
+    },
+    [queryClient],
+  )
 
   const signOut = React.useCallback(async () => {
     await apiLogout().catch(() => undefined)
-    setUser(null)
-  }, [])
+    // Drop EVERYTHING cached — never leak one account's data into the next.
+    queryClient.clear()
+    queryClient.setQueryData(SESSION_KEY, null)
+  }, [queryClient])
 
   const value = React.useMemo(
-    () => ({ user, loading, refresh, setUser, signOut }),
-    [user, loading, refresh, signOut],
+    () => ({
+      user: data ?? null,
+      loading: isPending,
+      refresh,
+      setUser,
+      signOut,
+    }),
+    [data, isPending, refresh, setUser, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

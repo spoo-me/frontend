@@ -8,13 +8,8 @@ import { ArrowRight, Check, CircleCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  PASSWORD_RULES,
-  passwordSatisfies,
-  requestPasswordReset,
-  resetPassword,
-  SpooApiError,
-} from "@/lib/spoo-api"
+import { requestPasswordReset, resetPassword, SpooApiError } from "@/lib/api"
+import { PASSWORD_RULES, passwordSatisfies } from "@/lib/validation"
 
 type Phase = "request" | "reset" | "done"
 
