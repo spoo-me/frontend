@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Logo } from "@/components/shared/logo"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
+import { useAuth } from "@/components/auth/auth-context"
+import { UserMenu } from "@/components/auth/user-menu"
 import { CommandMenu } from "@/components/layout/command-menu"
 import { MenuToggleIcon } from "@/components/ui/menu-toggle-icon"
 import {
@@ -99,6 +101,7 @@ function accentFor(key: string): string {
 export function Header() {
   const [open, setOpen] = React.useState(false)
   const [cmdOpen, setCmdOpen] = React.useState(false)
+  const { user, loading: authLoading } = useAuth()
   const { scrollY } = useScroll()
   const blur = useTransform(scrollY, [0, 80], [0, 14])
   const bg = useTransform(scrollY, [0, 80], [0, 0.7])
@@ -211,12 +214,28 @@ export function Header() {
 
             <span className="bg-border/70 mx-1 hidden h-4 w-px md:inline-block" />
 
-            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button asChild size="sm" className="hidden md:inline-flex">
-              <Link href="/signup">Get started</Link>
-            </Button>
+            {/* Session slot — placeholder while /auth/me settles, no layout shift */}
+            {authLoading ? (
+              <span className="hidden h-8 w-36 md:inline-block" aria-hidden />
+            ) : user ? (
+              <>
+                <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
+                <span className="hidden md:inline-flex">
+                  <UserMenu />
+                </span>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+                  <Link href="/login">Sign in</Link>
+                </Button>
+                <Button asChild size="sm" className="hidden md:inline-flex">
+                  <Link href="/signup">Get started</Link>
+                </Button>
+              </>
+            )}
 
             <Button
               variant="ghost"
@@ -242,6 +261,35 @@ export function Header() {
 function formatStars(n: number) {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
   return String(n)
+}
+
+function MobileAuthActions({ onClose }: { onClose: () => void }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="mt-4 h-[5.5rem]" aria-hidden />
+  return (
+    <div className="mt-4 flex flex-col gap-2">
+      {user ? (
+        <Button asChild size="default" className="w-full">
+          <Link href="/dashboard" onClick={onClose}>
+            Open dashboard
+          </Link>
+        </Button>
+      ) : (
+        <>
+          <Button asChild variant="outline" size="default" className="w-full">
+            <Link href="/login" onClick={onClose}>
+              Sign in
+            </Link>
+          </Button>
+          <Button asChild size="default" className="w-full">
+            <Link href="/signup" onClick={onClose}>
+              Get started
+            </Link>
+          </Button>
+        </>
+      )}
+    </div>
+  )
 }
 
 /* ---------- Mega-menu panels ---------- */
@@ -576,18 +624,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           </Link>
         </div>
 
-        <div className="mt-4 flex flex-col gap-2">
-          <Button asChild variant="outline" size="default" className="w-full">
-            <Link href="/login" onClick={onClose}>
-              Sign in
-            </Link>
-          </Button>
-          <Button asChild size="default" className="w-full">
-            <Link href="/signup" onClick={onClose}>
-              Get started
-            </Link>
-          </Button>
-        </div>
+        <MobileAuthActions onClose={onClose} />
 
         <div className="text-muted-foreground/70 mt-6 flex items-center gap-3 px-2 text-xs">
           <a

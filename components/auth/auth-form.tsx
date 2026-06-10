@@ -2,12 +2,23 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { motion } from "motion/react"
-import { ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { AnimatePresence, motion } from "motion/react"
+import { ArrowRight, Check } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BrandIcons } from "@/components/icons/brand-icons"
+import { useAuth } from "@/components/auth/auth-context"
+import {
+  login,
+  PASSWORD_RULES,
+  passwordSatisfies,
+  register,
+  safeNext,
+  SpooApiError,
+} from "@/lib/spoo-api"
 
 type Mode = "login" | "signup"
 
@@ -17,6 +28,7 @@ const copy: Record<
     title: string
     sub: string
     cta: string
+    pending: string
     alt: string
     altLink: string
     altHref: string
@@ -25,7 +37,8 @@ const copy: Record<
   login: {
     title: "Welcome back",
     sub: "Sign in to your spoo.me workspace.",
-    cta: "Continue with email",
+    cta: "Sign in",
+    pending: "Signing in…",
     alt: "Don't have an account?",
     altLink: "Create one",
     altHref: "/signup",
@@ -33,7 +46,8 @@ const copy: Record<
   signup: {
     title: "Create your account",
     sub: "Start free. Upgrade when your links do.",
-    cta: "Continue with email",
+    cta: "Create account",
+    pending: "Creating account…",
     alt: "Already have an account?",
     altLink: "Sign in",
     altHref: "/login",
@@ -48,13 +62,59 @@ const providers = [
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const c = copy[mode]
+  const router = useRouter()
+  const { setUser } = useAuth()
   const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
   const [pending, setPending] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [conflict, setConflict] = React.useState(false)
 
-  function onSubmit(e: React.FormEvent) {
+  // Dub-style progressive reveal: the password field appears once the
+  // email reads as one — the form starts as a single calm field.
+  const emailLooksValid = /\S+@\S+\.\S+/.test(email)
+  const canSubmit =
+    emailLooksValid &&
+    (mode === "login" ? password.length > 0 : passwordSatisfies(password))
+
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!canSubmit || pending) return
     setPending(true)
-    window.location.href = `https://spoo.me/${mode}?email=${encodeURIComponent(email)}`
+    setError(null)
+    setConflict(false)
+    try {
+      if (mode === "login") {
+        const { user } = await login({ email, password })
+        setUser(user)
+        // Read ?next= at submit time — avoids the useSearchParams Suspense
+        // requirement on an otherwise static page.
+        const next = safeNext(
+          new URLSearchParams(window.location.search).get("next"),
+        )
+        router.push(next ?? "/dashboard")
+      } else {
+        const { user } = await register({ email, password })
+        setUser(user)
+        router.push("/onboarding")
+      }
+    } catch (err) {
+      setPending(false)
+      if (err instanceof SpooApiError) {
+        if (err.status === 409) {
+          setConflict(true)
+          setError("This email already has an account.")
+        } else if (err.isRateLimit) {
+          setError("Too many attempts. Wait a minute and try again.")
+        } else if (err.code === "authentication_error") {
+          setError("Invalid email or password.")
+        } else {
+          setError(err.message)
+        }
+      } else {
+        setError("Can't reach the server. Check your connection and try again.")
+      }
+    }
   }
 
   return (
@@ -74,7 +134,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <div className="grid grid-cols-3 gap-2">
         {providers.map(({ id, label, Icon }) => (
           <Button key={id} asChild variant="outline" className="h-10 w-full">
-            <a href={`https://spoo.me/oauth/${id}`} rel="noreferrer" aria-label={`Continue with ${label}`}>
+            {/* Full-page navigation through the same-origin proxy — the
+                OAuth flow needs the backend session cookie + 302 chain. */}
+            <a href={`/oauth/${id}?next=/dashboard`} aria-label={`Continue with ${label}`}>
               <Icon className="size-4" data-icon="inline-start" />
               {label}
             </a>
@@ -117,8 +179,81 @@ export function AuthForm({ mode }: { mode: Mode }) {
             className="h-10"
           />
         </div>
-        <Button type="submit" className="h-10 w-full" disabled={pending || !email}>
-          {pending ? "Redirecting…" : c.cta}
+
+        <AnimatePresence initial={false}>
+          {emailLooksValid && (
+            <motion.div
+              key="password"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-col gap-1.5 pb-px">
+                <label
+                  htmlFor="auth-password"
+                  className="text-foreground text-sm font-medium"
+                >
+                  Password
+                </label>
+                <Input
+                  id="auth-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={mode === "signup" ? "Create a strong password" : "Your password"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  required
+                  aria-invalid={!!error || undefined}
+                  className="h-10"
+                />
+                {mode === "signup" && password.length > 0 && (
+                  <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1" aria-label="Password requirements">
+                    {PASSWORD_RULES.map((rule) => {
+                      const ok = rule.test(password)
+                      return (
+                        <li
+                          key={rule.id}
+                          className={cn(
+                            "flex items-center gap-1.5 text-xs transition-colors",
+                            ok ? "text-live" : "text-muted-foreground/60",
+                          )}
+                        >
+                          <Check
+                            className={cn("size-3 shrink-0", !ok && "opacity-30")}
+                            aria-hidden
+                          />
+                          {rule.label}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {error && (
+          <p role="alert" className="text-destructive text-sm">
+            {error}
+            {conflict && (
+              <>
+                {" "}
+                <Link
+                  href="/login"
+                  className="text-foreground font-medium underline-offset-4 hover:underline"
+                >
+                  Sign in instead
+                </Link>
+              </>
+            )}
+          </p>
+        )}
+
+        <Button type="submit" className="h-10 w-full" disabled={pending || !canSubmit}>
+          {pending ? c.pending : c.cta}
           {!pending && <ArrowRight className="size-4" data-icon="inline-end" />}
         </Button>
       </form>
