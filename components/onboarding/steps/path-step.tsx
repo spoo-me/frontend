@@ -2,16 +2,48 @@
 
 import * as React from "react"
 import { ArrowRight } from "lucide-react"
+import { motion } from "motion/react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import type { OnboardingPath } from "@/lib/onboarding"
 
-const BARS = [38, 62, 45, 80, 58, 92, 70, 64, 84]
-
 /* The stage illustrations ARE the product — enlarged, floating panels. */
 
+/** Catmull-Rom → cubic bezier, same smooth-line idiom as dashboard-preview. */
+function smoothPath(points: number[], w: number, h: number, pad = 6): string {
+  const max = Math.max(...points)
+  const stepX = w / (points.length - 1)
+  const xy = points.map(
+    (p, i) => [i * stepX, h - (p / max) * (h - pad)] as const,
+  )
+  let d = `M ${xy[0][0]} ${xy[0][1]}`
+  for (let i = 0; i < xy.length - 1; i++) {
+    const p0 = xy[Math.max(i - 1, 0)]
+    const p1 = xy[i]
+    const p2 = xy[i + 1]
+    const p3 = xy[Math.min(i + 2, xy.length - 1)]
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6
+    const c1y = p1[1] + (p2[1] - p0[1]) / 6
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6
+    const c2y = p2[1] - (p3[1] - p1[1]) / 6
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`
+  }
+  return d
+}
+
+const CLICKS = [14, 22, 18, 34, 28, 46, 42, 66, 58, 88, 76, 96]
+const CHART_W = 224
+const CHART_H = 56
+
 function LinksIllustration({ active }: { active: boolean }) {
+  const gradientId = React.useId()
+  const line = smoothPath(CLICKS, CHART_W, CHART_H)
+  const area = `${line} L ${CHART_W} ${CHART_H} L 0 ${CHART_H} Z`
+  // Peak = last point (the curve climbs into it)
+  const peakX = CHART_W
+  const peakY = CHART_H - (CLICKS[CLICKS.length - 1] / Math.max(...CLICKS)) * (CHART_H - 6)
+
   return (
     <div className="border-border/60 bg-card shadow-card w-64 rounded-xl border p-4 text-left">
       <div className="flex items-center justify-between gap-3">
@@ -28,18 +60,72 @@ function LinksIllustration({ active }: { active: boolean }) {
           </span>
         </span>
       </div>
-      <div className="mt-3 flex h-14 items-end gap-1" aria-hidden>
-        {BARS.map((h, i) => (
-          <span
-            key={i}
-            style={{ height: `${h}%` }}
-            className={cn(
-              "flex-1 rounded-[2px] transition-colors duration-500",
-              active ? "bg-brand/70" : "bg-border",
-            )}
+
+      <div className="relative mt-3">
+        <svg
+          viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+          preserveAspectRatio="none"
+          className="h-16 w-full overflow-visible"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="var(--brand)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {[0.33, 0.66].map((g) => (
+            <line
+              key={g}
+              x1={0}
+              x2={CHART_W}
+              y1={CHART_H * g}
+              y2={CHART_H * g}
+              stroke="currentColor"
+              className="text-border/40"
+              strokeDasharray="3 4"
+              strokeWidth={1}
+            />
+          ))}
+          <motion.path
+            d={area}
+            fill={`url(#${gradientId})`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: active ? 1 : 0.4 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
           />
-        ))}
+          <motion.path
+            d={line}
+            fill="none"
+            stroke="var(--brand)"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1, opacity: active ? 1 : 0.5 }}
+            transition={{ pathLength: { duration: 1.2, ease: "easeInOut" }, opacity: { duration: 0.4 } }}
+          />
+          <motion.g
+            initial={{ opacity: 0 }}
+            animate={{ opacity: active ? 1 : 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <circle cx={peakX} cy={peakY} r={3.5} fill="var(--brand)" />
+            <circle cx={peakX} cy={peakY} r={8} fill="var(--brand)" opacity={0.18} />
+          </motion.g>
+        </svg>
+        {/* Peak tooltip chip — floats off the line's landing point */}
+        <motion.span
+          initial={false}
+          animate={{ opacity: active ? 1 : 0, y: active ? 0 : 4 }}
+          transition={{ duration: 0.3, delay: 0.25 }}
+          className="border-border/60 bg-popover text-foreground shadow-card absolute -top-2 right-0 rounded-md border px-1.5 py-0.5 font-mono text-[9px] tabular-nums"
+        >
+          96 <span className="text-muted-foreground">now</span>
+        </motion.span>
       </div>
+
       <div className="text-muted-foreground/70 mt-2.5 flex items-center justify-between font-mono text-[9px] tabular-nums">
         <span>last 7 days</span>
         <span className="text-live">+38%</span>
