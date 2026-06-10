@@ -52,7 +52,12 @@ function CustomDomainIllustration({ active }: { active: boolean }) {
           )}
         />
         <span className="font-mono text-sm">
-          <span className={cn("transition-colors duration-500", active ? "text-brand" : "text-foreground/80")}>
+          <span
+            className={cn(
+              "transition-colors duration-500",
+              active ? "text-foreground" : "text-foreground/70",
+            )}
+          >
             go.acme.com
           </span>
           <span className="text-muted-foreground">/launch</span>
@@ -190,7 +195,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
               <div className="border-border/60 mt-4 divide-y rounded-xl border font-mono text-[11px]">
                 {created.dns_records.map((r, i) => (
                   <div key={i} className="flex items-center gap-3 px-4 py-3">
-                    <span className="label-mono text-brand w-12 shrink-0 text-[9px]">
+                    <span className="label-mono text-muted-foreground w-12 shrink-0 text-[9px]">
                       {r.type}
                     </span>
                     <span className="text-foreground/90 w-24 shrink-0 truncate">
