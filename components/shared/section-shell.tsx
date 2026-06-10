@@ -131,12 +131,41 @@ export function Section({
 }
 
 /**
- * Gutter hatch — fills the drafting margin (between inner and outer rails)
- * with the diagonal engineering hatch. Reserve for bands carrying a major
- * artifact (dashboard mock, stat lattice, CTA) so the margin "activates"
- * beside the page's heaviest moments.
+ * Gutter hatch — diagonal engineering hatch activating the frame's margins
+ * beside a band. Two zones:
+ *  - "gutter": the 24px drafting margin between inner and outer rails
+ *  - "outer":  the outermost flank, from the dashed rail to the viewport
+ *    edge, capped top/bottom by the band's full-bleed rules
+ * Reserve for bands carrying a major artifact; never inside the lattice,
+ * never on adjacent bands.
  */
-export function GutterHatch({ className }: { className?: string }) {
+export function GutterHatch({
+  area = "gutter",
+  className,
+}: {
+  area?: "gutter" | "outer"
+  className?: string
+}) {
+  if (area === "outer") {
+    return (
+      <>
+        <span
+          aria-hidden
+          className={cn(
+            "pattern-hatch pointer-events-none absolute inset-y-0 right-[calc(100%+1.5rem)] left-[calc(50%-50vw)] hidden opacity-60 min-[1300px]:block",
+            className,
+          )}
+        />
+        <span
+          aria-hidden
+          className={cn(
+            "pattern-hatch pointer-events-none absolute inset-y-0 left-[calc(100%+1.5rem)] right-[calc(50%-50vw)] hidden opacity-60 min-[1300px]:block",
+            className,
+          )}
+        />
+      </>
+    )
+  }
   return (
     <>
       <span

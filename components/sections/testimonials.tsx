@@ -33,9 +33,9 @@ export function Testimonials() {
       </Band>
 
       {/* Quote mosaic — cells share hairlines and span the full lattice;
-          hatch lives in the gutter only, never inside the lattice */}
+          the outermost flanks (dashed rail → viewport edge) hatch in */}
       <Band rule>
-        <GutterHatch />
+        <GutterHatch area="outer" />
         <div className="bg-border grid grid-cols-1 gap-px lg:grid-cols-12">
           {featured.map((t) => (
             <QuoteCard key={t.slug} item={t} />
