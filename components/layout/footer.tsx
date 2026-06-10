@@ -18,8 +18,9 @@ export function Footer() {
   ]
 
   return (
-    <footer className="border-border/60 relative overflow-hidden border-t">
-      <div className="relative z-10 mx-auto max-w-6xl px-4 pt-16 pb-0 sm:px-6">
+    // The frame closes above — the footer breathes outside the rails
+    <footer className="relative overflow-hidden">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 pt-20 pb-0 sm:px-6 sm:pt-24">
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div className="space-y-5">
             <Logo />
@@ -85,7 +86,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-border/40 mt-12 flex items-center justify-between border-t pt-5">
+        <div className="border-border/40 mt-12 flex items-center justify-between border-t border-dashed pt-5">
           <p className="text-muted-foreground/70 text-xs">
             © {new Date().getFullYear()} spoo.me, open source under Apache 2.0
           </p>

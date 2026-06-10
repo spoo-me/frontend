@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react"
 
 import { NumberTicker } from "@/components/ui/number-ticker"
 import { SectionHeading } from "@/components/shared/section-heading"
+import { Band } from "@/components/shared/section-shell"
 import { Globe } from "@/components/magicui/globe"
 import { siteConfig, stats } from "@/lib/site-config"
 
@@ -43,13 +44,16 @@ const supporting: Item[] = [
 
 export function Stats() {
   return (
-    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
-      <div
-        aria-hidden
-        className="pattern-dots pointer-events-none absolute inset-0 -z-10 opacity-30 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,black,transparent)]"
-      />
-      <div>
+    <>
+      {/* Header band */}
+      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+        <div
+          aria-hidden
+          className="pattern-dots pointer-events-none absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_60%_80%_at_50%_50%,black,transparent)]"
+        />
         <SectionHeading
+          num="07"
+          caption="Scale"
           title={
             <>
               Trusted at scale,{" "}
@@ -60,13 +64,16 @@ export function Stats() {
           }
           description="Real traffic, real uptime, real community. The metrics that make spoo dependable."
         />
+      </Band>
 
+      {/* Stat lattice — globe cell + giant-number cells, edge-to-rail */}
+      <Band rule>
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="border-border/60 bg-card/30 relative mt-14 grid grid-cols-1 overflow-hidden rounded-2xl border lg:grid-cols-[1.1fr_0.9fr]"
+          className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]"
         >
           {/* Hero stat: clicks served — globe backdrop */}
           <div className="relative flex min-h-[28rem] flex-col justify-end overflow-hidden p-8 sm:p-10 lg:min-h-[32rem]">
@@ -99,7 +106,7 @@ export function Stats() {
           </div>
 
           {/* Supporting stats: 3-up stacked column */}
-          <ul className="border-border/60 bg-background grid grid-cols-1 grid-rows-3 lg:border-l">
+          <ul className="border-border/60 bg-background grid grid-cols-1 grid-rows-3 border-t lg:border-t-0 lg:border-l">
             {supporting.map((item, i) => {
               const numberBlock = (
                 <div className="flex items-baseline">
@@ -158,7 +165,7 @@ export function Stats() {
             })}
           </ul>
         </motion.div>
-      </div>
-    </div>
+      </Band>
+    </>
   )
 }

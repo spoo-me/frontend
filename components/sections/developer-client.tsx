@@ -8,6 +8,7 @@ import { ArrowUpRight, Check, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
+import { Band } from "@/components/shared/section-shell"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 import { sdks } from "@/lib/apps-data"
@@ -42,9 +43,12 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
   }
 
   return (
-    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
-      <div>
+    <>
+      {/* Header band */}
+      <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
+          num="04"
+          caption="Developers"
           title={
             <>
               An API your team will{" "}
@@ -55,15 +59,18 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
           }
           description="Predictable REST. Type-safe SDKs. Idiomatic clients in every language you ship in."
         />
+      </Band>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+      {/* Split band — playground and SDK list separated by a band-local hairline */}
+      <Band rule>
+        <div className="divide-border/60 grid divide-y lg:grid-cols-[1.4fr_1fr] lg:divide-x lg:divide-y-0">
           {/* Code playground — editor file-tabs fused into the panel */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.5 }}
-            className="relative self-start [--code-surface:var(--card)] dark:[--code-surface:#09090b]"
+            className="relative self-start p-5 sm:p-9 [--code-surface:var(--card)] dark:[--code-surface:#09090b]"
           >
             {/* File tabs — no overflow container here, it would trap the -mb-px fusion */}
             <div className="flex flex-wrap items-end gap-0.5 px-3">
@@ -153,7 +160,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="space-y-4"
+            className="space-y-4 p-5 sm:p-8"
           >
             <div>
               <h3 className="text-foreground text-base font-semibold tracking-tight">
@@ -206,7 +213,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
             </Button>
           </motion.div>
         </div>
-      </div>
-    </div>
+      </Band>
+    </>
   )
 }

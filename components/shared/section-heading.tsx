@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils"
 
 type Props = {
   eyebrow?: React.ReactNode
+  /** chapter number rendered as a bracketed mono prefix: [01] */
+  num?: string
+  /** mono chapter caption set beside the number: [01] ANALYTICS */
+  caption?: string
   title: React.ReactNode
   description?: React.ReactNode
   align?: "left" | "center"
@@ -13,6 +17,8 @@ type Props = {
 
 export function SectionHeading({
   eyebrow,
+  num,
+  caption,
   title,
   description,
   align = "center",
@@ -26,6 +32,22 @@ export function SectionHeading({
         className,
       )}
     >
+      {caption && (
+        <motion.span
+          initial={{ opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.4 }}
+          className="label-mono text-muted-foreground mb-1"
+        >
+          {num && (
+            <span className="text-muted-foreground/50">
+              [<span className="text-muted-foreground/80"> {num} </span>]{" "}
+            </span>
+          )}
+          {caption}
+        </motion.span>
+      )}
       {eyebrow && (
         <motion.span
           initial={{ opacity: 0, y: 8 }}

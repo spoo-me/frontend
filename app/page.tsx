@@ -15,31 +15,32 @@ export default function HomePage() {
   return (
     <>
       <Header />
-      <main className="overflow-hidden">
+      <main>
         <PageFrame>
           <Hero />
-          <Section num="01" caption="Analytics" id="analytics">
+          {/* Chapter captions live inside each section's header band */}
+          <Section id="analytics">
             <DashboardPreview />
           </Section>
-          <Section num="02" caption="Features" id="features">
+          <Section id="features">
             <Features />
           </Section>
-          <Section num="03" caption="Ecosystem" id="apps">
+          <Section id="apps">
             <ConnectedApps />
           </Section>
-          <Section num="04" caption="Developers" id="developers">
+          <Section id="developers">
             <Developer />
           </Section>
-          <Section num="05" caption="Builders">
+          <Section>
             <Testimonials />
           </Section>
-          <Section num="06" caption="Self-host" id="self-host">
+          <Section id="self-host">
             <SelfHost />
           </Section>
-          <Section num="07" caption="Scale">
+          <Section>
             <Stats />
           </Section>
-          <Section num="08" caption="Get started">
+          <Section>
             <CTA />
           </Section>
         </PageFrame>

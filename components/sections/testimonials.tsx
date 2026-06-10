@@ -6,6 +6,7 @@ import { motion } from "motion/react"
 import { ArrowUpRight } from "lucide-react"
 
 import { SectionHeading } from "@/components/shared/section-heading"
+import { Band } from "@/components/shared/section-shell"
 import { cn } from "@/lib/utils"
 import { testimonials, type Testimonial } from "@/lib/testimonials"
 import { QuoteText } from "@/app/testimonials/_components/quote-text"
@@ -14,9 +15,12 @@ export function Testimonials() {
   const featured = testimonials.slice(0, 1)
 
   return (
-    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
-      <div>
+    <>
+      {/* Header band */}
+      <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
+          num="05"
+          caption="Builders"
           title={
             <>
               Real teams, shipping with{" "}
@@ -27,42 +31,48 @@ export function Testimonials() {
           }
           description="A small, growing chorus of operators, founders, and engineers using spoo in production."
         />
+      </Band>
 
-        <div className="mt-14 grid gap-5 lg:grid-cols-12">
+      {/* Quote mosaic — cells share hairlines on the lattice */}
+      <Band rule>
+        <div className="bg-border/60 grid grid-cols-1 gap-px lg:grid-cols-12">
           {featured.map((t, i) => (
             <QuoteCard key={t.slug} item={t} delay={0.05 + i * 0.08} />
           ))}
           <PlaceholderCard delay={0.05 + featured.length * 0.08} />
         </div>
+      </Band>
 
-        {testimonials.length > 1 && (
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/testimonials"
-              className="text-muted-foreground hover:text-foreground group inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-            >
-              Read all stories
-              <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
+      {testimonials.length > 1 && (
+        <Band rule className="flex items-center justify-between px-5 py-4 sm:px-9">
+          <span className="label-mono text-muted-foreground/60 hidden sm:block">
+            From production
+          </span>
+          <Link
+            href="/testimonials"
+            className="text-muted-foreground hover:text-foreground group inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+          >
+            Read all stories
+            <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </Link>
+        </Band>
+      )}
+    </>
   )
 }
 
 function QuoteCard({ item, delay }: { item: Testimonial; delay: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5, delay }}
-      className="lg:col-span-7"
+      className="bg-background lg:col-span-7"
     >
       <Link
         href={`/testimonials/${item.slug}`}
-        className="border-border/60 bg-card/30 hover:border-border/90 shadow-card group relative flex h-full flex-col gap-7 overflow-hidden rounded-2xl border p-7 transition-colors sm:p-9 dark:shadow-none"
+        className="hover:bg-foreground/[0.02] group relative flex h-full flex-col gap-7 overflow-hidden p-7 transition-colors sm:p-9"
       >
         {/* Brand-color radial glow — bottom-right inner glow */}
         <span
@@ -141,13 +151,13 @@ function Avatar({ item }: { item: Testimonial }) {
 function PlaceholderCard({ delay }: { delay: number }) {
   return (
     <motion.a
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5, delay }}
       href="mailto:hi@spoo.me?subject=spoo.me%20testimonial"
       className={cn(
-        "group border-border/50 hover:border-border bg-card/10 hover:bg-card/30 relative flex h-full flex-col gap-7 overflow-hidden rounded-2xl border border-dashed p-7 transition-colors sm:p-9 lg:col-span-5",
+        "group bg-background hover:bg-foreground/[0.02] relative flex h-full flex-col gap-7 overflow-hidden p-7 transition-colors sm:p-9 lg:col-span-5",
       )}
     >
       {/* Inner dotted-grid texture — matches site bg pattern */}

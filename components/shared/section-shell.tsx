@@ -1,33 +1,30 @@
 import { cn } from "@/lib/utils"
 
 /**
- * Page frame — the "rails": a bounded container whose vertical hairlines run
- * the full height of the page, giving every section a shared structure.
- * Sections divide it with horizontal rules (see Section below).
+ * Full-bleed rule — a horizontal hairline that escapes the frame and runs the
+ * entire viewport width, crossing the rails. Every band boundary on the page
+ * uses one of these; the intersections are what make the lattice read as a
+ * drafting sheet instead of a bordered box.
+ * Needs `overflow-x: clip` on an ancestor (set on body) — never `hidden`,
+ * which would create a scroll container and kill position:sticky.
  */
-export function PageFrame({
-  children,
-  className,
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
+export function Rule({ className }: { className?: string }) {
   return (
-    <div
+    <span
+      aria-hidden
       className={cn(
-        "border-border/60 relative mx-auto w-full max-w-[1200px] overflow-hidden sm:border-x",
+        "bg-border/60 pointer-events-none absolute top-0 left-1/2 h-px w-screen -translate-x-1/2",
         className,
       )}
-    >
-      {children}
-    </div>
+    />
   )
 }
 
 /**
  * Corner tick — a small "+" where a section divider meets the rails.
+ * Reserved for section boundaries (major intersections), not every band rule.
  */
-function Tick({ className }: { className?: string }) {
+export function Tick({ className }: { className?: string }) {
   return (
     <span
       aria-hidden
@@ -43,9 +40,58 @@ function Tick({ className }: { className?: string }) {
 }
 
 /**
- * Section — a frame-aware section: top hairline divider, a mono caption
- * sitting on the line, and corner ticks at the rail intersections.
- * Replaces the per-section floating eyebrows.
+ * Page frame — the "rails": a bounded sheet whose vertical hairlines run the
+ * full height of the page. Two solid inner rails bound the content; a dashed
+ * outer pair 24px out forms the drafting-margin gutter. Horizontal rules
+ * (Rule) cross the whole viewport, so the rails sit on a real lattice.
+ * The frame is a finite object: it opens with a rule + ticks and closes with
+ * one — the footer lives outside it.
+ */
+export function PageFrame({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn("relative mx-auto w-full max-w-[1200px]", className)}>
+      {/* Inner rails — solid */}
+      <span
+        aria-hidden
+        className="border-border/60 pointer-events-none absolute inset-y-0 left-0 hidden border-l sm:block"
+      />
+      <span
+        aria-hidden
+        className="border-border/60 pointer-events-none absolute inset-y-0 right-0 hidden border-r sm:block"
+      />
+      {/* Outer rails — dashed, the drafting-margin gutter */}
+      <span
+        aria-hidden
+        className="border-border/40 pointer-events-none absolute inset-y-0 -left-6 hidden border-l border-dashed min-[1300px]:block"
+      />
+      <span
+        aria-hidden
+        className="border-border/40 pointer-events-none absolute inset-y-0 -right-6 hidden border-r border-dashed min-[1300px]:block"
+      />
+      {/* Frame opening */}
+      <Rule />
+      <Tick className="-top-[4.5px] -left-[4.5px]" />
+      <Tick className="-top-[4.5px] -right-[4.5px]" />
+      {children}
+      {/* Frame closing — rails terminate here; the footer breathes outside */}
+      <Rule className="top-auto bottom-0" />
+      <Tick className="-bottom-[4.5px] -left-[4.5px]" />
+      <Tick className="-bottom-[4.5px] -right-[4.5px]" />
+    </div>
+  )
+}
+
+/**
+ * Section — a major chapter of the frame: full-bleed top rule + corner ticks.
+ * The optional mono caption sits on the line (used by subpages); landing
+ * sections instead carry their `[01] caption` inside the header band via
+ * SectionHeading.
  */
 export function Section({
   id,
@@ -62,11 +108,12 @@ export function Section({
   className?: string
 }) {
   return (
-    <section id={id} className={cn("border-border/60 relative border-t", className)}>
+    <section id={id} className={cn("relative", className)}>
+      <Rule />
       <Tick className="-top-[4.5px] -left-[4.5px]" />
       <Tick className="-top-[4.5px] -right-[4.5px]" />
       {caption && (
-        <span className="label-mono text-muted-foreground bg-background absolute top-0 left-5 -translate-y-1/2 px-2 sm:left-9">
+        <span className="label-mono text-muted-foreground bg-background absolute top-0 left-5 z-10 -translate-y-1/2 px-2 sm:left-9">
           {num && (
             <span className="text-muted-foreground/50">
               [<span className="text-muted-foreground/80">{num}</span>]{" "}
@@ -77,5 +124,31 @@ export function Section({
       )}
       {children}
     </section>
+  )
+}
+
+/**
+ * Band — one full-width row of the frame. Bands stack inside a Section;
+ * each draws its own full-bleed top rule (skip on the first, the Section
+ * already drew it). Subdivide a band with grid + `gap-px bg-border/60`
+ * lattice cells or `divide-x` — the internal lines span only this band.
+ */
+export function Band({
+  children,
+  className,
+  rule = false,
+  id,
+}: {
+  children: React.ReactNode
+  className?: string
+  /** draw a full-bleed hairline at the band's top edge */
+  rule?: boolean
+  id?: string
+}) {
+  return (
+    <div id={id} className={cn("relative", className)}>
+      {rule && <Rule />}
+      {children}
+    </div>
   )
 }

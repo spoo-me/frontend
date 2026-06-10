@@ -21,6 +21,7 @@ import { AnimatedList } from "@/components/magicui/animated-list"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BaseQr, encodeData } from "simple-qrbtf"
 import { SectionHeading } from "@/components/shared/section-heading"
+import { Band } from "@/components/shared/section-shell"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
 
@@ -343,7 +344,7 @@ export function Features() {
       name: "Custom Domains",
       description:
         "Use your own domain for branded short links that build trust and recognition.",
-      className: "col-span-3 lg:col-span-1",
+      className: "col-span-1 lg:col-span-1",
       background: <DomainBackground />,
     },
     {
@@ -351,7 +352,7 @@ export function Features() {
       name: "QR Code Generation",
       description:
         "Generate custom QR codes for your shortened links with brand colors and logos.",
-      className: "col-span-3 lg:col-span-1",
+      className: "col-span-1 lg:col-span-1",
       background: <QRCodeDemo />,
     },
     {
@@ -359,7 +360,7 @@ export function Features() {
       name: "Custom Link Aliases",
       description:
         "Create memorable, branded short links with custom aliases that reflect your brand or campaign.",
-      className: "col-span-3 lg:col-span-2",
+      className: "col-span-1 lg:col-span-2",
       background: <AliasDemo />,
     },
     {
@@ -367,7 +368,7 @@ export function Features() {
       name: "Advanced Analytics",
       description:
         "Get detailed insights on clicks, locations, devices, and referrers to optimize your links.",
-      className: "col-span-3 lg:col-span-2",
+      className: "col-span-1 lg:col-span-2",
       background: <AnalyticsChart />,
     },
     {
@@ -375,7 +376,7 @@ export function Features() {
       name: "Link Expiration",
       description:
         "Set expiration dates for temporary promotions or time-sensitive content.",
-      className: "col-span-3 lg:col-span-1",
+      className: "col-span-1 lg:col-span-1",
       background: <ExpiryTimeline />,
     },
     {
@@ -383,7 +384,7 @@ export function Features() {
       name: "Developer API",
       description:
         "Integrate link management into your applications with our RESTful API.",
-      className: "col-span-3 lg:col-span-1",
+      className: "col-span-1 lg:col-span-1",
       background: <APIDemo />,
     },
     {
@@ -391,7 +392,7 @@ export function Features() {
       name: "UTM Builder",
       description:
         "Create and manage UTM parameters for campaign tracking without the hassle.",
-      className: "col-span-3 lg:col-span-1",
+      className: "col-span-1 lg:col-span-1",
       background: <UtmDemo />,
     },
     {
@@ -399,7 +400,7 @@ export function Features() {
       name: "Analytics Alerts",
       description:
         "Get notified when your links reach specific performance thresholds.",
-      className: "col-span-3 lg:col-span-2",
+      className: "col-span-1 lg:col-span-2",
       background: <NotificationsList />,
     },
     {
@@ -407,15 +408,18 @@ export function Features() {
       name: "Customization",
       description:
         "Personalize link behavior, redirects, and appearance to match your brand.",
-      className: "col-span-3 lg:col-span-1",
+      className: "col-span-1 lg:col-span-1",
       background: <CustomizationDemo />,
     },
   ]
 
   return (
-    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
-      <div>
+    <>
+      {/* Header band */}
+      <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
+          num="02"
+          caption="Features"
           title={
             <>
               Everything you need.{" "}
@@ -426,15 +430,16 @@ export function Features() {
           }
           description="Built by developers shipping production traffic. Every feature has a reason it exists."
         />
+      </Band>
 
-        <div className="mx-auto mt-12 max-w-6xl">
-          <BentoGrid className="grid-cols-1 lg:grid-cols-4 auto-rows-[18rem]">
-            {features.map((feature, index) => (
-              <BentoCard key={index} index={index} {...feature} />
-            ))}
-          </BentoGrid>
-        </div>
-      </div>
-    </div>
+      {/* Bento fused into the lattice — cells share hairlines, edge-to-rail */}
+      <Band rule>
+        <BentoGrid className="grid-cols-1 lg:grid-cols-4 auto-rows-[18rem]">
+          {features.map((feature, index) => (
+            <BentoCard key={index} index={index} {...feature} />
+          ))}
+        </BentoGrid>
+      </Band>
+    </>
   )
 }

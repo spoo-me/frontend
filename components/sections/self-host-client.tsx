@@ -6,6 +6,7 @@ import { ArrowUpRight, Check, Copy } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
+import { Band } from "@/components/shared/section-shell"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 import { cn } from "@/lib/utils"
@@ -31,14 +32,13 @@ export function SelfHostClient() {
   }
 
   return (
-    <div className="relative px-5 py-24 sm:px-9 sm:py-32">
-      <div
-        aria-hidden
-        className="pattern-dots pointer-events-none absolute inset-0 -z-10 opacity-60 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,black,transparent)]"
-      />
-      <div>
+    <>
+      {/* Header band — heading + CTAs share the cell */}
+      <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
           align="center"
+          num="06"
+          caption="Self-host"
           title={
             <>
               Run spoo.me on{" "}
@@ -68,23 +68,33 @@ export function SelfHostClient() {
             </a>
           </Button>
         </div>
+      </Band>
 
+      {/* Diagram band — dotted patch under the deploy artifact */}
+      <Band rule className="px-5 py-16 sm:px-9 sm:py-20">
+        <div
+          aria-hidden
+          className="pattern-dots pointer-events-none absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,black,transparent)]"
+        />
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
-          className="mt-24"
+          className="relative"
         >
           <DeployDiagram onDockerClick={focusTerminal} />
         </motion.div>
+      </Band>
 
+      {/* Terminal band */}
+      <Band rule className="px-5 py-12 sm:px-9 sm:py-14">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="mx-auto mt-20 max-w-xl"
+          className="mx-auto max-w-xl"
         >
           <div
             ref={terminalRef}
@@ -124,7 +134,7 @@ export function SelfHostClient() {
             </code>
           </p>
         </motion.div>
-      </div>
-    </div>
+      </Band>
+    </>
   )
 }

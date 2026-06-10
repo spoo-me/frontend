@@ -177,6 +177,9 @@
     }
   body {
     @apply bg-background text-foreground;
+    /* Clip (not hide) horizontal overflow: full-bleed w-screen rules can
+       exceed the viewport by the scrollbar width. `clip` keeps sticky alive. */
+    overflow-x: clip;
     }
   html {
     @apply font-sans;

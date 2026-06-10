@@ -21,14 +21,18 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
+import { Band } from "@/components/shared/section-shell"
 import { siteConfig } from "@/lib/site-config"
 import { cn } from "@/lib/utils"
 
 export function DashboardPreview() {
   return (
-    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
-      <div>
+    <>
+      {/* Header band */}
+      <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
+          num="01"
+          caption="Analytics"
           title={
             <>
               Click insights without{" "}
@@ -39,20 +43,23 @@ export function DashboardPreview() {
           }
           description="A real analytics product, included free in every link. No third-party scripts, no cookie banners. Yours by default."
         />
+      </Band>
 
+      {/* Mock band — the dashboard pours under the next rule, hard-cropped */}
+      <Band rule className="overflow-hidden px-5 pt-10 sm:px-12 sm:pt-14">
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="relative mt-14"
+          className="relative -mb-20 sm:-mb-28"
         >
           <DashboardMock />
         </motion.div>
+      </Band>
 
-        <Callouts />
-      </div>
-    </div>
+      <Callouts />
+    </>
   )
 }
 
@@ -491,37 +498,47 @@ function Callouts() {
     },
   ]
   return (
-    <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {callouts.map((c, i) => (
-        <motion.div
-          key={c.title}
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.5, delay: i * 0.06 }}
-          className="flex gap-3"
-        >
-          <span className="border-border/60 bg-background text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md border">
-            <c.icon className="size-3.5" />
-          </span>
-          <div>
-            <h4 className="text-foreground text-sm font-semibold tracking-tight">
-              {c.title}
-            </h4>
-            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-              {c.description}
-            </p>
-          </div>
-        </motion.div>
-      ))}
-      <div className="sm:col-span-2 lg:col-span-4">
+    <>
+      {/* Callout cells — shared-hairline lattice, one cell per claim */}
+      <Band rule>
+        <div className="bg-border/60 grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4">
+          {callouts.map((c, i) => (
+            <motion.div
+              key={c.title}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.5, delay: i * 0.06 }}
+              className="bg-background flex flex-col gap-3 p-6 sm:p-7"
+            >
+              <span className="border-border/60 bg-muted/30 text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md border">
+                <c.icon className="size-3.5" />
+              </span>
+              <div>
+                <h4 className="text-foreground text-sm font-semibold tracking-tight">
+                  {c.title}
+                </h4>
+                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  {c.description}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </Band>
+
+      {/* Table-footer row */}
+      <Band rule className="flex items-center justify-between px-5 py-4 sm:px-9">
+        <span className="label-mono text-muted-foreground/60 hidden sm:block">
+          app.spoo.me
+        </span>
         <Button asChild variant="outline" size="sm">
           <a href={siteConfig.app.dashboard} target="_blank" rel="noreferrer">
             See live demo
             <ArrowUpRight className="size-3.5" data-icon="inline-end" />
           </a>
         </Button>
-      </div>
-    </div>
+      </Band>
+    </>
   )
 }

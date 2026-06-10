@@ -7,6 +7,7 @@ import { ArrowUpRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"
+import { Band } from "@/components/shared/section-shell"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
 import { connectedApps } from "@/lib/apps-data"
 import styles from "./connected-apps.module.css"
@@ -51,9 +52,12 @@ export function ConnectedApps() {
   const inView = useInView(ref, { once: true, amount: 0.2 })
 
   return (
-    <div className="relative px-5 py-24 sm:px-9 sm:py-28">
-      <div>
+    <>
+      {/* Header band */}
+      <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
+          num="03"
+          caption="Ecosystem"
           title={
             <>
               spoo lives{" "}
@@ -64,8 +68,10 @@ export function ConnectedApps() {
           }
           description="Not a website you bookmark. A constellation of clients on every desktop, browser, and chat platform, all orbiting the same core API."
         />
+      </Band>
 
-        <div className="mx-auto mt-14 max-w-6xl">
+      {/* Constellation band — chips spread across the full cell */}
+      <Band rule className="px-2 sm:px-4">
           <div className={styles.scatter} ref={ref} data-in-view={inView ? "true" : undefined}>
            <div className={styles.inner}>
             {placements.map((p) => {
@@ -125,17 +131,20 @@ export function ConnectedApps() {
             </div>
            </div>
           </div>
-        </div>
+      </Band>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/apps">
-              Browse all apps
-              <ArrowUpRight className="size-3.5" data-icon="inline-end" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+      {/* Table-footer row */}
+      <Band rule className="flex items-center justify-between px-5 py-4 sm:px-9">
+        <span className="label-mono text-muted-foreground/60 hidden sm:block">
+          16 clients · one API
+        </span>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/apps">
+            Browse all apps
+            <ArrowUpRight className="size-3.5" data-icon="inline-end" />
+          </Link>
+        </Button>
+      </Band>
+    </>
   )
 }

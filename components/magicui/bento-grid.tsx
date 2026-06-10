@@ -21,11 +21,16 @@ interface BentoCardProps {
   index?: number
 }
 
+/**
+ * Lattice bento — cells share hairlines via the gap-px trick: the grid's
+ * border-tint background shows through 1px gaps between opaque cells.
+ * Outer edges stay open; the frame's rails and rules provide them.
+ */
 const BentoGrid = ({ children, className, ...props }: BentoGridProps) => {
   return (
     <div
       className={cn(
-        "grid w-full auto-rows-[22rem] grid-cols-3 gap-3 md:gap-4",
+        "bg-border/60 grid w-full auto-rows-[22rem] grid-cols-3 gap-px",
         className,
       )}
       {...props}
@@ -49,12 +54,14 @@ const BentoCard = ({
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      // Opacity-only reveal — cells sit on a shared lattice, they don't slide
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, delay: (index % 4) * 0.06 }}
       className={cn(
-        "group border-border/60 bg-card/40 hover:border-border/90 shadow-card relative col-span-3 flex flex-col justify-between overflow-hidden rounded-xl border transition-colors dark:shadow-none",
+        // Opaque cell on the lattice — the gap-px grid draws the hairlines
+        "group bg-background relative col-span-3 flex flex-col justify-between overflow-hidden",
         className,
       )}
     >
