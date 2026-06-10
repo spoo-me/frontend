@@ -1,38 +1,101 @@
 "use client"
 
 import * as React from "react"
-import { Link2, Terminal } from "lucide-react"
+import Image from "next/image"
+import { ArrowRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import type { OnboardingPath } from "@/lib/onboarding"
+
+const BARS = [38, 62, 45, 80, 58, 92, 70]
+
+function LinksPreview({ active }: { active: boolean }) {
+  return (
+    <div className="border-border/60 bg-muted/20 mt-4 rounded-lg border p-3 text-left">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-foreground/90 truncate font-mono text-[11px]">
+          spoo.me/launch
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="relative flex size-1.5">
+            <span className="bg-live absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
+            <span className="bg-live relative inline-flex size-1.5 rounded-full" />
+          </span>
+          <span className="label-mono text-muted-foreground/70 text-[9px] tabular-nums">
+            1,284 clicks
+          </span>
+        </span>
+      </div>
+      <div className="mt-2.5 flex h-9 items-end gap-1" aria-hidden>
+        {BARS.map((h, i) => (
+          <span
+            key={i}
+            style={{ height: `${h}%` }}
+            className={cn(
+              "flex-1 rounded-[2px] transition-colors duration-300",
+              active ? "bg-brand/70" : "bg-border",
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ApiPreview({ active }: { active: boolean }) {
+  return (
+    <div className="border-border/60 bg-muted/20 mt-4 rounded-lg border p-3 text-left font-mono text-[11px] leading-5">
+      <div>
+        <span className={cn(active ? "text-brand" : "text-muted-foreground")}>
+          POST
+        </span>{" "}
+        <span className="text-foreground/90">/api/v1/shorten</span>
+      </div>
+      <div className="text-muted-foreground/80">
+        {"{"} url: <span className="text-foreground/70">&quot;https://…&quot;</span>{" "}
+        {"}"}
+      </div>
+      <div className="mt-1.5 flex items-center gap-1.5">
+        <span className="text-live">201</span>
+        <span className="label-mono text-muted-foreground/60 text-[9px] tabular-nums">
+          38ms
+        </span>
+      </div>
+    </div>
+  )
+}
 
 const PATHS: {
   value: OnboardingPath
   label: string
   description: string
-  icon: typeof Link2
-  bullets: string[]
+  icon3d: string
+  cta: string
+  preview: (props: { active: boolean }) => React.ReactNode
 }[] = [
   {
     value: "links",
     label: "Manage links",
     description: "Shorten, organize, and track everything from the dashboard.",
-    icon: Link2,
-    bullets: ["Custom aliases & QR codes", "Click analytics", "Password & expiry rules"],
+    icon3d: "/icons-3d/link_3D.png",
+    cta: "Continue with links",
+    preview: LinksPreview,
   },
   {
     value: "api",
     label: "Build with the API",
     description: "Keys, SDKs, and webhooks wired into your own stack.",
-    icon: Terminal,
-    bullets: ["REST API & typed SDKs", "Scoped API keys", "Webhooks & exports"],
+    icon3d: "/icons-3d/api_3D.png",
+    cta: "Continue with the API",
+    preview: ApiPreview,
   },
 ]
 
 export function PathStep({
-  onDone,
+  onChoose,
 }: {
-  onDone: (path: OnboardingPath) => void
+  onChoose: (path: OnboardingPath) => void
 }) {
   const [focus, setFocus] = React.useState<OnboardingPath>("links")
 
@@ -43,12 +106,12 @@ export function PathStep({
         setFocus((f) => (f === "links" ? "api" : "links"))
       } else if (e.key === "Enter") {
         e.preventDefault()
-        onDone(focus)
+        onChoose(focus)
       }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [focus, onDone])
+  }, [focus, onChoose])
 
   return (
     <div className="flex flex-col items-center text-center">
@@ -61,12 +124,11 @@ export function PathStep({
 
       <div className="mt-10 grid w-full max-w-xl gap-3 sm:grid-cols-2">
         {PATHS.map((p) => {
-          const Icon = p.icon
+          const Preview = p.preview
           const isFocused = focus === p.value
           return (
-            <button
+            <div
               key={p.value}
-              onClick={() => onDone(p.value)}
               onMouseEnter={() => setFocus(p.value)}
               className={cn(
                 "group flex flex-col rounded-xl border p-5 text-left transition-all",
@@ -75,40 +137,36 @@ export function PathStep({
                   : "border-border/60 hover:border-border bg-card/50",
               )}
             >
-              <span
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-lg border transition-colors",
-                  isFocused
-                    ? "border-brand/30 bg-brand/10 text-brand"
-                    : "border-border/60 bg-muted/40 text-muted-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-              </span>
-              <span className="text-foreground mt-4 text-sm font-semibold">
-                {p.label}
-              </span>
-              <span className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
+              <div className="flex items-center gap-3">
+                <Image
+                  src={p.icon3d}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className={cn(
+                    "size-10 object-contain transition-all duration-300",
+                    isFocused
+                      ? "scale-105 drop-shadow-[0_4px_12px_rgba(139,92,246,0.35)]"
+                      : "opacity-80 grayscale-[35%]",
+                  )}
+                />
+                <span className="text-foreground text-sm font-semibold">
+                  {p.label}
+                </span>
+              </div>
+              <span className="text-muted-foreground mt-3 text-[13px] leading-relaxed">
                 {p.description}
               </span>
-              <ul className="mt-4 space-y-1.5">
-                {p.bullets.map((b) => (
-                  <li
-                    key={b}
-                    className="text-muted-foreground/80 flex items-center gap-2 text-xs"
-                  >
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "size-1 rounded-full transition-colors",
-                        isFocused ? "bg-brand" : "bg-border",
-                      )}
-                    />
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </button>
+              <Preview active={isFocused} />
+              <Button
+                onClick={() => onChoose(p.value)}
+                variant={isFocused ? "default" : "outline"}
+                className="mt-4 h-9 w-full"
+              >
+                {p.cta}
+                <ArrowRight className="size-3.5" data-icon="inline-end" />
+              </Button>
+            </div>
           )
         })}
       </div>

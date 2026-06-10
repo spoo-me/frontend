@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { useAuth } from "@/components/auth/auth-context"
+import { VerifyPanel } from "@/components/auth/verify-panel"
 import { login, register, SpooApiError } from "@/lib/api"
 import { PASSWORD_RULES, passwordSatisfies, safeNext } from "@/lib/validation"
 
@@ -57,12 +58,15 @@ const providers = [
 export function AuthForm({ mode }: { mode: Mode }) {
   const c = copy[mode]
   const router = useRouter()
-  const { setUser } = useAuth()
+  const { setUser, signOut } = useAuth()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [conflict, setConflict] = React.useState(false)
+  // Dub-style: the OTP panel swaps into this pane right after signup —
+  // verification gates entry instead of being an onboarding step.
+  const [verifying, setVerifying] = React.useState(false)
 
   // Dub-style progressive reveal: the password field appears once the
   // email reads as one — the form starts as a single calm field.
@@ -90,7 +94,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
       } else {
         const { user } = await register({ email, password })
         setUser(user)
-        router.push("/onboarding")
+        setPending(false)
+        setVerifying(true)
       }
     } catch (err) {
       setPending(false)
@@ -111,6 +116,26 @@ export function AuthForm({ mode }: { mode: Mode }) {
     }
   }
 
+  if (verifying) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+      >
+        <VerifyPanel
+          onDone={() => router.push("/onboarding/welcome")}
+          onRestart={() => {
+            void signOut().then(() => {
+              setVerifying(false)
+              setPassword("")
+            })
+          }}
+        />
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -129,8 +154,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
         {providers.map(({ id, label, Icon }) => (
           <Button key={id} asChild variant="outline" className="h-10 w-full">
             {/* Full-page navigation through the same-origin proxy — the
-                OAuth flow needs the backend session cookie + 302 chain. */}
-            <a href={`/oauth/${id}?next=/dashboard`} aria-label={`Continue with ${label}`}>
+                OAuth flow needs the backend session cookie + 302 chain.
+                No `next` param: the backend routes brand-new accounts to
+                /onboarding and existing ones to /dashboard. */}
+            <a href={`/oauth/${id}`} aria-label={`Continue with ${label}`}>
               <Icon className="size-4" data-icon="inline-start" />
               {label}
             </a>

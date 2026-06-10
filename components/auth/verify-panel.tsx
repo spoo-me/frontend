@@ -18,7 +18,14 @@ import { sendVerification, SpooApiError, verifyEmail } from "@/lib/api"
 const RESEND_COOLDOWN = 60 // backend allows 1/min
 const SPAM_HINT_DELAY = 25_000
 
-export function VerifyStep({ onDone }: { onDone: () => void }) {
+export function VerifyPanel({
+  onDone,
+  onRestart,
+}: {
+  onDone: () => void
+  /** Override the default "sign out and go to /signup" restart behavior. */
+  onRestart?: () => void
+}) {
   const { user, refresh, signOut } = useAuth()
   const router = useRouter()
   const [code, setCode] = React.useState("")
@@ -119,6 +126,7 @@ export function VerifyStep({ onDone }: { onDone: () => void }) {
       <button
         type="button"
         onClick={() => {
+          if (onRestart) return onRestart()
           void signOut().then(() => router.push("/signup"))
         }}
         className="text-muted-foreground/70 hover:text-foreground mt-1.5 text-xs underline-offset-4 transition-colors hover:underline"

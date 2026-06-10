@@ -1,58 +1,65 @@
 /**
- * Onboarding wizard state — persisted to localStorage so the flow is
- * resumable and never traps the user (Dub's self-expiring-gate idea,
- * minus the backend: the user model has no onboarding field yet).
+ * Onboarding flow model — route-per-step (Dub-style).
+ *
+ * The URL is the source of truth for "where am I"; the server cache
+ * (/auth/onboarding, Redis, 24h TTL) makes resume work across devices and
+ * gates re-entry; localStorage carries only the bits the server doesn't:
+ * the first-artifact recap and the HDYHAU answer.
  */
 
 export type OnboardingPath = "links" | "api"
 
 export type OnboardingStep =
-  | "verify"
-  | "theme"
+  | "welcome"
   | "path"
-  | "artifact"
+  | "link"
+  | "api"
+  | "domain"
+  | "apps"
   | "done"
 
-export type OnboardingState = {
-  step: OnboardingStep
-  path: OnboardingPath | null
-  /** Whether the verify step is part of this run (fixed at first entry). */
-  sawVerify: boolean
-  /** First artifact produced during the flow, shown on the done screen. */
+export const STEP_ROUTES: Record<OnboardingStep, string> = {
+  welcome: "/onboarding/welcome",
+  path: "/onboarding/path",
+  link: "/onboarding/link",
+  api: "/onboarding/api",
+  domain: "/onboarding/domain",
+  apps: "/onboarding/apps",
+  done: "/onboarding/done",
+}
+
+export function isOnboardingStep(v: unknown): v is OnboardingStep {
+  return typeof v === "string" && v in STEP_ROUTES
+}
+
+/** Client-side stash — artifact recap + attribution, same-device only. */
+export type OnboardingStash = {
   artifact?:
     | { kind: "link"; shortUrl: string; alias: string }
     | { kind: "key"; name: string; tokenPrefix: string }
-  completed: boolean
-  /** Stashed client-side until an attribution endpoint exists. */
   heardFrom?: string
 }
 
-const STORAGE_KEY = "spoo.onboarding.v1"
+const STORAGE_KEY = "spoo.onboarding.v3"
 
-export const INITIAL_STATE: OnboardingState = {
-  step: "verify",
-  path: null,
-  sawVerify: true,
-  completed: false,
-}
-
-export function loadOnboarding(): OnboardingState {
-  if (typeof window === "undefined") return INITIAL_STATE
+export function loadStash(): OnboardingStash {
+  if (typeof window === "undefined") return {}
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return INITIAL_STATE
-    return { ...INITIAL_STATE, ...(JSON.parse(raw) as OnboardingState) }
+    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}")
   } catch {
-    return INITIAL_STATE
+    return {}
   }
 }
 
-export function saveOnboarding(state: OnboardingState) {
+export function saveStash(patch: Partial<OnboardingStash>) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...loadStash(), ...patch }),
+    )
   } catch {
-    // Storage unavailable (private mode etc.) — flow still works, just
-    // won't resume across reloads.
+    // Storage unavailable (private mode etc.) — the recap degrades, the
+    // flow itself is unaffected.
   }
 }
 
