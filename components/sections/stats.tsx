@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react"
 
 import { NumberTicker } from "@/components/ui/number-ticker"
 import { SectionHeading } from "@/components/shared/section-heading"
-import { Band, GutterHatch } from "@/components/shared/section-shell"
+import { Band } from "@/components/shared/section-shell"
 import { Globe } from "@/components/magicui/globe"
 import { siteConfig, stats } from "@/lib/site-config"
 
@@ -66,9 +66,9 @@ export function Stats() {
         />
       </Band>
 
-      {/* Stat lattice — globe cell + giant-number cells, edge-to-rail */}
+      {/* Stat lattice — globe cell + giant-number cells, edge-to-rail.
+          No gutter hatch here: the CTA band directly below carries it. */}
       <Band rule>
-        <GutterHatch />
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}

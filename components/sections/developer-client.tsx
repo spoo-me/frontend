@@ -61,17 +61,12 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
         />
       </Band>
 
-      {/* Split band — playground and SDK list separated by a band-local hairline */}
+      {/* Split band — playground and SDK list as lattice cells; the gap-px
+          line spans the full band height down to the next rule */}
       <Band rule>
-        <div className="divide-border grid divide-y lg:grid-cols-[1.4fr_1fr] lg:divide-x lg:divide-y-0">
+        <div className="bg-border grid gap-px lg:grid-cols-[1.4fr_1fr]">
           {/* Code playground — editor file-tabs fused into the panel */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.5 }}
-            className="relative self-start p-5 sm:p-9 [--code-surface:var(--card)] dark:[--code-surface:#09090b]"
-          >
+          <div className="bg-background relative p-5 sm:p-9 [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
             {/* File tabs — no overflow container here, it would trap the -mb-px fusion */}
             <div className="flex flex-wrap items-end gap-0.5 px-3">
               {samples.map((s) => {
@@ -152,16 +147,10 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                 />
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* SDKs list */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="space-y-4 p-5 sm:p-8"
-          >
+          <div className="bg-background space-y-4 p-5 sm:p-8">
             <div>
               <h3 className="text-foreground text-base font-semibold tracking-tight">
                 Official SDKs
@@ -211,7 +200,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                 <ArrowUpRight className="size-3.5" data-icon="inline-end" />
               </a>
             </Button>
-          </motion.div>
+          </div>
         </div>
       </Band>
     </>

@@ -13,7 +13,9 @@ export function Rule({ className }: { className?: string }) {
     <span
       aria-hidden
       className={cn(
-        "bg-border/60 pointer-events-none absolute top-0 left-1/2 h-px w-screen -translate-x-1/2",
+        // z-10: band rules must paint above opaque cell backgrounds that sit
+        // flush against the band top, or cells swallow the 1px line
+        "bg-border/60 pointer-events-none absolute top-0 left-1/2 z-10 h-px w-screen -translate-x-1/2",
         className,
       )}
     />
@@ -151,6 +153,29 @@ export function GutterHatch({ className }: { className?: string }) {
         )}
       />
     </>
+  )
+}
+
+/**
+ * Column guides — dashed construction lines carrying the lattice's column
+ * rhythm through an empty band (header cells between two lattices). They
+ * reach in from both rules and dissolve mid-band, so the grid keeps its
+ * thread without running lines behind the typography.
+ */
+export function ColGuides({ at = [25, 50, 75] }: { at?: number[] }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-0 hidden lg:block [mask-image:linear-gradient(to_bottom,black,transparent_38%,transparent_62%,black)]"
+    >
+      {at.map((p) => (
+        <span
+          key={p}
+          className="border-border/50 absolute inset-y-0 border-l border-dashed"
+          style={{ left: `${p}%` }}
+        />
+      ))}
+    </span>
   )
 }
 
