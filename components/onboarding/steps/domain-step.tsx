@@ -182,6 +182,8 @@ function CustomDomainIllustration({ active }: { active: boolean }) {
   )
 }
 
+/* Deliberately quiet — the custom-domain card is the one being sold, so
+   this scene carries no positive signals (no emerald, no benefit chips). */
 function DefaultDomainIllustration({ active }: { active: boolean }) {
   return (
     <div className="flex flex-col items-center gap-4">
@@ -209,17 +211,9 @@ function DefaultDomainIllustration({ active }: { active: boolean }) {
           <span className="text-muted-foreground">/launch</span>
         </span>
       </div>
-      <div className="flex items-center gap-1.5 font-mono text-[9px]">
-        <span className="border-live/30 text-live bg-live/10 rounded-md border px-1.5 py-0.5">
-          live now
-        </span>
-        <span className="border-border/60 text-muted-foreground/60 rounded-md border border-dashed px-1.5 py-0.5">
-          no DNS
-        </span>
-        <span className="border-border/60 text-muted-foreground/60 rounded-md border border-dashed px-1.5 py-0.5">
-          no setup
-        </span>
-      </div>
+      <span className="label-mono text-muted-foreground/60 text-[9px]">
+        the default · switch any time
+      </span>
     </div>
   )
 }
@@ -437,9 +431,6 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 focus === "custom" ? "border-ring/60" : "border-border/60",
               )}
             >
-              <span className="label-mono border-live/30 bg-live/10 text-live absolute top-4 right-4 rounded-full border px-2 py-0.5 text-[9px]">
-                RECOMMENDED
-              </span>
               <div className="relative flex h-44 items-center justify-center rounded-xl">
                 <div
                   aria-hidden
@@ -464,9 +455,9 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 Already have a domain? Links on it build trust — and earn the
                 clicks to prove it.
               </p>
+              {/* Always the primary action — hierarchy doesn't follow the mouse */}
               <Button
                 onClick={() => setConnecting(true)}
-                variant={focus === "custom" ? "default" : "outline"}
                 className="mt-6 h-10 w-full"
               >
                 Connect domain
@@ -482,11 +473,11 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
               )}
             >
               <div className="relative flex h-44 items-center justify-center rounded-xl">
-                {/* Emerald temperature — instant/live, vs the violet brand card */}
+                {/* Neutral glow — no value signal on the option we're not selling */}
                 <div
                   aria-hidden
                   className={cn(
-                    "bg-live/10 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
+                    "bg-foreground/5 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
                     focus === "default" ? "opacity-100" : "opacity-0",
                   )}
                 />
@@ -503,12 +494,13 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 Stay on spoo.me
               </h2>
               <p className="text-muted-foreground mx-auto mt-2 max-w-60 flex-1 text-[13px] leading-relaxed">
-                The default domain, no setup — and you can bring your own
+                Links work on spoo.me from day one. Bring your own domain
                 whenever you&apos;re ready.
               </p>
+              {/* Always secondary — keeping the default is the quiet path */}
               <Button
                 onClick={onDone}
-                variant={focus === "default" ? "default" : "outline"}
+                variant="outline"
                 className="mt-6 h-10 w-full"
               >
                 Keep spoo.me
