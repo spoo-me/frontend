@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ArrowRight, Check, Copy, ShieldCheck } from "lucide-react"
+import { ArrowRight, Check, Copy } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import { cn } from "@/lib/utils"
@@ -39,52 +39,187 @@ async function mockCreateDomain(fqdn: string): Promise<CustomDomain> {
 
 type Choice = "custom" | "default"
 
-/* Stage illustrations — the resulting short link, branded vs default. */
+/* Stage illustrations — two different scenes, not two pills. Ownership is
+   a cluster of branded domain pills, each wearing its own "company" mark
+   (hand-drawn, deliberately unalike); instant is one clean spoo pill. */
 
-function CustomDomainIllustration({ active }: { active: boolean }) {
+/* Five fake-but-credible logomarks. Different geometric constructions on
+   purpose — overlapping discs, a bolt, a play wedge, a clover, an open
+   ring — so they read as five companies, not one icon set recolored. */
+
+function MarkVenn() {
   return (
-    <div className="flex flex-col items-center gap-2.5">
-      <div className="border-border/60 bg-card shadow-card flex items-center gap-2.5 rounded-full border py-2.5 pr-5 pl-4">
-        <ShieldCheck
-          className={cn(
-            "size-4 transition-colors duration-500",
-            active ? "text-live" : "text-muted-foreground/50",
-          )}
-        />
-        <span className="font-mono text-sm">
-          <span
-            className={cn(
-              "transition-colors duration-500",
-              active ? "text-foreground" : "text-foreground/70",
-            )}
-          >
-            go.acme.com
-          </span>
-          <span className="text-muted-foreground">/launch</span>
-        </span>
-      </div>
-      <span className="label-mono text-muted-foreground/60 text-[9px]">
-        your domain · your brand
-      </span>
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" aria-hidden>
+      <circle cx="6" cy="8" r="4.6" fill="#fb7185" fillOpacity="0.92" />
+      <circle cx="10.2" cy="8" r="4.6" fill="#e11d48" fillOpacity="0.78" />
+    </svg>
+  )
+}
+
+function MarkBolt() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" aria-hidden>
+      <path
+        d="M9.4 1.2 3.2 9.1h3.6L6 14.8l6.8-8.6H9.1l.3-5Z"
+        fill="#fbbf24"
+        stroke="#fbbf24"
+        strokeWidth="0.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function MarkPlay() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" aria-hidden>
+      <path
+        d="M5.2 3.1c0-.9 1-1.5 1.8-1L13 5.9c.8.5.8 1.7 0 2.2l-6 3.8c-.8.5-1.8-.1-1.8-1V3.1Z"
+        fill="#38bdf8"
+        transform="translate(0 1.5)"
+      />
+    </svg>
+  )
+}
+
+function MarkClover() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" aria-hidden>
+      <circle cx="8" cy="4.4" r="3" fill="#a78bfa" />
+      <circle cx="8" cy="11.6" r="3" fill="#a78bfa" />
+      <circle cx="4.4" cy="8" r="3" fill="#8b5cf6" />
+      <circle cx="11.6" cy="8" r="3" fill="#8b5cf6" />
+    </svg>
+  )
+}
+
+function MarkRing() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-3.5 shrink-0" aria-hidden>
+      <circle
+        cx="8"
+        cy="8"
+        r="5.2"
+        fill="none"
+        stroke="#34d399"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray="24.5 8.2"
+        transform="rotate(-50 8 8)"
+      />
+    </svg>
+  )
+}
+
+const DOMAIN_PILLS = [
+  {
+    host: "forma.io",
+    mark: MarkVenn,
+    idle: "-rotate-3",
+    focused: "rotate-0 -translate-x-1.5 -translate-y-0.5",
+  },
+  {
+    host: "boltlab.co",
+    mark: MarkBolt,
+    idle: "rotate-2",
+    focused: "rotate-0 translate-x-1.5 -translate-y-0.5",
+  },
+  {
+    host: "vega.tv",
+    mark: MarkPlay,
+    idle: "-rotate-1",
+    focused: "rotate-0 -translate-y-1",
+  },
+  {
+    host: "clove.app",
+    mark: MarkClover,
+    idle: "rotate-3",
+    focused: "rotate-0 -translate-x-1.5 translate-y-0.5",
+  },
+  {
+    host: "lumen.fm",
+    mark: MarkRing,
+    idle: "-rotate-2",
+    focused: "rotate-0 translate-x-1.5 translate-y-0.5",
+  },
+]
+
+function DomainPill({
+  pill,
+  active,
+}: {
+  pill: (typeof DOMAIN_PILLS)[number]
+  active: boolean
+}) {
+  const Mark = pill.mark
+  return (
+    <div
+      className={cn(
+        "border-border/70 bg-card flex items-center gap-2 rounded-full border px-3.5 py-1.5 font-mono text-[11px] shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-500",
+        active ? pill.focused : pill.idle,
+      )}
+    >
+      <Mark />
+      <span className="text-foreground/90 whitespace-nowrap">{pill.host}</span>
     </div>
   )
 }
 
-function DefaultDomainIllustration() {
+function CustomDomainIllustration({ active }: { active: boolean }) {
+  const [a, b, c, d, e] = DOMAIN_PILLS
   return (
     <div className="flex flex-col items-center gap-2.5">
-      <div className="border-border/60 bg-card shadow-card flex items-center gap-2.5 rounded-full border py-2.5 pr-5 pl-4">
-        <span className="relative flex size-1.5">
-          <span className="bg-live relative inline-flex size-1.5 rounded-full" />
-        </span>
+      <div className="flex justify-center gap-2.5">
+        <DomainPill pill={a} active={active} />
+        <DomainPill pill={b} active={active} />
+      </div>
+      <DomainPill pill={c} active={active} />
+      <div className="flex justify-center gap-2.5">
+        <DomainPill pill={d} active={active} />
+        <DomainPill pill={e} active={active} />
+      </div>
+    </div>
+  )
+}
+
+function DefaultDomainIllustration({ active }: { active: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div
+        className={cn(
+          "border-border/60 bg-card shadow-card flex items-center gap-2.5 rounded-full border py-2.5 pr-5 pl-4 transition-transform duration-500",
+          active && "-translate-y-0.5",
+        )}
+      >
+        {/* Bland mark — mono in both themes */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/logo-black.png"
+          alt=""
+          className="size-4 shrink-0 object-contain dark:hidden"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/logo-white.png"
+          alt=""
+          className="hidden size-4 shrink-0 object-contain dark:block"
+        />
         <span className="font-mono text-sm">
           <span className="text-foreground/80">spoo.me</span>
           <span className="text-muted-foreground">/launch</span>
         </span>
       </div>
-      <span className="label-mono text-muted-foreground/60 text-[9px]">
-        live in seconds · zero setup
-      </span>
+      <div className="flex items-center gap-1.5 font-mono text-[9px]">
+        <span className="border-live/30 text-live bg-live/10 rounded-md border px-1.5 py-0.5">
+          live now
+        </span>
+        <span className="border-border/60 text-muted-foreground/60 rounded-md border border-dashed px-1.5 py-0.5">
+          no DNS
+        </span>
+        <span className="border-border/60 text-muted-foreground/60 rounded-md border border-dashed px-1.5 py-0.5">
+          no setup
+        </span>
+      </div>
     </div>
   )
 }
@@ -293,7 +428,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
             key="cards"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-12 grid w-full max-w-3xl gap-4 sm:grid-cols-2"
+            className="mt-12 grid w-full max-w-4xl gap-5 sm:grid-cols-2"
           >
             <div
               onMouseEnter={() => setFocus("custom")}
@@ -305,11 +440,11 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
               <span className="label-mono border-live/30 bg-live/10 text-live absolute top-4 right-4 rounded-full border px-2 py-0.5 text-[9px]">
                 RECOMMENDED
               </span>
-              <div className="pattern-dots relative flex h-36 items-center justify-center rounded-xl">
+              <div className="relative flex h-44 items-center justify-center rounded-xl">
                 <div
                   aria-hidden
                   className={cn(
-                    "bg-brand/10 absolute size-28 rounded-full blur-2xl transition-opacity duration-500",
+                    "bg-brand/10 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
                     focus === "custom" ? "opacity-100" : "opacity-0",
                   )}
                 />
@@ -346,11 +481,12 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 focus === "default" ? "border-ring/60" : "border-border/60",
               )}
             >
-              <div className="pattern-dots relative flex h-36 items-center justify-center rounded-xl">
+              <div className="relative flex h-44 items-center justify-center rounded-xl">
+                {/* Emerald temperature — instant/live, vs the violet brand card */}
                 <div
                   aria-hidden
                   className={cn(
-                    "bg-brand/10 absolute size-28 rounded-full blur-2xl transition-opacity duration-500",
+                    "bg-live/10 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
                     focus === "default" ? "opacity-100" : "opacity-0",
                   )}
                 />
@@ -360,7 +496,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                     focus === "default" && "-translate-y-1",
                   )}
                 >
-                  <DefaultDomainIllustration />
+                  <DefaultDomainIllustration active={focus === "default"} />
                 </div>
               </div>
               <h2 className="text-foreground mt-6 text-base font-semibold">
