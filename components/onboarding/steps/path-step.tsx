@@ -8,11 +8,19 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import type { OnboardingPath } from "@/lib/onboarding"
 
-/* The stage illustrations ARE the product — enlarged, floating panels. */
+/* The stage illustrations ARE the product — enlarged, floating panels.
+   Both panels share exact dimensions so the two options weigh the same. */
+
+const PANEL = "border-border/60 bg-card shadow-card h-40 w-full max-w-[19rem] overflow-hidden rounded-xl border"
 
 /** Catmull-Rom → cubic bezier, same smooth-line idiom as dashboard-preview. */
-function smoothPath(points: number[], w: number, h: number, pad = 6): string {
-  const max = Math.max(...points)
+function smoothPath(
+  points: number[],
+  w: number,
+  h: number,
+  pad = 6,
+  max = Math.max(...points),
+): string {
   const stepX = w / (points.length - 1)
   const xy = points.map(
     (p, i) => [i * stepX, h - (p / max) * (h - pad)] as const,
@@ -32,97 +40,148 @@ function smoothPath(points: number[], w: number, h: number, pad = 6): string {
   return d
 }
 
-const CLICKS = [14, 22, 18, 34, 28, 46, 42, 66, 58, 88, 76, 96]
-const CHART_W = 224
-const CHART_H = 64
+/* Dense daily-traffic oscillation, shadcn area-chart register: a tall
+   neutral series behind, the brand series in front. Pure illustration —
+   no axes, labels, dots, or legend. */
+const SERIES_BACK = [
+  34, 58, 30, 72, 44, 66, 28, 80, 52, 38, 88, 46, 70, 34, 92, 56, 40, 76,
+  30, 84, 50, 64, 36, 96, 58, 42, 78, 32, 86, 48, 68, 38, 90, 54, 74, 100,
+]
+const SERIES_FRONT = [
+  16, 28, 12, 36, 20, 30, 10, 40, 24, 16, 44, 20, 34, 14, 46, 26, 18, 38,
+  12, 42, 22, 30, 16, 48, 28, 18, 38, 14, 42, 22, 32, 16, 44, 26, 36, 50,
+]
+const CHART_W = 304
+const CHART_H = 160
 
 function LinksIllustration({ active }: { active: boolean }) {
-  const gradientId = React.useId()
-  const line = smoothPath(CLICKS, CHART_W, CHART_H)
-  const area = `${line} L ${CHART_W} ${CHART_H} L 0 ${CHART_H} Z`
-  const peakY =
-    CHART_H - (CLICKS[CLICKS.length - 1] / Math.max(...CLICKS)) * (CHART_H - 6)
+  const id = React.useId()
+  const max = Math.max(...SERIES_BACK)
+  const backLine = smoothPath(SERIES_BACK, CHART_W, CHART_H, 18, max)
+  const frontLine = smoothPath(SERIES_FRONT, CHART_W, CHART_H, 18, max)
+  const backArea = `${backLine} L ${CHART_W} ${CHART_H} L 0 ${CHART_H} Z`
+  const frontArea = `${frontLine} L ${CHART_W} ${CHART_H} L 0 ${CHART_H} Z`
 
-  // Just the curve — no labels, no chrome. Neutral ink, one live accent.
   return (
     <div
       className={cn(
-        "border-border/60 bg-card shadow-card w-64 rounded-xl border p-5 transition-colors duration-500",
-        active ? "text-foreground/80" : "text-foreground/40",
+        PANEL,
+        "transition-opacity duration-500",
+        active ? "opacity-100" : "opacity-60",
       )}
     >
       <svg
         viewBox={`0 0 ${CHART_W} ${CHART_H}`}
         preserveAspectRatio="none"
-        className="h-20 w-full overflow-visible"
+        className="size-full"
         aria-hidden
       >
         <defs>
-          <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.1" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          <linearGradient id={`${id}-back`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--muted-foreground)" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="var(--muted-foreground)" stopOpacity="0.02" />
+          </linearGradient>
+          <linearGradient id={`${id}-front`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="var(--brand)" stopOpacity="0.04" />
           </linearGradient>
         </defs>
+
         <motion.path
-          d={area}
-          fill={`url(#${gradientId})`}
+          d={backArea}
+          fill={`url(#${id}-back)`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
         />
         <motion.path
-          d={line}
+          d={backLine}
           fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
+          stroke="var(--muted-foreground)"
+          strokeOpacity={0.45}
+          strokeWidth={1.25}
           strokeLinecap="round"
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
+          transition={{ duration: 1.4, ease: "easeInOut" }}
         />
-        <motion.g
+
+        <motion.path
+          d={frontArea}
+          fill={`url(#${id}-front)`}
           initial={{ opacity: 0 }}
-          animate={{ opacity: active ? 1 : 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <circle cx={CHART_W} cy={peakY} r={3} className="fill-live" />
-          <circle cx={CHART_W} cy={peakY} r={7.5} className="fill-live" opacity={0.2} />
-        </motion.g>
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+        />
+        <motion.path
+          d={frontLine}
+          fill="none"
+          stroke="var(--brand)"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.4, ease: "easeInOut", delay: 0.15 }}
+        />
       </svg>
     </div>
   )
 }
 
+/* Endless API spec — endpoint rows on a slow vertical loop, faded at both
+   edges so the surface reads as a window onto more. */
+const ENDPOINTS: Array<[method: string, path: string, status: string]> = [
+  ["POST", "/api/v1/shorten", "201"],
+  ["GET", "/api/v1/urls", "200"],
+  ["GET", "/api/v1/stats/{alias}", "200"],
+  ["POST", "/api/v1/keys", "201"],
+  ["DELETE", "/api/v1/urls/{id}", "204"],
+  ["POST", "/api/v1/custom-domains", "201"],
+  ["GET", "/api/v1/qr/{alias}", "200"],
+  ["POST", "/api/v1/webhooks", "201"],
+]
+
 function ApiIllustration({ active }: { active: boolean }) {
-  // Request → response, nothing else. Neutral ink, one live accent.
   return (
-    <div className="border-border/60 bg-card shadow-card w-64 rounded-xl border p-5 text-left font-mono text-xs">
+    <div
+      className={cn(
+        PANEL,
+        "relative px-5 text-left font-mono text-xs transition-opacity duration-500",
+        active ? "opacity-100" : "opacity-60",
+      )}
+    >
       <div
-        className={cn(
-          "transition-colors duration-500",
-          active ? "text-foreground/80" : "text-foreground/40",
-        )}
+        className="h-full [mask-image:linear-gradient(to_bottom,transparent,black_26%,black_74%,transparent)]"
       >
-        POST /api/v1/shorten
-      </div>
-      <div className="mt-2.5 flex items-center gap-2">
-        <span
-          className={cn(
-            "transition-colors duration-500",
-            active ? "text-live" : "text-muted-foreground/50",
-          )}
-        >
-          201 Created
-        </span>
-        <span
+        <motion.div
           aria-hidden
-          className={cn(
-            "h-3.5 w-[5px] transition-colors duration-500",
-            active ? "bg-foreground/60 animate-pulse" : "bg-foreground/20",
-          )}
-        />
+          animate={{ y: ["0%", "-50%"] }}
+          transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
+          className="flex flex-col"
+        >
+          {[0, 1].map((copy) => (
+            <ul key={copy} className="flex flex-col gap-3.5 py-[7px]">
+              {ENDPOINTS.map(([method, path, status]) => (
+                <li
+                  key={`${method} ${path}`}
+                  className="flex items-baseline justify-between gap-4 whitespace-nowrap"
+                >
+                  <span className="flex items-baseline gap-3">
+                    <span className="text-foreground/80 w-14 shrink-0">
+                      {method}
+                    </span>
+                    <span className="text-muted-foreground">{path}</span>
+                  </span>
+                  <span className="text-muted-foreground/40">{status}</span>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </motion.div>
       </div>
     </div>
   )
@@ -199,7 +258,7 @@ export function PathStep({
         We&apos;ll tailor the next step. Everything stays available either way.
       </p>
 
-      <div className="mt-12 grid w-full max-w-3xl gap-4 sm:grid-cols-2">
+      <div className="mt-12 grid w-full max-w-4xl gap-5 sm:grid-cols-2">
         {PATHS.map((p) => {
           const Illustration = p.illustration
           const isFocused = focus === p.value
@@ -213,7 +272,7 @@ export function PathStep({
               )}
             >
               {/* Stage — the product itself is the illustration */}
-              <div className="pattern-dots relative flex h-44 items-center justify-center rounded-xl">
+              <div className="pattern-dots relative flex h-52 items-center justify-center rounded-xl">
                 <div
                   aria-hidden
                   className={cn(
