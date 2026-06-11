@@ -13,7 +13,9 @@ export default function OnboardingTemplate({
       initial={{ opacity: 0, y: 24, filter: "blur(3px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.32, ease: "easeOut" }}
-      className="flex w-full max-w-2xl justify-center"
+      // Generous ceiling — each step constrains its own column; wide stages
+      // (path cards) get the room they need.
+      className="flex w-full max-w-5xl justify-center"
     >
       {children}
     </motion.div>

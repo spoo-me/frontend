@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button"
 import type { OnboardingPath } from "@/lib/onboarding"
 
 /* The stage illustrations ARE the product — enlarged, floating panels.
-   Both panels share exact dimensions so the two options weigh the same. */
+   Fixed (not max-) width: both panels must weigh exactly the same. */
 
-const PANEL = "border-border/60 bg-card shadow-card h-40 w-full max-w-[19rem] overflow-hidden rounded-xl border"
+const PANEL = "border-border/60 bg-card shadow-card h-40 w-[19rem] max-w-full overflow-hidden rounded-xl border"
 
 /** Catmull-Rom → cubic bezier, same smooth-line idiom as dashboard-preview. */
 function smoothPath(
@@ -40,17 +40,14 @@ function smoothPath(
   return d
 }
 
-/* Dense daily-traffic oscillation, shadcn area-chart register: a tall
-   neutral series behind, the brand series in front. Pure illustration —
-   no axes, labels, dots, or legend. */
-const SERIES_BACK = [
-  34, 58, 30, 72, 44, 66, 28, 80, 52, 38, 88, 46, 70, 34, 92, 56, 40, 76,
-  30, 84, 50, 64, 36, 96, 58, 42, 78, 32, 86, 48, 68, 38, 90, 54, 74, 100,
-]
-const SERIES_FRONT = [
-  16, 28, 12, 36, 20, 30, 10, 40, 24, 16, 44, 20, 34, 14, 46, 26, 18, 38,
-  12, 42, 22, 30, 16, 48, 28, 18, 38, 14, 42, 22, 32, 16, 44, 26, 36, 50,
-]
+/* Daily-traffic oscillation in the shadcn area-chart register: the example's
+   two blues, taller series behind, vivid one in front. Pure illustration —
+   no axes, labels, dots, or legend. (Deliberate accent-lock exception:
+   chart ink mirrors the shadcn default palette, per design call.) */
+const SERIES_BACK = [42, 70, 36, 84, 52, 76, 40, 92, 58, 44, 88, 50, 78, 96]
+const SERIES_FRONT = [18, 34, 14, 42, 24, 36, 16, 46, 26, 20, 44, 22, 38, 50]
+const BACK_INK = "#60a5fa"
+const FRONT_INK = "#3b82f6"
 const CHART_W = 304
 const CHART_H = 160
 
@@ -70,80 +67,91 @@ function LinksIllustration({ active }: { active: boolean }) {
         active ? "opacity-100" : "opacity-60",
       )}
     >
-      <svg
-        viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-        preserveAspectRatio="none"
-        className="size-full"
-        aria-hidden
-      >
-        <defs>
-          <linearGradient id={`${id}-back`} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--muted-foreground)" stopOpacity="0.16" />
-            <stop offset="100%" stopColor="var(--muted-foreground)" stopOpacity="0.02" />
-          </linearGradient>
-          <linearGradient id={`${id}-front`} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="var(--brand)" stopOpacity="0.04" />
-          </linearGradient>
-        </defs>
+      {/* Soft edge fades — the chart is a window, not a poster */}
+      <div className="size-full [mask-image:linear-gradient(to_right,transparent,black_14%,black_86%,transparent)]">
+        <svg
+          viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+          preserveAspectRatio="none"
+          className="size-full"
+          aria-hidden
+        >
+          <defs>
+            <linearGradient id={`${id}-back`} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor={BACK_INK} stopOpacity="0.14" />
+              <stop offset="100%" stopColor={BACK_INK} stopOpacity="0.02" />
+            </linearGradient>
+            <linearGradient id={`${id}-front`} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor={FRONT_INK} stopOpacity="0.4" />
+              <stop offset="100%" stopColor={FRONT_INK} stopOpacity="0.04" />
+            </linearGradient>
+          </defs>
 
-        <motion.path
-          d={backArea}
-          fill={`url(#${id}-back)`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-        />
-        <motion.path
-          d={backLine}
-          fill="none"
-          stroke="var(--muted-foreground)"
-          strokeOpacity={0.45}
-          strokeWidth={1.25}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.4, ease: "easeInOut" }}
-        />
+          <motion.path
+            d={backArea}
+            fill={`url(#${id}-back)`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          />
+          <motion.path
+            d={backLine}
+            fill="none"
+            stroke={BACK_INK}
+            strokeOpacity={0.45}
+            strokeWidth={1.25}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1.4, ease: "easeInOut" }}
+          />
 
-        <motion.path
-          d={frontArea}
-          fill={`url(#${id}-front)`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-        />
-        <motion.path
-          d={frontLine}
-          fill="none"
-          stroke="var(--brand)"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.4, ease: "easeInOut", delay: 0.15 }}
-        />
-      </svg>
+          <motion.path
+            d={frontArea}
+            fill={`url(#${id}-front)`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+          />
+          <motion.path
+            d={frontLine}
+            fill="none"
+            stroke={FRONT_INK}
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1.4, ease: "easeInOut", delay: 0.15 }}
+          />
+        </svg>
+      </div>
     </div>
   )
 }
 
-/* Endless API spec — endpoint rows on a slow vertical loop, faded at both
-   edges so the surface reads as a window onto more. */
+/* Endless API spec — a static stack of endpoint rows, taller than the
+   panel and faded at both edges: a window onto more. Each CRUD verb gets
+   a soft tint. */
 const ENDPOINTS: Array<[method: string, path: string, status: string]> = [
   ["POST", "/api/v1/shorten", "201"],
   ["GET", "/api/v1/urls", "200"],
   ["GET", "/api/v1/stats/{alias}", "200"],
+  ["PUT", "/api/v1/urls/{id}", "200"],
   ["POST", "/api/v1/keys", "201"],
   ["DELETE", "/api/v1/urls/{id}", "204"],
-  ["POST", "/api/v1/custom-domains", "201"],
   ["GET", "/api/v1/qr/{alias}", "200"],
   ["POST", "/api/v1/webhooks", "201"],
 ]
+
+const METHOD_TINT: Record<string, string> = {
+  GET: "text-sky-400/75",
+  POST: "text-emerald-400/75",
+  PUT: "text-amber-400/75",
+  DELETE: "text-rose-400/75",
+}
 
 function ApiIllustration({ active }: { active: boolean }) {
   return (
@@ -154,34 +162,23 @@ function ApiIllustration({ active }: { active: boolean }) {
         active ? "opacity-100" : "opacity-60",
       )}
     >
-      <div
-        className="h-full [mask-image:linear-gradient(to_bottom,transparent,black_26%,black_74%,transparent)]"
-      >
-        <motion.div
-          aria-hidden
-          animate={{ y: ["0%", "-50%"] }}
-          transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
-          className="flex flex-col"
-        >
-          {[0, 1].map((copy) => (
-            <ul key={copy} className="flex flex-col gap-3.5 py-[7px]">
-              {ENDPOINTS.map(([method, path, status]) => (
-                <li
-                  key={`${method} ${path}`}
-                  className="flex items-baseline justify-between gap-4 whitespace-nowrap"
-                >
-                  <span className="flex items-baseline gap-3">
-                    <span className="text-foreground/80 w-14 shrink-0">
-                      {method}
-                    </span>
-                    <span className="text-muted-foreground">{path}</span>
-                  </span>
-                  <span className="text-muted-foreground/40">{status}</span>
-                </li>
-              ))}
-            </ul>
+      <div className="flex h-full flex-col justify-center [mask-image:linear-gradient(to_bottom,transparent,black_28%,black_72%,transparent)]">
+        <ul aria-hidden className="flex shrink-0 flex-col gap-3.5">
+          {ENDPOINTS.map(([method, path, status]) => (
+            <li
+              key={`${method} ${path}`}
+              className="flex items-baseline justify-between gap-4 whitespace-nowrap"
+            >
+              <span className="flex items-baseline gap-3">
+                <span className={cn("w-14 shrink-0", METHOD_TINT[method])}>
+                  {method}
+                </span>
+                <span className="text-muted-foreground">{path}</span>
+              </span>
+              <span className="text-muted-foreground/40">{status}</span>
+            </li>
           ))}
-        </motion.div>
+        </ul>
       </div>
     </div>
   )
@@ -194,31 +191,31 @@ const PATHS: {
   cta: string
   illustration: (props: { active: boolean }) => React.ReactNode
 }[] = [
-  {
-    value: "links",
-    label: "Manage links",
-    description: (
-      <>
-        <U>Short links</U>, <U>QR codes</U>, and <U>real-time analytics</U> —
-        organized from one dashboard.
-      </>
-    ),
-    cta: "Continue with links",
-    illustration: LinksIllustration,
-  },
-  {
-    value: "api",
-    label: "Build with the API",
-    description: (
-      <>
-        <U>REST API</U>, <U>typed SDKs</U>, and <U>webhooks</U> wired straight
-        into your own stack.
-      </>
-    ),
-    cta: "Continue with the API",
-    illustration: ApiIllustration,
-  },
-]
+    {
+      value: "links",
+      label: "Manage links",
+      description: (
+        <>
+          <U>Short links</U>, <U>QR codes</U>, and <U>real-time analytics</U> —
+          organized from one dashboard.
+        </>
+      ),
+      cta: "Continue with links",
+      illustration: LinksIllustration,
+    },
+    {
+      value: "api",
+      label: "Build with the API",
+      description: (
+        <>
+          <U>REST API</U>, <U>typed SDKs</U>, and <U>webhooks</U> wired straight
+          into your own stack.
+        </>
+      ),
+      cta: "Continue with the API",
+      illustration: ApiIllustration,
+    },
+  ]
 
 function U({ children }: { children: React.ReactNode }) {
   return (
@@ -258,7 +255,7 @@ export function PathStep({
         We&apos;ll tailor the next step. Everything stays available either way.
       </p>
 
-      <div className="mt-12 grid w-full max-w-4xl gap-5 sm:grid-cols-2">
+      <div className="mt-12 grid w-full max-w-5xl gap-5 sm:grid-cols-2">
         {PATHS.map((p) => {
           const Illustration = p.illustration
           const isFocused = focus === p.value
