@@ -160,18 +160,35 @@ export function ApiStep({
             transition={{ duration: 0.2 }}
             className="mt-10 flex w-full max-w-md flex-col items-center"
           >
-            <div className="border-border/60 bg-card/50 w-full rounded-xl border border-dashed p-6">
-              <div className="border-border/60 bg-muted/40 text-muted-foreground mx-auto flex size-10 items-center justify-center rounded-lg border">
-                <KeyRound className="size-4" aria-hidden />
+            <div className="border-border/60 bg-card/50 relative w-full overflow-hidden rounded-xl border border-dashed p-6">
+              {/* Dot patch — same texture every other stage carries */}
+              <div
+                aria-hidden
+                className="pattern-dots absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_70%_80%_at_50%_30%,black,transparent)]"
+              />
+              <div className="relative mx-auto w-fit">
+                <span
+                  aria-hidden
+                  className="bg-brand/20 absolute -inset-3 rounded-full blur-xl"
+                />
+                <div className="border-border/60 bg-muted/40 text-foreground relative mx-auto flex size-10 items-center justify-center rounded-lg border">
+                  <KeyRound className="size-4" aria-hidden />
+                </div>
               </div>
-              <div className="label-mono text-muted-foreground mt-4 text-[10px]">
+              <div className="label-mono text-muted-foreground relative mt-4 text-[10px]">
                 scopes
               </div>
-              <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-                {["shorten:create", "urls:read", "stats:read"].map((s) => (
+              <div className="relative mt-2 flex flex-wrap justify-center gap-1.5">
+                {(
+                  [
+                    ["shorten:create", "text-emerald-400/80"],
+                    ["urls:read", "text-sky-400/80"],
+                    ["stats:read", "text-sky-400/80"],
+                  ] as const
+                ).map(([s, tint]) => (
                   <code
                     key={s}
-                    className="border-border/60 bg-background text-foreground/80 rounded-md border px-2 py-0.5 font-mono text-[11px]"
+                    className={`border-border/60 bg-background rounded-md border px-2 py-0.5 font-mono text-[11px] ${tint}`}
                   >
                     {s}
                   </code>
