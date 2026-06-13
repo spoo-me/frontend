@@ -52,8 +52,10 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
         every client talks to the same account you just set up.
       </p>
 
-      {/* The deck — tilted, overlapping, spreads on hover */}
-      <div className="group mt-12 flex items-center justify-center px-4 py-3">
+      {/* The deck — tilted, overlapping, spreads on hover. Named group:
+          the unnamed `group` lives on each tile so dual icons (mono → color
+          devicon) swap on THEIR hover, not when the whole deck is hovered. */}
+      <div className="group/deck mt-12 flex items-center justify-center px-4 py-3">
         {featured.map((app, i) => {
           const Icon = BrandIcons[app.iconKey as BrandIconKey] ?? null
           return (
@@ -67,7 +69,7 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
                 stiffness: 320,
                 damping: 24,
               }}
-              className="-ml-3 transition-[margin] duration-300 first:ml-0 group-hover:-ml-1 sm:-ml-4"
+              className="-ml-3 transition-[margin] duration-300 first:ml-0 group-hover/deck:-ml-1 sm:-ml-4"
               style={{ zIndex: i <= 3 ? i + 1 : featured.length - i }}
             >
               <Link
@@ -77,10 +79,18 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
                 aria-label={`${app.name} — opens in a new tab`}
                 title={app.name}
                 style={{ "--tilt": `${TILTS[i]}deg` } as React.CSSProperties}
-                className="border-border/70 bg-card shadow-card hover:border-ring hover:ring-ring/30 flex size-16 rotate-(--tilt) items-center justify-center rounded-2xl border transition-all duration-300 group-hover:rotate-0 hover:z-20 hover:-translate-y-2 hover:scale-105 hover:ring-2 sm:size-19"
+                className="group group/tile border-border/70 bg-card shadow-card hover:border-ring hover:ring-ring/30 flex size-16 rotate-(--tilt) items-center justify-center rounded-2xl border transition-all duration-300 group-hover/deck:rotate-0 hover:z-20 hover:-translate-y-2 hover:scale-105 hover:ring-2 sm:size-19"
               >
                 {Icon ? (
-                  <Icon className="text-foreground size-7 sm:size-8" />
+                  /* Mono deck, identity on hover: the brightness/invert filter
+                     crushes every mark (multicolor or currentColor) to ink;
+                     hovering lifts the filter and the brand color blooms. */
+                  <span
+                    style={{ color: app.color }}
+                    className="flex items-center justify-center opacity-90 transition-[filter,opacity] duration-300 [filter:brightness(0)] group-hover/tile:opacity-100 group-hover/tile:[filter:none] dark:[filter:brightness(0)_invert(1)] dark:group-hover/tile:[filter:none]"
+                  >
+                    <Icon className="size-7 sm:size-8" />
+                  </span>
                 ) : null}
               </Link>
             </motion.div>
