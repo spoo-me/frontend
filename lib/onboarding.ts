@@ -16,7 +16,6 @@ export type OnboardingStep =
   | "api"
   | "domain"
   | "apps"
-  | "plans"
   | "done"
 
 export const STEP_ROUTES: Record<OnboardingStep, string> = {
@@ -26,11 +25,8 @@ export const STEP_ROUTES: Record<OnboardingStep, string> = {
   api: "/onboarding/api",
   domain: "/onboarding/domain",
   apps: "/onboarding/apps",
-  plans: "/onboarding/plans",
   done: "/onboarding/done",
 }
-
-export type PlanId = "free" | "pro" | "business"
 
 export function isOnboardingStep(v: unknown): v is OnboardingStep {
   return typeof v === "string" && v in STEP_ROUTES
@@ -42,9 +38,6 @@ export type OnboardingStash = {
     | { kind: "link"; shortUrl: string; alias: string }
     | { kind: "key"; name: string; tokenPrefix: string }
   heardFrom?: string
-  /** Plan the user leaned toward in the plans beat — intent only; billing
-   *  is set up later in the dashboard. */
-  plan?: PlanId
 }
 
 const STORAGE_KEY = "spoo.onboarding.v3"
