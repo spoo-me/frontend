@@ -5,5 +5,5 @@ import { useOnboarding } from "@/components/onboarding/use-onboarding"
 
 export default function AppsPage() {
   const { advance } = useOnboarding()
-  return <AppsStep onDone={() => advance("done")} />
+  return <AppsStep onDone={() => advance("plans")} />
 }
