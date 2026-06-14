@@ -142,15 +142,13 @@ export function ApiStep({
             transition={{ duration: 0.35, ease: "easeOut" }}
             className="mt-10 w-full max-w-lg space-y-4 text-left"
           >
-            {/* Hero — a credential reveal, not a field. Key-icon lockup +
-                crop-mark frame (the landing's alias-selection motif) make
-                the token read as a precious, one-time artifact. */}
-            <div
-              ref={keyCardRef}
-              className="border-border/60 bg-card shadow-card rounded-xl border px-6 py-7 text-center dark:shadow-none"
-            >
+            {/* Hero — a credential reveal floating in open space (no panel).
+                Key-icon lockup + crop-mark frame (the landing's alias-
+                selection motif) carry the ceremony; the curl below stays
+                boxed, so the hero/utility hierarchy reads. */}
+            <div ref={keyCardRef} className="py-3 text-center">
               <div className="flex items-center justify-center gap-2">
-                <span className="border-border/60 bg-background/60 text-foreground flex size-6 items-center justify-center rounded-md border">
+                <span className="border-border/60 bg-card text-foreground flex size-6 items-center justify-center rounded-md border">
                   <KeyRound className="size-3.5" aria-hidden />
                 </span>
                 <span className="label-mono text-muted-foreground/70 text-[10px]">
@@ -162,19 +160,19 @@ export function ApiStep({
                 <div className="relative max-w-full overflow-x-auto px-5 py-3 [scrollbar-width:none]">
                   <span
                     aria-hidden
-                    className="border-foreground/40 absolute top-0 left-0 size-2.5 border-t border-l"
+                    className="border-foreground/50 absolute top-0 left-0 size-2.5 border-t border-l"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/40 absolute top-0 right-0 size-2.5 border-t border-r"
+                    className="border-foreground/50 absolute top-0 right-0 size-2.5 border-t border-r"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/40 absolute bottom-0 left-0 size-2.5 border-b border-l"
+                    className="border-foreground/50 absolute bottom-0 left-0 size-2.5 border-b border-l"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/40 absolute right-0 bottom-0 size-2.5 border-r border-b"
+                    className="border-foreground/50 absolute right-0 bottom-0 size-2.5 border-r border-b"
                   />
                   <code className="text-foreground font-mono text-base font-medium tracking-tight whitespace-nowrap sm:text-lg">
                     {created.token}
