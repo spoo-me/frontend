@@ -2,10 +2,52 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { ArrowRight, Check, Copy, KeyRound, TriangleAlert } from "lucide-react"
+import { ArrowRight, Check, Copy, KeyRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { celebrate } from "@/lib/confetti"
 import { createApiKey, SpooApiError, type ApiKeyCreated } from "@/lib/api"
+
+/**
+ * Hand-lit curl — the request is fixed-shape, so we color the tokens
+ * directly rather than running Shiki on a one-liner. Same multi-color
+ * register as the developer section's code blocks; the live token echoes
+ * the hero key in foreground ink inside the auth string.
+ */
+function CurlBlock({ token }: { token: string }) {
+  const flag = "text-muted-foreground"
+  const str = "text-amber-200/70"
+  const cont = "text-muted-foreground/40"
+  return (
+    <pre className="overflow-x-auto px-4 py-3.5 text-left font-mono text-xs leading-relaxed whitespace-pre [scrollbar-width:thin]">
+      <code>
+        <span className="text-foreground">curl</span> <span className={flag}>-X</span>{" "}
+        <span className="text-emerald-400/80">POST</span>{" "}
+        <span className="text-sky-400/80">https://spoo.me/api/v1/shorten</span>{" "}
+        <span className={cont}>{"\\"}</span>
+        {"\n  "}
+        <span className={flag}>-H</span>{" "}
+        <span className={str}>
+          {'"Authorization: Bearer '}
+          <span className="text-foreground/90">{token}</span>
+          {'"'}
+        </span>{" "}
+        <span className={cont}>{"\\"}</span>
+        {"\n  "}
+        <span className={flag}>-H</span>{" "}
+        <span className={str}>{'"Content-Type: application/json"'}</span>{" "}
+        <span className={cont}>{"\\"}</span>
+        {"\n  "}
+        <span className={flag}>-d</span>{" "}
+        <span className={str}>
+          {"'{"}
+          <span className="text-sky-300/70">{'"long_url"'}</span>
+          {': "https://example.com"}\''}
+        </span>
+      </code>
+    </pre>
+  )
+}
 
 export function ApiStep({
   onDone,
@@ -18,6 +60,7 @@ export function ApiStep({
   const [error, setError] = React.useState<string | null>(null)
   const [created, setCreated] = React.useState<ApiKeyCreated | null>(null)
   const [copied, setCopied] = React.useState<"key" | "curl" | null>(null)
+  const keyCardRef = React.useRef<HTMLDivElement>(null)
 
   async function generate() {
     if (pending || created) return
@@ -59,6 +102,13 @@ export function ApiStep({
     setTimeout(() => setCopied(null), 1600)
   }
 
+  // One celebratory burst when the key lands, sourced from the key card.
+  React.useEffect(() => {
+    if (!created) return
+    const t = setTimeout(() => celebrate(keyCardRef.current), 120)
+    return () => clearTimeout(t)
+  }, [created])
+
   // After creation: Enter advances.
   React.useEffect(() => {
     if (!created) return
@@ -79,7 +129,7 @@ export function ApiStep({
       </h1>
       <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
         {created
-          ? "Run the request below — your first 201 is one paste away."
+          ? "Copy it now — the full key is shown only this once."
           : "Scoped to creating links and reading stats. You can rotate or revoke it any time."}
       </p>
 
@@ -90,42 +140,50 @@ export function ApiStep({
             initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="mt-10 w-full max-w-lg space-y-3 text-left"
+            className="mt-10 w-full max-w-lg space-y-4 text-left"
           >
-            <div className="border-border/60 bg-card shadow-card rounded-xl border p-4 dark:shadow-none">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="label-mono text-muted-foreground text-[10px]">
-                    API key · shown once
-                  </div>
-                  <code className="text-foreground mt-1 block truncate font-mono text-[13px]">
-                    {created.token}
-                  </code>
-                </div>
+            {/* Hero — the key itself. Brand-tint glow marks it as the thing. */}
+            <div
+              ref={keyCardRef}
+              className="border-border/60 bg-card shadow-card relative overflow-hidden rounded-xl border p-5 dark:shadow-none"
+            >
+              <span
+                aria-hidden
+                className="bg-brand/10 pointer-events-none absolute -top-12 -right-10 size-36 rounded-full blur-2xl"
+              />
+              <div className="label-mono text-muted-foreground/70 relative text-[10px]">
+                Secret key
+              </div>
+              <div className="relative mt-2 flex items-center gap-3">
+                <code className="text-foreground min-w-0 flex-1 truncate font-mono text-[15px] font-medium tracking-tight">
+                  {created.token}
+                </code>
                 <Button
                   onClick={() => void copy("key")}
-                  size="icon-sm"
+                  size="sm"
                   variant="outline"
-                  aria-label="Copy API key"
                   className="shrink-0"
                 >
                   {copied === "key" ? (
-                    <Check className="text-live size-3.5" />
+                    <>
+                      <Check className="text-live size-3.5" />
+                      Copied
+                    </>
                   ) : (
-                    <Copy className="size-3.5" />
+                    <>
+                      <Copy className="size-3.5" />
+                      Copy
+                    </>
                   )}
                 </Button>
               </div>
-              <p className="text-muted-foreground/80 mt-3 flex items-start gap-1.5 text-xs leading-relaxed">
-                <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
-                Store it somewhere safe — we only show the full key at creation.
-              </p>
             </div>
 
-            <div className="border-border/60 relative overflow-hidden rounded-xl border bg-[var(--code-surface)]">
-              <div className="border-border/60 flex items-center justify-between border-b px-4 py-2">
-                <span className="label-mono text-muted-foreground text-[10px]">
-                  Your first request
+            {/* Secondary — try it. Quieter header, ghost copy, syntax-lit. */}
+            <div className="border-border/50 relative overflow-hidden rounded-xl border bg-[var(--code-surface)]">
+              <div className="border-border/50 flex items-center justify-between border-b px-4 py-2">
+                <span className="label-mono text-muted-foreground/60 text-[10px]">
+                  Try it now
                 </span>
                 <Button
                   onClick={() => void copy("curl")}
@@ -141,12 +199,10 @@ export function ApiStep({
                   )}
                 </Button>
               </div>
-              <pre className="overflow-x-auto px-4 py-3.5 text-left font-mono text-xs leading-relaxed [scrollbar-width:thin]">
-                <code className="text-foreground/85">{curl}</code>
-              </pre>
+              <CurlBlock token={created.token} />
             </div>
 
-            <div className="flex flex-col items-center pt-4">
+            <div className="flex flex-col items-center pt-3">
               <Button onClick={() => onDone(created)} className="h-10 min-w-44">
                 Continue
                 <ArrowRight className="size-4" data-icon="inline-end" />
