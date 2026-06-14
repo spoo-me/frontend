@@ -3,6 +3,7 @@ import "server-only"
 import { codeToHtml } from "shiki"
 
 import type { BrandIconKey } from "@/components/icons/brand-icons"
+import { CURL_TOKEN_PLACEHOLDER } from "@/lib/onboarding"
 
 export type Sample = {
   id: string
@@ -119,6 +120,19 @@ export async function highlightCode(code: string, lang: string): Promise<string>
     themes: { light: "vitesse-light", dark: "vesper" },
     defaultColor: false,
   })
+}
+
+/**
+ * The onboarding "try it now" curl, highlighted once with a placeholder
+ * token. The client injects the real key into the rendered HTML.
+ */
+const ONBOARDING_CURL = `curl -X POST https://spoo.me/api/v1/shorten \\
+  -H "Authorization: Bearer ${CURL_TOKEN_PLACEHOLDER}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"long_url": "https://example.com"}'`
+
+export async function getOnboardingCurlHtml(): Promise<string> {
+  return highlightCode(ONBOARDING_CURL, "bash")
 }
 
 export async function getHighlightedSamples(): Promise<HighlightedSample[]> {

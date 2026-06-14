@@ -63,6 +63,13 @@ export function saveStash(patch: Partial<OnboardingStash>) {
   }
 }
 
+/**
+ * Sentinel sitting inside the onboarding curl template, highlighted once on
+ * the server (vesper) then swapped for the real token client-side. It lives
+ * inside a quoted string so Shiki keeps it as one contiguous token.
+ */
+export const CURL_TOKEN_PLACEHOLDER = "SPOO_TOKEN_PLACEHOLDER"
+
 export const HEARD_FROM_OPTIONS = [
   "X / Twitter",
   "GitHub",

@@ -15,55 +15,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { celebrate } from "@/lib/confetti"
+import { CURL_TOKEN_PLACEHOLDER } from "@/lib/onboarding"
 import { siteConfig } from "@/lib/site-config"
 import { createApiKey, SpooApiError, type ApiKeyCreated } from "@/lib/api"
 
-/**
- * Hand-lit curl — the request is fixed-shape, so we color the tokens
- * directly rather than running Shiki on a one-liner. Same multi-color
- * register as the developer section's code blocks; the live token echoes
- * the hero key in foreground ink inside the auth string.
- */
-function CurlBlock({ token }: { token: string }) {
-  const base = "text-foreground"
-  const flag = "text-muted-foreground"
-  const str = "text-amber-200/80"
-  const cont = "text-muted-foreground/40"
-  return (
-    <pre className="overflow-x-auto px-4 py-4 text-left font-mono text-xs leading-relaxed whitespace-pre [scrollbar-width:thin]">
-      <code>
-        <span className={base}>curl</span> <span className={flag}>-X</span>{" "}
-        <span className="text-emerald-400/85">POST</span>{" "}
-        <span className="text-sky-400/85">https://spoo.me/api/v1/shorten</span>{" "}
-        <span className={cont}>{"\\"}</span>
-        {"\n  "}
-        <span className={flag}>-H</span>{" "}
-        <span className={str}>
-          {'"Authorization: Bearer '}
-          <span className="text-foreground/90">{token}</span>
-          {'"'}
-        </span>{" "}
-        <span className={cont}>{"\\"}</span>
-        {"\n  "}
-        <span className={flag}>-H</span>{" "}
-        <span className={str}>{'"Content-Type: application/json"'}</span>{" "}
-        <span className={cont}>{"\\"}</span>
-        {"\n  "}
-        <span className={flag}>-d</span>{" "}
-        <span className={str}>
-          {"'{"}
-          <span className="text-sky-300/80">{'"long_url"'}</span>
-          {': "https://example.com"}\''}
-        </span>
-      </code>
-    </pre>
-  )
-}
-
 export function ApiStep({
+  curlHtml,
   onDone,
   onSkip,
 }: {
+  /** Server-highlighted curl template (vesper); token swapped in client-side. */
+  curlHtml: string
   onDone: (key: ApiKeyCreated) => void
   onSkip: () => void
 }) {
@@ -106,6 +68,14 @@ export function ApiStep({
   -H "Content-Type: application/json" \\
   -d '{"long_url": "https://example.com"}'`
     : ""
+
+  // Drop the real token into the server-highlighted template — the
+  // placeholder sits inside one string span, so vesper coloring survives.
+  const curlHighlighted = React.useMemo(
+    () =>
+      created ? curlHtml.replaceAll(CURL_TOKEN_PLACEHOLDER, created.token) : "",
+    [curlHtml, created],
+  )
 
   async function copy(kind: "key" | "curl") {
     if (!created) return
@@ -282,7 +252,7 @@ export function ApiStep({
           --code-surface is re-declared because the dialog portals to body. */}
       {created && (
         <Dialog open={tryOpen} onOpenChange={setTryOpen}>
-          <DialogContent className="text-left sm:max-w-md [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
+          <DialogContent className="text-left sm:max-w-xl [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
             <DialogHeader>
               <DialogTitle>Try it now</DialogTitle>
               <DialogDescription>
@@ -291,7 +261,10 @@ export function ApiStep({
             </DialogHeader>
 
             <div className="border-border/60 overflow-hidden rounded-lg border bg-[var(--code-surface)]">
-              <CurlBlock token={created.token} />
+              <div
+                className="shiki-host overflow-x-auto px-4 py-4 text-xs leading-relaxed [scrollbar-width:thin]"
+                dangerouslySetInnerHTML={{ __html: curlHighlighted }}
+              />
             </div>
 
             <DialogFooter className="sm:justify-between">

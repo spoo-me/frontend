@@ -1,24 +1,9 @@
-"use client"
+import { getOnboardingCurlHtml } from "@/lib/code-samples"
+import { ApiPageClient } from "./api-page-client"
 
-import { ApiStep } from "@/components/onboarding/steps/api-step"
-import { useOnboarding } from "@/components/onboarding/use-onboarding"
-import { saveStash } from "@/lib/onboarding"
-
-export default function ApiPage() {
-  const { advance } = useOnboarding()
-  return (
-    <ApiStep
-      onDone={(key) => {
-        saveStash({
-          artifact: {
-            kind: "key",
-            name: key.name,
-            tokenPrefix: key.token_prefix ?? key.token.slice(0, 9),
-          },
-        })
-        advance("domain")
-      }}
-      onSkip={() => advance("domain")}
-    />
-  )
+export default async function ApiPage() {
+  // Highlight the curl template (vesper) on the server; the client swaps in
+  // the real token at runtime.
+  const curlHtml = await getOnboardingCurlHtml()
+  return <ApiPageClient curlHtml={curlHtml} />
 }
