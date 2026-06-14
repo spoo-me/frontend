@@ -15,21 +15,24 @@ import { createApiKey, SpooApiError, type ApiKeyCreated } from "@/lib/api"
  * the hero key in foreground ink inside the auth string.
  */
 function CurlBlock({ token }: { token: string }) {
-  const flag = "text-muted-foreground"
-  const str = "text-amber-200/70"
-  const cont = "text-muted-foreground/40"
+  // Deliberately low-contrast: nothing here is full white — the key above
+  // owns that. Syntax tints stay, dialed down so color doesn't pull focus.
+  const base = "text-muted-foreground/80"
+  const flag = "text-muted-foreground/50"
+  const str = "text-amber-200/45"
+  const cont = "text-muted-foreground/25"
   return (
-    <pre className="overflow-x-auto px-4 py-3.5 text-left font-mono text-xs leading-relaxed whitespace-pre [scrollbar-width:thin]">
+    <pre className="overflow-x-auto px-4 pt-1 pb-3.5 text-left font-mono text-[11px] leading-relaxed whitespace-pre [scrollbar-width:thin]">
       <code>
-        <span className="text-foreground">curl</span> <span className={flag}>-X</span>{" "}
-        <span className="text-emerald-400/80">POST</span>{" "}
-        <span className="text-sky-400/80">https://spoo.me/api/v1/shorten</span>{" "}
+        <span className={base}>curl</span> <span className={flag}>-X</span>{" "}
+        <span className="text-emerald-400/55">POST</span>{" "}
+        <span className="text-sky-400/55">https://spoo.me/api/v1/shorten</span>{" "}
         <span className={cont}>{"\\"}</span>
         {"\n  "}
         <span className={flag}>-H</span>{" "}
         <span className={str}>
           {'"Authorization: Bearer '}
-          <span className="text-foreground/90">{token}</span>
+          <span className="text-foreground/70">{token}</span>
           {'"'}
         </span>{" "}
         <span className={cont}>{"\\"}</span>
@@ -41,7 +44,7 @@ function CurlBlock({ token }: { token: string }) {
         <span className={flag}>-d</span>{" "}
         <span className={str}>
           {"'{"}
-          <span className="text-sky-300/70">{'"long_url"'}</span>
+          <span className="text-sky-300/45">{'"long_url"'}</span>
           {': "https://example.com"}\''}
         </span>
       </code>
@@ -140,13 +143,12 @@ export function ApiStep({
             initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="mt-10 w-full max-w-lg space-y-4 text-left"
+            className="mt-10 w-full max-w-xl text-left"
           >
-            {/* Hero — a credential reveal floating in open space (no panel).
-                Key-icon lockup + crop-mark frame (the landing's alias-
-                selection motif) carry the ceremony; the curl below stays
-                boxed, so the hero/utility hierarchy reads. */}
-            <div ref={keyCardRef} className="py-3 text-center">
+            {/* Hero — the key, large and isolated. It owns the screen's
+                contrast (full white) and size; everything below recedes.
+                Crop-mark frame = the landing's alias-selection motif. */}
+            <div ref={keyCardRef} className="text-center">
               <div className="flex items-center justify-center gap-2">
                 <span className="border-border/60 bg-card text-foreground flex size-6 items-center justify-center rounded-md border">
                   <KeyRound className="size-3.5" aria-hidden />
@@ -156,31 +158,31 @@ export function ApiStep({
                 </span>
               </div>
 
-              <div className="mt-5 flex justify-center">
-                <div className="relative max-w-full overflow-x-auto px-5 py-3 [scrollbar-width:none]">
+              <div className="mt-6 flex justify-center">
+                <div className="relative max-w-full overflow-x-auto px-6 py-4 [scrollbar-width:none]">
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute top-0 left-0 size-2.5 border-t border-l"
+                    className="border-foreground/50 absolute top-0 left-0 size-3 border-t border-l"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute top-0 right-0 size-2.5 border-t border-r"
+                    className="border-foreground/50 absolute top-0 right-0 size-3 border-t border-r"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute bottom-0 left-0 size-2.5 border-b border-l"
+                    className="border-foreground/50 absolute bottom-0 left-0 size-3 border-b border-l"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute right-0 bottom-0 size-2.5 border-r border-b"
+                    className="border-foreground/50 absolute right-0 bottom-0 size-3 border-r border-b"
                   />
-                  <code className="text-foreground font-mono text-base font-medium tracking-tight whitespace-nowrap sm:text-lg">
+                  <code className="text-foreground font-mono text-lg font-semibold tracking-tight whitespace-nowrap sm:text-2xl">
                     {created.token}
                   </code>
                 </div>
               </div>
 
-              <div className="mt-5 flex justify-center">
+              <div className="mt-6 flex justify-center">
                 <Button onClick={() => void copy("key")} size="sm" variant="outline">
                   {copied === "key" ? (
                     <>
@@ -197,10 +199,11 @@ export function ApiStep({
               </div>
             </div>
 
-            {/* Secondary — try it. Recessed code surface, quieter header. */}
-            <div className="border-border/60 relative overflow-hidden rounded-xl border bg-[var(--code-surface)]">
-              <div className="border-border/50 flex items-center justify-between border-b px-4 py-2">
-                <span className="label-mono text-muted-foreground/60 text-[10px]">
+            {/* Footnote — try it. No panel weight: faint border, no header
+                divider, low-contrast code. A quiet reference, not a peer. */}
+            <div className="border-border/40 relative mt-12 overflow-hidden rounded-lg border bg-[var(--code-surface)]">
+              <div className="flex items-center justify-between px-4 pt-2.5">
+                <span className="label-mono text-muted-foreground/50 text-[10px]">
                   Try it now
                 </span>
                 <Button
@@ -208,7 +211,7 @@ export function ApiStep({
                   size="icon-xs"
                   variant="ghost"
                   aria-label="Copy curl command"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground/50 hover:text-foreground"
                 >
                   {copied === "curl" ? (
                     <Check className="text-live size-3" />
@@ -220,7 +223,7 @@ export function ApiStep({
               <CurlBlock token={created.token} />
             </div>
 
-            <div className="flex flex-col items-center pt-3">
+            <div className="flex flex-col items-center pt-10">
               <Button onClick={() => onDone(created)} className="h-10 min-w-44">
                 Continue
                 <ArrowRight className="size-4" data-icon="inline-end" />
