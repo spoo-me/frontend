@@ -2,11 +2,20 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { ArrowRight, Check, Copy, KeyRound } from "lucide-react"
+import { ArrowRight, Check, Copy, KeyRound, Terminal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { celebrate } from "@/lib/confetti"
+import { siteConfig } from "@/lib/site-config"
 import { createApiKey, SpooApiError, type ApiKeyCreated } from "@/lib/api"
 
 /**
@@ -16,24 +25,22 @@ import { createApiKey, SpooApiError, type ApiKeyCreated } from "@/lib/api"
  * the hero key in foreground ink inside the auth string.
  */
 function CurlBlock({ token }: { token: string }) {
-  // Deliberately low-contrast: nothing here is full white — the key above
-  // owns that. Syntax tints stay, dialed down so color doesn't pull focus.
-  const base = "text-muted-foreground/80"
-  const flag = "text-muted-foreground/50"
-  const str = "text-amber-200/45"
-  const cont = "text-muted-foreground/25"
+  const base = "text-foreground"
+  const flag = "text-muted-foreground"
+  const str = "text-amber-200/80"
+  const cont = "text-muted-foreground/40"
   return (
-    <pre className="overflow-x-auto px-4 pt-1 pb-3.5 text-left font-mono text-[11px] leading-relaxed whitespace-pre [scrollbar-width:thin]">
+    <pre className="overflow-x-auto px-4 py-4 text-left font-mono text-xs leading-relaxed whitespace-pre [scrollbar-width:thin]">
       <code>
         <span className={base}>curl</span> <span className={flag}>-X</span>{" "}
-        <span className="text-emerald-400/55">POST</span>{" "}
-        <span className="text-sky-400/55">https://spoo.me/api/v1/shorten</span>{" "}
+        <span className="text-emerald-400/85">POST</span>{" "}
+        <span className="text-sky-400/85">https://spoo.me/api/v1/shorten</span>{" "}
         <span className={cont}>{"\\"}</span>
         {"\n  "}
         <span className={flag}>-H</span>{" "}
         <span className={str}>
           {'"Authorization: Bearer '}
-          <span className="text-foreground/70">{token}</span>
+          <span className="text-foreground/90">{token}</span>
           {'"'}
         </span>{" "}
         <span className={cont}>{"\\"}</span>
@@ -45,7 +52,7 @@ function CurlBlock({ token }: { token: string }) {
         <span className={flag}>-d</span>{" "}
         <span className={str}>
           {"'{"}
-          <span className="text-sky-300/45">{'"long_url"'}</span>
+          <span className="text-sky-300/80">{'"long_url"'}</span>
           {': "https://example.com"}\''}
         </span>
       </code>
@@ -64,6 +71,7 @@ export function ApiStep({
   const [error, setError] = React.useState<string | null>(null)
   const [created, setCreated] = React.useState<ApiKeyCreated | null>(null)
   const [copied, setCopied] = React.useState<"key" | "curl" | null>(null)
+  const [tryOpen, setTryOpen] = React.useState(false)
   const keyCardRef = React.useRef<HTMLDivElement>(null)
 
   async function generate() {
@@ -113,9 +121,9 @@ export function ApiStep({
     return () => clearTimeout(t)
   }, [created])
 
-  // After creation: Enter advances.
+  // After creation: Enter advances — unless the Try-it dialog owns focus.
   React.useEffect(() => {
-    if (!created) return
+    if (!created || tryOpen) return
     function onKey(e: KeyboardEvent) {
       if (e.key === "Enter") {
         e.preventDefault()
@@ -124,7 +132,7 @@ export function ApiStep({
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [created, onDone])
+  }, [created, tryOpen, onDone])
 
   return (
     <div className="flex w-full flex-col items-center text-center [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
@@ -186,7 +194,7 @@ export function ApiStep({
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-center">
+              <div className="mt-6 flex items-center justify-center gap-2">
                 <Button onClick={() => void copy("key")} size="sm" variant="outline">
                   {copied === "key" ? (
                     <>
@@ -200,34 +208,19 @@ export function ApiStep({
                     </>
                   )}
                 </Button>
-              </div>
-            </div>
-
-            {/* Footnote — try it. No panel weight: faint border, no header
-                divider, low-contrast code. A quiet reference, not a peer. */}
-            <div className="border-border/40 relative mt-12 overflow-hidden rounded-lg border bg-[var(--code-surface)]">
-              <div className="flex items-center justify-between px-4 pt-2.5">
-                <span className="label-mono text-muted-foreground/50 text-[10px]">
-                  Try it now
-                </span>
                 <Button
-                  onClick={() => void copy("curl")}
-                  size="icon-xs"
+                  onClick={() => setTryOpen(true)}
+                  size="sm"
                   variant="ghost"
-                  aria-label="Copy curl command"
-                  className="text-muted-foreground/50 hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  {copied === "curl" ? (
-                    <Check className="text-live size-3" />
-                  ) : (
-                    <Copy className="size-3" />
-                  )}
+                  <Terminal className="size-3.5" />
+                  Try it now
                 </Button>
               </div>
-              <CurlBlock token={created.token} />
             </div>
 
-            <div className="flex flex-col items-center pt-10">
+            <div className="flex flex-col items-center pt-12">
               <Button onClick={() => onDone(created)} className="h-10 min-w-44">
                 Continue
                 <ArrowRight className="size-4" data-icon="inline-end" />
@@ -284,6 +277,50 @@ export function ApiStep({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Try-it dialog — the curl lives here, full-contrast, behind a button.
+          --code-surface is re-declared because the dialog portals to body. */}
+      {created && (
+        <Dialog open={tryOpen} onOpenChange={setTryOpen}>
+          <DialogContent className="text-left sm:max-w-md [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
+            <DialogHeader>
+              <DialogTitle>Try it now</DialogTitle>
+              <DialogDescription>
+                Run this with your new key — your first 201 is one paste away.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="border-border/60 overflow-hidden rounded-lg border bg-[var(--code-surface)]">
+              <CurlBlock token={created.token} />
+            </div>
+
+            <DialogFooter className="sm:justify-between">
+              <a
+                href={siteConfig.links.docs}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 self-center text-xs font-medium transition-colors"
+              >
+                API reference
+                <ArrowRight className="size-3 -rotate-45" />
+              </a>
+              <Button onClick={() => void copy("curl")} size="sm">
+                {copied === "curl" ? (
+                  <>
+                    <Check className="size-3.5" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3.5" />
+                    Copy command
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
