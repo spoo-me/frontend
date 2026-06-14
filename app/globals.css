@@ -101,7 +101,13 @@
   0%, 49% {
     opacity: 1;}
   50%, 100% {
-    opacity: 0;}}}
+    opacity: 0;}}
+  --animate-shiny-text: shiny-text 5s infinite;
+  @keyframes shiny-text {
+  0%, 90%, 100% {
+    background-position: calc(-100% - var(--shiny-width)) 0;}
+  30%, 60% {
+    background-position: calc(100% + var(--shiny-width)) 0;}}}
 
 :root {
     --background: oklch(1 0 0);

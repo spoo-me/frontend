@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react"
 import { ArrowRight, Check, Copy, KeyRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { AnimatedShinyText } from "@/components/ui/animated-shiny-text"
 import { celebrate } from "@/lib/confetti"
 import { createApiKey, SpooApiError, type ApiKeyCreated } from "@/lib/api"
 
@@ -176,9 +177,12 @@ export function ApiStep({
                     aria-hidden
                     className="border-foreground/50 absolute right-0 bottom-0 size-3 border-r border-b"
                   />
-                  <code className="text-foreground font-mono text-lg font-semibold tracking-tight whitespace-nowrap sm:text-2xl">
+                  <AnimatedShinyText
+                    shimmerWidth={140}
+                    className="text-foreground/80 max-w-none font-mono text-lg font-semibold tracking-tight whitespace-nowrap dark:via-white sm:text-2xl"
+                  >
                     {created.token}
-                  </code>
+                  </AnimatedShinyText>
                 </div>
               </div>
 
