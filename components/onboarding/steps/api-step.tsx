@@ -142,19 +142,16 @@ export function ApiStep({
             transition={{ duration: 0.35, ease: "easeOut" }}
             className="mt-10 w-full max-w-lg space-y-4 text-left"
           >
-            {/* Hero — the key itself. Brand-tint glow marks it as the thing. */}
+            {/* Hero — raised card (same surface as the link success card);
+                depth alone sets it above the recessed code block below. */}
             <div
               ref={keyCardRef}
-              className="border-border/60 bg-card shadow-card relative overflow-hidden rounded-xl border p-5 dark:shadow-none"
+              className="border-border/60 bg-card shadow-card rounded-xl border p-5 dark:shadow-none"
             >
-              <span
-                aria-hidden
-                className="bg-brand/10 pointer-events-none absolute -top-12 -right-10 size-36 rounded-full blur-2xl"
-              />
-              <div className="label-mono text-muted-foreground/70 relative text-[10px]">
+              <div className="label-mono text-muted-foreground/70 text-[10px]">
                 Secret key
               </div>
-              <div className="relative mt-2 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-3">
                 <code className="text-foreground min-w-0 flex-1 truncate font-mono text-[15px] font-medium tracking-tight">
                   {created.token}
                 </code>
@@ -179,8 +176,8 @@ export function ApiStep({
               </div>
             </div>
 
-            {/* Secondary — try it. Quieter header, ghost copy, syntax-lit. */}
-            <div className="border-border/50 relative overflow-hidden rounded-xl border bg-[var(--code-surface)]">
+            {/* Secondary — try it. Recessed code surface, quieter header. */}
+            <div className="border-border/60 relative overflow-hidden rounded-xl border bg-[var(--code-surface)]">
               <div className="border-border/50 flex items-center justify-between border-b px-4 py-2">
                 <span className="label-mono text-muted-foreground/60 text-[10px]">
                   Try it now
