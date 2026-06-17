@@ -12,7 +12,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -350,34 +349,39 @@ function QrDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="text-center sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>QR code</DialogTitle>
-          <DialogDescription>
-            Scan it, or download to drop into a deck, poster, or print.
-          </DialogDescription>
+      {/* Darker than the default popover grey; no close X (backdrop + Esc
+          dismiss); generous padding; no separate footer band. */}
+      <DialogContent
+        showCloseButton={false}
+        className="bg-background gap-5 p-7 text-center sm:max-w-xs"
+      >
+        <DialogHeader className="gap-1.5">
+          <DialogTitle className="text-lg">QR code</DialogTitle>
+          <DialogDescription>Scan it, or download to share.</DialogDescription>
         </DialogHeader>
 
-        <div className="flex justify-center py-1">
-          <div ref={tileRef} className="rounded-xl bg-white p-4 ring-1 ring-foreground/10">
-            <div
-              role="img"
-              aria-label={`QR code for ${created.short_url}`}
-              className="size-44 [&_svg]:size-full"
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
-          </div>
+        <div
+          ref={tileRef}
+          className="justify-self-center rounded-2xl bg-white p-2.5 ring-1 ring-foreground/10"
+        >
+          {/* Crop most of the QR's built-in quiet zone for a tighter look;
+              the downloaded PNG re-serializes the full-margin svg. */}
+          <div
+            role="img"
+            aria-label={`QR code for ${created.short_url}`}
+            className="size-40 overflow-hidden [&_svg]:size-full [&_svg]:scale-[1.16]"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
         </div>
 
-        <DialogFooter className="sm:justify-center">
-          <Button
-            onClick={() => downloadQrPng(tileRef.current, `spoo-${created.alias}.png`)}
-            size="sm"
-          >
-            <Download className="size-3.5" />
-            Download PNG
-          </Button>
-        </DialogFooter>
+        <Button
+          onClick={() => downloadQrPng(tileRef.current, `spoo-${created.alias}.png`)}
+          size="sm"
+          className="justify-self-center"
+        >
+          <Download className="size-3.5" />
+          Download PNG
+        </Button>
       </DialogContent>
     </Dialog>
   )
