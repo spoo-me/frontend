@@ -164,23 +164,13 @@ export function LinkStep({
                   </>
                 )}
               </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <Button asChild size="sm" variant="outline">
                 <a href={created.short_url} target="_blank" rel="noreferrer">
                   Open
                   <ArrowUpRight className="size-3.5" />
                 </a>
               </Button>
-              <Button
-                onClick={() => setQrOpen(true)}
-                size="sm"
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <Button onClick={() => setQrOpen(true)} size="sm" variant="outline">
                 <QrCode className="size-3.5" />
                 QR code
               </Button>
@@ -302,15 +292,9 @@ function LinkResult({
 
   return (
     <div ref={linkRef} className="flex flex-col items-center gap-3">
-      {/* The alias is the hero — larger than the page title; the domain is a
-          quiet prefix so the eye lands on the part that's actually theirs. */}
-      <div className="flex max-w-full items-baseline justify-center overflow-x-auto font-mono tracking-tight [scrollbar-width:none]">
-        <span className="text-muted-foreground/40 text-2xl whitespace-nowrap sm:text-3xl">
-          {host}
-        </span>
-        <span className="text-foreground text-4xl font-semibold whitespace-nowrap sm:text-5xl">
-          {slug}
-        </span>
+      <div className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">
+        <span className="text-muted-foreground/45">{host}</span>
+        <span className="text-foreground">{slug}</span>
       </div>
       <div className="text-muted-foreground/70 flex items-center gap-1.5 text-xs">
         <span aria-hidden>↳</span>
