@@ -2,12 +2,21 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { ArrowRight, Check, Copy } from "lucide-react"
+import { ArrowRight, ArrowUpRight, Check, Copy, Download, QrCode } from "lucide-react"
 import { BaseQr, encodeData } from "simple-qrbtf"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { celebrate } from "@/lib/confetti"
 import { checkAlias, shorten, SpooApiError, type ShortUrl } from "@/lib/api"
 
 type AliasState =
@@ -30,6 +39,8 @@ export function LinkStep({
   const [error, setError] = React.useState<string | null>(null)
   const [created, setCreated] = React.useState<ShortUrl | null>(null)
   const [copied, setCopied] = React.useState(false)
+  const [qrOpen, setQrOpen] = React.useState(false)
+  const linkRef = React.useRef<HTMLDivElement>(null)
 
   const urlLooksValid = /^https?:\/\/\S+\.\S+/.test(url.trim())
 
@@ -90,9 +101,16 @@ export function LinkStep({
     }
   }
 
-  // After creation: Enter advances.
+  // One celebratory burst when the link lands, sourced from the link itself.
   React.useEffect(() => {
     if (!created) return
+    const t = setTimeout(() => celebrate(linkRef.current), 120)
+    return () => clearTimeout(t)
+  }, [created])
+
+  // After creation: Enter advances — unless the QR dialog owns focus.
+  React.useEffect(() => {
+    if (!created || qrOpen) return
     function onKey(e: KeyboardEvent) {
       if (e.key === "Enter") {
         e.preventDefault()
@@ -101,7 +119,7 @@ export function LinkStep({
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [created, onDone])
+  }, [created, qrOpen, onDone])
 
   async function copy() {
     if (!created) return
@@ -128,38 +146,47 @@ export function LinkStep({
             initial={{ opacity: 0, y: 16, filter: "blur(3px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="mt-10 w-full max-w-md"
+            className="mt-12 flex w-full max-w-md flex-col items-center"
           >
-            <div className="border-border/60 bg-card shadow-card rounded-xl border p-5 dark:shadow-none">
-              <div className="flex items-center gap-4">
-                <QrTile url={created.short_url} />
-                <div className="min-w-0 flex-1 text-left">
-                  <div className="label-mono text-muted-foreground text-[10px]">
-                    Short link
-                  </div>
-                  <div className="text-foreground mt-1 truncate font-mono text-sm font-medium">
-                    {created.short_url.replace(/^https?:\/\//, "")}
-                  </div>
-                  <div className="text-muted-foreground/70 mt-1.5 truncate text-xs">
-                    → {created.long_url}
-                  </div>
-                </div>
-                <Button
-                  onClick={() => void copy()}
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label="Copy short link"
-                  className="shrink-0"
-                >
-                  {copied ? (
+            <LinkResult created={created} linkRef={linkRef} />
+
+            <div className="mt-7 flex items-center justify-center gap-2">
+              <Button onClick={() => void copy()} size="sm" variant="outline">
+                {copied ? (
+                  <>
                     <Check className="text-live size-3.5" />
-                  ) : (
+                    Copied
+                  </>
+                ) : (
+                  <>
                     <Copy className="size-3.5" />
-                  )}
-                </Button>
-              </div>
+                    Copy link
+                  </>
+                )}
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <a href={created.short_url} target="_blank" rel="noreferrer">
+                  Open
+                  <ArrowUpRight className="size-3.5" />
+                </a>
+              </Button>
+              <Button
+                onClick={() => setQrOpen(true)}
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <QrCode className="size-3.5" />
+                QR code
+              </Button>
             </div>
-            <Button onClick={() => onDone(created)} className="mt-8 h-10 min-w-44">
+
+            <Button onClick={() => onDone(created)} className="mt-12 h-10 min-w-44">
               Continue
               <ArrowRight className="size-4" data-icon="inline-end" />
             </Button>
@@ -245,6 +272,51 @@ export function LinkStep({
           </motion.form>
         )}
       </AnimatePresence>
+
+      {created && (
+        <QrDialog open={qrOpen} onOpenChange={setQrOpen} created={created} />
+      )}
+    </div>
+  )
+}
+
+/* The hero: short link floated on the page (no panel), destination below. */
+function LinkResult({
+  created,
+  linkRef,
+}: {
+  created: ShortUrl
+  linkRef: React.RefObject<HTMLDivElement | null>
+}) {
+  const noProto = created.short_url.replace(/^https?:\/\//, "")
+  const slash = noProto.indexOf("/")
+  const host = slash >= 0 ? noProto.slice(0, slash + 1) : `${noProto}/`
+  const slug = slash >= 0 ? noProto.slice(slash + 1) : created.alias
+
+  let destHost = created.long_url
+  try {
+    destHost = new URL(created.long_url).hostname.replace(/^www\./, "")
+  } catch {
+    /* keep raw */
+  }
+
+  return (
+    <div ref={linkRef} className="flex flex-col items-center gap-3">
+      <div className="font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
+        <span className="text-muted-foreground/55">{host}</span>
+        <span className="text-foreground">{slug}</span>
+      </div>
+      <div className="text-muted-foreground/70 flex items-center gap-1.5 text-xs">
+        <span aria-hidden>↳</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://www.google.com/s2/favicons?domain=${destHost}&sz=64`}
+          alt=""
+          className="size-3.5 rounded-[3px]"
+          loading="lazy"
+        />
+        <span className="max-w-[16rem] truncate">{destHost}</span>
+      </div>
     </div>
   )
 }
@@ -270,19 +342,83 @@ function AliasBadge({ state }: { state: AliasState }) {
   )
 }
 
-function QrTile({ url }: { url: string }) {
+/* Scannable QR (dark-on-white) in a bright tile, downloadable as PNG. */
+function QrDialog({
+  open,
+  onOpenChange,
+  created,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  created: ShortUrl
+}) {
+  const tileRef = React.useRef<HTMLDivElement>(null)
   const svg = React.useMemo(() => {
-    const data = encodeData({ text: url })
-    return BaseQr({ qrcode: data, otherColor: "currentColor", posColor: "currentColor" })
-  }, [url])
+    const data = encodeData({ text: created.short_url })
+    return BaseQr({ qrcode: data, otherColor: "#0a0a0a", posColor: "#0a0a0a" })
+  }, [created.short_url])
+
   return (
-    <div className="border-border/70 bg-background shrink-0 rounded-lg border p-2">
-      <div
-        role="img"
-        aria-label={`QR code for ${url}`}
-        className="text-foreground/90 size-16 [&_svg]:size-full"
-        dangerouslySetInnerHTML={{ __html: svg }}
-      />
-    </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="text-center sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>QR code</DialogTitle>
+          <DialogDescription>
+            Scan it, or download to drop into a deck, poster, or print.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex justify-center py-1">
+          <div ref={tileRef} className="rounded-xl bg-white p-4 ring-1 ring-foreground/10">
+            <div
+              role="img"
+              aria-label={`QR code for ${created.short_url}`}
+              className="size-44 [&_svg]:size-full"
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="sm:justify-center">
+          <Button
+            onClick={() => downloadQrPng(tileRef.current, `spoo-${created.alias}.png`)}
+            size="sm"
+          >
+            <Download className="size-3.5" />
+            Download PNG
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
+}
+
+/* Rasterize the inline QR svg to a padded 1024px PNG on white. */
+function downloadQrPng(container: HTMLElement | null, filename: string) {
+  const source = container?.querySelector("svg")
+  if (!source) return
+  const clone = source.cloneNode(true) as SVGSVGElement
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg")
+  const SIZE = 1024
+  const PAD = Math.round(SIZE * 0.08)
+  clone.setAttribute("width", String(SIZE))
+  clone.setAttribute("height", String(SIZE))
+  const xml = new XMLSerializer().serializeToString(clone)
+
+  const img = new Image()
+  img.onload = () => {
+    const canvas = document.createElement("canvas")
+    canvas.width = SIZE
+    canvas.height = SIZE
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, SIZE, SIZE)
+    ctx.drawImage(img, PAD, PAD, SIZE - PAD * 2, SIZE - PAD * 2)
+    const a = document.createElement("a")
+    a.href = canvas.toDataURL("image/png")
+    a.download = filename
+    a.click()
+  }
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml)
 }
