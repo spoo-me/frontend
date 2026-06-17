@@ -302,9 +302,15 @@ function LinkResult({
 
   return (
     <div ref={linkRef} className="flex flex-col items-center gap-3">
-      <div className="font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
-        <span className="text-muted-foreground/55">{host}</span>
-        <span className="text-foreground">{slug}</span>
+      {/* The alias is the hero — larger than the page title; the domain is a
+          quiet prefix so the eye lands on the part that's actually theirs. */}
+      <div className="flex max-w-full items-baseline justify-center overflow-x-auto font-mono tracking-tight [scrollbar-width:none]">
+        <span className="text-muted-foreground/40 text-2xl whitespace-nowrap sm:text-3xl">
+          {host}
+        </span>
+        <span className="text-foreground text-4xl font-semibold whitespace-nowrap sm:text-5xl">
+          {slug}
+        </span>
       </div>
       <div className="text-muted-foreground/70 flex items-center gap-1.5 text-xs">
         <span aria-hidden>↳</span>
