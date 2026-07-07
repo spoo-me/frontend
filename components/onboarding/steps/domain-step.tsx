@@ -23,7 +23,7 @@ async function mockCreateDomain(fqdn: string): Promise<CustomDomain> {
   return {
     id: "mock",
     fqdn,
-    status: "pending",
+    status: "PENDING",
     dns_records: [
       { type: "CNAME", name: sub, value: "cname.spoo.me", purpose: "routing" },
       {
@@ -155,7 +155,7 @@ function DomainPill({
   return (
     <div
       className={cn(
-        "border-border/70 bg-card flex items-center gap-2 rounded-full border px-3.5 py-1.5 font-mono text-[11px] shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-500",
+        "border-border/70 bg-card flex items-center gap-2 rounded-full border px-3.5 py-1.5 font-mono text-[11px] shadow-float transition-transform duration-500",
         active ? pill.focused : pill.idle,
       )}
     >
@@ -282,7 +282,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
     <div className="flex w-full flex-col items-center text-center">
       <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
         Make the link{" "}
-        <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+        <span className="text-muted-foreground italic font-serif font-normal">
           yours
         </span>
       </h1>

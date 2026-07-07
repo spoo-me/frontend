@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google"
 
 import "./globals.css"
+import { NuqsAdapter } from "nuqs/adapters/next/app"
+
 import { AuthProvider } from "@/components/auth/auth-context"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -70,7 +72,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-background text-foreground font-sans">
         <ThemeProvider defaultTheme="dark">
           <QueryProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <NuqsAdapter>{children}</NuqsAdapter>
+            </AuthProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

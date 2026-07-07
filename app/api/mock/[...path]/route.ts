@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 
+import {
+  buildDomains,
+  buildGrants,
+  buildKeys,
+  buildLinks,
+  generateStats,
+  type MockDomain,
+  type MockKey,
+  type MockLink,
+  type StatsDimension,
+} from "./seed"
+
 /**
  * Mock backend for design walkthroughs — enabled only when SPOO_MOCK=1
  * (npm run dev:mock). next.config.mjs points the same-origin proxy
@@ -8,7 +20,8 @@ import { NextRequest, NextResponse } from "next/server"
  *
  * Conventions:
  *  - any email/password signs in; signup walks the OTP beat (any 6 digits)
- *  - aliases "launch", "spring", "ga", "api", "docs" are taken
+ *  - the workspace is a deterministic seeded dataset (see seed.ts)
+ *  - aliases "spring", "ga" are taken (plus everything in the seed)
  *  - state is per dev-server process; restart to reset, or GET /api/mock/reset
  */
 
@@ -18,22 +31,26 @@ type MockState = {
   email: string
   userName: string | null
   verified: boolean
-  onboarding: { step: string | null; path: "links" | "api" | null; completed: boolean }
-  links: Array<{
-    id: string
-    alias: string
-    long_url: string
-    created_at: string
-    total_clicks: number
-  }>
+  onboarding: {
+    step: string | null
+    path: "links" | "api" | null
+    completed: boolean
+  }
+  links: MockLink[]
+  domains: MockDomain[]
+  keys: MockKey[]
+  grants: ReturnType<typeof buildGrants>
 }
 
 const initial = (): MockState => ({
   email: "you@example.com",
-  userName: null,
+  userName: "Aditya",
   verified: true,
-  onboarding: { step: null, path: null, completed: false },
-  links: [],
+  onboarding: { step: "completed", path: "links", completed: true },
+  links: buildLinks(),
+  domains: buildDomains(),
+  keys: buildKeys(),
+  grants: buildGrants(),
 })
 
 // Survives HMR within one dev-server process.
@@ -41,7 +58,7 @@ const g = globalThis as typeof globalThis & { __spooMock?: MockState }
 g.__spooMock ??= initial()
 const state = () => g.__spooMock!
 
-const TAKEN_ALIASES = new Set(["launch", "spring", "ga", "api", "docs"])
+const EXTRA_TAKEN = new Set(["spring", "ga"])
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
@@ -62,7 +79,7 @@ function user() {
     user_name: s.userName,
     plan: "free",
     password_set: true,
-    auth_providers: [],
+    auth_providers: [{ provider: "github", email: s.email, linked_at: null }],
     pfp: null,
   }
 }
@@ -88,17 +105,42 @@ function slug() {
   return Math.random().toString(36).slice(2, 7)
 }
 
+function linkItem(l: MockLink) {
+  return {
+    id: l.id,
+    alias: l.alias,
+    long_url: l.long_url,
+    status: l.status,
+    created_at: l.created_at,
+    expire_after: l.expire_after,
+    max_clicks: l.max_clicks,
+    private_stats: l.private_stats,
+    block_bots: l.block_bots,
+    password_set: l.password_set,
+    total_clicks: l.total_clicks,
+    last_click: l.last_click,
+    domain: l.domain,
+  }
+}
+
+function aliasTaken(alias: string) {
+  const a = alias.toLowerCase()
+  return EXTRA_TAKEN.has(a) || state().links.some((l) => l.alias.toLowerCase() === a)
+}
+
 async function handle(req: NextRequest, path: string[]) {
-  if (!MOCK) return fail(404, "mock_disabled", "Mock API is disabled (set SPOO_MOCK=1)")
+  if (!MOCK)
+    return fail(404, "mock_disabled", "Mock API is disabled (set SPOO_MOCK=1)")
 
   const route = `${req.method} /${path.join("/")}`
   const body =
-    req.method === "POST" || req.method === "PUT"
+    req.method === "POST" || req.method === "PUT" || req.method === "PATCH"
       ? await req.json().catch(() => ({}))
       : ({} as Record<string, unknown>)
+  const params = req.nextUrl.searchParams
 
   // Latency theater — enough to exercise loading states, not annoy.
-  await sleep(250 + Math.random() * 250)
+  await sleep(200 + Math.random() * 250)
 
   const s = state()
 
@@ -116,6 +158,8 @@ async function handle(req: NextRequest, path: string[]) {
         email: String(body.email ?? "you@example.com"),
         userName: body.user_name ? String(body.user_name) : null,
         verified: false, // signup walks the OTP beat
+        links: [],
+        onboarding: { step: null, path: null, completed: false },
       }
       return withSession(
         json({
@@ -130,7 +174,6 @@ async function handle(req: NextRequest, path: string[]) {
       g.__spooMock = {
         ...initial(),
         email: String(body.email ?? "you@example.com"),
-        verified: true,
       }
       return withSession(json({ access_token: "mock_access", user: user() }))
     }
@@ -156,6 +199,11 @@ async function handle(req: NextRequest, path: string[]) {
       return json({ success: true })
     case "POST /auth/reset-password":
       return json({ success: true })
+    case "POST /auth/device/revoke": {
+      const id = String(body.grant_id ?? "")
+      s.grants = s.grants.filter((gr) => gr.id !== id)
+      return json({ success: true })
+    }
 
     /* ---------- onboarding cache ---------- */
     case "GET /auth/onboarding":
@@ -177,10 +225,10 @@ async function handle(req: NextRequest, path: string[]) {
       return json(s.onboarding)
     }
 
-    /* ---------- links ---------- */
+    /* ---------- shorten ---------- */
     case "GET /v1/shorten/check-alias": {
-      const alias = req.nextUrl.searchParams.get("alias") ?? ""
-      const taken = TAKEN_ALIASES.has(alias.toLowerCase())
+      const alias = params.get("alias") ?? ""
+      const taken = aliasTaken(alias)
       return json({ available: !taken, reason: taken ? "taken" : null })
     }
     case "POST /v1/shorten": {
@@ -188,87 +236,307 @@ async function handle(req: NextRequest, path: string[]) {
       if (!/^https?:\/\//.test(longUrl))
         return fail(422, "invalid_url", "Enter a valid http(s) URL", "long_url")
       const alias = body.alias ? String(body.alias) : slug()
-      if (TAKEN_ALIASES.has(alias.toLowerCase()))
+      if (body.alias && !/^[a-zA-Z0-9_-]{3,16}$/.test(alias))
+        return fail(
+          422,
+          "invalid_alias",
+          "3–16 characters: letters, numbers, - and _",
+          "alias",
+        )
+      if (aliasTaken(alias))
         return fail(409, "alias_taken", "That alias is already taken", "alias")
-      s.links.push({
+      const domain = body.domain ? String(body.domain) : null
+      if (domain && !s.domains.some((d) => d.fqdn === domain && d.status === "ACTIVE"))
+        return fail(422, "domain_not_active", "That domain isn't active", "domain")
+      const link: MockLink = {
         id: `url_${slug()}`,
         alias,
         long_url: longUrl,
+        domain,
+        status: "ACTIVE",
         created_at: new Date().toISOString(),
+        expire_after:
+          typeof body.expire_after === "number" ? body.expire_after : null,
+        max_clicks: typeof body.max_clicks === "number" ? body.max_clicks : null,
+        password_set: typeof body.password === "string" && body.password.length > 0,
+        private_stats: Boolean(body.private_stats),
+        block_bots: Boolean(body.block_bots),
         total_clicks: 0,
-      })
+        last_click: null,
+        weight: 1,
+      }
+      s.links.unshift(link)
       return json({
         alias,
-        short_url: `https://spoo.me/${alias}`,
+        short_url: `https://${domain ?? "spoo.me"}/${alias}`,
         long_url: longUrl,
         owner_id: "usr_mock_1",
         created_at: Math.floor(Date.now() / 1000),
         status: "active",
-        private_stats: false,
-      })
-    }
-    case "GET /v1/urls":
-      return json({
-        items: s.links.map((l) => ({
-          id: l.id,
-          alias: l.alias,
-          long_url: l.long_url,
-          status: "active",
-          created_at: l.created_at,
-          expire_after: null,
-          max_clicks: null,
-          private_stats: false,
-          block_bots: false,
-          password_set: false,
-          total_clicks: l.total_clicks,
-          last_click: null,
-          domain: null,
-        })),
-        page: 1,
-        pageSize: 20,
-        total: s.links.length,
-        hasNext: false,
-      })
-
-    /* ---------- api keys ---------- */
-    case "POST /v1/keys": {
-      const name = String(body.name ?? "").trim()
-      if (!name) return fail(422, "invalid_name", "Give the key a name", "name")
-      const prefix = "spk_live_"
-      const token = `${prefix}${slug()}${slug()}${slug()}${slug()}`
-      return json({
-        id: `key_${slug()}`,
-        name,
-        scopes: Array.isArray(body.scopes) ? body.scopes : [],
-        token_prefix: token.slice(0, 12),
-        token,
+        private_stats: link.private_stats,
       })
     }
 
-    /* ---------- custom domains ---------- */
-    case "POST /v1/custom-domains": {
-      const fqdn = String(body.fqdn ?? "")
+    /* ---------- urls list + management ---------- */
+    case "GET /v1/urls": {
+      let items = [...s.links]
+      const domain = params.get("domain")
+      if (domain) items = items.filter((l) => l.domain === domain)
+      const rawFilter = params.get("filter") ?? params.get("filterBy")
+      if (rawFilter) {
+        try {
+          const f = JSON.parse(rawFilter) as {
+            status?: string
+            search?: string
+            passwordSet?: boolean
+            maxClicksSet?: boolean
+            createdAfter?: string
+            createdBefore?: string
+          }
+          if (f.status)
+            items = items.filter(
+              (l) => l.status.toLowerCase() === String(f.status).toLowerCase(),
+            )
+          if (typeof f.passwordSet === "boolean")
+            items = items.filter((l) => l.password_set === f.passwordSet)
+          if (typeof f.maxClicksSet === "boolean")
+            items = items.filter((l) => (l.max_clicks !== null) === f.maxClicksSet)
+          if (f.createdAfter)
+            items = items.filter((l) => l.created_at >= String(f.createdAfter))
+          if (f.createdBefore)
+            items = items.filter((l) => l.created_at <= String(f.createdBefore))
+          if (f.search) {
+            const q = String(f.search).toLowerCase()
+            items = items.filter(
+              (l) =>
+                l.alias.toLowerCase().includes(q) ||
+                l.long_url.toLowerCase().includes(q),
+            )
+          }
+        } catch {
+          return fail(422, "invalid_filter", "filter must be JSON", "filter")
+        }
+      }
+      const sortBy = (params.get("sortBy") ?? "created_at") as
+        | "created_at"
+        | "last_click"
+        | "total_clicks"
+      const dir = ["asc", "1"].includes(params.get("sortOrder") ?? "desc") ? 1 : -1
+      items.sort((a, b) => {
+        const av = a[sortBy] ?? ""
+        const bv = b[sortBy] ?? ""
+        return av === bv ? 0 : av > bv ? dir : -dir
+      })
+      const page = Math.max(1, Number(params.get("page") ?? 1))
+      const pageSize = Math.min(100, Math.max(1, Number(params.get("pageSize") ?? 20)))
+      const startIdx = (page - 1) * pageSize
       return json({
-        id: `dom_${slug()}`,
-        fqdn,
-        status: "PENDING",
-        dns_records: [
-          { type: "CNAME", name: fqdn, value: "edge.spoo.me", purpose: "routing" },
-          {
-            type: "TXT",
-            name: `_spoo-verify.${fqdn}`,
-            value: `spoo-verify=${slug()}${slug()}`,
-            purpose: "ownership",
-          },
-        ],
-        setup_notes: ["DNS can take up to an hour to propagate."],
+        items: items.slice(startIdx, startIdx + pageSize).map(linkItem),
+        page,
+        pageSize,
+        total: items.length,
+        hasNext: startIdx + pageSize < items.length,
       })
     }
   }
 
+  /* ---------- urls/{id} (+ /status) ---------- */
+  if (path[0] === "v1" && path[1] === "urls" && path[2]) {
+    const link = s.links.find((l) => l.id === path[2] || l.alias === path[2])
+    if (!link) return fail(404, "not_found", "No such URL")
+
+    if (req.method === "PATCH" && path[3] === "status") {
+      const next = String(body.status ?? "").toUpperCase()
+      if (!["ACTIVE", "INACTIVE"].includes(next))
+        return fail(422, "invalid_status", "status must be ACTIVE or INACTIVE", "status")
+      link.status = next as MockLink["status"]
+      return json(linkItem(link))
+    }
+    if (req.method === "PATCH") {
+      if (typeof body.long_url === "string") {
+        if (!/^https?:\/\//.test(body.long_url))
+          return fail(422, "invalid_url", "Enter a valid http(s) URL", "long_url")
+        link.long_url = body.long_url
+      }
+      if (typeof body.alias === "string" && body.alias !== link.alias) {
+        if (!/^[a-zA-Z0-9_-]{3,16}$/.test(body.alias))
+          return fail(422, "invalid_alias", "3–16 characters: letters, numbers, - and _", "alias")
+        if (aliasTaken(body.alias))
+          return fail(409, "alias_taken", "That alias is already taken", "alias")
+        link.alias = body.alias
+      }
+      if ("password" in body)
+        link.password_set = typeof body.password === "string" && body.password.length > 0
+      if ("max_clicks" in body)
+        link.max_clicks =
+          body.max_clicks === null || body.max_clicks === 0 ? null : Number(body.max_clicks)
+      if ("expire_after" in body)
+        link.expire_after = body.expire_after === null ? null : Number(body.expire_after)
+      if ("private_stats" in body) link.private_stats = Boolean(body.private_stats)
+      if ("block_bots" in body) link.block_bots = Boolean(body.block_bots)
+      if ("domain" in body) link.domain = body.domain === null ? null : String(body.domain)
+      if ("status" in body) {
+        const next = String(body.status).toUpperCase()
+        if (["ACTIVE", "INACTIVE"].includes(next))
+          link.status = next as MockLink["status"]
+      }
+      return json(linkItem(link))
+    }
+    if (req.method === "DELETE") {
+      s.links = s.links.filter((l) => l !== link)
+      return new NextResponse(null, { status: 204 })
+    }
+  }
+
+  /* ---------- stats + export ---------- */
+  if (route === "GET /v1/stats") {
+    const endMs = params.get("end_date")
+      ? Date.parse(params.get("end_date")!)
+      : Date.now()
+    const startMs = params.get("start_date")
+      ? Date.parse(params.get("start_date")!)
+      : endMs - 30 * 86_400_000
+    const groupBy = (params.get("group_by")?.split(",") ?? ["time"]) as StatsDimension[]
+    const shortCodes = params.get("short_code")?.split(",").filter(Boolean) ?? null
+    let filters: Partial<Record<string, string[]>> | undefined
+    const rawFilters = params.get("filters")
+    if (rawFilters) {
+      try {
+        const parsed = JSON.parse(rawFilters) as Record<string, string[]>
+        filters = parsed
+      } catch {
+        return fail(422, "invalid_filters", "filters must be JSON", "filters")
+      }
+    }
+    for (const dim of ["browser", "os", "country", "city", "referrer"] as const) {
+      const v = params.get(dim)
+      if (v) filters = { ...filters, [dim]: v.split(",") }
+    }
+    return json(generateStats(s.links, { startMs, endMs, shortCodes, filters, groupBy }))
+  }
+
+  /* ---------- api keys ---------- */
+  if (route === "GET /v1/keys")
+    return json({
+      items: s.keys.map(({ ...k }) => k),
+    })
+  if (route === "POST /v1/keys") {
+    const name = String(body.name ?? "").trim()
+    if (!name) return fail(422, "invalid_name", "Give the key a name", "name")
+    const token = `spk_live_${slug()}${slug()}${slug()}${slug()}`
+    const key: MockKey = {
+      id: `key_${slug()}`,
+      name,
+      description: body.description ? String(body.description) : null,
+      token_prefix: token.slice(0, 12),
+      scopes: Array.isArray(body.scopes) ? (body.scopes as string[]) : [],
+      created_at: new Date().toISOString(),
+      expires_at: body.expires_at ? String(body.expires_at) : null,
+      last_used_at: null,
+      revoked: false,
+    }
+    s.keys.unshift(key)
+    return json({ ...key, token })
+  }
+  if (path[0] === "v1" && path[1] === "keys" && path[2] && req.method === "DELETE") {
+    const key = s.keys.find((k) => k.id === path[2])
+    if (!key) return fail(404, "not_found", "No such key")
+    if (params.get("revoke") === "true") key.revoked = true
+    else s.keys = s.keys.filter((k) => k !== key)
+    return new NextResponse(null, { status: 204 })
+  }
+
+  /* ---------- custom domains ---------- */
+  if (route === "GET /v1/custom-domains")
+    return json({
+      items: s.domains,
+      page: 1,
+      pageSize: 20,
+      total: s.domains.length,
+      hasNext: false,
+    })
+  if (route === "POST /v1/custom-domains") {
+    const fqdn = String(body.fqdn ?? "").toLowerCase()
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(fqdn))
+      return fail(422, "invalid_fqdn", "Enter a valid domain name", "fqdn")
+    if (s.domains.some((d) => d.fqdn === fqdn))
+      return fail(409, "domain_exists", "That domain is already registered", "fqdn")
+    const dom: MockDomain = {
+      id: `dom_${slug()}`,
+      fqdn,
+      status: "PENDING",
+      created_at: new Date().toISOString(),
+      last_verified_at: null,
+      last_verification_error: null,
+      cf_status: null,
+      cf_ssl_status: null,
+      root_redirect: null,
+      not_found_redirect: null,
+      custom_robots_txt: null,
+      dns_records: [
+        { type: "CNAME", name: fqdn, value: "edge.spoo.me", purpose: "routing" },
+        {
+          type: "TXT",
+          name: `_spoo-verify.${fqdn}`,
+          value: `spoo-verify=${slug()}${slug()}`,
+          purpose: "ownership",
+        },
+      ],
+      setup_notes: ["DNS can take up to an hour to propagate."],
+    }
+    s.domains.unshift(dom)
+    return json(dom)
+  }
+  if (path[0] === "v1" && path[1] === "custom-domains" && path[2]) {
+    const dom = s.domains.find((d) => d.id === path[2])
+    if (!dom) return fail(404, "not_found", "No such domain")
+    if (req.method === "GET") return json(dom)
+    if (req.method === "POST" && path[3] === "verify") {
+      // Walk the machine one step per verify call: PENDING → VERIFYING → ACTIVE.
+      if (dom.status === "PENDING") {
+        dom.status = "VERIFYING"
+        dom.cf_status = "pending"
+        dom.cf_ssl_status = "pending_validation"
+        dom.last_verification_error =
+          "CNAME record not found yet. DNS may still be propagating"
+      } else if (dom.status === "VERIFYING") {
+        dom.status = "ACTIVE"
+        dom.cf_status = "active"
+        dom.cf_ssl_status = "active"
+        dom.last_verified_at = new Date().toISOString()
+        dom.last_verification_error = null
+        dom.setup_notes = []
+      }
+      return json(dom)
+    }
+    if (req.method === "PATCH") {
+      if ("root_redirect" in body)
+        dom.root_redirect = body.root_redirect === null ? null : String(body.root_redirect)
+      if ("not_found_redirect" in body)
+        dom.not_found_redirect =
+          body.not_found_redirect === null ? null : String(body.not_found_redirect)
+      if ("custom_robots_txt" in body)
+        dom.custom_robots_txt =
+          body.custom_robots_txt === null ? null : String(body.custom_robots_txt)
+      return json(dom)
+    }
+    if (req.method === "DELETE") {
+      dom.status = "REVOKED"
+      if (params.get("cascade") === "true")
+        s.links = s.links.filter((l) => l.domain !== dom.fqdn)
+      return json(dom)
+    }
+  }
+
+  /* ---------- connected apps (device grants) ---------- */
+  if (route === "GET /v1/apps") return json({ items: s.grants })
+
   /* ---------- oauth: one hop, straight back signed-in ---------- */
   if (path[0] === "oauth") {
-    g.__spooMock = { ...initial(), email: `you@${path[1] ?? "oauth"}.dev`, verified: true }
+    g.__spooMock = {
+      ...initial(),
+      email: `you@${path[1] ?? "oauth"}.dev`,
+    }
     return withSession(
       NextResponse.redirect(new URL("/onboarding", req.url), { status: 302 }),
     )
@@ -284,6 +552,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ path: stri
   return handle(req, (await ctx.params).path)
 }
 export async function PUT(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  return handle(req, (await ctx.params).path)
+}
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   return handle(req, (await ctx.params).path)
 }
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {

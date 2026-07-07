@@ -13,6 +13,7 @@
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
+    --color-canvas: var(--canvas);
     --color-brand: var(--brand);
     --color-live: var(--live);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -142,6 +143,8 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    /* App-chrome canvas: the layer the floating content sheet sits on */
+    --canvas: oklch(0.955 0 0);
     /* Accent lock: violet = brand (aurora, charts, rare emphasis), emerald = live/success semantic only */
     --brand: oklch(0.541 0.281 293.009);
     --live: oklch(0.596 0.145 163.225);
@@ -179,6 +182,7 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --canvas: oklch(0.115 0 0);
     --brand: oklch(0.606 0.25 292.717);
     --live: oklch(0.765 0.177 163.223);
 }
