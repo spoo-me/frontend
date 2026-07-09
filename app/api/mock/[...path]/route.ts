@@ -117,10 +117,53 @@ function linkItem(l: MockLink) {
     private_stats: l.private_stats,
     block_bots: l.block_bots,
     password_set: l.password_set,
+    password: l.password,
     total_clicks: l.total_clicks,
     last_click: l.last_click,
     domain: l.domain,
+    geo_rules: l.geo_rules,
+    ab_variants: l.ab_variants,
+    meta_tags: l.meta_tags,
   }
+}
+
+function parseGeoRules(v: unknown) {
+  if (!Array.isArray(v)) return null
+  const rules = v
+    .filter(
+      (r): r is { country: string; url: string } =>
+        !!r &&
+        typeof r === "object" &&
+        /^[A-Z]{2}$/.test(String((r as { country?: unknown }).country)) &&
+        /^https?:\/\//.test(String((r as { url?: unknown }).url)),
+    )
+    .map((r) => ({ country: r.country, url: r.url }))
+  return rules.length ? rules : null
+}
+
+function parseVariants(v: unknown) {
+  if (!Array.isArray(v)) return null
+  const variants = v
+    .filter(
+      (x): x is { url: string; weight: number } =>
+        !!x &&
+        typeof x === "object" &&
+        /^https?:\/\//.test(String((x as { url?: unknown }).url)) &&
+        Number((x as { weight?: unknown }).weight) > 0,
+    )
+    .map((x) => ({ url: x.url, weight: Number(x.weight) }))
+  return variants.length ? variants : null
+}
+
+function parseMetaTags(v: unknown) {
+  if (!v || typeof v !== "object") return null
+  const m = v as Record<string, unknown>
+  const out: { title?: string; description?: string; image?: string; color?: string } = {}
+  if (typeof m.title === "string" && m.title) out.title = m.title
+  if (typeof m.description === "string" && m.description) out.description = m.description
+  if (typeof m.image === "string" && m.image) out.image = m.image
+  if (typeof m.color === "string" && /^#[0-9a-f]{6}$/i.test(m.color)) out.color = m.color
+  return Object.keys(out).length ? out : null
 }
 
 function aliasTaken(alias: string) {
@@ -259,10 +302,17 @@ async function handle(req: NextRequest, path: string[]) {
           typeof body.expire_after === "number" ? body.expire_after : null,
         max_clicks: typeof body.max_clicks === "number" ? body.max_clicks : null,
         password_set: typeof body.password === "string" && body.password.length > 0,
+        password:
+          typeof body.password === "string" && body.password.length > 0
+            ? String(body.password)
+            : null,
         private_stats: Boolean(body.private_stats),
         block_bots: Boolean(body.block_bots),
         total_clicks: 0,
         last_click: null,
+        geo_rules: parseGeoRules(body.geo_rules),
+        ab_variants: parseVariants(body.ab_variants),
+        meta_tags: parseMetaTags(body.meta_tags),
         weight: 1,
       }
       s.links.unshift(link)
@@ -365,8 +415,10 @@ async function handle(req: NextRequest, path: string[]) {
           return fail(409, "alias_taken", "That alias is already taken", "alias")
         link.alias = body.alias
       }
-      if ("password" in body)
+      if ("password" in body) {
         link.password_set = typeof body.password === "string" && body.password.length > 0
+        link.password = link.password_set ? String(body.password) : null
+      }
       if ("max_clicks" in body)
         link.max_clicks =
           body.max_clicks === null || body.max_clicks === 0 ? null : Number(body.max_clicks)
@@ -375,6 +427,13 @@ async function handle(req: NextRequest, path: string[]) {
       if ("private_stats" in body) link.private_stats = Boolean(body.private_stats)
       if ("block_bots" in body) link.block_bots = Boolean(body.block_bots)
       if ("domain" in body) link.domain = body.domain === null ? null : String(body.domain)
+      if ("geo_rules" in body)
+        link.geo_rules = body.geo_rules === null ? null : parseGeoRules(body.geo_rules)
+      if ("ab_variants" in body)
+        link.ab_variants =
+          body.ab_variants === null ? null : parseVariants(body.ab_variants)
+      if ("meta_tags" in body)
+        link.meta_tags = body.meta_tags === null ? null : parseMetaTags(body.meta_tags)
       if ("status" in body) {
         const next = String(body.status).toUpperCase()
         if (["ACTIVE", "INACTIVE"].includes(next))

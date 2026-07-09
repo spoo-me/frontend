@@ -28,10 +28,19 @@ export type MockLink = {
   expire_after: number | null
   max_clicks: number | null
   password_set: boolean
+  password: string | null
   private_stats: boolean
   block_bots: boolean
   total_clicks: number
   last_click: string | null
+  geo_rules: Array<{ country: string; url: string }> | null
+  ab_variants: Array<{ url: string; weight: number }> | null
+  meta_tags: {
+    title?: string
+    description?: string
+    image?: string
+    color?: string
+  } | null
   /** Relative traffic weight used by the stats generator. */
   weight: number
 }
@@ -158,11 +167,16 @@ export function buildLinks(): MockLink[] {
             : null,
       max_clicks: alias === "invite" ? 500 : alias === "swag" ? 1000 : null,
       password_set: alias === "deck" || alias === "kit",
+      password:
+        alias === "deck" ? "velvet-quartz-42" : alias === "kit" ? "amber-pixel-77" : null,
       private_stats: alias === "hiring",
       block_bots: weight >= 6,
       total_clicks: status === "ACTIVE" || status === "EXPIRED" ? clicks : Math.round(clicks * 0.3),
       last_click:
         status === "ACTIVE" ? isoDaysAgo(rand() * 2, rand) : isoDaysAgo(20 + rand() * 30, rand),
+      geo_rules: null,
+      ab_variants: null,
+      meta_tags: null,
       weight,
     }
   })
@@ -469,7 +483,14 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
     if (dim === "time" || dim === "short_code") continue
     const table = DIMENSIONS[dim]
     if (!table) continue
-    const rows = table.map(([value, w], i) => {
+    // A filtered dimension's own breakdown contains only the selected
+    // values — filtered traffic can't have other referrers/countries/etc.
+    // Other dimensions keep their full distribution over that traffic.
+    const active = q.filters?.[dim]
+    const pool = active?.length
+      ? table.filter(([value]) => active.includes(value))
+      : table
+    const rows = pool.map(([value, w], i) => {
       const jitter = 0.82 + mulberry32(SEED ^ (i * 31) ^ table.length)() * 0.36
       return { value, raw: w * jitter }
     })
