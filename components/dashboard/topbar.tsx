@@ -2,12 +2,11 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { ChevronRight, Menu, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { UserMenu } from "@/components/auth/user-menu"
 import { SidebarContent } from "@/components/dashboard/sidebar"
 import { dashboardNav } from "@/components/dashboard/nav"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
@@ -26,11 +25,13 @@ function Breadcrumb() {
   const leaf = segments[0]
   return (
     <div className="flex min-w-0 items-center gap-1.5 text-[13px]">
+      {/* Below sm the root crumb yields its room to the leaf — "Analytics",
+          not "Dashboard > Anal…". The sheet already links back to Overview. */}
       <Link
         href="/dashboard"
         className={
           leaf
-            ? "text-muted-foreground hover:text-foreground transition-colors duration-150"
+            ? "text-muted-foreground hover:text-foreground max-sm:hidden transition-colors duration-150"
             : "text-foreground font-medium"
         }
       >
@@ -38,7 +39,7 @@ function Breadcrumb() {
       </Link>
       {leaf && (
         <>
-          <ChevronRight className="text-muted-foreground/50 size-3.5 shrink-0" />
+          <ChevronRight className="text-muted-foreground/50 size-3.5 shrink-0 max-sm:hidden" />
           <span className="text-foreground truncate font-medium">
             {SEGMENT_TITLES[leaf] ?? leaf}
           </span>
@@ -49,7 +50,6 @@ function Breadcrumb() {
 }
 
 export function DashboardTopbar() {
-  const router = useRouter()
   const [sheetOpen, setSheetOpen] = React.useState(false)
 
   return (
@@ -77,13 +77,13 @@ export function DashboardTopbar() {
         <Button size="sm" onClick={() => openLinkComposer()}>
           <Plus data-icon="inline-start" />
           New link
-          <Kbd className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80 ml-1">
+          {/* Keyboard hint means nothing on touch and eats breadcrumb room. */}
+          <Kbd className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80 ml-1 max-sm:hidden">
             N
           </Kbd>
         </Button>
-        <span className="lg:hidden">
-          <UserMenu />
-        </span>
+        {/* No avatar here: the account menu lives in the sidebar on desktop
+            and in the same sidebar (as the sheet) on mobile — one home. */}
       </div>
     </header>
   )

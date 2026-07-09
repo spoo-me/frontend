@@ -149,9 +149,12 @@ export function TimeRangePicker({
           )}
         </div>
 
-        {/* Calendar sized to content; preset rail takes the remainder */}
-        <div className="flex">
-          <div className="border-border/60 flex-1 border-r px-3 py-2">
+        {/* Calendar sized to content; preset rail takes the remainder.
+            Below sm the pair can't share a row (calendar + 10rem rail beats
+            the viewport), so the rail becomes a wrapping chip row under the
+            calendar instead of clipping off-screen. */}
+        <div className="flex max-sm:flex-col">
+          <div className="border-border/60 flex-1 px-3 py-2 max-sm:border-b sm:border-r">
             <div className="relative w-full">
             <Calendar
               mode="range"
@@ -185,7 +188,7 @@ export function TimeRangePicker({
             />
             </div>
           </div>
-          <div className="w-40 shrink-0 p-1.5">
+          <div className="shrink-0 p-1.5 max-sm:flex max-sm:flex-wrap max-sm:gap-1 max-sm:p-2 sm:w-40">
             {PRESETS.map((p) => {
               const active = effective?.preset === p.token
               return (
@@ -197,10 +200,10 @@ export function TimeRangePicker({
                     setDraft(presetRange(p.token)!)
                   }}
                   className={cn(
-                    "flex h-8 w-full items-center justify-between rounded-lg px-2.5 text-left text-[13px] transition-colors duration-150",
+                    "flex h-8 items-center justify-between rounded-lg px-2.5 text-left text-[13px] transition-colors duration-150 max-sm:gap-1.5 max-sm:border sm:w-full",
                     active
-                      ? "bg-accent/70 text-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                      ? "bg-accent/70 text-foreground max-sm:border-border"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground max-sm:border-border/60",
                   )}
                 >
                   {p.label}

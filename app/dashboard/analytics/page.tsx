@@ -37,7 +37,7 @@ import {
 } from "@/components/dashboard/analytics/time-range"
 import { useAutoRefreshPref, useSlidingNow } from "@/hooks/use-auto-refresh"
 import { useAnalyticsLayout } from "@/hooks/use-analytics-layout"
-import { useIsLgUp } from "@/hooks/use-breakpoint"
+import { useIsLgUp, useIsSmUp } from "@/hooks/use-breakpoint"
 import { RefreshControl } from "@/components/dashboard/refresh-control"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { onAnalyticsEditMode } from "@/components/dashboard/analytics/edit-mode"
@@ -209,6 +209,7 @@ export default function AnalyticsPage() {
   const lay = useAnalyticsLayout()
   const widgets = lay.layout.widgets
   const isLgUp = useIsLgUp()
+  const isSmUp = useIsSmUp()
 
   const [editing, setEditing] = React.useState(false)
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
@@ -346,6 +347,9 @@ export default function AnalyticsPage() {
       ctx={widgetCtx}
       editing={editing}
       expanded={expandId === w.id}
+      // Compact headers on phones only — the tablet stack is wide enough
+      // for the full controls even though it also renders the MobileStack.
+      narrow={!isSmUp}
       rangeLabel={rangeLabel}
       deltaLabel={deltaLabel}
       onExpandedChange={
@@ -375,7 +379,9 @@ export default function AnalyticsPage() {
             onChange={(v) => setters[key](v.length ? v : null)}
           />
         ))}
-        <span className="ml-auto flex items-center gap-1.5">
+        {/* Below lg the refresh group flows with the wrapping chips —
+            ml-auto would strand it right-aligned on its own row. */}
+        <span className="flex items-center gap-1.5 lg:ml-auto">
           {isLgUp && !editing && (
             <Button variant="outline" size="sm" onClick={startEditing}>
               <LayoutGrid data-icon="inline-start" />

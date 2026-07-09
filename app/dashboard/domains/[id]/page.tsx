@@ -301,7 +301,9 @@ export default function DomainDetailPage() {
             <Button
               size="sm"
               variant="outline"
-              className="ml-auto"
+              // When the row wraps (phones) the button joins the content
+              // flow left-aligned instead of floating off the right edge.
+              className="ml-auto max-sm:ml-0"
               onClick={() => openLinkComposer({ domain: dom.fqdn })}
             >
               <Plus data-icon="inline-start" />

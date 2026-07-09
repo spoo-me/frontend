@@ -23,6 +23,7 @@ export function WidgetShell({
   title,
   scope,
   editing,
+  narrow,
   onRemove,
   quickControls,
   panelClassName,
@@ -33,6 +34,9 @@ export function WidgetShell({
   /** The widget's own lens; rendered as a quiet chip after the title. */
   scope?: WidgetScope
   editing?: boolean
+  /** Phone-width cell: the leading icon yields its room to the title so
+      long titles ("Clicks over time") survive next to the quick controls. */
+  narrow?: boolean
   onRemove?: () => void
   quickControls?: React.ReactNode
   panelClassName?: string
@@ -45,7 +49,7 @@ export function WidgetShell({
           side panel. */}
       <SectionHeader
         className="h-9 shrink-0 px-2.5"
-        icon={icon}
+        icon={narrow ? undefined : icon}
         title={title}
         badge={scope && <ScopeChip scope={scope} />}
         action={quickControls && <span data-no-drag>{quickControls}</span>}

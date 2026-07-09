@@ -44,7 +44,10 @@ import { RadialChart } from "@/components/dashboard/analytics/widgets/radial-cha
 import { BreakdownRadar } from "@/components/dashboard/analytics/widgets/radar-chart"
 import { BubbleChart } from "@/components/dashboard/analytics/widgets/bubble-chart"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
-import { MetricControl } from "@/components/dashboard/analytics/metric-control"
+import {
+  HeaderControls,
+  MetricControl,
+} from "@/components/dashboard/analytics/metric-control"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
@@ -73,6 +76,7 @@ export function BreakdownWidget({
   config,
   w,
   h,
+  narrow,
   rows,
   loading,
   disjoint,
@@ -86,6 +90,9 @@ export function BreakdownWidget({
   config: BreakdownConfig
   w: number
   h: number
+  /** Rendered at phone width (mobile stack): the header icon yields its
+      room to the title. Control folding is measured, not flagged. */
+  narrow?: boolean
   rows: DimensionRow[]
   loading: boolean
   /** Scope and board filters exclude each other — nothing to show. */
@@ -144,16 +151,16 @@ export function BreakdownWidget({
       title={config.title ?? meta.title}
       scope={config.scope}
       editing={editing}
+      narrow={narrow}
       onRemove={onRemove}
       panelClassName={
         expanded ? "h-[calc(100dvh-15rem)] min-h-[420px] flex-none" : undefined
       }
       quickControls={
-        <span className="flex items-center gap-1.5">
+        <HeaderControls>
           <MetricControl
             value={metric}
             onChange={(m) => onConfigChange({ metric: m })}
-            compact={w < 6}
           />
           <Segmented
             value={mode}
@@ -180,7 +187,7 @@ export function BreakdownWidget({
               <ExpandIcon className="size-3.5" strokeWidth={1.75} />
             </button>
           )}
-        </span>
+        </HeaderControls>
       }
     >
       {loading ? (

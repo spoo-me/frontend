@@ -19,7 +19,10 @@ import { timeSeriesOf, type StatsResponse } from "@/lib/api"
 import type { TimeseriesConfig } from "@/lib/analytics-layout"
 import { ClicksChart } from "@/components/dashboard/clicks-chart"
 import { CalendarHeatmap } from "@/components/dashboard/analytics/widgets/calendar-heatmap"
-import { MetricControl } from "@/components/dashboard/analytics/metric-control"
+import {
+  HeaderControls,
+  MetricControl,
+} from "@/components/dashboard/analytics/metric-control"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
@@ -40,7 +43,7 @@ const TS_CHART_ICONS = {
  */
 export function TimeseriesWidget({
   config,
-  w = 12,
+  narrow,
   loading,
   stats,
   prevStats,
@@ -53,8 +56,9 @@ export function TimeseriesWidget({
   onRemove,
 }: {
   config: TimeseriesConfig
-  /** Grid width, drives header control density. */
-  w?: number
+  /** Rendered at phone width (mobile stack): the header icon yields its
+      room to the title. Control folding is measured, not flagged. */
+  narrow?: boolean
   loading: boolean
   stats?: StatsResponse
   /** Previous equal-length window; drawn as a ghost when compare is on. */
@@ -114,16 +118,16 @@ export function TimeseriesWidget({
       title={config.title ?? "Clicks over time"}
       scope={config.scope}
       editing={editing}
+      narrow={narrow}
       onRemove={onRemove}
       panelClassName={
         expanded ? "h-[calc(100dvh-15rem)] min-h-[420px] flex-none" : undefined
       }
       quickControls={
-        <span className="flex items-center gap-1.5">
+        <HeaderControls>
           <MetricControl
             value={metric}
             onChange={(m) => onConfigChange({ metric: m })}
-            compact={!expanded && w < 6}
           />
           <Segmented
             value={mode}
@@ -152,7 +156,7 @@ export function TimeseriesWidget({
               <ExpandIcon className="size-3.5" strokeWidth={1.75} />
             </button>
           )}
-        </span>
+        </HeaderControls>
       }
     >
       {loading ? (

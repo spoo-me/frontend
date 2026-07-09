@@ -41,7 +41,11 @@ export function LinkSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full gap-0 overflow-y-auto p-0 sm:max-w-md">
+      {/* Full width on phones: the base primitive's w-3/4 leaves a useless
+          blurred sliver of the list and starves the form. The data-variant
+          override is what actually beats data-[side=right]:w-3/4; ≥sm the
+          primitive's max-w-sm cap keeps the desktop overlay as-is. */}
+      <SheetContent side="right" className="gap-0 overflow-y-auto p-0 data-[side=right]:w-full">
         {!link ? (
           <>
             <SheetTitle className="sr-only">Link details</SheetTitle>

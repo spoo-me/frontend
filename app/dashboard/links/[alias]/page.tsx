@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { ArrowLeft, ChartLine, Globe2, Settings2 } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 import {
   dimensionRowsOf,
   getStats,
@@ -21,7 +20,11 @@ import { StatusPill } from "@/components/dashboard/status-pill"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { KpiCard } from "@/components/dashboard/kpi"
 import { ClicksChart, type ChartMetric } from "@/components/dashboard/clicks-chart"
-import { Segmented } from "@/components/dashboard/segmented"
+import {
+  AdaptiveSegmented,
+  HeaderControls,
+  MetricControl,
+} from "@/components/dashboard/analytics/metric-control"
 import { BreakdownList } from "@/components/dashboard/breakdown-list"
 import { LinkActions, shortUrlOf } from "@/components/dashboard/links/link-actions"
 import { LinkSettingsForm } from "@/components/dashboard/links/link-settings-form"
@@ -166,25 +169,21 @@ export default function LinkDetailPage() {
           icon={ChartLine}
           title="Clicks over time"
           action={
-            <span className="flex items-center gap-1.5">
-              <Segmented
-                value={metric}
-                onChange={setMetric}
-                options={[
-                  { value: "total", label: "total" },
-                  { value: "unique", label: "unique" },
-                  { value: "both", label: "both" },
-                ]}
-              />
-              <Segmented
+            /* Same fold mechanic as the analytics widget headers: when the
+               measured header can't hold the segmented controls next to the
+               full title, both fold into compact mono dropdowns. */
+            <HeaderControls>
+              <MetricControl value={metric} onChange={setMetric} />
+              <AdaptiveSegmented
                 value={String(rangeDays)}
                 onChange={(v) => setRangeDays(Number(v))}
                 options={RANGES.map((r) => ({
                   value: String(r.days),
                   label: r.label,
                 }))}
+                ariaLabel="Range"
               />
-            </span>
+            </HeaderControls>
           }
         />
         <Panel className="mt-2 p-4">

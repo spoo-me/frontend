@@ -23,7 +23,12 @@ export function SectionHeader({
   className?: string
 }) {
   return (
-    <div className={cn("flex h-9 items-center justify-between", className)}>
+    // The data attributes are the measuring points for HeaderControls'
+    // fold-when-tight mechanic (analytics/metric-control.tsx).
+    <div
+      data-section-header
+      className={cn("flex h-9 items-center justify-between", className)}
+    >
       <span className="flex min-w-0 items-center gap-2">
         {lead ??
           (Icon && (
@@ -32,7 +37,9 @@ export function SectionHeader({
               strokeWidth={1.75}
             />
           ))}
-        <span className="label-mono text-muted-foreground truncate">{title}</span>
+        <span data-section-title className="label-mono text-muted-foreground truncate">
+          {title}
+        </span>
         {badge}
       </span>
       {action}

@@ -26,6 +26,7 @@ export function WidgetCell({
   ctx,
   editing,
   expanded,
+  narrow,
   rangeLabel,
   deltaLabel,
   onExpandedChange,
@@ -38,6 +39,9 @@ export function WidgetCell({
   ctx: WidgetStatsCtx
   editing?: boolean
   expanded?: boolean
+  /** Mobile stack: the cell renders at phone width no matter what the
+      stored grid.w says, so header controls must take their compact form. */
+  narrow?: boolean
   rangeLabel: string
   deltaLabel: string
   /** Absent while editing (focus mode and edit mode are exclusive). */
@@ -78,7 +82,7 @@ export function WidgetCell({
           <TimeseriesWidget
             key={`view:${w.config.viz}`}
             config={w.config}
-            w={w.grid.w}
+            narrow={narrow}
             loading={loading}
             stats={stats}
             prevStats={prev}
@@ -99,6 +103,7 @@ export function WidgetCell({
             config={w.config}
             w={w.grid.w}
             h={w.grid.h}
+            narrow={narrow}
             rows={stats ? dimensionRowsOf(stats, w.config.dimension) : []}
             loading={loading}
             disjoint={disjoint}
