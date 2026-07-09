@@ -206,7 +206,7 @@ export function BreakdownWidget({
                 dimension={dimension}
                 rows={rows}
                 metric={metric}
-                segments={expanded ? 14 : treemapSegments(h)}
+                segments={expanded ? 18 : treemapSegments(w, h)}
                 onSelect={onSelect}
               />
             ) : viz === "bars" ? (

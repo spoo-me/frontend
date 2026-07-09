@@ -130,8 +130,9 @@ export const statSparkline = (h: number) => h >= 3
 export const breakdownTableFullCols = (w: number) => w >= 5
 // Vertical columns: width decides how many categories fit legibly.
 export const breakdownColumnCount = (w: number) => (w >= 8 ? 10 : w >= 5 ? 8 : 5)
-// Treemap holds more cells than a donut at the same size before it muddies.
-export const treemapSegments = (h: number) => donutSegments(h) + 4
+// Treemap density scales with AREA — a wider or taller map fits more tiles.
+export const treemapSegments = (w: number, h: number) =>
+  Math.min(24, Math.max(5, Math.round((w * h) / 3.5)))
 
 /* ---------- per-kind spec ---------- */
 

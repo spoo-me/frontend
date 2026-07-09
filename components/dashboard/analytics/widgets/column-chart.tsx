@@ -15,11 +15,33 @@ import {
 import { formatCount } from "@/lib/format"
 import type { DimensionRow, StatsDimension } from "@/lib/api"
 import type { BreakdownMetric } from "@/components/dashboard/breakdown-list"
-import { dimensionLabel } from "@/components/dashboard/dim-icon"
+import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import {
   DimTooltip,
   TOOLTIP_WRAPPER_STYLE,
 } from "@/components/dashboard/analytics/widgets/dim-tooltip"
+
+/** Dimensions whose values carry real identity marks (favicons, flags,
+    browser logos, OS glyphs). Cities and links only have a generic glyph,
+    so their axis stays text. */
+const ICON_AXIS_DIMENSIONS = new Set(["referrer", "country", "browser", "os"])
+
+/** Category tick rendered as the value's identity icon; recharts clones
+    this element with {x, y, payload} per tick. */
+function IconTick(props: {
+  x?: number
+  y?: number
+  payload?: { value?: string | number }
+  dimension: Exclude<StatsDimension, "time">
+}) {
+  const { x = 0, y = 0, payload, dimension } = props
+  const value = String(payload?.value ?? "")
+  return (
+    <foreignObject x={x - 8} y={y + 4} width={16} height={16}>
+      <DimensionIcon dimension={dimension} value={value} className="size-4" />
+    </foreignObject>
+  )
+}
 
 /**
  * Ranked categories as vertical columns, the classic browsers/OS shape.
@@ -88,7 +110,14 @@ export function ColumnChart({
             }}
             tickLine={false}
             axisLine={false}
-            tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
+            height={26}
+            tick={
+              ICON_AXIS_DIMENSIONS.has(dimension) ? (
+                <IconTick dimension={dimension} />
+              ) : (
+                { fill: "var(--muted-foreground)", fontSize: 10 }
+              )
+            }
             tickMargin={6}
             interval={0}
           />

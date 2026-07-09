@@ -6,7 +6,7 @@ import { ResponsiveContainer, Tooltip, Treemap } from "recharts"
 import { formatCount } from "@/lib/format"
 import type { DimensionRow, StatsDimension } from "@/lib/api"
 import type { BreakdownMetric } from "@/components/dashboard/breakdown-list"
-import { dimensionLabel } from "@/components/dashboard/dim-icon"
+import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import {
   DimTooltip,
   OTHER,
@@ -56,27 +56,32 @@ function TreemapCell(props: {
         strokeWidth={2}
       />
       {showLabel && (
-        <>
-          <text
-            x={x + 8}
-            y={y + 18}
-            fill="var(--foreground)"
-            fillOpacity={0.85}
-            fontSize={11}
-            fontWeight={500}
-          >
-            {label.length > width / 7 ? `${label.slice(0, Math.max(3, Math.floor(width / 7) - 1))}…` : label}
-          </text>
-          <text
-            x={x + 8}
-            y={y + 33}
-            fill="var(--muted-foreground)"
-            fontSize={10}
-            fontFamily="var(--font-geist-mono, monospace)"
-          >
-            {formatCount(datum.size ?? 0)}
-          </text>
-        </>
+        /* HTML island: identity icon + CSS truncation beat SVG text math. */
+        <foreignObject
+          x={x + 7}
+          y={y + 6}
+          width={Math.max(0, width - 14)}
+          height={Math.max(0, height - 12)}
+          className="pointer-events-none"
+        >
+          <div className="flex h-full flex-col gap-0.5 overflow-hidden">
+            <span className="flex min-w-0 items-center gap-1.5">
+              {value !== OTHER && (
+                <DimensionIcon
+                  dimension={dimension}
+                  value={value}
+                  className="size-3.5 shrink-0"
+                />
+              )}
+              <span className="text-foreground/90 min-w-0 truncate text-[11px] leading-4 font-medium">
+                {label}
+              </span>
+            </span>
+            <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
+              {formatCount(datum.size ?? 0)}
+            </span>
+          </div>
+        </foreignObject>
       )}
     </g>
   )

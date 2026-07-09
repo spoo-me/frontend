@@ -271,6 +271,8 @@ export function EditBar({
                         )}
                       </Button>
                     </DropdownMenuTrigger>
+                    {/* Content width defaults to the trigger's; these
+                        triggers are tiny, so size to the labels instead. */}
                     <DropdownMenuContent align="center" side="top" className="w-40">
                       <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
                         Default view
@@ -278,6 +280,7 @@ export function EditBar({
                       {vizOptions.map((v) => (
                         <DropdownMenuCheckboxItem
                           key={v.value}
+                          className="whitespace-nowrap"
                           checked={selectedViz === v.value}
                           onCheckedChange={() =>
                             onConfigChange(selected.id, { viz: v.value })
@@ -301,13 +304,14 @@ export function EditBar({
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" side="top" className="w-40">
+                  <DropdownMenuContent align="center" side="top" className="w-44">
                     <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
                       Metric
                     </DropdownMenuLabel>
                     {METRICS.map((m) => (
                       <DropdownMenuCheckboxItem
                         key={m.value}
+                        className="whitespace-nowrap"
                         checked={seriesMetric === m.value}
                         onCheckedChange={() =>
                           onConfigChange(selected.id, { metric: m.value })
@@ -337,11 +341,12 @@ export function EditBar({
                     />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" side="top">
+                <DropdownMenuContent align="center" side="top" className="w-auto">
                   <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
                     Chart ink
                   </DropdownMenuLabel>
-                  <div className="grid grid-cols-6 gap-1.5 px-2 pt-1 pb-2">
+                  {/* One row: the spectrum reads as a ramp, never wraps. */}
+                  <div className="flex items-center gap-1.5 px-2 pt-1 pb-2">
                     {ACCENTS.map((a) => (
                       <button
                         key={a}
