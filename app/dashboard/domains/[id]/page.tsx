@@ -1,16 +1,20 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
-  BadgeCheck,
+  Check,
   Globe,
   LoaderCircle,
+  Plus,
   Route,
   ShieldAlert,
+  TriangleAlert,
 } from "lucide-react"
+import { motion } from "motion/react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -20,9 +24,12 @@ import {
   updateCustomDomain,
   verifyCustomDomain,
   type CustomDomain,
+  type DnsRecord,
 } from "@/lib/api"
+import { formatWhen } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -38,14 +45,15 @@ import {
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { StatusPill } from "@/components/dashboard/status-pill"
 import { CopyButton } from "@/components/dashboard/copy-button"
+import { openLinkComposer } from "@/components/dashboard/links/composer"
 
 /**
- * The multi-step domain setup, driven entirely by SERVER state — the step
- * you see is a pure function of `status`, so it survives refreshes by
- * construction (SPEC §2).
+ * Domain setup as a vertical rail. The step you're on is a pure function of
+ * server `status`, so it survives refreshes by construction (SPEC §2). Every
+ * step's content stays mounted while setting up; only the markers advance.
  */
 
-const STEPS = ["Register", "DNS records", "Verify", "Live"] as const
+type StepState = "done" | "current" | "todo"
 
 function stepIndex(status: CustomDomain["status"]): number {
   switch (status) {
@@ -60,35 +68,130 @@ function stepIndex(status: CustomDomain["status"]): number {
   }
 }
 
-function StepRail({ current }: { current: number }) {
+function stateOf(i: number, current: number): StepState {
+  return i < current ? "done" : i === current ? "current" : "todo"
+}
+
+function StepMarker({ state, n }: { state: StepState; n: number }) {
   return (
-    <ol className="flex items-center gap-1.5">
-      {STEPS.map((step, i) => (
-        <React.Fragment key={step}>
-          {i > 0 && (
-            <span
-              className={cn(
-                "h-px w-6",
-                i <= current ? "bg-foreground/40" : "bg-border",
-              )}
-            />
-          )}
-          <li
+    <span
+      className={cn(
+        "flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-[10px] transition-colors duration-300",
+        state === "done" && "border-live/30 bg-live/10 text-live",
+        state === "current" && "border-foreground/30 bg-card text-foreground",
+        state === "todo" && "border-border text-muted-foreground/50 border-dashed",
+      )}
+    >
+      {state === "done" ? <Check className="size-3" /> : `0${n}`}
+    </span>
+  )
+}
+
+function SetupStep({
+  n,
+  state,
+  label,
+  meta,
+  last,
+  children,
+}: {
+  n: number
+  state: StepState
+  label: string
+  meta?: React.ReactNode
+  last?: boolean
+  children?: React.ReactNode
+}) {
+  return (
+    <div className="grid grid-cols-[24px_minmax(0,1fr)] gap-x-4">
+      <div className="flex flex-col items-center">
+        <StepMarker state={state} n={n} />
+        {!last && (
+          <span
+            aria-hidden
             className={cn(
-              "flex h-7 items-center gap-1.5 rounded-full border px-2.5 font-mono text-[11px]",
-              i < current
-                ? "border-live/30 bg-live/8 text-live"
-                : i === current
-                  ? "border-border bg-card text-foreground"
-                  : "border-border/60 text-muted-foreground/60 border-dashed",
+              "my-1 w-px flex-1 transition-colors duration-300",
+              state === "done" ? "bg-live/25" : "bg-border/70",
+            )}
+          />
+        )}
+      </div>
+      <div className={cn("min-w-0", !last && "pb-8")}>
+        <div className="flex h-6 items-center justify-between gap-3">
+          <span
+            className={cn(
+              "label-mono transition-colors duration-300",
+              state === "current"
+                ? "text-foreground"
+                : state === "done"
+                  ? "text-muted-foreground"
+                  : "text-muted-foreground/50",
             )}
           >
-            {i < current && <BadgeCheck className="size-3" />}
-            {step}
-          </li>
-        </React.Fragment>
-      ))}
-    </ol>
+            {label}
+          </span>
+          {meta}
+        </div>
+        {children && <div className="mt-2">{children}</div>}
+      </div>
+    </div>
+  )
+}
+
+function StepMeta({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-muted-foreground/60 shrink-0 font-mono text-[11px] tabular-nums">
+      {children}
+    </span>
+  )
+}
+
+/** Type / Name / Value, each field copyable — mirrors what registrars ask for. */
+function CopyCell({ value }: { value: string }) {
+  return (
+    <span className="flex min-w-0 items-center gap-1">
+      <span className="text-foreground truncate font-mono text-xs">{value}</span>
+      <CopyButton value={value} className="size-5 [&_svg]:size-3" />
+    </span>
+  )
+}
+
+function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
+  return (
+    <Panel>
+      <div className="border-border/60 hidden h-8 grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 border-b px-3 sm:grid">
+        <span className="label-mono text-muted-foreground/60">Type</span>
+        <span className="label-mono text-muted-foreground/60">Name</span>
+        <span className="label-mono text-muted-foreground/60">Value</span>
+      </div>
+      <div className="divide-border/60 divide-y">
+        {records.map((rec) => (
+          <div
+            key={rec.type + rec.name}
+            className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1.5 px-3 py-2.5 sm:h-11 sm:grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] sm:items-center sm:py-0"
+          >
+            <span className="text-muted-foreground self-center font-mono text-[11px]">
+              {rec.type}
+            </span>
+            <CopyCell value={rec.name} />
+            <span className="sm:hidden" aria-hidden />
+            <CopyCell value={rec.value} />
+          </div>
+        ))}
+      </div>
+    </Panel>
+  )
+}
+
+function Enter({ i, children }: { i: number; children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: i * 0.05 }}
+    >
+      {children}
+    </motion.div>
   )
 }
 
@@ -123,21 +226,25 @@ export default function DomainDetailPage() {
 
   const [rootRedirect, setRootRedirect] = React.useState<string | null>(null)
   const [notFound, setNotFound] = React.useState<string | null>(null)
+  const [robots, setRobots] = React.useState<string | null>(null)
   const routingDirty =
     dom &&
     ((rootRedirect !== null && rootRedirect !== (dom.root_redirect ?? "")) ||
-      (notFound !== null && notFound !== (dom.not_found_redirect ?? "")))
+      (notFound !== null && notFound !== (dom.not_found_redirect ?? "")) ||
+      (robots !== null && robots !== (dom.custom_robots_txt ?? "")))
 
   const saveRouting = useMutation({
     mutationFn: () =>
       updateCustomDomain(params.id, {
         ...(rootRedirect !== null ? { root_redirect: rootRedirect || null } : {}),
         ...(notFound !== null ? { not_found_redirect: notFound || null } : {}),
+        ...(robots !== null ? { custom_robots_txt: robots || null } : {}),
       }),
     onSuccess: (next) => {
       queryClient.setQueryData(["domains", params.id], next)
       setRootRedirect(null)
       setNotFound(null)
+      setRobots(null)
       toast.success("Routing updated")
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't save"),
@@ -155,142 +262,311 @@ export default function DomainDetailPage() {
 
   if (domain.isPending) {
     return (
-      <div className="mx-auto w-full max-w-4xl space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-40 w-full" />
+      <div className="mx-auto w-full max-w-4xl">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="mt-2 h-7 w-64" />
+        <Skeleton className="mt-2.5 h-3.5 w-44" />
+        <div className="mt-8 grid grid-cols-[24px_minmax(0,1fr)] gap-x-4 gap-y-8">
+          {[0, 1, 2].map((i) => (
+            <React.Fragment key={i}>
+              <Skeleton className="size-6 rounded-full" />
+              <Skeleton className={cn("w-full", i === 1 ? "h-32" : "h-6")} />
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     )
   }
   if (!dom) return null
 
   const current = stepIndex(dom.status)
+  const settingUp = dom.status === "PENDING" || dom.status === "VERIFYING"
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-8">
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onClick={() => router.push("/dashboard/domains")}
-          aria-label="Back to domains"
-          className="text-muted-foreground hover:text-foreground hover:bg-accent/60 mt-0.5 flex size-7 items-center justify-center rounded-lg transition-colors duration-150"
+      <div>
+        <Link
+          href="/dashboard/domains"
+          className="label-mono text-muted-foreground/60 hover:text-foreground inline-flex items-center gap-1.5 transition-colors duration-150"
         >
-          <ArrowLeft className="size-4" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-foreground truncate font-mono text-lg font-semibold tracking-tight">
-              {dom.fqdn}
-            </h1>
-            <StatusPill status={dom.status} kind="domain" />
-          </div>
-          <div className="mt-3">
-            <StepRail current={current} />
-          </div>
+          <ArrowLeft className="size-3" />
+          Domains
+        </Link>
+        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-2">
+          <h1 className="text-foreground truncate font-mono text-xl font-semibold tracking-tight">
+            {dom.fqdn}
+          </h1>
+          <StatusPill status={dom.status} kind="domain" />
+          {dom.status === "ACTIVE" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto"
+              onClick={() => openLinkComposer({ domain: dom.fqdn })}
+            >
+              <Plus data-icon="inline-start" />
+              Use this domain
+            </Button>
+          )}
         </div>
+        <p className="text-muted-foreground/60 mt-1.5 flex items-center gap-2 font-mono text-[11px] tabular-nums">
+          <span>added {formatWhen(dom.created_at)}</span>
+          {dom.status === "ACTIVE" && (
+            <>
+              <span aria-hidden>·</span>
+              <span>verified {formatWhen(dom.last_verified_at)}</span>
+            </>
+          )}
+        </p>
       </div>
 
-      {/* Step 2/3: DNS + verify (hidden once ACTIVE) */}
-      {dom.status !== "ACTIVE" && dom.status !== "REVOKED" && (
+      {/* Setup rail: PENDING / VERIFYING */}
+      {settingUp && (
         <div className="mt-8">
-          <SectionHeader icon={Globe} title="DNS records" />
-          <Panel className="mt-2">
-            <div className="divide-border/60 divide-y">
-              {dom.dns_records.map((rec) => (
-                <div key={rec.name + rec.type} className="flex items-center gap-3 px-4 py-3">
-                  <span className="border-border/60 bg-muted/40 text-muted-foreground w-14 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-mono text-[10px]">
-                    {rec.type}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-foreground truncate font-mono text-xs">{rec.name}</div>
-                    <div className="text-muted-foreground truncate font-mono text-[11px]">
-                      → {rec.value}
-                    </div>
-                  </div>
-                  <CopyButton value={rec.value} />
-                </div>
-              ))}
-            </div>
-            <div className="border-border/60 bg-muted/30 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
-              <span className="text-muted-foreground text-xs">
-                {dom.last_verification_error ??
-                  dom.setup_notes[0] ??
-                  "Add these records, then verify."}
-              </span>
-              <Button
-                size="sm"
-                disabled={verify.isPending}
-                onClick={() => verify.mutate()}
-              >
-                {verify.isPending && (
-                  <LoaderCircle data-icon="inline-start" className="animate-spin" />
+          <Enter i={0}>
+            <SetupStep
+              n={1}
+              state={stateOf(0, current)}
+              label="Register domain"
+              meta={<StepMeta>registered {formatWhen(dom.created_at)}</StepMeta>}
+            />
+          </Enter>
+          <Enter i={1}>
+            <SetupStep
+              n={2}
+              state={stateOf(1, current)}
+              label="Point DNS at spoo.me"
+              meta={<StepMeta>{dom.dns_records.length} records</StepMeta>}
+            >
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-xs">
+                  Add these records at your DNS provider.
+                </p>
+                <DnsRecordsTable records={dom.dns_records} />
+                {dom.setup_notes[0] && (
+                  <p className="text-muted-foreground/60 text-[11px]">
+                    {dom.setup_notes[0]}
+                  </p>
                 )}
-                {dom.status === "PENDING" ? "Start verification" : "Check again"}
-              </Button>
-            </div>
-          </Panel>
+              </div>
+            </SetupStep>
+          </Enter>
+          <Enter i={2}>
+            <SetupStep n={3} state={stateOf(2, current)} label="Verify ownership">
+              <div className="space-y-2.5">
+                <p className="text-muted-foreground text-xs">
+                  We confirm the records and provision TLS at the edge.
+                </p>
+                {dom.last_verification_error && (
+                  <p className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                    <TriangleAlert className="mt-px size-3.5 shrink-0" />
+                    {dom.last_verification_error}
+                  </p>
+                )}
+                {(dom.cf_status || dom.cf_ssl_status) && (
+                  <p className="text-muted-foreground/70 flex items-center gap-2 font-mono text-[11px]">
+                    <span>edge {dom.cf_status ?? "waiting"}</span>
+                    <span aria-hidden>·</span>
+                    <span>tls {dom.cf_ssl_status ?? "waiting"}</span>
+                  </p>
+                )}
+                <div className="pt-1">
+                  <Button
+                    size="sm"
+                    disabled={verify.isPending}
+                    onClick={() => verify.mutate()}
+                  >
+                    {verify.isPending && (
+                      <LoaderCircle data-icon="inline-start" className="animate-spin" />
+                    )}
+                    {dom.status === "PENDING" ? "Start verification" : "Check again"}
+                  </Button>
+                </div>
+              </div>
+            </SetupStep>
+          </Enter>
+          <Enter i={3}>
+            <SetupStep n={4} state={stateOf(3, current)} label="Go live" last>
+              <p className="text-muted-foreground/60 text-xs">
+                Links on {dom.fqdn} start resolving once checks pass.
+              </p>
+            </SetupStep>
+          </Enter>
         </div>
       )}
 
-      {/* Step 4: routing config (ACTIVE only) */}
+      {/* Live: routing config + DNS reference */}
       {dom.status === "ACTIVE" && (
-        <div className="mt-8">
-          <SectionHeader icon={Route} title="Routing" />
-          <Panel className="mt-2 space-y-5 p-5">
-            <div className="space-y-1.5">
-              <label className="text-foreground text-xs font-medium">Root redirect</label>
-              <Input
-                value={rootRedirect ?? dom.root_redirect ?? ""}
-                onChange={(e) => setRootRedirect(e.target.value)}
-                placeholder={`Where ${dom.fqdn}/ goes`}
-                spellCheck={false}
-                className="h-9 font-mono text-xs"
+        <>
+          <Enter i={0}>
+            <div className="mt-8">
+              <SectionHeader
+                icon={Route}
+                title="Routing"
+                action={
+                  <div
+                    inert={!routingDirty}
+                    className={cn(
+                      "transition-opacity duration-150",
+                      routingDirty ? "opacity-100" : "pointer-events-none opacity-0",
+                    )}
+                  >
+                    <Button
+                      size="sm"
+                      disabled={saveRouting.isPending}
+                      onClick={() => saveRouting.mutate()}
+                    >
+                      {saveRouting.isPending && (
+                        <LoaderCircle data-icon="inline-start" className="animate-spin" />
+                      )}
+                      Save routing
+                    </Button>
+                  </div>
+                }
               />
-              <p className="text-muted-foreground/70 text-xs">
-                Visitors hitting the bare domain get sent here.
+              <Panel className="mt-2">
+                <div className="space-y-5 p-5">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-foreground mb-2.5 block text-xs font-medium">
+                      Root redirect
+                    </label>
+                    <Input
+                      value={rootRedirect ?? dom.root_redirect ?? ""}
+                      onChange={(e) => setRootRedirect(e.target.value)}
+                      placeholder={`Where ${dom.fqdn}/ goes`}
+                      spellCheck={false}
+                      className="h-9 font-mono text-xs"
+                    />
+                    <p className="text-muted-foreground/70 text-xs">
+                      Visitors hitting the bare domain get sent here. Blank
+                      serves a 404.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-foreground mb-2.5 block text-xs font-medium">
+                      Not-found redirect
+                    </label>
+                    <Input
+                      value={notFound ?? dom.not_found_redirect ?? ""}
+                      onChange={(e) => setNotFound(e.target.value)}
+                      placeholder="Where unknown aliases go"
+                      spellCheck={false}
+                      className="h-9 font-mono text-xs"
+                    />
+                    <p className="text-muted-foreground/70 text-xs">
+                      Fallback for typos and missing aliases. Blank serves a
+                      404.
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <label className="text-foreground text-xs font-medium">
+                      Custom robots.txt
+                    </label>
+                    <span className="text-muted-foreground/60 font-mono text-[11px] tabular-nums">
+                      {(robots ?? dom.custom_robots_txt ?? "").length} / 4096
+                    </span>
+                  </div>
+                  <Textarea
+                    value={robots ?? dom.custom_robots_txt ?? ""}
+                    onChange={(e) => setRobots(e.target.value)}
+                    placeholder={"User-agent: *\nDisallow: /"}
+                    spellCheck={false}
+                    maxLength={4096}
+                    className="min-h-24 font-mono text-xs"
+                  />
+                  <p className="text-muted-foreground/70 text-xs">
+                    Served at {dom.fqdn}/robots.txt. Blank serves the default,
+                    which blocks all crawlers.
+                  </p>
+                </div>
+                </div>
+                <div className="border-border/60 bg-muted/30 flex items-start gap-2 border-t px-5 py-3">
+                  <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-700 dark:text-amber-400" />
+                  <p className="text-muted-foreground text-xs">
+                    Redirects send visitors to whatever you configure here.
+                    Phishing or other abuse gets the domain revoked.
+                  </p>
+                </div>
+              </Panel>
+            </div>
+          </Enter>
+          <Enter i={1}>
+            <div className="mt-8">
+              <SectionHeader icon={Globe} title="DNS records" />
+              <div className="mt-2">
+                <DnsRecordsTable records={dom.dns_records} />
+              </div>
+              <p className="text-muted-foreground/60 mt-2 text-[11px]">
+                Keep these records in place. Removing them takes the domain offline.
               </p>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-foreground text-xs font-medium">
-                Not-found redirect
-              </label>
-              <Input
-                value={notFound ?? dom.not_found_redirect ?? ""}
-                onChange={(e) => setNotFound(e.target.value)}
-                placeholder="Where unknown aliases go (optional)"
-                spellCheck={false}
-                className="h-9 font-mono text-xs"
-              />
+          </Enter>
+        </>
+      )}
+
+      {/* Suspended: explain, keep the revoke escape hatch below */}
+      {dom.status === "SUSPENDED" && (
+        <Enter i={0}>
+          <Panel className="mt-8 border-amber-500/25 p-4">
+            <div className="flex gap-3">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-400" />
+              <div className="space-y-1">
+                <div className="text-foreground text-sm font-medium">
+                  Domain suspended
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Links on {dom.fqdn} stop resolving while suspended. Your links
+                  and their stats are kept. Reach out on Discord if you think
+                  this is a mistake.
+                </p>
+              </div>
             </div>
-            <div
-              className={cn(
-                "flex justify-end transition-opacity duration-150",
-                routingDirty ? "opacity-100" : "pointer-events-none opacity-0",
-              )}
-            >
-              <Button size="sm" disabled={saveRouting.isPending} onClick={() => saveRouting.mutate()}>
-                Save routing
+          </Panel>
+        </Enter>
+      )}
+
+      {/* Revoked: terminal state */}
+      {dom.status === "REVOKED" && (
+        <Enter i={0}>
+          <Panel className="mt-8">
+            <div className="pattern-dots m-4 flex h-44 flex-col items-center justify-center gap-3 rounded-lg">
+              <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+                domain revoked
+              </span>
+              <p className="text-muted-foreground max-w-sm text-center text-xs">
+                Links on {dom.fqdn} stopped resolving. Revocation is terminal.
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/dashboard/domains">Back to domains</Link>
               </Button>
             </div>
           </Panel>
-        </div>
+        </Enter>
       )}
 
       {/* Danger zone */}
       {dom.status !== "REVOKED" && (
-        <div className="mt-8">
-          <SectionHeader icon={ShieldAlert} title="Danger zone" />
-          <Panel className="border-destructive/20 mt-2 flex flex-wrap items-center justify-between gap-3 p-4">
-            <div>
-              <div className="text-foreground text-sm font-medium">Revoke this domain</div>
-              <div className="text-muted-foreground text-xs">
-                Links on {dom.fqdn} stop resolving. Revocation is terminal.
+        <Enter i={settingUp ? 4 : 2}>
+          <div className="mt-8">
+            <SectionHeader icon={ShieldAlert} title="Danger zone" />
+            <Panel className="border-destructive/20 mt-2 flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <div className="text-foreground text-sm font-medium">
+                  Revoke this domain
+                </div>
+                <div className="text-muted-foreground text-xs">
+                  Links on {dom.fqdn} stop resolving. Revocation is terminal.
+                </div>
               </div>
-            </div>
-            <Button variant="destructive" size="sm" onClick={() => setConfirmOpen(true)}>
-              Revoke domain
-            </Button>
-          </Panel>
-        </div>
+              <Button variant="destructive" size="sm" onClick={() => setConfirmOpen(true)}>
+                Revoke domain
+              </Button>
+            </Panel>
+          </div>
+        </Enter>
       )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -312,8 +588,8 @@ export default function DomainDetailPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => revoke.mutate()}
-              className="bg-destructive hover:bg-destructive/90 text-white"
             >
               Revoke domain
             </AlertDialogAction>

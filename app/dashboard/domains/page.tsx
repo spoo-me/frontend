@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ChevronRight, Globe, Plus } from "lucide-react"
+import { motion } from "motion/react"
 import { toast } from "sonner"
 
 import { createCustomDomain, listCustomDomains, SpooApiError } from "@/lib/api"
@@ -20,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Panel, SectionHeader } from "@/components/dashboard/section"
+import { Panel } from "@/components/dashboard/section"
 import { StatusPill } from "@/components/dashboard/status-pill"
 
 export default function DomainsPage() {
@@ -84,8 +85,13 @@ export default function DomainsPage() {
           </div>
         ) : (
           <ul className="divide-border/60 divide-y">
-            {items.map((dom) => (
-              <li key={dom.id}>
+            {items.map((dom, i) => (
+              <motion.li
+                key={dom.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: i * 0.04 }}
+              >
                 <Link
                   href={`/dashboard/domains/${dom.id}`}
                   className="hover:bg-accent/40 flex h-14 items-center gap-3 px-4 transition-colors duration-150"
@@ -106,7 +112,7 @@ export default function DomainsPage() {
                   <StatusPill status={dom.status} kind="domain" />
                   <ChevronRight className="text-muted-foreground/50 size-4" />
                 </Link>
-              </li>
+              </motion.li>
             ))}
           </ul>
         )}
