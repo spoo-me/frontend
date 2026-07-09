@@ -22,7 +22,18 @@ import {
 } from "react-icons/fa6"
 
 import { cn } from "@/lib/utils"
-import type { AbVariant, GeoRule, MetaTags } from "@/lib/api"
+import {
+  GEO_RULE_URL_MAX_LENGTH,
+  GEO_RULES_MAX_COUNTRIES,
+  META_DESCRIPTION_MAX,
+  META_IMAGE_URL_MAX,
+  META_TITLE_MAX,
+  type AbVariant,
+  type GeoRules,
+  type MetaTags,
+  type MetaTagsInput,
+  type UrlMetadata,
+} from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -72,10 +83,50 @@ export function looksLikeUrl(raw: string): boolean {
 
 export const metaColorValid = (c: string) => /^#[0-9a-fA-F]{6}$/.test(c)
 
-export const completeGeoRules = (rules: GeoRuleDraft[]): GeoRule[] =>
-  rules
-    .filter((r) => /^[A-Z]{2}$/.test(r.country) && looksLikeUrl(r.url))
-    .map((r) => ({ country: r.country, url: normalizeUrl(r.url) }))
+/** Canonical wire payload (PR #230 flat map): only complete rows travel;
+    first occurrence of a country wins (duplicates block saving anyway —
+    see geoRulesProblem). */
+export const completeGeoRules = (rules: GeoRuleDraft[]): GeoRules => {
+  const map: GeoRules = {}
+  for (const r of rules) {
+    if (!/^[A-Z]{2}$/.test(r.country) || r.country in map) continue
+    if (!looksLikeUrl(r.url)) continue
+    map[r.country] = normalizeUrl(r.url)
+  }
+  return map
+}
+
+/** Wire map → editor rows (settings form initial state). */
+export const geoDraftsOf = (rules: GeoRules | null | undefined): GeoRuleDraft[] =>
+  Object.entries(rules ?? {}).map(([country, url]) => ({ country, url }))
+
+/** Key-order-insensitive equality — the server echoes a normalized map. */
+export const sameGeoRules = (a: GeoRules, b: GeoRules | null | undefined) => {
+  const bb = b ?? {}
+  const keys = Object.keys(a)
+  return keys.length === Object.keys(bb).length && keys.every((k) => a[k] === bb[k])
+}
+
+/** First blocking problem with the geo drafts, or null. Mirrors the server
+    validators (PR #230): one rule per country, at most 50 countries, URL
+    within the long_url length bound — so saves never 400 blind. */
+export function geoRulesProblem(rules: GeoRuleDraft[]): string | null {
+  const seen = new Set<string>()
+  for (const r of rules) {
+    if (!/^[A-Z]{2}$/.test(r.country)) continue
+    if (seen.has(r.country))
+      return `${dimensionLabel("country", r.country)} has two rules. Each country gets one.`
+    seen.add(r.country)
+    if (
+      looksLikeUrl(r.url) &&
+      normalizeUrl(r.url).length > GEO_RULE_URL_MAX_LENGTH
+    )
+      return `The ${dimensionLabel("country", r.country)} URL is too long (${GEO_RULE_URL_MAX_LENGTH.toLocaleString()} characters max).`
+  }
+  if (seen.size > GEO_RULES_MAX_COUNTRIES)
+    return `At most ${GEO_RULES_MAX_COUNTRIES} country rules per link.`
+  return null
+}
 
 export const completeVariants = (variants: VariantDraft[]): AbVariant[] =>
   variants
@@ -85,15 +136,63 @@ export const completeVariants = (variants: VariantDraft[]): AbVariant[] =>
 export const variantTotal = (variants: VariantDraft[]) =>
   completeVariants(variants).reduce((a, v) => a + v.weight, 0)
 
-/** Canonical payload from a meta draft; undefined when nothing is set. */
-export function metaTagsOf(m: MetaDraft): MetaTags | undefined {
-  const out: MetaTags = {
-    ...(m.title ? { title: m.title } : {}),
-    ...(m.description ? { description: m.description } : {}),
-    ...(m.image ? { image: normalizeUrl(m.image) } : {}),
+/** Canonical wire payload (PR #231): undefined when nothing is set. The
+    backend requires `title` on any meta_tags object, so a draft with only
+    extras produces undefined too — metaTagsProblem flags that case before
+    a save can drop it silently. */
+export function metaTagsOf(m: MetaDraft): MetaTagsInput | undefined {
+  const title = m.title.trim()
+  if (!title) return undefined
+  return {
+    title,
+    ...(m.description.trim() ? { description: m.description.trim() } : {}),
+    ...(m.image.trim() ? { image: normalizeUrl(m.image) } : {}),
     ...(metaColorValid(m.color) ? { color: m.color.toLowerCase() } : {}),
   }
-  return Object.keys(out).length ? out : undefined
+}
+
+/** Payload-vs-echo equality: the server echoes every field with explicit
+    nulls (plus `warnings`, which the client never sends), so compare the
+    four client-settable fields only. */
+export const sameMetaTags = (
+  a: MetaTagsInput | null,
+  b: MetaTags | MetaTagsInput | null | undefined,
+) =>
+  (a?.title ?? null) === (b?.title ?? null) &&
+  (a?.description ?? null) === (b?.description ?? null) &&
+  (a?.image ?? null) === (b?.image ?? null) &&
+  (a?.color ?? null) === (b?.color ?? null)
+
+/** First blocking problem with the meta draft, or null. Mirrors the server
+    DTO rules (PR #231): title mandatory (1–120) whenever anything is set,
+    description ≤240, image https-only / no SVG / ≤2048 chars, color
+    #RRGGBB — so saves never 422 blind. */
+export function metaTagsProblem(m: MetaDraft): string | null {
+  const title = m.title.trim()
+  const hasExtras = Boolean(m.description.trim() || m.image.trim() || m.color.trim())
+  if (!title && !hasExtras) return null
+  if (!title) return "Give the preview a title. Cards without one render broken."
+  if (title.length > META_TITLE_MAX)
+    return `The title is too long (${META_TITLE_MAX} characters max).`
+  if (m.description.trim().length > META_DESCRIPTION_MAX)
+    return `The description is too long (${META_DESCRIPTION_MAX} characters max).`
+  const image = m.image.trim()
+  if (image) {
+    const url = normalizeUrl(image)
+    if (!looksLikeUrl(image) || !/^https:\/\//.test(url))
+      return "The image must be an https:// URL."
+    if (url.length > META_IMAGE_URL_MAX)
+      return `The image URL is too long (${META_IMAGE_URL_MAX.toLocaleString()} characters max).`
+    try {
+      if (new URL(url).pathname.toLowerCase().endsWith(".svg"))
+        return "SVG images aren't supported; preview crawlers can't render them."
+    } catch {
+      return "The image must be an https:// URL."
+    }
+  }
+  if (m.color.trim() && !metaColorValid(m.color.trim()))
+    return "The theme color must be a #RRGGBB hex value."
+  return null
 }
 
 export const emptyMetaDraft = (): MetaDraft => ({
@@ -109,6 +208,33 @@ export const metaDraftOf = (m: MetaTags | null | undefined): MetaDraft => ({
   image: m?.image ?? "",
   color: m?.color ?? "",
 })
+
+/** Fetched image the editor would accept: https, not SVG, within length.
+    Anything else is dropped on prefill rather than planting a 422. */
+function usableFetchedImage(img: string | null): string | null {
+  if (!img || !img.startsWith("https://") || img.length > META_IMAGE_URL_MAX)
+    return null
+  try {
+    if (new URL(img).pathname.toLowerCase().endsWith(".svg")) return null
+  } catch {
+    return null
+  }
+  return img
+}
+
+/** Destination fetch → display draft (Dub-model prefill). Every field is
+    clamped to the editor's own limits so a fill can't plant a 422; absent
+    data (no fetch yet, error, non-https destination) yields the empty
+    draft so the fields fall back to their placeholders. */
+export function prefillDraftOf(m: UrlMetadata | null | undefined): MetaDraft {
+  if (!m) return emptyMetaDraft()
+  return {
+    title: (m.title ?? "").slice(0, META_TITLE_MAX),
+    description: (m.description ?? "").slice(0, META_DESCRIPTION_MAX),
+    image: usableFetchedImage(m.image) ?? "",
+    color: m.color && metaColorValid(m.color) ? m.color : "",
+  }
+}
 
 /* ---------------------------------------------------------- small chrome */
 
@@ -263,12 +389,18 @@ export function GeoRulesEditor({
   rules: GeoRuleDraft[]
   onChange: (rules: GeoRuleDraft[]) => void
 }) {
+  const problem = geoRulesProblem(rules)
   return (
     <div className="space-y-2">
       <SectionLabel>Geo targeting</SectionLabel>
-      <p className="text-muted-foreground/70 text-xs">
-        Visitors from a matched country are redirected to its URL instead of
-        the destination.
+      <p
+        className={cn(
+          "text-xs",
+          problem ? "text-destructive" : "text-muted-foreground/70",
+        )}
+      >
+        {problem ??
+          "Visitors from a matched country are redirected to its URL instead of the destination."}
       </p>
       {rules.map((rule, i) => (
         <div key={i} className="flex items-center gap-1.5">
@@ -311,6 +443,7 @@ export function GeoRulesEditor({
         variant="outline"
         size="sm"
         className="h-8"
+        disabled={rules.length >= GEO_RULES_MAX_COUNTRIES}
         onClick={() => onChange([...rules, { country: "", url: "" }])}
       >
         <Plus data-icon="inline-start" />
@@ -565,6 +698,9 @@ export function MetaTagsEditor({
   domain,
   alias,
   preview = "side",
+  loading = false,
+  notice,
+  problem: problemProp,
 }: {
   value: MetaDraft
   onChange: (value: MetaDraft) => void
@@ -572,14 +708,29 @@ export function MetaTagsEditor({
   alias: string
   /** side: fields + preview rail (stacks below sm). below: always stacked. */
   preview?: "side" | "below"
+  /** Destination fetch in flight: the fields pulse in place (opacity only,
+      zero layout shift) — the fields themselves are the loading surface. */
+  loading?: boolean
+  /** Quiet muted status line (fetch failures); yields to any problem. */
+  notice?: string | null
+  /** Validation override: pass null to suppress while an uncustomized
+      prefill is display-only and never travels. undefined = compute here. */
+  problem?: string | null
 }) {
   const [previewOn, setPreviewOn] = React.useState<MetaPlatform>("x")
   const colorValid = metaColorValid(value.color)
+  const problem =
+    problemProp === undefined ? metaTagsProblem(value) : problemProp
   const patch = (partial: Partial<MetaDraft>) =>
     onChange({ ...value, ...partial })
 
   const fields = (
-    <div className="min-w-0 flex-1 space-y-5">
+    <div className={cn("min-w-0 flex-1 space-y-5", loading && "animate-pulse")}>
+      {problem ? (
+        <p className="text-destructive text-xs">{problem}</p>
+      ) : notice ? (
+        <p className="text-muted-foreground/70 text-xs">{notice}</p>
+      ) : null}
       <Field
         label="Social title"
         hint="Overrides the destination's Open Graph title."
@@ -588,6 +739,7 @@ export function MetaTagsEditor({
           value={value.title}
           onChange={(e) => patch({ title: e.target.value })}
           placeholder="From the destination"
+          maxLength={META_TITLE_MAX}
           className="h-9 text-xs"
         />
       </Field>
@@ -599,10 +751,14 @@ export function MetaTagsEditor({
           value={value.description}
           onChange={(e) => patch({ description: e.target.value })}
           placeholder="From the destination"
+          maxLength={META_DESCRIPTION_MAX}
           className="h-9 text-xs"
         />
       </Field>
-      <Field label="Social image" hint="1200×630 works everywhere.">
+      <Field
+        label="Social image"
+        hint="https:// only, no SVG. 1200×630 works everywhere."
+      >
         <Input
           value={value.image}
           onChange={(e) => patch({ image: e.target.value })}

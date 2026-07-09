@@ -21,6 +21,7 @@ import { toast } from "sonner"
 
 import {
   checkAlias,
+  fetchUrlMetadata,
   listCustomDomains,
   shorten,
   SpooApiError,
@@ -53,11 +54,15 @@ import {
   completeGeoRules,
   completeVariants,
   emptyMetaDraft,
+  geoRulesProblem,
   GeoRulesEditor,
   looksLikeUrl,
   MetaTagsEditor,
   metaTagsOf,
+  metaTagsProblem,
   normalizeUrl,
+  prefillDraftOf,
+  SectionLabel,
   VariantsEditor,
   variantTotal,
   type GeoRuleDraft,
@@ -76,11 +81,21 @@ const WORDS =
   "amber basil cedar delta ember fable garnet hazel indigo juniper koala lumen maple nectar onyx pixel quartz raven sable tundra umber velvet willow zephyr".split(
     " ",
   )
-const pickWord = () => WORDS[Math.floor(Math.random() * WORDS.length)]
+/** Unbiased crypto-random integer in [0, bound). */
+const randInt = (bound: number) => {
+  const buf = new Uint32Array(1)
+  const limit = Math.floor(4294967296 / bound) * bound
+  do {
+    crypto.getRandomValues(buf)
+  } while (buf[0] >= limit)
+  return buf[0] % bound
+}
+const pickWord = () => WORDS[randInt(WORDS.length)]
+// "." separators: backend URL-password rule requires a letter, a digit and
+// an "@" or "." with no two consecutive specials (shared/validators.py).
 const suggestPassword = () =>
-  `${pickWord()}-${pickWord()}-${Math.floor(10 + Math.random() * 89)}`
-const suggestAlias = () =>
-  `${pickWord()}-${Math.floor(10 + Math.random() * 89)}`
+  `${pickWord()}.${pickWord()}.${10 + randInt(89)}`
+const suggestAlias = () => `${pickWord()}-${10 + randInt(89)}`
 
 const EXPIRY_PRESETS: Array<[label: string, hours: number]> = [
   ["1 day", 24],
@@ -136,8 +151,44 @@ export function LinkComposer() {
     { url: "", weight: "" },
   ])
   const [meta, setMeta] = React.useState<MetaDraft>(emptyMetaDraft())
+  // Dub-model prefill: while false the meta fields simply MIRROR the
+  // destination fetch (display only — nothing travels on submit, the link
+  // keeps inheriting live tags). The first manual edit flips it and the
+  // draft is the user's from then on: auto-fill never writes again and
+  // submit sends meta_tags. "Reset to destination" flips it back.
+  const [metaCustomized, setMetaCustomized] = React.useState(false)
   const [blockBots, setBlockBots] = React.useState(false)
   const [privateStats, setPrivateStats] = React.useState(false)
+
+  // Destination-tag prefill (GET /api/v1/metadata, PR #231). The long URL
+  // debounces ~600ms into a stable key; the fetch itself only runs while
+  // the metadata tab is showing, so the quick-shorten happy path costs
+  // zero metadata requests. staleTime is generous and retry off — the
+  // endpoint is 20/min rate-limited and tags rarely change mid-session.
+  const [debouncedUrl, setDebouncedUrl] = React.useState("")
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedUrl(looksLikeUrl(longUrl) ? normalizeUrl(longUrl) : "")
+    }, 600)
+    return () => clearTimeout(t)
+  }, [longUrl])
+  const metaFetchUrl =
+    debouncedUrl.startsWith("https://") ? debouncedUrl : null
+  const destMeta = useQuery({
+    queryKey: ["url-metadata", metaFetchUrl],
+    queryFn: () => fetchUrlMetadata(metaFetchUrl!),
+    enabled: open && tab === "metadata" && Boolean(metaFetchUrl),
+    staleTime: 10 * 60_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+
+  // Prefill is never a dirty bit: while uncustomized the DISPLAYED draft is
+  // derived straight from the fetch (no effect, no state write) — a new URL
+  // clears it, a resolve fills it (clamped via prefillDraftOf), reset falls
+  // back to it from the cache. The first manual edit snapshots it into
+  // `meta` via onChange and flips customized.
+  const displayedMeta = metaCustomized ? meta : prefillDraftOf(destMeta.data)
 
   React.useEffect(() => {
     const onOpen = (e: Event) => {
@@ -171,8 +222,10 @@ export function LinkComposer() {
     setGeoRules([{ country: "", url: "" }])
     setVariants([{ url: "", weight: "" }])
     setMeta(emptyMetaDraft())
+    setMetaCustomized(false)
     setBlockBots(false)
     setPrivateStats(false)
+    setDebouncedUrl("")
   }
 
   // Animated tab height: measure the active panel, glide the container.
@@ -232,8 +285,19 @@ export function LinkComposer() {
           : "checking"
 
   const geoPayload = completeGeoRules(geoRules)
+  const geoCount = Object.keys(geoPayload).length
+  const geoProblem = geoRulesProblem(geoRules)
   const variantPayload = completeVariants(variants)
-  const metaPayload = metaTagsOf(meta)
+  // Uncustomized = inherit the destination's live tags: the (display-only)
+  // prefill never travels and never blocks submit.
+  const metaPayload = metaCustomized ? metaTagsOf(meta) : undefined
+  const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
+  const metaNotice =
+    !metaCustomized && destMeta.isError
+      ? destMeta.error instanceof SpooApiError && destMeta.error.isRateLimit
+        ? "preview fetches are rate limited, try again in a minute"
+        : "couldn't fetch a preview from this destination"
+      : null
   const weights = variantTotal(variants)
 
   const create = useMutation({
@@ -249,7 +313,7 @@ export function LinkComposer() {
         ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
         ...(blockBots ? { block_bots: true } : {}),
         ...(privateStats ? { private_stats: true } : {}),
-        ...(geoPayload.length ? { geo_rules: geoPayload } : {}),
+        ...(geoCount ? { geo_rules: geoPayload } : {}),
         ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
         ...(metaPayload ? { meta_tags: metaPayload } : {}),
       }),
@@ -260,7 +324,10 @@ export function LinkComposer() {
       reset()
       const short = created.short_url
       toast.success("Link created", {
-        description: short.replace(/^https?:\/\//, ""),
+        // Machine text reads mono, same as every short link in the app.
+        description: (
+          <span className="font-mono">{short.replace(/^https?:\/\//, "")}</span>
+        ),
         action: {
           label: "Copy",
           onClick: () => navigator.clipboard.writeText(short),
@@ -283,6 +350,8 @@ export function LinkComposer() {
     looksLikeUrl(longUrl) &&
     !create.isPending &&
     weights <= 100 &&
+    !geoProblem &&
+    !metaProblem &&
     (alias === "" || aliasState === "available" || aliasState === "checking")
 
   const submit = () => {
@@ -297,7 +366,7 @@ export function LinkComposer() {
 
   const basicSet = expiry !== "" || maxClicks !== ""
   const securitySet = password !== "" || blockBots || privateStats
-  const targetingSet = geoPayload.length > 0 || variantPayload.length > 0
+  const targetingSet = geoCount > 0 || variantPayload.length > 0
 
   /** The dot = this tab holds a value; visible without visiting it. */
   const tabDot = (set: boolean) =>
@@ -408,7 +477,7 @@ export function LinkComposer() {
                     aliasState === "taken"
                       ? "That alias is taken, try another."
                       : aliasState === "invalid"
-                        ? "3–16 characters: letters, numbers, - and _"
+                        ? "3-16 characters: letters, numbers, - and _"
                         : aliasState === "available"
                           ? `${domain}/${alias} is available.`
                           : "Leave the alias empty for a random one."
@@ -607,13 +676,36 @@ export function LinkComposer() {
                 <VariantsEditor variants={variants} onChange={setVariants} />
               </TabsContent>
 
-              <TabsContent value="metadata">
+              <TabsContent value="metadata" className="space-y-2">
+                {/* Fixed-height header row: the reset action appears in
+                    place when the draft is customized — zero layout shift
+                    between mirrored and customized states. */}
+                <div className="flex h-7 items-center justify-between">
+                  <SectionLabel>Meta tags</SectionLabel>
+                  {metaCustomized && (
+                    <button
+                      type="button"
+                      onClick={() => setMetaCustomized(false)}
+                      className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4 transition-colors duration-150"
+                    >
+                      Reset to destination
+                    </button>
+                  )}
+                </div>
                 <MetaTagsEditor
-                  value={meta}
-                  onChange={setMeta}
+                  value={displayedMeta}
+                  onChange={(v) => {
+                    // Any manual edit — typing, clearing, a color pick —
+                    // flips customized; auto-fill goes through setMeta only.
+                    setMeta(v)
+                    setMetaCustomized(true)
+                  }}
                   domain={domain}
                   alias={alias}
                   preview="side"
+                  loading={!metaCustomized && destMeta.isFetching}
+                  notice={metaNotice}
+                  problem={metaProblem}
                 />
               </TabsContent>
             </div>

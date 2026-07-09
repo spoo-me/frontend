@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { NextRequest, NextResponse } from "next/server"
+import { getAlpha2Codes } from "i18n-iso-countries"
 
 import {
   buildDomains,
@@ -151,18 +152,95 @@ function linkItem(l: MockLink) {
   }
 }
 
-function parseGeoRules(v: unknown) {
-  if (!Array.isArray(v)) return null
-  const rules = v
-    .filter(
-      (r): r is { country: string; url: string } =>
-        !!r &&
-        typeof r === "object" &&
-        /^[A-Z]{2}$/.test(String((r as { country?: unknown }).country)) &&
-        /^https?:\/\//.test(String((r as { url?: unknown }).url)),
-    )
-    .map((r) => ({ country: r.country, url: r.url }))
-  return rules.length ? rules : null
+/* geo_rules mirrors backend PR #230 byte-for-byte: the wire is a FLAT MAP of
+   ISO 3166-1 alpha-2 code → URL. DTO layer (pydantic, 422): keys uppercased,
+   case-collisions rejected, URLs non-empty and ≤ 8192 chars. Service layer
+   (ValidationError, 400 validation_error): ≤ 50 entries, real ISO codes,
+   URL validity — with field paths like `geo_rules.IN`. Cleared rules are
+   stored/echoed as null ({} never round-trips). */
+const GEO_RULES_MAX_COUNTRIES = 50
+const GEO_RULE_URL_MAX_LENGTH = 8192
+const ISO_ALPHA2 = new Set(Object.keys(getAlpha2Codes()))
+
+type GeoRulesResult =
+  | { ok: Record<string, string> | null }
+  | { err: NextResponse }
+
+function normalizeGeoRules(v: unknown): GeoRulesResult {
+  if (v === null || v === undefined) return { ok: null }
+  if (typeof v !== "object" || Array.isArray(v))
+    return {
+      err: fail(
+        422,
+        "validation_error",
+        "geo_rules: Input should be a valid dictionary",
+        "geo_rules",
+      ),
+    }
+  const normalized: Record<string, string> = {}
+  for (const [key, url] of Object.entries(v as Record<string, unknown>)) {
+    const code = key.trim().toUpperCase()
+    if (code in normalized)
+      return {
+        err: fail(
+          422,
+          "validation_error",
+          `geo_rules: Value error, duplicate country code after normalisation: '${code}'`,
+          "geo_rules",
+        ),
+      }
+    if (typeof url !== "string" || !url.trim())
+      return {
+        err: fail(
+          422,
+          "validation_error",
+          `geo_rules: Value error, geo_rules['${code}'] must be a non-empty URL string`,
+          "geo_rules",
+        ),
+      }
+    if (url.length > GEO_RULE_URL_MAX_LENGTH)
+      return {
+        err: fail(
+          422,
+          "validation_error",
+          `geo_rules: Value error, geo_rules['${code}'] URL exceeds ${GEO_RULE_URL_MAX_LENGTH} characters`,
+          "geo_rules",
+        ),
+      }
+    normalized[code] = url.trim()
+  }
+  // {} clears — stored as null, and never rejected (rollback path).
+  if (!Object.keys(normalized).length) return { ok: null }
+  if (Object.keys(normalized).length > GEO_RULES_MAX_COUNTRIES)
+    return {
+      err: fail(
+        400,
+        "validation_error",
+        `geo_rules cannot exceed ${GEO_RULES_MAX_COUNTRIES} country entries`,
+        "geo_rules",
+      ),
+    }
+  for (const [code, url] of Object.entries(normalized)) {
+    if (!ISO_ALPHA2.has(code))
+      return {
+        err: fail(
+          400,
+          "validation_error",
+          `'${code}' is not a valid ISO 3166-1 alpha-2 country code`,
+          `geo_rules.${code}`,
+        ),
+      }
+    if (!/^https?:\/\/[^\s]+\.[^\s]+/.test(url))
+      return {
+        err: fail(
+          400,
+          "validation_error",
+          "URL is not allowed or invalid",
+          `geo_rules.${code}`,
+        ),
+      }
+  }
+  return { ok: normalized }
 }
 
 function parseVariants(v: unknown) {
@@ -179,16 +257,319 @@ function parseVariants(v: unknown) {
   return variants.length ? variants : null
 }
 
-function parseMetaTags(v: unknown) {
-  if (!v || typeof v !== "object") return null
-  const m = v as Record<string, unknown>
-  const out: { title?: string; description?: string; image?: string; color?: string } = {}
-  if (typeof m.title === "string" && m.title) out.title = m.title
-  if (typeof m.description === "string" && m.description) out.description = m.description
-  if (typeof m.image === "string" && m.image) out.image = m.image
-  if (typeof m.color === "string" && /^#[0-9a-f]{6}$/i.test(m.color)) out.color = m.color
-  return Object.keys(out).length ? out : null
+/* meta_tags mirrors backend PR #231 byte-for-byte: whole-object replace,
+   null clears (clearing is never gated). Setting is gated — verified
+   account + custom_meta_tags flag, 403 `forbidden` otherwise (the mock
+   account has the flag). DTO layer (pydantic, 422): title required 1–120
+   after control-strip + trim, description ≤ 240, image https ≤ 2048 chars
+   or a data:image/png|jpeg|webp;base64 URI ≤ 512KB decoded (re-hosted on
+   the CDN — 400 validation_error on ingest failures), color #RRGGBB.
+   Model layer rejects .svg paths (422, field `image`). The echo carries
+   every field with explicit nulls plus `warnings` — platform-cliff notes
+   that stay null until async image validation records dimensions. */
+const META_TITLE_MAX = 120
+const META_DESCRIPTION_MAX = 240
+const META_IMAGE_URL_MAX = 2048
+const META_IMAGE_MAX_BYTES = 512_000
+const META_DATA_URI_RE = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/
+
+type WireMetaTags = {
+  title: string
+  description: string | null
+  image: string | null
+  color: string | null
+  warnings: string[] | null
 }
+type MetaTagsResult = { ok: WireMetaTags | null } | { err: NextResponse }
+
+function normalizeMetaTags(v: unknown): MetaTagsResult {
+  if (v === null || v === undefined) return { ok: null }
+  if (typeof v !== "object" || Array.isArray(v))
+    return {
+      err: fail(
+        422,
+        "validation_error",
+        "meta_tags: Input should be a valid dictionary or object to extract fields from",
+        "meta_tags",
+      ),
+    }
+  const m = v as Record<string, unknown>
+  // eslint-disable-next-line no-control-regex
+  const strip = (t: string) => t.replace(/[\x00-\x1f\x7f]/g, "").trim()
+
+  if (typeof m.title !== "string")
+    return {
+      err: fail(
+        422,
+        "validation_error",
+        "meta_tags.title: Field required",
+        "meta_tags.title",
+      ),
+    }
+  const title = strip(m.title)
+  if (!title)
+    return {
+      err: fail(
+        422,
+        "validation_error",
+        "meta_tags.title: String should have at least 1 character",
+        "meta_tags.title",
+      ),
+    }
+  if (title.length > META_TITLE_MAX)
+    return {
+      err: fail(
+        422,
+        "validation_error",
+        `meta_tags.title: String should have at most ${META_TITLE_MAX} characters`,
+        "meta_tags.title",
+      ),
+    }
+
+  let description: string | null = null
+  if (m.description != null) {
+    if (typeof m.description !== "string")
+      return {
+        err: fail(
+          422,
+          "validation_error",
+          "meta_tags.description: Input should be a valid string",
+          "meta_tags.description",
+        ),
+      }
+    description = strip(m.description)
+    if (description.length > META_DESCRIPTION_MAX)
+      return {
+        err: fail(
+          422,
+          "validation_error",
+          `meta_tags.description: String should have at most ${META_DESCRIPTION_MAX} characters`,
+          "meta_tags.description",
+        ),
+      }
+  }
+
+  let image: string | null = null
+  if (m.image != null) {
+    if (typeof m.image !== "string")
+      return {
+        err: fail(
+          422,
+          "validation_error",
+          "meta_tags.image: Input should be a valid string",
+          "meta_tags.image",
+        ),
+      }
+    image = m.image
+    if (image.startsWith("data:image/")) {
+      // Ingest path: decoded, magic-byte checked, and stored on the CDN by
+      // the real backend — the mock re-hosts to a deterministic fake URL.
+      const dm = META_DATA_URI_RE.exec(image)
+      if (!dm)
+        return {
+          err: fail(
+            400,
+            "validation_error",
+            "image must be an https URL or a base64 data URI (image/png, image/jpeg, image/webp)",
+            "meta_tags.image",
+          ),
+        }
+      if (dm[2].length > (META_IMAGE_MAX_BYTES * 4) / 3 + 4)
+        return {
+          err: fail(
+            400,
+            "validation_error",
+            `image exceeds ${META_IMAGE_MAX_BYTES} bytes`,
+            "meta_tags.image",
+          ),
+        }
+      const ext = dm[1] === "jpeg" ? "jpg" : dm[1]
+      image = `https://cdn.spoo.me/og/usr_mock_1/${slug()}${slug()}.${ext}`
+    } else {
+      if (!image.startsWith("https://"))
+        return {
+          err: fail(
+            422,
+            "validation_error",
+            "meta_tags.image: Value error, image must be an https:// URL or an image data URI",
+            "meta_tags.image",
+          ),
+        }
+      if (image.length > META_IMAGE_URL_MAX)
+        return {
+          err: fail(
+            422,
+            "validation_error",
+            "meta_tags.image: Value error, image URL must be at most 2048 characters",
+            "meta_tags.image",
+          ),
+        }
+      let pathname = ""
+      try {
+        pathname = new URL(image).pathname
+      } catch {
+        /* the real backend only inspects the path — unparsable stays */
+      }
+      // Model-layer check — the real error's loc is bare `image`.
+      if (pathname.toLowerCase().endsWith(".svg"))
+        return {
+          err: fail(
+            422,
+            "validation_error",
+            "image: Value error, SVG images are not supported by preview crawlers",
+            "image",
+          ),
+        }
+    }
+  }
+
+  let color: string | null = null
+  if (m.color != null) {
+    if (typeof m.color !== "string" || !/^#[0-9a-fA-F]{6}$/.test(m.color))
+      return {
+        err: fail(
+          422,
+          "validation_error",
+          "meta_tags.color: String should match pattern '^#[0-9a-fA-F]{6}$'",
+          "meta_tags.color",
+        ),
+      }
+    color = m.color
+  }
+
+  return { ok: { title, description, image, color, warnings: null } }
+}
+
+/* GET /v1/metadata mirrors backend PR #231 byte-for-byte: auth-required
+   destination tag fetch (prefill companion to meta_tags). Wire: 200 with
+   every field explicit (nulls included) + raw og/twitter families; 400
+   validation_error for non-https urls; 422 unfetchable when the page
+   can't be fetched; 504 upstream_timeout; 429 rate_limit_exceeded at
+   20/min. Deterministic fakes: a couple of well-known hosts carry rich
+   data, unknown hosts are sparse (title only), path containing "broken"
+   is unfetchable and "slow" times out — so every UI state is testable. */
+const META_RICH_HOSTS: Record<
+  string,
+  {
+    title: string
+    description: string
+    image: string
+    color: string | null
+    site_name: string
+  }
+> = {
+  "github.com": {
+    title: "GitHub · Build and ship software on a single platform",
+    description:
+      "Join the world's most widely adopted AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity.",
+    image: "https://github.githubassets.com/assets/home24-5939032587c9.jpg",
+    color: "#1e2327",
+    site_name: "GitHub",
+  },
+  "vercel.com": {
+    title: "Vercel: Build and deploy the best web experiences with the AI Cloud",
+    description:
+      "Vercel gives you the frameworks, workflows, and infrastructure to build a faster, more personalized web.",
+    image: "https://assets.vercel.com/image/upload/front/vercel/dps.png",
+    color: null,
+    site_name: "Vercel",
+  },
+  "stripe.com": {
+    title: "Stripe | Financial Infrastructure to Grow Your Revenue",
+    description:
+      "Stripe powers online and in-person payment processing and financial solutions for businesses of all sizes. Accept payments, send payouts, and automate financial processes with a suite of APIs and no-code tools.",
+    image: "https://images.stripeassets.com/fzn2n1nzq965/01hMKr6nEEGVfOuhsaMIXQ/c424849423b5f036a8892afa09ac38c7/OG_image.png",
+    color: "#635bff",
+    site_name: "Stripe",
+  },
+}
+
+function mockMetadata(url: string): NextResponse {
+  let u: URL
+  try {
+    u = new URL(url)
+  } catch {
+    return fail(
+      422,
+      "unfetchable",
+      "destination is not a fetchable HTML page (invalid URL)",
+    )
+  }
+  const host = u.hostname.replace(/^www\./, "").toLowerCase()
+  const pathLower = u.pathname.toLowerCase()
+  if (pathLower.includes("broken"))
+    return fail(
+      422,
+      "unfetchable",
+      "destination is not a fetchable HTML page (connection refused)",
+    )
+  if (pathLower.includes("slow") || pathLower.includes("timeout"))
+    return fail(504, "upstream_timeout", "destination did not respond in time")
+
+  const segments = u.pathname.split("/").filter(Boolean)
+  const fromPath = segments.length
+    ? segments[segments.length - 1]
+        .replace(/\.[a-z0-9]+$/i, "")
+        .replace(/[-_]+/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    : null
+
+  const rich = META_RICH_HOSTS[host]
+  let title: string | null
+  let description: string | null
+  let image: string | null
+  let color: string | null
+  let site_name: string | null
+  if (rich) {
+    // GitHub is path-aware like the real thing: repo pages get the
+    // dynamically generated opengraph card.
+    if (host === "github.com" && segments.length >= 2) {
+      title = `${segments[0]}/${segments[1]}: ${fromPath}`
+      description = `Contribute to ${segments[0]}/${segments[1]} development by creating an account on GitHub.`
+      image = `https://opengraph.githubassets.com/1/${segments[0]}/${segments[1]}`
+    } else {
+      title = fromPath ? `${fromPath} · ${rich.site_name}` : rich.title
+      description = rich.description
+      image = rich.image
+    }
+    color = rich.color
+    site_name = rich.site_name
+  } else {
+    // Unknown hosts parse sparse: an html <title> fallback at best, no
+    // social tags at all (og/twitter stay empty below).
+    title = fromPath ? `${fromPath} | ${host}` : host
+    description = null
+    image = null
+    color = null
+    site_name = null
+  }
+
+  return json({
+    url,
+    final_url: url,
+    title,
+    description,
+    image,
+    color,
+    site_name,
+    og: rich
+      ? {
+          title: title ?? "",
+          description: description ?? "",
+          image: image ?? "",
+          site_name: site_name ?? "",
+          type: "website",
+        }
+      : {},
+    twitter: rich
+      ? { card: "summary_large_image", title: title ?? "" }
+      : {},
+    fetched_at: new Date().toISOString(),
+  })
+}
+
+/** 20/min sliding window, shared across HMR like the rest of the state. */
+const gm = globalThis as typeof globalThis & { __spooMetaHits?: number[] }
 
 function aliasTaken(alias: string) {
   const a = alias.toLowerCase()
@@ -302,6 +683,23 @@ async function handle(req: NextRequest, path: string[]) {
       return json(s.onboarding)
     }
 
+    /* ---------- destination metadata (prefill) ---------- */
+    case "GET /v1/metadata": {
+      if (!req.cookies.has("access_token") && !req.cookies.has("refresh_token"))
+        return fail(401, "authentication_error", "Authentication required")
+      const url = params.get("url") ?? ""
+      if (!url.startsWith("https://"))
+        return fail(400, "validation_error", "url must be https", "url")
+      const now = Date.now()
+      gm.__spooMetaHits = (gm.__spooMetaHits ?? []).filter(
+        (t) => now - t < 60_000,
+      )
+      if (gm.__spooMetaHits.length >= 20)
+        return fail(429, "rate_limit_exceeded", "Too many requests")
+      gm.__spooMetaHits.push(now)
+      return mockMetadata(url)
+    }
+
     /* ---------- shorten ---------- */
     case "GET /v1/shorten/check-alias": {
       const alias = params.get("alias") ?? ""
@@ -317,7 +715,7 @@ async function handle(req: NextRequest, path: string[]) {
         return fail(
           422,
           "invalid_alias",
-          "3–16 characters: letters, numbers, - and _",
+          "3-16 characters: letters, numbers, - and _",
           "alias",
         )
       if (aliasTaken(alias))
@@ -325,6 +723,14 @@ async function handle(req: NextRequest, path: string[]) {
       const domain = body.domain ? String(body.domain) : null
       if (domain && !s.domains.some((d) => d.fqdn === domain && d.status === "ACTIVE"))
         return fail(422, "domain_not_active", "That domain isn't active", "domain")
+      const geo = normalizeGeoRules(body.geo_rules)
+      if ("err" in geo) return geo.err
+      const meta = normalizeMetaTags(body.meta_tags)
+      if ("err" in meta) return meta.err
+      // Flag-gated + verified-account only (403 with a clear message —
+      // the field rides a shared endpoint, nothing to hide). PR #231.
+      if (meta.ok !== null && !s.verified)
+        return fail(403, "forbidden", "meta_tags requires a verified account")
       const link: MockLink = {
         id: `url_${slug()}`,
         alias,
@@ -344,9 +750,9 @@ async function handle(req: NextRequest, path: string[]) {
         block_bots: Boolean(body.block_bots),
         total_clicks: 0,
         last_click: null,
-        geo_rules: parseGeoRules(body.geo_rules),
+        geo_rules: geo.ok,
         ab_variants: parseVariants(body.ab_variants),
-        meta_tags: parseMetaTags(body.meta_tags),
+        meta_tags: meta.ok,
         weight: 1,
       }
       s.links.unshift(link)
@@ -358,6 +764,10 @@ async function handle(req: NextRequest, path: string[]) {
         created_at: Math.floor(Date.now() / 1000),
         status: "active",
         private_stats: link.private_stats,
+        // UrlResponse echoes the normalized map (or null) — PR #230.
+        geo_rules: link.geo_rules,
+        // UrlResponse echoes the full object with explicit nulls — PR #231.
+        meta_tags: link.meta_tags,
       })
     }
 
@@ -444,7 +854,7 @@ async function handle(req: NextRequest, path: string[]) {
       }
       if (typeof body.alias === "string" && body.alias !== link.alias) {
         if (!/^[a-zA-Z0-9_-]{3,16}$/.test(body.alias))
-          return fail(422, "invalid_alias", "3–16 characters: letters, numbers, - and _", "alias")
+          return fail(422, "invalid_alias", "3-16 characters: letters, numbers, - and _", "alias")
         if (aliasTaken(body.alias))
           return fail(409, "alias_taken", "That alias is already taken", "alias")
         link.alias = body.alias
@@ -461,13 +871,24 @@ async function handle(req: NextRequest, path: string[]) {
       if ("private_stats" in body) link.private_stats = Boolean(body.private_stats)
       if ("block_bots" in body) link.block_bots = Boolean(body.block_bots)
       if ("domain" in body) link.domain = body.domain === null ? null : String(body.domain)
-      if ("geo_rules" in body)
-        link.geo_rules = body.geo_rules === null ? null : parseGeoRules(body.geo_rules)
+      if ("geo_rules" in body) {
+        // PR #230 PATCH semantics: null/{} clears, a map replaces in full.
+        const geo = normalizeGeoRules(body.geo_rules)
+        if ("err" in geo) return geo.err
+        link.geo_rules = geo.ok
+      }
       if ("ab_variants" in body)
         link.ab_variants =
           body.ab_variants === null ? null : parseVariants(body.ab_variants)
-      if ("meta_tags" in body)
-        link.meta_tags = body.meta_tags === null ? null : parseMetaTags(body.meta_tags)
+      if ("meta_tags" in body) {
+        // PR #231 PATCH semantics: null clears (never gated), an object
+        // replaces in full (gated: verified account + flag).
+        const meta = normalizeMetaTags(body.meta_tags)
+        if ("err" in meta) return meta.err
+        if (meta.ok !== null && !s.verified)
+          return fail(403, "forbidden", "meta_tags requires a verified account")
+        link.meta_tags = meta.ok
+      }
       if ("status" in body) {
         const next = String(body.status).toUpperCase()
         if (["ACTIVE", "INACTIVE"].includes(next))

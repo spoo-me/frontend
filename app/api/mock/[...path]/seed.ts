@@ -33,13 +33,17 @@ export type MockLink = {
   block_bots: boolean
   total_clicks: number
   last_click: string | null
-  geo_rules: Array<{ country: string; url: string }> | null
+  /** Real wire shape (backend PR #230): UPPERCASE ISO alpha-2 → URL. */
+  geo_rules: Record<string, string> | null
   ab_variants: Array<{ url: string; weight: number }> | null
+  /** Real wire shape (backend PR #231): full echo, explicit nulls;
+      `warnings` stays null until async image validation runs. */
   meta_tags: {
-    title?: string
-    description?: string
-    image?: string
-    color?: string
+    title: string
+    description: string | null
+    image: string | null
+    color: string | null
+    warnings: string[] | null
   } | null
   /** Relative traffic weight used by the stats generator. */
   weight: number
@@ -174,9 +178,29 @@ export function buildLinks(): MockLink[] {
       total_clicks: status === "ACTIVE" || status === "EXPIRED" ? clicks : Math.round(clicks * 0.3),
       last_click:
         status === "ACTIVE" ? isoDaysAgo(rand() * 2, rand) : isoDaysAgo(20 + rand() * 30, rand),
-      geo_rules: null,
+      // "pricing" ships purchasing-power-parity pages — a believable geo
+      // demo the settings form can round-trip out of the box.
+      geo_rules:
+        alias === "pricing"
+          ? {
+              IN: "https://spoo.me/in/#pricing",
+              BR: "https://spoo.me/br/#pricing",
+            }
+          : null,
       ab_variants: null,
-      meta_tags: null,
+      // "launch" carries a custom social card — the meta editor and the
+      // unfurl previews have something real to round-trip out of the box.
+      meta_tags:
+        alias === "launch"
+          ? {
+              title: "spoo.me v2 is here 🎉",
+              description:
+                "Custom domains, edge analytics, and the fastest redirects we've ever shipped.",
+              image: "https://cdn.spoo.me/og/usr_mock_1/v2-launch-card.png",
+              color: "#8b5cf6",
+              warnings: null,
+            }
+          : null,
       weight,
     }
   })
@@ -240,7 +264,7 @@ export function buildKeys(): MockKey[] {
     {
       id: "key_ci",
       name: "GitHub Actions",
-      description: "release pipeline — shortens changelog links",
+      description: "release pipeline, shortens changelog links",
       token_prefix: "spk_live_a3f8",
       scopes: ["shorten:create", "urls:read"],
       created_at: isoDaysAgo(88, rand),

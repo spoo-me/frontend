@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Check,
   ChevronDown,
@@ -16,6 +16,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
   checkAlias,
+  fetchUrlMetadata,
   updateUrl,
   SpooApiError,
   type UpdateUrlInput,
@@ -46,10 +47,16 @@ import {
 import {
   completeGeoRules,
   completeVariants,
+  geoDraftsOf,
+  geoRulesProblem,
   GeoRulesEditor,
   metaDraftOf,
+  prefillDraftOf,
+  sameGeoRules,
+  sameMetaTags,
   MetaTagsEditor,
   metaTagsOf,
+  metaTagsProblem,
   VariantsEditor,
   variantTotal,
   type GeoRuleDraft,
@@ -75,13 +82,23 @@ const WORDS =
   "amber basil cedar delta ember fable garnet hazel indigo juniper koala lumen maple nectar onyx pixel quartz raven sable tundra umber velvet willow zephyr".split(
     " ",
   )
+/** Unbiased crypto-random integer in [0, bound). */
+function randInt(bound: number) {
+  const buf = new Uint32Array(1)
+  const limit = Math.floor(4294967296 / bound) * bound
+  do {
+    crypto.getRandomValues(buf)
+  } while (buf[0] >= limit)
+  return buf[0] % bound
+}
+// "." separators: backend URL-password rule requires a letter, a digit and
+// an "@" or "." with no two consecutive specials (shared/validators.py).
 function suggestPassword() {
-  const pick = () => WORDS[Math.floor(Math.random() * WORDS.length)]
-  return `${pick()}-${pick()}-${Math.floor(10 + Math.random() * 89)}`
+  const pick = () => WORDS[randInt(WORDS.length)]
+  return `${pick()}.${pick()}.${10 + randInt(89)}`
 }
 function suggestAlias() {
-  const pick = () => WORDS[Math.floor(Math.random() * WORDS.length)]
-  return `${pick()}-${Math.floor(10 + Math.random() * 89)}`
+  return `${WORDS[randInt(WORDS.length)]}-${10 + randInt(89)}`
 }
 
 function normalizeUrl(raw: string) {
@@ -177,8 +194,8 @@ function describeChanges(link: UrlListItem, patch: UpdateUrlInput): ChangeRow[] 
   if (patch.geo_rules !== undefined)
     rows.push({
       field: "Geo rules",
-      from: countOf(link.geo_rules?.length, "rule"),
-      to: countOf(patch.geo_rules?.length, "rule"),
+      from: countOf(Object.keys(link.geo_rules ?? {}).length, "rule"),
+      to: countOf(Object.keys(patch.geo_rules ?? {}).length, "rule"),
     })
   if (patch.ab_variants !== undefined)
     rows.push({
@@ -187,8 +204,14 @@ function describeChanges(link: UrlListItem, patch: UpdateUrlInput): ChangeRow[] 
       to: countOf(patch.ab_variants?.length, "variant"),
     })
   if (patch.meta_tags !== undefined) {
-    const keysOf = (m: UrlListItem["meta_tags"]) =>
-      m && Object.keys(m).length ? Object.keys(m).join(", ") : "default"
+    // The echo carries explicit nulls (and warnings) — count set fields only.
+    const keysOf = (m: UpdateUrlInput["meta_tags"] | UrlListItem["meta_tags"]) => {
+      if (!m) return "default"
+      const set = (["title", "description", "image", "color"] as const).filter(
+        (k) => m[k] != null,
+      )
+      return set.length ? set.join(", ") : "default"
+    }
     rows.push({
       field: "Meta tags",
       from: keysOf(link.meta_tags),
@@ -248,12 +271,44 @@ export function LinkSettingsForm({
   const [privateStats, setPrivateStats] = React.useState(Boolean(link.private_stats))
 
   const [geoRules, setGeoRules] = React.useState<GeoRuleDraft[]>(
-    (link.geo_rules ?? []).map((r) => ({ ...r })),
+    geoDraftsOf(link.geo_rules),
   )
   const [variants, setVariants] = React.useState<VariantDraft[]>(
     (link.ab_variants ?? []).map((v) => ({ url: v.url, weight: String(v.weight) })),
   )
   const [meta, setMeta] = React.useState<MetaDraft>(metaDraftOf(link.meta_tags))
+  // Customized = this link freezes its own tags (meta_tags set on the wire,
+  // or a manual edit in this form). While false the fields merely MIRROR
+  // the destination's live tags (fetched below, display only — an untouched
+  // form never PATCHes). A customized link is hard-frozen: no fetch, no
+  // overwrite. "Reset to destination" flips back and PATCHes null on save.
+  const [metaCustomized, setMetaCustomized] = React.useState(
+    Boolean(link.meta_tags),
+  )
+
+  // Destination-tag mirror (GET /api/v1/metadata): only for uncustomized
+  // links, debounced against destination edits; retry off and staleTime
+  // generous — the endpoint is 20/min rate-limited.
+  const [debouncedUrl, setDebouncedUrl] = React.useState(normalizeUrl(longUrl))
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedUrl(normalizeUrl(longUrl)), 600)
+    return () => clearTimeout(t)
+  }, [longUrl])
+  const metaFetchUrl = debouncedUrl.startsWith("https://") ? debouncedUrl : null
+  const destMeta = useQuery({
+    queryKey: ["url-metadata", metaFetchUrl],
+    queryFn: () => fetchUrlMetadata(metaFetchUrl!),
+    enabled: !metaCustomized && Boolean(metaFetchUrl),
+    staleTime: 10 * 60_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+  // Prefill is never a dirty bit: while uncustomized the DISPLAYED draft is
+  // derived straight from the fetch (no effect, no state write) — a new
+  // destination clears it, a resolve fills it (clamped), reset falls back
+  // to it from the cache. The first manual edit snapshots it into `meta`
+  // via onChange and flips customized.
+  const displayedMeta = metaCustomized ? meta : prefillDraftOf(destMeta.data)
 
   const aliasChanged = alias !== (link.alias ?? "")
   // idle/invalid/checking derive from the input; only the server verdict
@@ -300,14 +355,23 @@ export function LinkSettingsForm({
   // Feature payloads: canonical complete rows vs what the link stores;
   // clearing PATCHes null (explicit removal, same semantics as password).
   const geoPayload = completeGeoRules(geoRules)
-  if (JSON.stringify(geoPayload) !== JSON.stringify(link.geo_rules ?? []))
-    patch.geo_rules = geoPayload.length ? geoPayload : null
+  if (!sameGeoRules(geoPayload, link.geo_rules))
+    patch.geo_rules = Object.keys(geoPayload).length ? geoPayload : null
   const variantPayload = completeVariants(variants)
   if (JSON.stringify(variantPayload) !== JSON.stringify(link.ab_variants ?? []))
     patch.ab_variants = variantPayload.length ? variantPayload : null
-  const metaPayload = metaTagsOf(meta) ?? null
-  if (JSON.stringify(metaPayload) !== JSON.stringify(link.meta_tags ?? null))
-    patch.meta_tags = metaPayload
+  // Uncustomized = inherit live tags: the mirrored prefill never travels,
+  // so the payload is null and an untouched form stays clean. Resetting a
+  // previously-customized link makes null differ from the echo → PATCH null.
+  const metaPayload = metaCustomized ? (metaTagsOf(meta) ?? null) : null
+  if (!sameMetaTags(metaPayload, link.meta_tags)) patch.meta_tags = metaPayload
+  const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
+  const metaNotice =
+    !metaCustomized && destMeta.isError
+      ? destMeta.error instanceof SpooApiError && destMeta.error.isRateLimit
+        ? "preview fetches are rate limited, try again in a minute"
+        : "couldn't fetch a preview from this destination"
+      : null
 
   const dirty = Object.keys(patch).length > 0
 
@@ -331,6 +395,8 @@ export function LinkSettingsForm({
     dirty &&
     !save.isPending &&
     variantTotal(variants) <= 100 &&
+    !geoRulesProblem(geoRules) &&
+    !metaProblem &&
     (!aliasChanged || aliasState === "available" || alias === "") &&
     (passwordMode !== "set" || newPassword.length > 0)
 
@@ -354,7 +420,7 @@ export function LinkSettingsForm({
           aliasState === "taken"
             ? "That alias is taken."
             : aliasState === "invalid"
-              ? "3–16 characters: letters, numbers, - and _"
+              ? "3-16 characters: letters, numbers, - and _"
               : "Changing the alias breaks the old address."
         }
       >
@@ -577,15 +643,36 @@ export function LinkSettingsForm({
       <VariantsEditor variants={variants} onChange={setVariants} />
 
       <div className="space-y-3">
-        <div className="label-mono text-muted-foreground/60 text-[10px]">
-          Meta tags
+        {/* Fixed-height header row: the reset action appears in place when
+            the tags are customized — zero layout shift either way. */}
+        <div className="flex h-7 items-center justify-between">
+          <div className="label-mono text-muted-foreground/60 text-[10px]">
+            Meta tags
+          </div>
+          {metaCustomized && (
+            <button
+              type="button"
+              onClick={() => setMetaCustomized(false)}
+              className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4 transition-colors duration-150"
+            >
+              Reset to destination
+            </button>
+          )}
         </div>
         <MetaTagsEditor
-          value={meta}
-          onChange={setMeta}
+          value={displayedMeta}
+          onChange={(v) => {
+            // Any manual edit — typing, clearing, a color pick — flips
+            // customized; the mirror effect goes through setMeta only.
+            setMeta(v)
+            setMetaCustomized(true)
+          }}
           domain={domain}
           alias={alias}
           preview="below"
+          loading={!metaCustomized && destMeta.isFetching}
+          notice={metaNotice}
+          problem={metaProblem}
         />
       </div>
 
