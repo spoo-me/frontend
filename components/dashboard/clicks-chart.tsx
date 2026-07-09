@@ -58,12 +58,8 @@ function ChartTooltip({
         </span>
       </div>
       <div className="space-y-1 px-3 py-2">
-        <Row swatch="bg-brand" label="Clicks" value={formatCount(d.clicks)} />
-        <Row
-          swatch="border-brand border bg-transparent"
-          label="Unique"
-          value={formatCount(d.unique_clicks)}
-        />
+        <Row swatch="fill" label="Clicks" value={formatCount(d.clicks)} />
+        <Row swatch="ring" label="Unique" value={formatCount(d.unique_clicks)} />
         <div className="mt-1.5 border-t border-border/60 pt-1.5">
           <Row label="Unique rate" value={`${rate}%`} muted />
         </div>
@@ -78,14 +74,24 @@ function Row({
   value,
   muted,
 }: {
-  swatch?: string
+  /** Series indicators follow the widget's ink, not the brand. */
+  swatch?: "fill" | "ring"
   label: string
   value: string
   muted?: boolean
 }) {
   return (
     <div className="flex items-center gap-2">
-      {swatch && <span className={`size-2 rounded-full ${swatch}`} />}
+      {swatch && (
+        <span
+          className="size-2 rounded-full"
+          style={
+            swatch === "fill"
+              ? { background: "var(--chart-accent, var(--brand))" }
+              : { border: "1px solid var(--chart-accent, var(--brand))" }
+          }
+        />
+      )}
       <span className="flex-1 text-xs text-muted-foreground">{label}</span>
       <span
         className={`font-mono text-xs font-medium tabular-nums ${muted ? "text-muted-foreground" : "text-foreground"}`}
@@ -112,9 +118,11 @@ export function ClicksChart({
   height?: number | string
   /** total / unique swap the solid series; "both" overlays uniques dashed. */
   metric?: ChartMetric
-  /** "area" draws the line+fill, "line" the stroke alone; "bars" renders the
-      same buckets as columns on a category axis ("both" = grouped bars). */
-  variant?: "area" | "line" | "bars"
+  /** "area" draws the line+fill, "line" the stroke alone, "step" the same
+      area with hard bucket edges; "cumulative" runs the totals forward into
+      a rising area; "bars" renders the buckets as columns on a category
+      axis ("both" = grouped bars). */
+  variant?: "area" | "line" | "step" | "bars" | "cumulative"
   /** Entering the expanded (focus) view grows the area's amplitude from the
       baseline up into the taller canvas. Purely presentational: the plot
       snaps to its final geometry and a scaleY animation on the area layer
@@ -127,10 +135,19 @@ export function ClicksChart({
   // Gradient ids are document-global; multiple chart instances with
   // different accents must not share one.
   const fillId = React.useId()
-  const data: Datum[] = React.useMemo(
-    () => series.map((b) => ({ ...b, t: new Date(b.bucket).getTime() })),
-    [series]
-  )
+  const data: Datum[] = React.useMemo(() => {
+    const base = series.map((b) => ({ ...b, t: new Date(b.bucket).getTime() }))
+    if (variant !== "cumulative") return base
+    // Running totals: the tooltip then reads "clicks so far", which is the
+    // honest reading of a cumulative curve.
+    let clicks = 0
+    let unique = 0
+    return base.map((b) => ({
+      ...b,
+      clicks: (clicks += b.clicks),
+      unique_clicks: (unique += b.unique_clicks),
+    }))
+  }, [series, variant])
   const tickFmt = hourly ? hourFmt : dayFmt
 
   // Animation = data change, and recharts can't be trusted to deliver it:
@@ -354,7 +371,7 @@ export function ClicksChart({
               }}
             />
             <Area
-              type="monotone"
+              type={variant === "step" ? "stepAfter" : "monotone"}
               dataKey={metric === "unique" ? "unique_clicks" : "clicks"}
               stroke="var(--chart-accent, var(--brand))"
               strokeWidth={1.75}
@@ -368,7 +385,7 @@ export function ClicksChart({
             {selection}
             {metric === "both" && (
               <Area
-                type="monotone"
+                type={variant === "step" ? "stepAfter" : "monotone"}
                 dataKey="unique_clicks"
                 stroke="var(--chart-accent, var(--brand))"
                 strokeWidth={1.25}

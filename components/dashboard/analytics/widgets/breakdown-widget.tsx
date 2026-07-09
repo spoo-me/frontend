@@ -4,7 +4,10 @@ import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
 import {
   ChartBar,
+  ChartColumn,
   ChartPie,
+  Donut,
+  LayoutDashboard,
   Map as MapIcon,
   Maximize2,
   Minimize2,
@@ -16,15 +19,19 @@ import { formatCount, formatPercent } from "@/lib/format"
 import type { DimensionRow } from "@/lib/api"
 import {
   breakdownBarLimit,
+  breakdownColumnCount,
   breakdownTableFullCols,
   donutLegend,
   donutSegments,
+  treemapSegments,
   type BreakdownConfig,
 } from "@/lib/analytics-layout"
 import { DIMENSION_META } from "@/components/dashboard/analytics/widget-meta"
 import { BreakdownList } from "@/components/dashboard/breakdown-list"
 import { CountryMap } from "@/components/dashboard/analytics/country-map"
 import { DonutChart } from "@/components/dashboard/analytics/widgets/donut-chart"
+import { ColumnChart } from "@/components/dashboard/analytics/widgets/column-chart"
+import { TreemapChart } from "@/components/dashboard/analytics/widgets/treemap-chart"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -32,7 +39,10 @@ import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
 
 const BD_CHART_ICONS = {
   bars: ChartBar,
-  donut: ChartPie,
+  columns: ChartColumn,
+  donut: Donut,
+  pie: ChartPie,
+  treemap: LayoutDashboard,
   map: MapIcon,
 } as const
 
@@ -173,13 +183,30 @@ export function BreakdownWidget({
           >
             {viz === "map" ? (
               <CountryMap rows={rows} metric={metric} onSelect={onSelect} />
-            ) : viz === "donut" ? (
+            ) : viz === "donut" || viz === "pie" ? (
               <DonutChart
                 dimension={dimension}
                 rows={rows}
                 metric={metric}
                 segments={expanded ? 6 : donutSegments(h)}
                 legend={expanded || donutLegend(w)}
+                variant={viz}
+                onSelect={onSelect}
+              />
+            ) : viz === "columns" ? (
+              <ColumnChart
+                dimension={dimension}
+                rows={rows}
+                metric={metric}
+                count={expanded ? 12 : breakdownColumnCount(w)}
+                onSelect={onSelect}
+              />
+            ) : viz === "treemap" ? (
+              <TreemapChart
+                dimension={dimension}
+                rows={rows}
+                metric={metric}
+                segments={expanded ? 14 : treemapSegments(h)}
                 onSelect={onSelect}
               />
             ) : viz === "bars" ? (

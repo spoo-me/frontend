@@ -1,0 +1,134 @@
+"use client"
+
+import * as React from "react"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
+
+import { formatCount } from "@/lib/format"
+import type { DimensionRow, StatsDimension } from "@/lib/api"
+import type { BreakdownMetric } from "@/components/dashboard/breakdown-list"
+import { dimensionLabel } from "@/components/dashboard/dim-icon"
+import {
+  DimTooltip,
+  TOOLTIP_WRAPPER_STYLE,
+} from "@/components/dashboard/analytics/widgets/dim-tooltip"
+
+/**
+ * Ranked categories as vertical columns, the classic browsers/OS shape.
+ * Columns carry the accent alpha ramp (leader bright, tail quiet); "both"
+ * groups the unique count as a quieter twin, same grammar as the
+ * time-series bars. Columns are click-to-filter.
+ */
+
+export function ColumnChart({
+  dimension,
+  rows,
+  metric,
+  count,
+  onSelect,
+}: {
+  dimension: Exclude<StatsDimension, "time">
+  rows: DimensionRow[]
+  metric: BreakdownMetric
+  /** How many ranked categories to show (width-derived). */
+  count: number
+  onSelect?: (value: string) => void
+}) {
+  const key = metric === "unique" ? "unique_clicks" : "clicks"
+  const data = React.useMemo(
+    () => [...rows].sort((a, b) => b[key] - a[key]).slice(0, count),
+    [rows, key, count],
+  )
+  const n = data.length
+  const ramp = (i: number) =>
+    `color-mix(in oklab, var(--chart-accent, var(--brand)) ${Math.round(88 - i * (48 / Math.max(n - 1, 1)))}%, var(--background))`
+
+  if (!rows.length) {
+    return (
+      <div className="text-muted-foreground/70 flex h-full items-center justify-center text-xs">
+        no data in this range
+      </div>
+    )
+  }
+
+  const clickBar = onSelect
+    ? {
+        onClick: (d: unknown) => {
+          const v = (d as { payload?: { value?: string } }).payload?.value
+          if (typeof v === "string") onSelect(v)
+        },
+        className: "cursor-pointer",
+      }
+    : {}
+
+  return (
+    <div className="h-full w-full p-2 pt-3 **:outline-none">
+      <ResponsiveContainer key={metric} width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+          <CartesianGrid
+            vertical={false}
+            strokeDasharray="3 4"
+            stroke="var(--border)"
+            strokeOpacity={0.7}
+          />
+          <XAxis
+            dataKey="value"
+            type="category"
+            tickFormatter={(v: string) => {
+              const label = dimensionLabel(dimension, v)
+              return label.length > 9 ? `${label.slice(0, 8)}…` : label
+            }}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
+            tickMargin={6}
+            interval={0}
+          />
+          <YAxis
+            width={40}
+            tickFormatter={(v: number) => formatCount(v)}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+            allowDecimals={false}
+          />
+          <Tooltip
+            content={<DimTooltip dimension={dimension} />}
+            wrapperStyle={TOOLTIP_WRAPPER_STYLE}
+            cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.06 }}
+          />
+          <Bar
+            dataKey={key}
+            radius={[3, 3, 0, 0]}
+            maxBarSize={44}
+            isAnimationActive={false}
+            {...clickBar}
+          >
+            {data.map((d, i) => (
+              <Cell key={d.value} fill={ramp(i)} />
+            ))}
+          </Bar>
+          {metric === "both" && (
+            <Bar
+              dataKey="unique_clicks"
+              fill="var(--chart-accent, var(--brand))"
+              fillOpacity={0.3}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={44}
+              isAnimationActive={false}
+              {...clickBar}
+            />
+          )}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}

@@ -142,9 +142,15 @@ export function catalogMatch(
 /** Chart ink presets resolve to per-theme CSS variables (globals.css). */
 export const ACCENT_VARS: Record<Accent, string> = {
   violet: "var(--chart-violet)",
-  emerald: "var(--chart-emerald)",
+  indigo: "var(--chart-indigo)",
+  blue: "var(--chart-blue)",
   sky: "var(--chart-sky)",
+  teal: "var(--chart-teal)",
+  emerald: "var(--chart-emerald)",
+  lime: "var(--chart-lime)",
   amber: "var(--chart-amber)",
+  orange: "var(--chart-orange)",
   rose: "var(--chart-rose)",
+  fuchsia: "var(--chart-fuchsia)",
   neutral: "var(--chart-neutral)",
 }

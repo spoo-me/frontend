@@ -158,10 +158,16 @@
     --map-base: color-mix(in oklab, var(--muted-foreground) 16%, var(--background));
     /* Chart ink presets (widget accents) — hotter/darker on light */
     --chart-violet: var(--brand);
-    --chart-emerald: oklch(0.55 0.13 163);
-    --chart-sky: oklch(0.55 0.11 235);
-    --chart-amber: oklch(0.62 0.13 70);
-    --chart-rose: oklch(0.58 0.16 15);
+    --chart-indigo: oklch(0.51 0.19 275);
+    --chart-blue: oklch(0.55 0.19 260);
+    --chart-sky: oklch(0.6 0.14 235);
+    --chart-teal: oklch(0.56 0.12 190);
+    --chart-emerald: oklch(0.58 0.15 160);
+    --chart-lime: oklch(0.62 0.16 128);
+    --chart-amber: oklch(0.68 0.15 75);
+    --chart-orange: oklch(0.64 0.17 45);
+    --chart-rose: oklch(0.59 0.19 20);
+    --chart-fuchsia: oklch(0.58 0.22 330);
     --chart-neutral: oklch(0.5 0 0);
 }
 
@@ -204,10 +210,16 @@
     --map-base: color-mix(in oklab, var(--muted) 55%, var(--background));
     /* Chart ink presets (widget accents) — brighter on dark */
     --chart-violet: var(--brand);
-    --chart-emerald: oklch(0.75 0.15 163);
-    --chart-sky: oklch(0.74 0.12 235);
-    --chart-amber: oklch(0.8 0.14 80);
-    --chart-rose: oklch(0.72 0.16 15);
+    --chart-indigo: oklch(0.68 0.17 275);
+    --chart-blue: oklch(0.7 0.16 260);
+    --chart-sky: oklch(0.75 0.13 235);
+    --chart-teal: oklch(0.76 0.12 190);
+    --chart-emerald: oklch(0.77 0.15 160);
+    --chart-lime: oklch(0.82 0.18 128);
+    --chart-amber: oklch(0.82 0.15 80);
+    --chart-orange: oklch(0.75 0.16 45);
+    --chart-rose: oklch(0.72 0.18 18);
+    --chart-fuchsia: oklch(0.74 0.2 330);
     --chart-neutral: oklch(0.75 0 0);
 }
 

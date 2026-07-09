@@ -3,18 +3,26 @@
 import * as React from "react"
 import { motion } from "motion/react"
 import {
+  Activity,
   ChartArea,
   ChartBar,
+  ChartColumn,
   ChartLine,
   ChartPie,
+  Donut,
   Ellipsis,
+  Layers,
+  LayoutDashboard,
   Map as MapIcon,
+  MousePointerClick,
   Plus,
   Redo2,
   RotateCcw,
   Table2,
   Trash2,
+  TrendingUp,
   Undo2,
+  Users,
   X,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -24,6 +32,7 @@ import {
   ACCENTS,
   type AnalyticsLayout,
   type BreakdownViz,
+  type SeriesMetric,
   type TimeseriesViz,
   type Widget,
   type WidgetConfigPatch,
@@ -76,15 +85,30 @@ import { Textarea } from "@/components/ui/textarea"
 const TS_VIZ: Array<{ value: TimeseriesViz; icon: React.ElementType; label: string }> = [
   { value: "area", icon: ChartArea, label: "Area" },
   { value: "line", icon: ChartLine, label: "Line" },
-  { value: "bars", icon: ChartBar, label: "Bars" },
+  { value: "step", icon: Activity, label: "Step" },
+  { value: "bars", icon: ChartColumn, label: "Bars" },
+  { value: "cumulative", icon: TrendingUp, label: "Cumulative" },
   { value: "table", icon: Table2, label: "Table" },
 ]
 const BD_VIZ: Array<{ value: BreakdownViz; icon: React.ElementType; label: string }> = [
   { value: "bars", icon: ChartBar, label: "Bars" },
-  { value: "donut", icon: ChartPie, label: "Donut" },
+  { value: "columns", icon: ChartColumn, label: "Columns" },
+  { value: "donut", icon: Donut, label: "Donut" },
+  { value: "pie", icon: ChartPie, label: "Pie" },
+  { value: "treemap", icon: LayoutDashboard, label: "Treemap" },
   { value: "map", icon: MapIcon, label: "Map" },
   { value: "table", icon: Table2, label: "Table" },
 ]
+const METRICS: Array<{ value: SeriesMetric; icon: React.ElementType; label: string }> = [
+  { value: "total", icon: MousePointerClick, label: "Total clicks" },
+  { value: "unique", icon: Users, label: "Unique visitors" },
+  { value: "both", icon: Layers, label: "Both" },
+]
+const METRIC_SHORT: Record<SeriesMetric, string> = {
+  total: "Total",
+  unique: "Unique",
+  both: "Both",
+}
 
 function BarDivider() {
   return <span aria-hidden className="bg-border/60 mx-0.5 h-4 w-px shrink-0" />
@@ -191,6 +215,11 @@ export function EditBar({
     selected && selected.kind !== "stat" ? selected.config.viz : null
   const currentVizOption =
     vizOptions?.find((v) => v.value === selectedViz) ?? null
+  // Stat tiles have a fixed metric identity; series widgets choose theirs.
+  const seriesMetric =
+    selected && selected.kind !== "stat" ? selected.config.metric : null
+  const currentMetric = METRICS.find((m) => m.value === seriesMetric) ?? null
+  const selectedAccent = selected?.config.accent ?? "violet"
   // createElement keeps the lint from reading an icon lookup as a component
   // definition-in-render.
   const selectedIconEl = selected
@@ -208,6 +237,7 @@ export function EditBar({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.97 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        data-edit-bar
         className="pointer-events-none fixed bottom-8 left-1/2 z-30 -translate-x-1/2"
       >
         <motion.div
@@ -241,7 +271,7 @@ export function EditBar({
                         )}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center" side="top" className="w-36">
+                    <DropdownMenuContent align="center" side="top" className="w-40">
                       <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
                         Default view
                       </DropdownMenuLabel>
@@ -261,28 +291,75 @@ export function EditBar({
                   </DropdownMenu>
                 </>
               )}
+              {seriesMetric && currentMetric && (
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2">
+                      <currentMetric.icon className="size-3.5" strokeWidth={1.75} />
+                      <span className="text-xs">
+                        {METRIC_SHORT[currentMetric.value]}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" side="top" className="w-40">
+                    <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
+                      Metric
+                    </DropdownMenuLabel>
+                    {METRICS.map((m) => (
+                      <DropdownMenuCheckboxItem
+                        key={m.value}
+                        checked={seriesMetric === m.value}
+                        onCheckedChange={() =>
+                          onConfigChange(selected.id, { metric: m.value })
+                        }
+                      >
+                        <m.icon className="size-3.5" strokeWidth={1.75} />
+                        {m.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               <BarDivider />
-              {/* Accent swatches: chart ink only, never chrome. */}
-              <span className="flex items-center gap-1 px-1">
-                {ACCENTS.map((a) => {
-                  const active = (selected.config.accent ?? "violet") === a
-                  return (
-                    <button
-                      key={a}
-                      type="button"
-                      aria-label={`${a} accent`}
-                      title={a}
-                      onClick={() => onConfigChange(selected.id, { accent: a })}
-                      className={cn(
-                        "size-4 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
-                        active &&
-                          "ring-foreground/60 ring-offset-popover ring-1 ring-offset-2",
-                      )}
-                      style={{ background: ACCENT_VARS[a] }}
+              {/* Chart ink: applies to the visualization only, never chrome. */}
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Chart ink"
+                    title="Chart ink"
+                    className="hover:bg-accent/60 aria-expanded:bg-accent/60 flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150"
+                  >
+                    <span
+                      aria-hidden
+                      className="size-3.5 rounded-full"
+                      style={{ background: ACCENT_VARS[selectedAccent] }}
                     />
-                  )
-                })}
-              </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" side="top">
+                  <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
+                    Chart ink
+                  </DropdownMenuLabel>
+                  <div className="grid grid-cols-6 gap-1.5 px-2 pt-1 pb-2">
+                    {ACCENTS.map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        aria-label={`${a} ink`}
+                        title={a}
+                        onClick={() => onConfigChange(selected.id, { accent: a })}
+                        className={cn(
+                          "size-5 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
+                          selectedAccent === a &&
+                            "ring-foreground/60 ring-offset-popover ring-1 ring-offset-2",
+                        )}
+                        style={{ background: ACCENT_VARS[a] }}
+                      />
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <BarDivider />
               <BarIconButton
                 label="Reset chart"

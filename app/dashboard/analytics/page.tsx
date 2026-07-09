@@ -285,6 +285,26 @@ export default function AnalyticsPage() {
     return () => window.removeEventListener("keydown", onKey)
   })
 
+  // Click-away deselect: the whole page is the canvas, not just the grid.
+  // Anything that isn't a widget, the bar, or an open overlay clears the
+  // selection and returns the bar to its board state. Click (not
+  // pointerdown) so the rename input's blur commits before it unmounts.
+  React.useEffect(() => {
+    if (!editing) return
+    const onClick = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null
+      if (
+        t?.closest(
+          "[data-widget-id], [data-edit-bar], [data-radix-popper-content-wrapper], [role=dialog], [role=alertdialog], [data-sonner-toaster]"
+        )
+      )
+        return
+      setSelectedId(null)
+    }
+    document.addEventListener("click", onClick)
+    return () => document.removeEventListener("click", onClick)
+  }, [editing])
+
   // Focus mode starts at the top; exiting returns to the saved scroll depth.
   const scrollDepth = React.useRef(0)
   const prevExpand = React.useRef<string | null>(expandId)

@@ -3,67 +3,24 @@
 import * as React from "react"
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 
-import { cn } from "@/lib/utils"
 import { formatCount } from "@/lib/format"
 import type { DimensionRow, StatsDimension } from "@/lib/api"
 import type { BreakdownMetric } from "@/components/dashboard/breakdown-list"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
+import {
+  DimTooltip,
+  OTHER,
+  TOOLTIP_WRAPPER_STYLE,
+} from "@/components/dashboard/analytics/widgets/dim-tooltip"
 
 /**
- * Share-of-total view: a thin ring in a brand alpha ramp (top slices bright,
- * tail quiet, Other in the neutral map tone) with the total in the center.
- * Slices and legend rows are click-to-filter, same as bars and tables.
+ * Share-of-total view in an accent alpha ramp (top slices bright, tail
+ * quiet, Other in the neutral map tone). "donut" is a thin ring with the
+ * total in the center; "pie" fills the disc. Slices and legend rows are
+ * click-to-filter, same as bars and tables.
  */
 
-const OTHER = "__other__"
-
 type Slice = DimensionRow & { fill: string }
-
-function DonutTooltip({
-  active,
-  payload,
-  dimension,
-}: {
-  active?: boolean
-  payload?: Array<{ payload: Slice }>
-  dimension: Exclude<StatsDimension, "time">
-}) {
-  if (!active || !payload?.length) return null
-  const d = payload[0].payload
-  const rate = d.clicks ? Math.round((d.unique_clicks / d.clicks) * 100) : 0
-  return (
-    <div className="border-border/60 bg-popover min-w-[168px] overflow-hidden rounded-lg border shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)]">
-      <div className="border-border/60 bg-muted/40 border-b px-3 py-1.5">
-        <span className="text-foreground text-xs font-medium">
-          {d.value === OTHER ? "Other" : dimensionLabel(dimension, d.value)}
-        </span>
-      </div>
-      <div className="space-y-1 px-3 py-2">
-        <Row label="Clicks" value={formatCount(d.clicks)} />
-        <Row label="Unique" value={formatCount(d.unique_clicks)} />
-        <div className="border-border/60 mt-1.5 border-t pt-1.5">
-          <Row label="Unique rate" value={`${rate}%`} muted />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-muted-foreground flex-1 text-xs">{label}</span>
-      <span
-        className={cn(
-          "font-mono text-xs font-medium tabular-nums",
-          muted ? "text-muted-foreground" : "text-foreground",
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  )
-}
 
 export function DonutChart({
   dimension,
@@ -71,6 +28,7 @@ export function DonutChart({
   metric,
   segments,
   legend,
+  variant = "donut",
   onSelect,
 }: {
   dimension: Exclude<StatsDimension, "time">
@@ -79,6 +37,7 @@ export function DonutChart({
   /** Top-N slices before the Other bucket (size-derived). */
   segments: number
   legend: boolean
+  variant?: "donut" | "pie"
   onSelect?: (value: string) => void
 }) {
   const key = metric === "unique" ? "unique_clicks" : "clicks"
@@ -123,15 +82,18 @@ export function DonutChart({
             the same data-change grammar as the bar cascade. */}
         <ResponsiveContainer key={metric} width="100%" height="100%">
           <PieChart>
-            <Tooltip content={<DonutTooltip dimension={dimension} />} />
+            <Tooltip
+              content={<DimTooltip dimension={dimension} />}
+              wrapperStyle={TOOLTIP_WRAPPER_STYLE}
+            />
             <Pie
               data={slices}
               dataKey={key}
               nameKey="value"
-              innerRadius="62%"
+              innerRadius={variant === "pie" ? 0 : "62%"}
               outerRadius="92%"
-              paddingAngle={2}
-              cornerRadius={3}
+              paddingAngle={variant === "pie" ? 1 : 2}
+              cornerRadius={variant === "pie" ? 2 : 3}
               stroke="var(--background)"
               strokeWidth={2}
               isAnimationActive
@@ -150,14 +112,16 @@ export function DonutChart({
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-foreground font-mono text-lg leading-none font-semibold tracking-tight tabular-nums">
-            {formatCount(total)}
-          </span>
-          <span className="label-mono text-muted-foreground/60 mt-1 text-[9px]">
-            {metric === "unique" ? "unique" : "clicks"}
-          </span>
-        </div>
+        {variant === "donut" && (
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-foreground font-mono text-lg leading-none font-semibold tracking-tight tabular-nums">
+              {formatCount(total)}
+            </span>
+            <span className="label-mono text-muted-foreground/60 mt-1 text-[9px]">
+              {metric === "unique" ? "unique" : "clicks"}
+            </span>
+          </div>
+        )}
       </div>
       {legend && (
         <div className="flex w-[42%] min-w-0 shrink-0 flex-col justify-center gap-0.5 pr-1">

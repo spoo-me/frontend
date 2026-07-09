@@ -2,12 +2,14 @@
 
 import * as React from "react"
 import {
+  Activity,
   ChartArea,
-  ChartBar,
+  ChartColumn,
   ChartLine,
   Maximize2,
   Minimize2,
   Table2,
+  TrendingUp,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -22,7 +24,9 @@ import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
 const TS_CHART_ICONS = {
   area: ChartArea,
   line: ChartLine,
-  bars: ChartBar,
+  step: Activity,
+  bars: ChartColumn,
+  cumulative: TrendingUp,
 } as const
 
 /**
@@ -138,25 +142,25 @@ export function TimeseriesWidget({
         <Skeleton className="h-full w-full" />
       ) : (
         <>
-          {(["area", "line", "bars"] as const).map((v) => (
-            <div
-              key={v}
-              className={cn(
-                "absolute inset-0 p-4 transition-opacity duration-150 ease-out",
-                (mode !== "chart" || chartViz !== v) && "pointer-events-none opacity-0",
-              )}
-            >
-              <ClicksChart
-                series={series}
-                hourly={hourly}
-                height="100%"
-                metric={metric}
-                variant={v}
-                expanded={expanded}
-                onRangeSelect={onRangeSelect}
-              />
-            </div>
-          ))}
+          {/* One chart layer only: the parent re-keys this widget when the
+              configured type changes, so chartViz is stable for a mount.
+              It stays mounted behind the table flip (no draw replay). */}
+          <div
+            className={cn(
+              "absolute inset-0 p-4 transition-opacity duration-150 ease-out",
+              mode !== "chart" && "pointer-events-none opacity-0",
+            )}
+          >
+            <ClicksChart
+              series={series}
+              hourly={hourly}
+              height="100%"
+              metric={metric}
+              variant={chartViz}
+              expanded={expanded}
+              onRangeSelect={onRangeSelect}
+            />
+          </div>
           <div
             className={cn(
               "absolute inset-0 transition-opacity duration-150 ease-out",

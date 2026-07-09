@@ -26,8 +26,21 @@ export type StatMetric =
   | "unique_rate"
   | "clicks_per_visitor"
 export type SeriesMetric = "total" | "unique" | "both"
-export type TimeseriesViz = "area" | "line" | "bars" | "table"
-export type BreakdownViz = "bars" | "donut" | "table" | "map"
+export type TimeseriesViz =
+  | "area"
+  | "line"
+  | "step"
+  | "bars"
+  | "cumulative"
+  | "table"
+export type BreakdownViz =
+  | "bars"
+  | "columns"
+  | "donut"
+  | "pie"
+  | "treemap"
+  | "map"
+  | "table"
 
 export const BREAKDOWN_DIMENSIONS = [
   "short_code",
@@ -40,13 +53,19 @@ export const BREAKDOWN_DIMENSIONS = [
 export type BreakdownDimension = (typeof BREAKDOWN_DIMENSIONS)[number]
 
 /** Chart ink presets — applied to the visualization only, never card chrome.
-    Values resolve to per-theme CSS variables (globals.css). */
+    Values resolve to per-theme CSS variables (globals.css). Spectrum order. */
 export const ACCENTS = [
   "violet",
-  "emerald",
+  "indigo",
+  "blue",
   "sky",
+  "teal",
+  "emerald",
+  "lime",
   "amber",
+  "orange",
   "rose",
+  "fuchsia",
   "neutral",
 ] as const
 export type Accent = (typeof ACCENTS)[number]
@@ -109,6 +128,10 @@ export const donutSegments = (h: number) => (heightPx(h) - 56 < 260 ? 4 : 6)
 export const donutLegend = (w: number) => w >= 5
 export const statSparkline = (h: number) => h >= 3
 export const breakdownTableFullCols = (w: number) => w >= 5
+// Vertical columns: width decides how many categories fit legibly.
+export const breakdownColumnCount = (w: number) => (w >= 8 ? 10 : w >= 5 ? 8 : 5)
+// Treemap holds more cells than a donut at the same size before it muddies.
+export const treemapSegments = (h: number) => donutSegments(h) + 4
 
 /* ---------- per-kind spec ---------- */
 
@@ -194,8 +217,23 @@ const STAT_METRICS: readonly StatMetric[] = [
   "unique_rate",
   "clicks_per_visitor",
 ]
-const TIMESERIES_VIZ: readonly TimeseriesViz[] = ["area", "line", "bars", "table"]
-const BREAKDOWN_VIZ: readonly BreakdownViz[] = ["bars", "donut", "table", "map"]
+const TIMESERIES_VIZ: readonly TimeseriesViz[] = [
+  "area",
+  "line",
+  "step",
+  "bars",
+  "cumulative",
+  "table",
+]
+const BREAKDOWN_VIZ: readonly BreakdownViz[] = [
+  "bars",
+  "columns",
+  "donut",
+  "pie",
+  "treemap",
+  "map",
+  "table",
+]
 
 function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(v as T) ? (v as T) : fallback
