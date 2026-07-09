@@ -5,11 +5,9 @@ import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
 import {
-  AppWindow,
   ArrowUpRight,
   ChartLine,
   Globe2,
-  KeyRound,
   Link2,
   Plus,
   TrendingUp,
@@ -24,7 +22,7 @@ import {
   listUrls,
   timeSeriesOf,
 } from "@/lib/api"
-import { formatCount } from "@/lib/format"
+import {formatCount, pctChange } from "@/lib/format"
 import { useAuth } from "@/components/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -36,23 +34,40 @@ import { openLinkComposer } from "@/components/dashboard/links/composer"
 
 const DAYS = 30
 
-function pctChange(now: number, before: number): number | null {
-  if (!before) return null
-  return ((now - before) / before) * 100
+/** Pending state in the exact geometry of the loaded rows (h-9, bar-like
+    widths), so data arrival swaps content without reshaping the panel. */
+function ListSkeleton() {
+  const widths = [92, 78, 64, 55, 43, 36]
+  return (
+    <div className="space-y-1">
+      {widths.map((w, i) => (
+        <Skeleton
+          key={i}
+          className="h-9 rounded-lg"
+          style={{ width: `${w}%` }}
+        />
+      ))}
+    </div>
+  )
 }
 
 export default function DashboardOverviewPage() {
   const { user } = useAuth()
   const name = user?.user_name?.trim() || user?.email?.split("@")[0] || "there"
 
-  const { current, previous } = React.useMemo(() => {
+  // Lazy init: the window is pinned once per visit (impure clock reads
+  // don't belong in render proper).
+  const [{ current, previous }] = React.useState(() => {
     const end = Date.now()
     const start = end - DAYS * 86_400_000
     return {
       current: { start: new Date(start), end: new Date(end) },
-      previous: { start: new Date(start - DAYS * 86_400_000), end: new Date(start) },
+      previous: {
+        start: new Date(start - DAYS * 86_400_000),
+        end: new Date(start),
+      },
     }
-  }, [])
+  })
 
   const stats = useQuery({
     queryKey: ["stats", "overview", DAYS],
@@ -120,6 +135,11 @@ export default function DashboardOverviewPage() {
     },
   ]
   const remaining = checklist.filter((c) => !c.done)
+  // Every source must have answered before the checklist may render:
+  // pending queries read as "not done" and the block would flash in.
+  const checklistReady = Boolean(
+    urls.data && domains.data && keys.data && grants.data,
+  )
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -155,7 +175,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* Setup checklist, only while something remains */}
-      {remaining.length > 0 && !urls.isPending && (
+      {checklistReady && remaining.length > 0 && (
         <div className="mt-8">
           <SectionHeader
             icon={TrendingUp}
@@ -187,8 +207,9 @@ export default function DashboardOverviewPage() {
       )}
 
       {/* Clicks chart */}
-      <div className="mt-8">
+      <div className="border-border/60 bg-shell mt-8 rounded-2xl border p-0.5">
         <SectionHeader
+          className="h-9 px-2.5"
           icon={ChartLine}
           title="Clicks over time"
           action={
@@ -201,7 +222,7 @@ export default function DashboardOverviewPage() {
             </Link>
           }
         />
-        <Panel className="mt-2 p-4">
+        <Panel className="bg-background mt-0 rounded-[14px] p-4">
           {stats.isPending ? (
             <Skeleton className="h-[220px] w-full" />
           ) : (
@@ -212,8 +233,9 @@ export default function DashboardOverviewPage() {
 
       {/* Top links + referrers */}
       <div className="mt-8 grid grid-cols-1 gap-6 pb-8 lg:grid-cols-2">
-        <div>
+        <div className="border-border/60 bg-shell rounded-2xl border p-0.5">
           <SectionHeader
+            className="h-9 px-2.5"
             icon={Link2}
             title="Top links"
             action={
@@ -226,9 +248,9 @@ export default function DashboardOverviewPage() {
               </Link>
             }
           />
-          <Panel className="mt-2 p-2">
+          <Panel className="bg-background mt-0 rounded-[14px] p-2">
             {stats.isPending ? (
-              <Skeleton className="h-56 w-full" />
+              <ListSkeleton />
             ) : topLinks.length ? (
               <div className="space-y-1">
                 {topLinks.map((row, i) => (
@@ -272,11 +294,11 @@ export default function DashboardOverviewPage() {
             )}
           </Panel>
         </div>
-        <div>
-          <SectionHeader icon={Globe2} title="Referrers" />
-          <Panel className="mt-2 p-2">
+        <div className="border-border/60 bg-shell rounded-2xl border p-0.5">
+          <SectionHeader className="h-9 px-2.5" icon={Globe2} title="Referrers" />
+          <Panel className="bg-background mt-0 rounded-[14px] p-2">
             {stats.isPending ? (
-              <Skeleton className="h-56 w-full" />
+              <ListSkeleton />
             ) : (
               <BreakdownList
                 dimension="referrer"

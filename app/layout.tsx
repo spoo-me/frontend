@@ -70,6 +70,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       )}
     >
       <body className="bg-background text-foreground font-sans">
+        {/* Pre-hydration auth hint (same trick as theme scripts): returning
+            sessions mark <html> so the SSR'd dashboard gate never paints
+            its text; sign-out clears the flag. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("spoo:authed")==="1")document.documentElement.classList.add("authed")}catch(e){}`,
+          }}
+        />
         <ThemeProvider defaultTheme="dark">
           <QueryProvider>
             <AuthProvider>

@@ -2,7 +2,15 @@
 
 import * as React from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { KeyRound, Plus, ShieldOff, Trash2, TriangleAlert } from "lucide-react"
+import {
+  ArrowUpRight,
+  BookOpen,
+  KeyRound,
+  Plus,
+  ShieldOff,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -16,7 +24,9 @@ import { formatWhen } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { DateTimeField } from "@/components/dashboard/date-time-field"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
@@ -35,6 +45,27 @@ import {
 import { Ellipsis } from "lucide-react"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
+
+const SCOPE_INFO: Record<(typeof API_KEY_SCOPES)[number], string> = {
+  "shorten:create": "Create short links",
+  "urls:read": "List and read links",
+  "urls:manage": "Edit and delete links",
+  "stats:read": "Read analytics data",
+  "domains:read": "List custom domains",
+  "domains:manage": "Add and remove domains",
+}
+
+/** Superuser scope: implies everything, so picking it locks the rest. */
+const ADMIN_SCOPE = "admin:all"
+
+const KEY_EXPIRY_PRESETS = [
+  { token: "never", label: "No expiry", days: null },
+  { token: "7d", label: "7 days", days: 7 },
+  { token: "30d", label: "30 days", days: 30 },
+  { token: "90d", label: "90 days", days: 90 },
+  { token: "1y", label: "1 year", days: 365 },
+  { token: "custom", label: "Custom", days: null },
+] as const
 
 function KeyRow({ apiKey }: { apiKey: ApiKey }) {
   const queryClient = useQueryClient()
@@ -71,6 +102,17 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
           <span className="font-sans">
             · created {formatWhen(apiKey.created_at)} · last used{" "}
             {formatWhen(apiKey.last_used_at)}
+            {apiKey.expires_at && (
+              <>
+                {" "}
+                · expires{" "}
+                {new Date(apiKey.expires_at).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </>
+            )}
           </span>
         </div>
       </div>
@@ -90,7 +132,7 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
             <Ellipsis />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-auto">
           {!apiKey.revoked && (
             <DropdownMenuItem onSelect={() => act.mutate(true)}>
               <ShieldOff />
@@ -114,15 +156,39 @@ export default function DeveloperPage() {
   const [createOpen, setCreateOpen] = React.useState(false)
   const [name, setName] = React.useState("")
   const [scopes, setScopes] = React.useState<string[]>(["shorten:create"])
+  const [expiry, setExpiry] = React.useState<string>("never")
+  const [customExpiry, setCustomExpiry] = React.useState("")
   const [newToken, setNewToken] = React.useState<string | null>(null)
 
+  const adminAll = scopes.includes(ADMIN_SCOPE)
+  // What was selected before admin:all took over, so unchecking restores it.
+  const preAdminScopes = React.useRef<string[]>(["shorten:create"])
+  const expiresAt = React.useMemo(() => {
+    if (expiry === "never") return undefined
+    if (expiry === "custom")
+      return customExpiry ? new Date(customExpiry).toISOString() : undefined
+    const days = KEY_EXPIRY_PRESETS.find((p) => p.token === expiry)?.days
+    return days ? new Date(Date.now() + days * 86_400_000).toISOString() : undefined
+  }, [expiry, customExpiry])
+
+  const resetForm = () => {
+    setName("")
+    setScopes(["shorten:create"])
+    setExpiry("never")
+    setCustomExpiry("")
+  }
+
   const create = useMutation({
-    mutationFn: () => createApiKey({ name: name.trim(), scopes }),
+    mutationFn: () =>
+      createApiKey({
+        name: name.trim(),
+        scopes,
+        ...(expiresAt ? { expires_at: expiresAt } : {}),
+      }),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["keys"] })
       setNewToken(created.token)
-      setName("")
-      setScopes(["shorten:create"])
+      resetForm()
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't create key"),
   })
@@ -174,7 +240,23 @@ export default function DeveloperPage() {
 
       {/* Docs pointer */}
       <div className="mt-8">
-        <SectionHeader icon={KeyRound} title="Using your key" />
+        <SectionHeader
+          icon={KeyRound}
+          title="Using your key"
+          action={
+            <Button asChild variant="outline" size="sm" className="h-7">
+              <a
+                href="https://docs.spoo.me/api-reference/authentication"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <BookOpen data-icon="inline-start" />
+                API reference
+                <ArrowUpRight data-icon="inline-end" />
+              </a>
+            </Button>
+          }
+        />
         <Panel className="mt-2">
           <div className="border-border/60 bg-muted/30 flex h-9 items-center justify-between border-b px-3">
             <span className="text-muted-foreground font-mono text-[11px]">curl</span>
@@ -183,18 +265,38 @@ export default function DeveloperPage() {
             />
           </div>
           <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed">
+            {/* Hand-tokenized: one static snippet doesn't earn a highlighter
+                dependency. Colors stay inside the accent lock (brand + live). */}
             <code>
-              <span className="text-muted-foreground">curl -X POST</span>{" "}
-              https://spoo.me/api/v1/shorten \{"\n"}
+              <span className="text-foreground font-medium">curl</span>{" "}
+              <span className="text-muted-foreground">-X</span>{" "}
+              <span className="text-brand">POST</span>{" "}
+              <span className="text-foreground">
+                https://spoo.me/api/v1/shorten
+              </span>{" "}
+              <span className="text-muted-foreground/60">\{"\n"}</span>
               {"  "}
               <span className="text-muted-foreground">-H</span>{" "}
-              &quot;Authorization: Bearer spoo_YOUR_KEY&quot; \{"\n"}
+              <span className="text-live">
+                &quot;Authorization: Bearer{" "}
+                <span className="text-foreground font-medium">
+                  spoo_YOUR_KEY
+                </span>
+                &quot;
+              </span>{" "}
+              <span className="text-muted-foreground/60">\{"\n"}</span>
               {"  "}
               <span className="text-muted-foreground">-H</span>{" "}
-              &quot;Content-Type: application/json&quot; \{"\n"}
+              <span className="text-live">
+                &quot;Content-Type: application/json&quot;
+              </span>{" "}
+              <span className="text-muted-foreground/60">\{"\n"}</span>
               {"  "}
               <span className="text-muted-foreground">-d</span>{" "}
-              &apos;{"{"}&quot;long_url&quot;: &quot;https://example.com&quot;{"}"}&apos;
+              <span className="text-live">
+                &apos;{"{"}&quot;long_url&quot;: &quot;https://example.com&quot;
+                {"}"}&apos;
+              </span>
             </code>
           </pre>
         </Panel>
@@ -205,10 +307,13 @@ export default function DeveloperPage() {
         open={createOpen}
         onOpenChange={(v) => {
           setCreateOpen(v)
-          if (!v) setNewToken(null)
+          if (!v) {
+            setNewToken(null)
+            resetForm()
+          }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           {newToken ? (
             <>
               <DialogHeader>
@@ -243,39 +348,131 @@ export default function DeveloperPage() {
                   Name it after where it lives, and grant only the scopes it needs.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  autoFocus
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. GitHub Actions"
-                  className="h-9 text-sm"
-                />
+              <div className="space-y-5">
                 <div className="space-y-1.5">
-                  {API_KEY_SCOPES.map((scope) => (
-                    <label
-                      key={scope}
-                      className="flex cursor-pointer items-center gap-2.5 text-sm"
-                    >
-                      <Checkbox
-                        checked={scopes.includes(scope)}
-                        onCheckedChange={(v) =>
+                  <Label className="text-foreground text-xs font-medium">
+                    Name
+                  </Label>
+                  <Input
+                    autoFocus
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. GitHub Actions"
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-foreground text-xs font-medium">
+                    Scopes
+                  </Label>
+                  <div className="border-border/60 divide-border/60 divide-y overflow-hidden rounded-xl border">
+                    {API_KEY_SCOPES.map((scope) => (
+                      <label
+                        key={scope}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-2.5 px-3 py-2 transition-opacity duration-150",
+                          adminAll && "pointer-events-none opacity-45",
+                        )}
+                      >
+                        <Checkbox
+                          checked={adminAll || scopes.includes(scope)}
+                          disabled={adminAll}
+                          onCheckedChange={(v) =>
+                            setScopes(
+                              v === true
+                                ? [...scopes, scope]
+                                : scopes.filter((s) => s !== scope),
+                            )
+                          }
+                        />
+                        <span className="text-foreground w-36 shrink-0 font-mono text-xs">
+                          {scope}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {SCOPE_INFO[scope]}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors duration-150",
+                      adminAll
+                        ? "border-amber-500/40 bg-amber-500/5 dark:bg-amber-400/10"
+                        : "border-border/60",
+                    )}
+                  >
+                    <Checkbox
+                      checked={adminAll}
+                      onCheckedChange={(v) => {
+                        if (v === true) {
+                          preAdminScopes.current = scopes
+                          setScopes([ADMIN_SCOPE])
+                        } else {
                           setScopes(
-                            v === true
-                              ? [...scopes, scope]
-                              : scopes.filter((s) => s !== scope),
+                            preAdminScopes.current.length
+                              ? preAdminScopes.current
+                              : ["shorten:create"],
                           )
                         }
+                      }}
+                    />
+                    <span className="text-foreground w-36 shrink-0 font-mono text-xs">
+                      {ADMIN_SCOPE}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      Full access, overrides all scopes
+                    </span>
+                  </label>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-foreground text-xs font-medium">
+                    Expires
+                  </Label>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {KEY_EXPIRY_PRESETS.map((p) => (
+                      <button
+                        key={p.token}
+                        type="button"
+                        onClick={() => setExpiry(p.token)}
+                        className={cn(
+                          "h-8 rounded-lg border px-2.5 text-xs transition-colors duration-150",
+                          expiry === p.token
+                            ? "border-border bg-accent/70 text-foreground"
+                            : "border-border/60 text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                    {expiry === "custom" && (
+                      <DateTimeField
+                        value={customExpiry}
+                        onChange={setCustomExpiry}
+                        placeholder="Pick date and time"
+                        defaultOpen
+                        className="h-8"
                       />
-                      <span className="font-mono text-xs">{scope}</span>
-                    </label>
-                  ))}
+                    )}
+                  </div>
+                  <p className="text-muted-foreground/70 text-xs">
+                    {expiry === "never"
+                      ? "The key works until you revoke it."
+                      : "The key stops working after this and can't be renewed."}
+                  </p>
                 </div>
               </div>
               <DialogFooter>
                 <Button
                   size="sm"
-                  disabled={!name.trim() || !scopes.length || create.isPending}
+                  disabled={
+                    !name.trim() ||
+                    !scopes.length ||
+                    (expiry === "custom" && !customExpiry) ||
+                    create.isPending
+                  }
                   onClick={() => create.mutate()}
                 >
                   {create.isPending ? "Creating…" : "Create key"}

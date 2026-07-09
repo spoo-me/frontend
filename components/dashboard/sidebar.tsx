@@ -3,9 +3,10 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { motion } from "motion/react"
 import {
+  BookOpen,
   ChevronsUpDown,
-  CircleHelp,
   LogOut,
   PanelLeft,
   Search,
@@ -14,6 +15,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/shared/logo"
+import { BrandIcons } from "@/components/icons/brand-icons"
 import { useAuth } from "@/components/auth/auth-context"
 import { UserAvatar } from "@/components/auth/user-menu"
 import {
@@ -24,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   dashboardFlags,
   dashboardNav,
@@ -34,25 +35,6 @@ import {
 import { openDashboardCommandMenu } from "@/components/dashboard/command-menu"
 
 const COLLAPSE_KEY = "spoo:sidebar-collapsed"
-
-/** Wrap a row in a tooltip only when the rail is collapsed. */
-function MaybeTip({
-  label,
-  collapsed,
-  children,
-}: {
-  label: string
-  collapsed: boolean
-  children: React.ReactElement
-}) {
-  if (!collapsed) return children
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
-    </Tooltip>
-  )
-}
 
 function NavRow({
   item,
@@ -66,23 +48,62 @@ function NavRow({
   const pathname = usePathname()
   const active = isNavItemActive(pathname, item)
   return (
-    <MaybeTip label={item.title} collapsed={collapsed}>
       <Link
         href={item.href}
         onClick={onNavigate}
         aria-current={active ? "page" : undefined}
+        aria-label={collapsed ? item.title : undefined}
         className={cn(
-          "flex h-9 items-center gap-2.5 rounded-lg border border-transparent text-[13px] font-medium transition-colors duration-150",
+          "relative flex h-9 items-center gap-2.5 rounded-lg text-[13px] font-medium transition-colors duration-150",
           collapsed ? "justify-center px-0" : "px-2.5",
           active
-            ? "border-border bg-card text-foreground"
+            ? "text-foreground"
             : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
         )}
       >
-        <item.icon className="size-[15px] shrink-0" strokeWidth={1.75} />
-        {!collapsed && item.title}
+        {active && (
+          <motion.span
+            layoutId="sidebar-active-pill"
+            // Only route changes animate the pill (its actual job). Rail
+            // expand/collapse resizes it natively via inset-0 — letting
+            // the layout projection re-measure then would make it chase
+            // the CSS width transition and rubber-band.
+            layoutDependency={pathname}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="border-border bg-card absolute inset-0 rounded-lg border"
+          />
+        )}
+        <item.icon className="relative size-[15px] shrink-0" strokeWidth={1.75} />
+        {!collapsed && <span className="relative">{item.title}</span>}
       </Link>
-    </MaybeTip>
+  )
+}
+
+function ResourceRow({
+  href,
+  icon: Icon,
+  label,
+  collapsed,
+}: {
+  href: string
+  icon: React.ElementType
+  label: string
+  collapsed: boolean
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={collapsed ? label : undefined}
+      className={cn(
+        "text-muted-foreground hover:text-foreground hover:bg-accent/60 flex h-8 items-center gap-2.5 rounded-lg text-[13px] transition-colors duration-150",
+        collapsed ? "justify-center px-0" : "px-2.5",
+      )}
+    >
+      <Icon className="size-[15px] shrink-0" />
+      {!collapsed && label}
+    </a>
   )
 }
 
@@ -93,17 +114,21 @@ function NavRow({
 function ProfilePill({ collapsed }: { collapsed: boolean }) {
   const { user, signOut } = useAuth()
   const router = useRouter()
-  if (!user) return null
+  if (!user) return <div aria-hidden className="h-[52px]" />
   const name = user.user_name?.trim() || user.email.split("@")[0]
   return (
     <DropdownMenu>
-      <MaybeTip label={name} collapsed={collapsed}>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
+            aria-label={collapsed ? name : undefined}
             className={cn(
-              "border-border bg-card hover:bg-accent/40 flex w-full items-center gap-2.5 rounded-lg border transition-colors duration-150",
-              collapsed ? "justify-center border-transparent bg-transparent p-1" : "px-2.5 py-2",
+              // Fixed height in both states: the peek animation stays a
+              // pure horizontal reveal, nothing above the pill moves.
+              "border-border bg-card hover:bg-accent/40 flex h-[52px] w-full items-center gap-2.5 rounded-lg border transition-colors duration-150",
+              collapsed
+                ? "justify-center border-transparent bg-transparent p-0"
+                : "px-2.5",
             )}
           >
             <UserAvatar user={user} />
@@ -122,7 +147,6 @@ function ProfilePill({ collapsed }: { collapsed: boolean }) {
             )}
           </button>
         </DropdownMenuTrigger>
-      </MaybeTip>
       <DropdownMenuContent side="top" align="start" className="w-56">
         <DropdownMenuLabel>
           <span className="text-foreground block truncate text-xs font-medium">{name}</span>
@@ -134,12 +158,6 @@ function ProfilePill({ collapsed }: { collapsed: boolean }) {
         <DropdownMenuItem onSelect={() => router.push("/dashboard/settings")}>
           <Settings />
           Settings
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={() => window.open("https://docs.spoo.me", "_blank")}
-        >
-          <CircleHelp />
-          Help
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -162,10 +180,12 @@ function ProfilePill({ collapsed }: { collapsed: boolean }) {
  */
 export function SidebarContent({
   collapsed = false,
+  peeking = false,
   onToggleCollapse,
   onNavigate,
 }: {
   collapsed?: boolean
+  peeking?: boolean
   onToggleCollapse?: () => void
   onNavigate?: () => void
 }) {
@@ -185,46 +205,48 @@ export function SidebarContent({
             </span>
           </span>
         )}
-        {onToggleCollapse && (
-          <MaybeTip label="Expand sidebar" collapsed={collapsed}>
+        {collapsed ? (
+          // Collapsed rail at rest: just the mark. Hovering the rail peeks
+          // the whole sidebar open, so the logo needs no second job.
+          <Logo withText={false} href="/dashboard" className="size-6" />
+        ) : (
+          onToggleCollapse && (
             <button
               type="button"
               onClick={onToggleCollapse}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={peeking ? "Pin sidebar open" : "Collapse sidebar"}
               className="text-muted-foreground/70 hover:text-foreground hover:bg-accent/60 flex size-7 items-center justify-center rounded-lg transition-colors duration-150"
             >
               <PanelLeft className="size-4" strokeWidth={1.75} />
             </button>
-          </MaybeTip>
+          )
         )}
       </div>
 
-      <MaybeTip label="Search ⌘K" collapsed={collapsed}>
-        <button
-          type="button"
-          onClick={() => openDashboardCommandMenu()}
-          aria-label="Search"
-          className={cn(
-            "border-border bg-card dark:bg-input/30 text-muted-foreground hover:text-foreground hover:bg-accent/40 dark:hover:bg-input/50 flex h-9 items-center gap-2 rounded-lg border text-[13px] transition-colors duration-150",
-            collapsed ? "justify-center px-0" : "px-2.5",
-          )}
-        >
-          <Search className="size-[15px] shrink-0" strokeWidth={1.75} />
-          {!collapsed && (
-            <>
-              <span className="flex-1 text-left">Search</span>
-              <span className="flex items-center gap-0.5">
-                <kbd className="border-border/60 bg-muted/40 text-muted-foreground rounded border px-1 font-mono text-[10px]">
-                  ⌘
-                </kbd>
-                <kbd className="border-border/60 bg-muted/40 text-muted-foreground rounded border px-1 font-mono text-[10px]">
-                  K
-                </kbd>
-              </span>
-            </>
-          )}
-        </button>
-      </MaybeTip>
+      <button
+        type="button"
+        onClick={() => openDashboardCommandMenu()}
+        aria-label="Search"
+        className={cn(
+          "bg-foreground/6 border-border text-muted-foreground hover:text-foreground hover:bg-foreground/9 flex h-9 items-center gap-2 rounded-lg border text-[13px] transition-colors duration-150",
+          collapsed ? "justify-center px-0" : "px-2.5",
+        )}
+      >
+        <Search className="size-[15px] shrink-0" strokeWidth={1.75} />
+        {!collapsed && (
+          <>
+            <span className="flex-1 text-left">Search</span>
+            <span className="flex items-center gap-0.5">
+              <kbd className="bg-background/70 text-muted-foreground rounded border border-transparent px-1 font-mono text-[10px]">
+                ⌘
+              </kbd>
+              <kbd className="bg-background/70 text-muted-foreground rounded border border-transparent px-1 font-mono text-[10px]">
+                K
+              </kbd>
+            </span>
+          </>
+        )}
+      </button>
 
       <nav aria-label="Dashboard" className="mt-6">
         {dashboardNav.map((group, i) => {
@@ -234,14 +256,25 @@ export function SidebarContent({
           if (!items.length) return null
           return (
             <div key={group.label} className={cn(i > 0 && "mt-4")}>
-              {collapsed ? (
-                i > 0 && <div className="border-border/60 mx-2 mb-3 border-t" />
-              ) : (
-                <div className="label-mono text-muted-foreground/60 px-2.5 pb-2">
-                  {group.label}
-                </div>
-              )}
-              <div className="space-y-1">
+              {/* Same 28px slot in both states so rows never shift
+                  vertically while the peek animates. */}
+              <div
+                className={cn(
+                  "flex h-7 items-center",
+                  !collapsed && "px-2.5 pb-1",
+                )}
+              >
+                {collapsed ? (
+                  i > 0 && (
+                    <div className="border-border/60 mx-2 w-full border-t" />
+                  )
+                ) : (
+                  <span className="label-mono text-muted-foreground/60">
+                    {group.label}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-0.5">
                 {items.map((item) => (
                   <NavRow
                     key={item.href}
@@ -265,6 +298,20 @@ export function SidebarContent({
           collapsed ? "-mx-2.5 px-2.5" : "-mx-4 px-4",
         )}
       >
+        <div className="mb-3 space-y-0.5">
+          <ResourceRow
+            href="https://docs.spoo.me"
+            icon={BookOpen}
+            label="Docs"
+            collapsed={collapsed}
+          />
+          <ResourceRow
+            href="https://spoo.me/discord"
+            icon={BrandIcons.discord}
+            label="Discord"
+            collapsed={collapsed}
+          />
+        </div>
         <ProfilePill collapsed={collapsed} />
       </div>
     </div>
@@ -281,7 +328,63 @@ export function DashboardSidebar() {
       localStorage.getItem(COLLAPSE_KEY) === "1",
   )
 
+  // Hover-to-peek: the collapsed rail expands as an OVERLAY (the layout
+  // spacer keeps its 58px, content never reflows). Intent delay going in,
+  // grace going out, and the peek holds while a menu it spawned is open.
+  const [peek, setPeek] = React.useState(false)
+  const enterT = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const leaveT = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const peekIn = () => {
+    if (!collapsed) return
+    if (leaveT.current) {
+      clearTimeout(leaveT.current)
+      leaveT.current = null
+    }
+    if (!peek && !enterT.current)
+      enterT.current = setTimeout(() => {
+        enterT.current = null
+        setPeek(true)
+      }, 180)
+  }
+
+  const peekOut = () => {
+    if (enterT.current) {
+      clearTimeout(enterT.current)
+      enterT.current = null
+    }
+    if (!peek || leaveT.current) return
+    const attempt = () => {
+      // A dropdown spawned from the rail portals outside it; closing the
+      // peek under an open menu would orphan it.
+      if (document.querySelector('[data-state="open"][role="menu"]')) {
+        leaveT.current = setTimeout(attempt, 300)
+      } else {
+        leaveT.current = null
+        setPeek(false)
+      }
+    }
+    leaveT.current = setTimeout(attempt, 250)
+  }
+
+  React.useEffect(
+    () => () => {
+      if (enterT.current) clearTimeout(enterT.current)
+      if (leaveT.current) clearTimeout(leaveT.current)
+    },
+    [],
+  )
+
   const toggle = () => {
+    setPeek(false)
+    if (enterT.current) {
+      clearTimeout(enterT.current)
+      enterT.current = null
+    }
+    if (leaveT.current) {
+      clearTimeout(leaveT.current)
+      leaveT.current = null
+    }
     setCollapsed((v) => {
       localStorage.setItem(COLLAPSE_KEY, v ? "0" : "1")
       return !v
@@ -291,11 +394,32 @@ export function DashboardSidebar() {
   return (
     <aside
       className={cn(
-        "hidden h-dvh shrink-0 transition-[width] duration-200 ease-out lg:block",
+        "relative hidden h-dvh shrink-0 transition-[width] duration-200 ease-out lg:block",
         collapsed ? "w-[58px]" : "w-60",
       )}
     >
-      <SidebarContent collapsed={collapsed} onToggleCollapse={toggle} />
+      <div
+        onMouseEnter={peekIn}
+        onMouseLeave={peekOut}
+        onFocusCapture={peekIn}
+        onBlurCapture={peekOut}
+        className={cn(
+          collapsed
+            ? cn(
+                "bg-canvas absolute inset-y-0 left-0 z-40 border-r transition-[width,box-shadow,border-color] duration-200 ease-out",
+                peek
+                  ? "border-border/60 w-60 shadow-[8px_0_32px_-12px_rgba(0,0,0,0.18)] dark:shadow-[8px_0_32px_-12px_rgba(0,0,0,0.55)]"
+                  : "w-[58px] border-transparent shadow-none",
+              )
+            : "h-full w-60",
+        )}
+      >
+        <SidebarContent
+          collapsed={collapsed && !peek}
+          peeking={peek}
+          onToggleCollapse={toggle}
+        />
+      </div>
     </aside>
   )
 }

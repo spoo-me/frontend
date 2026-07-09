@@ -11,6 +11,7 @@ import { UserMenu } from "@/components/auth/user-menu"
 import { SidebarContent } from "@/components/dashboard/sidebar"
 import { dashboardNav } from "@/components/dashboard/nav"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
+import { Kbd } from "@/components/dashboard/kbd"
 
 const SEGMENT_TITLES: Record<string, string> = Object.fromEntries(
   dashboardNav.flatMap((g) =>
@@ -76,6 +77,9 @@ export function DashboardTopbar() {
         <Button size="sm" onClick={() => openLinkComposer()}>
           <Plus data-icon="inline-start" />
           New link
+          <Kbd className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80 ml-1">
+            N
+          </Kbd>
         </Button>
         <span className="lg:hidden">
           <UserMenu />
