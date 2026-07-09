@@ -3,7 +3,8 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
-import { Toaster } from "sonner"
+import { useTheme } from "next-themes"
+import { Toaster, type ToasterProps } from "sonner"
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useAuth } from "@/components/auth/auth-context"
@@ -22,6 +23,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const { resolvedTheme } = useTheme()
 
   // Returning sessions skip the gate: render the shell optimistically
   // while /me revalidates; the flag is dropped on sign-out or a failed
@@ -72,11 +74,20 @@ export default function DashboardLayout({
       <SearchParamsKeeper />
       <SetupChecklist />
       <ShortcutsHelp />
+      {/* Theme must be forwarded: sonner defaults to its light palette, so
+          without it the description and action chip keep light-mode colors
+          on a dark toast (unreadable). Tokens pin every slot to our theme. */}
       <Toaster
         position="bottom-right"
+        theme={resolvedTheme as ToasterProps["theme"]}
         toastOptions={{
-          className:
-            "!bg-popover !text-popover-foreground !border-border/60 !shadow-lg !rounded-xl",
+          classNames: {
+            toast:
+              "!bg-popover !text-popover-foreground !border-border/60 !shadow-lg !rounded-xl",
+            description: "!text-muted-foreground",
+            actionButton: "!bg-primary !text-primary-foreground",
+            cancelButton: "!bg-muted !text-muted-foreground",
+          },
         }}
       />
     </div>
