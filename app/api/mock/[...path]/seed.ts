@@ -462,7 +462,16 @@ function filterShare(filters?: StatsQuery["filters"]) {
 export function generateStats(links: MockLink[], q: StatsQuery) {
   const hourly = q.endMs - q.startMs <= 26 * 3_600_000
   const bucketMs = hourly ? 3_600_000 : 86_400_000
-  const start = Math.floor(q.startMs / bucketMs) * bucketMs
+  // Bucket in LOCAL time like the real backend ($dateToString with the
+  // requested timezone): floor to the local hour/day, so "today" exists
+  // as a partial bucket the moment the local day starts.
+  const floorLocal = (ms: number) => {
+    const d = new Date(ms)
+    if (hourly) d.setMinutes(0, 0, 0)
+    else d.setHours(0, 0, 0, 0)
+    return d.getTime()
+  }
+  const start = floorLocal(q.startMs)
   const share = weightShare(links, q.shortCodes) * filterShare(q.filters)
 
   const series: Array<{ bucket: string; clicks: number; unique_clicks: number }> = []
@@ -481,8 +490,49 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
   // real traffic would.
   const uniqueTotal = series.reduce((a, b) => a + b.unique_clicks, 0)
 
+  /* ---------- assemble the REAL wire shape ----------
+     Mirrors the FastAPI stats response exactly: one array per metric per
+     dimension keyed "{metric}_by_{dim}", entries keyed by the dimension
+     name with *_percentage fields, display-formatted time labels in local
+     time, quiet buckets ABSENT (Mongo groups only what exists), strftime
+     time_bucket_info. The frontend adapter merges it all back. */
+  const pad = (n: number) => String(n).padStart(2, "0")
+  const label = (ms: number) => {
+    const d = new Date(ms)
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    return hourly ? `${day} ${pad(d.getHours())}:00` : day
+  }
   const metrics: Record<string, unknown[]> = {}
-  if (q.groupBy.includes("time")) metrics["clicks_by_time"] = series
+  const emit = (
+    dim: string,
+    rows: Array<{ value: string; clicks: number; unique_clicks: number }>,
+  ) => {
+    const clickTotal = rows.reduce((a, r) => a + r.clicks, 0) || 1
+    const uniqTotal = rows.reduce((a, r) => a + r.unique_clicks, 0) || 1
+    metrics[`clicks_by_${dim}`] = rows.map((r) => ({
+      [dim]: r.value,
+      clicks: r.clicks,
+      clicks_percentage: Math.round((r.clicks / clickTotal) * 10000) / 100,
+    }))
+    metrics[`unique_clicks_by_${dim}`] = rows.map((r) => ({
+      [dim]: r.value,
+      unique_clicks: r.unique_clicks,
+      unique_clicks_percentage:
+        Math.round((r.unique_clicks / uniqTotal) * 10000) / 100,
+    }))
+  }
+
+  if (q.groupBy.includes("time"))
+    emit(
+      "time",
+      series
+        .filter((b) => b.clicks > 0 || b.unique_clicks > 0)
+        .map((b) => ({
+          value: label(new Date(b.bucket).getTime()),
+          clicks: b.clicks,
+          unique_clicks: b.unique_clicks,
+        })),
+    )
 
   for (const dim of q.groupBy) {
     if (dim === "time" || dim === "short_code") continue
@@ -495,25 +545,23 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
     const pool = active?.length
       ? table.filter(([value]) => active.includes(value))
       : table
-    const rows = pool.map(([value, w], i) => {
+    const raws = pool.map(([value, w], i) => {
       const jitter = 0.82 + mulberry32(SEED ^ (i * 31) ^ table.length)() * 0.36
       return { value, raw: w * jitter }
     })
-    const rawTotal = rows.reduce((a, r) => a + r.raw, 0)
-    metrics[`clicks_by_${dim}`] = rows
-      .map(({ value, raw }, i) => {
-        const clicks = Math.round((raw / rawTotal) * total)
-        const rate = 0.6 + mulberry32(SEED ^ (i * 97) ^ raw)() * 0.2
-        return {
-          value,
-          clicks,
-          unique_clicks: Math.round(clicks * rate),
-          percentage: Math.round((raw / rawTotal) * 1000) / 10,
-        }
-      })
-      // The real backend derives rows from events: zero clicks = no row.
-      .filter((r) => r.clicks > 0)
-      .sort((a, b) => b.clicks - a.clicks)
+    const rawTotal = raws.reduce((a, r) => a + r.raw, 0)
+    emit(
+      dim,
+      raws
+        .map(({ value, raw }, i) => {
+          const clicks = Math.round((raw / rawTotal) * total)
+          const rate = 0.6 + mulberry32(SEED ^ (i * 97) ^ raw)() * 0.2
+          return { value, clicks, unique_clicks: Math.round(clicks * rate) }
+        })
+        // The real backend derives rows from events: zero clicks = no row.
+        .filter((r) => r.clicks > 0)
+        .sort((a, b) => b.clicks - a.clicks),
+    )
   }
 
   if (q.groupBy.includes("short_code")) {
@@ -521,44 +569,61 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
       ? links.filter((l) => q.shortCodes!.includes(l.alias))
       : links
     const wTotal = pool.reduce((a, l) => a + l.weight, 0)
-    metrics["clicks_by_short_code"] = pool
-      .map((l, i) => {
-        const clicks = Math.round((l.weight / wTotal) * total)
-        const rate = 0.6 + mulberry32(SEED ^ (i * 53) ^ l.weight)() * 0.2
-        return {
-          value: l.alias,
-          clicks,
-          unique_clicks: Math.round(clicks * rate),
-          percentage: Math.round((l.weight / wTotal) * 1000) / 10,
-        }
-      })
-      .filter((r) => r.clicks > 0)
-      .sort((a, b) => b.clicks - a.clicks)
-      .slice(0, 25)
+    emit(
+      "short_code",
+      pool
+        .map((l, i) => {
+          const clicks = Math.round((l.weight / wTotal) * total)
+          const rate = 0.6 + mulberry32(SEED ^ (i * 53) ^ l.weight)() * 0.2
+          return {
+            value: l.alias,
+            clicks,
+            unique_clicks: Math.round(clicks * rate),
+          }
+        })
+        .filter((r) => r.clicks > 0)
+        .sort((a, b) => b.clicks - a.clicks)
+        .slice(0, 25),
+    )
   }
 
+  const fmt = hourly ? "%Y-%m-%d %H:00" : "%Y-%m-%d"
   return {
     summary: {
       total_clicks: total,
       unique_clicks: uniqueTotal,
       first_click: new Date(q.startMs).toISOString(),
       last_click: series.findLast((b) => b.clicks > 0)?.bucket ?? null,
-      // No redirects happened = no latency to average. null, not vibes.
-      avg_redirection_time: total ? 38 + Math.round(mulberry32(SEED)() * 14) : null,
+      // Real backend averages to 0 over an empty range; the client adapter
+      // is what turns that into null.
+      avg_redirection_time: total ? 38 + Math.round(mulberry32(SEED)() * 14) : 0,
     },
     metrics,
-    computed_metrics: {
-      unique_click_rate: total ? Math.round((uniqueTotal / total) * 1000) / 10 : 0,
-      repeat_click_rate: total ? Math.round((1 - uniqueTotal / total) * 1000) / 10 : 0,
-      average_clicks_per_visitor: uniqueTotal
-        ? Math.round((total / uniqueTotal) * 100) / 100
-        : 0,
-    },
+    // Real backend omits computed_metrics entirely when nothing clicked.
+    ...(total > 0
+      ? {
+          computed_metrics: {
+            unique_click_rate: Math.round((uniqueTotal / total) * 1000) / 10,
+            repeat_click_rate:
+              Math.round((1 - uniqueTotal / total) * 1000) / 10,
+            average_clicks_per_visitor: uniqueTotal
+              ? Math.round((total / uniqueTotal) * 100) / 100
+              : 0,
+          },
+        }
+      : {}),
     time_range: {
-      start: new Date(q.startMs).toISOString(),
-      end: new Date(q.endMs).toISOString(),
+      start_date: new Date(q.startMs).toISOString(),
+      end_date: new Date(q.endMs).toISOString(),
     },
-    time_bucket_info: { strategy: hourly ? "hourly" : "daily", bucket_ms: bucketMs },
+    time_bucket_info: {
+      strategy: hourly ? "hourly" : "daily",
+      interval_minutes: hourly ? 60 : 1440,
+      mongo_format: fmt,
+      display_format: fmt,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
     generated_at: new Date().toISOString(),
+    api_version: "v1",
   }
 }

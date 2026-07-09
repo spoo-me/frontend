@@ -490,7 +490,6 @@ async function handle(req: NextRequest, path: string[]) {
       ? Date.parse(params.get("start_date")!)
       : endMs - 30 * 86_400_000
     const groupBy = (params.get("group_by")?.split(",") ?? ["time"]) as StatsDimension[]
-    const shortCodes = params.get("short_code")?.split(",").filter(Boolean) ?? null
     let filters: Partial<Record<string, string[]>> | undefined
     const rawFilters = params.get("filters")
     if (rawFilters) {
@@ -501,6 +500,13 @@ async function handle(req: NextRequest, path: string[]) {
         return fail(422, "invalid_filters", "filters must be JSON", "filters")
       }
     }
+    // Link scoping arrives via filters.short_code (real-API semantics);
+    // the bare short_code param is single-value anon scope there.
+    const shortCodes =
+      (filters?.short_code as string[] | undefined) ??
+      params.get("short_code")?.split(",").filter(Boolean) ??
+      null
+    if (filters?.short_code) delete filters.short_code
     for (const dim of ["browser", "os", "country", "city", "referrer"] as const) {
       const v = params.get(dim)
       if (v) filters = { ...filters, [dim]: v.split(",") }
