@@ -1,4 +1,4 @@
-import { authedFetch, jsonInit, parse } from "./client"
+import { authedFetch, jsonInit, parse, SpooApiError } from "./client"
 
 /**
  * Connected apps = device-auth grants (CLI, extensions, bots). The real
@@ -17,9 +17,16 @@ export type AppGrant = {
 }
 
 export function listAppGrants() {
-  return authedFetch("/api/v1/apps", { method: "GET" }).then((r) =>
-    parse<{ items: AppGrant[] }>(r),
-  )
+  return authedFetch("/api/v1/apps", { method: "GET" }).then(
+    (r) => parse<{ items: AppGrant[] }>(r),
+    // The list endpoint doesn't exist on the real backend yet (device
+    // grants are revoke-only there); treat its absence as an empty list
+    // instead of poisoning every query that gates on this answering.
+  ).catch((e: unknown) => {
+    if (e instanceof SpooApiError && (e.status === 404 || e.status === 405))
+      return { items: [] }
+    throw e
+  })
 }
 
 export function revokeAppGrant(grantId: string) {

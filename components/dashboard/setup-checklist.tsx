@@ -75,21 +75,21 @@ export function SetupChecklist() {
     },
     {
       done:
-        (domains.data?.items.filter((d) => d.status === "ACTIVE").length ?? 0) > 0,
+        (domains.data?.items?.filter((d) => d.status === "ACTIVE").length ?? 0) > 0,
       icon: Globe2,
       label: "Connect a custom domain",
       href: "/dashboard/domains",
       cta: "Connect",
     },
     {
-      done: (keys.data?.items.filter((k) => !k.revoked).length ?? 0) > 0,
+      done: (keys.data?.items?.filter((k) => !k.revoked).length ?? 0) > 0,
       icon: KeyRound,
       label: "Create an API key",
       href: "/dashboard/developer",
       cta: "Create",
     },
     {
-      done: (grants.data?.items.length ?? 0) > 0,
+      done: (grants.data?.items?.length ?? 0) > 0,
       icon: Puzzle,
       label: "Install an app or extension",
       href: "/dashboard/apps",

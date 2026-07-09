@@ -508,11 +508,26 @@ async function handle(req: NextRequest, path: string[]) {
     return json(generateStats(s.links, { startMs, endMs, shortCodes, filters, groupBy }))
   }
 
-  /* ---------- api keys ---------- */
+  /* ---------- api keys ----------
+     Wire shape mirrors the REAL backend's ApiKeyResponse exactly: envelope
+     key `keys`, Unix-second timestamps, NO last_used_at (not served yet).
+     The frontend normalizes; keeping the mock honest prevents drift. */
+  const keyToWire = (k: MockKey) => ({
+    id: k.id,
+    name: k.name,
+    description: k.description,
+    scopes: k.scopes,
+    created_at: k.created_at
+      ? Math.floor(new Date(k.created_at).getTime() / 1000)
+      : null,
+    expires_at: k.expires_at
+      ? Math.floor(new Date(k.expires_at).getTime() / 1000)
+      : null,
+    revoked: k.revoked,
+    token_prefix: k.token_prefix,
+  })
   if (route === "GET /v1/keys")
-    return json({
-      items: s.keys.map(({ ...k }) => k),
-    })
+    return json({ keys: s.keys.map(keyToWire) })
   if (route === "POST /v1/keys") {
     const name = String(body.name ?? "").trim()
     if (!name) return fail(422, "invalid_name", "Give the key a name", "name")
@@ -529,14 +544,15 @@ async function handle(req: NextRequest, path: string[]) {
       revoked: false,
     }
     s.keys.unshift(key)
-    return json({ ...key, token })
+    return json({ ...keyToWire(key), token }, { status: 201 })
   }
   if (path[0] === "v1" && path[1] === "keys" && path[2] && req.method === "DELETE") {
     const key = s.keys.find((k) => k.id === path[2])
     if (!key) return fail(404, "not_found", "No such key")
-    if (params.get("revoke") === "true") key.revoked = true
+    const revoke = params.get("revoke") === "true"
+    if (revoke) key.revoked = true
     else s.keys = s.keys.filter((k) => k !== key)
-    return new NextResponse(null, { status: 204 })
+    return json({ success: true, action: revoke ? "revoked" : "deleted" })
   }
 
   /* ---------- custom domains ---------- */
