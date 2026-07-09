@@ -26,7 +26,7 @@ export async function generateMetadata({
   const t = getTestimonial(slug)
   if (!t) return {}
   return {
-    title: `${t.person.name}, ${t.company.name} — customer story`,
+    title: `${t.person.name}, ${t.company.name} · customer story`,
     description: flattenQuote(t.shortQuote),
   }
 }

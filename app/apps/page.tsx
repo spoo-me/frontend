@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 export const metadata: Metadata = {
   title: "Apps & SDKs",
   description:
-    "Every official spoo.me client — Raycast, Chrome, Discord, Telegram, Windows, mobile, plus SDKs in Python, TypeScript, Rust, Go and C++.",
+    "Every official spoo.me client: Raycast, Chrome, Discord, Telegram, Windows, mobile, plus SDKs in Python, TypeScript, Rust, Go and C++.",
 }
 
 const groups: { id: string; title: string; description: string; categories: ConnectedApp["category"][] }[] = [

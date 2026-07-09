@@ -13,7 +13,7 @@ import { QuoteText } from "./_components/quote-text"
 export const metadata: Metadata = {
   title: "Customer stories",
   description:
-    "Operators, founders, and engineers share how spoo.me fits into their stack — from quick links to production link infrastructure.",
+    "Operators, founders, and engineers share how spoo.me fits into their stack, from quick links to production link infrastructure.",
 }
 
 export default function TestimonialsIndexPage() {

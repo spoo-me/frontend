@@ -120,8 +120,8 @@ export function humanize(range: TimeRange): string {
   }
   const sameDay = range.from.toDateString() === range.to.toDateString()
   if (sameDay)
-    return `${dayFmt.format(range.from)}, ${timeFmt.format(range.from)} – ${timeFmt.format(range.to)}`
-  return `${dayFmt.format(range.from)} – ${dayFmt.format(range.to)}`
+    return `${dayFmt.format(range.from)}, ${timeFmt.format(range.from)} to ${timeFmt.format(range.to)}`
+  return `${dayFmt.format(range.from)} to ${dayFmt.format(range.to)}`
 }
 
 export function toLocalInput(d: Date): string {

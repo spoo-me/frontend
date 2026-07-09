@@ -47,7 +47,7 @@ export default function WelcomePage() {
         Welcome to spoo.me
       </h1>
       <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
-        Short links, QR codes, and real-time analytics — with an API
+        Short links, QR codes, and real-time analytics, with an API
         underneath everything. Let&apos;s get you set up.
       </p>
 

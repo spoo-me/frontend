@@ -88,7 +88,7 @@ export function ShortcutsHelp() {
             <Row label="Select all on page" keys={[mod, "A"]} />
           </Group>
           <Group title="New link dialog">
-            <Row label="Switch tab" keys={[mod, "1–4"]} />
+            <Row label="Switch tab" keys={[mod, "1-4"]} />
             <Row label="Create link" keys={[mod, "↵"]} />
           </Group>
         </div>

@@ -196,7 +196,7 @@ const PATHS: {
       label: "Manage links",
       description: (
         <>
-          <U>Short links</U>, <U>QR codes</U>, and <U>real-time analytics</U> —
+          <U>Short links</U>, <U>QR codes</U>, and <U>real-time analytics</U>,
           organized from one dashboard.
         </>
       ),

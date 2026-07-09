@@ -86,7 +86,7 @@ export function LinkStep({
       setCreated(link)
     } catch (err) {
       if (err instanceof SpooApiError && err.status === 409) {
-        setError("That alias just got taken — try another.")
+        setError("That alias just got taken. Try another.")
         setAliasState({ kind: "unavailable", reason: "already taken" })
       } else if (err instanceof SpooApiError && err.needsVerification) {
         setError("Your email needs to be verified before creating links.")
@@ -134,7 +134,7 @@ export function LinkStep({
       </h1>
       <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
         {created
-          ? "Share it anywhere — every click lands in your analytics."
+          ? "Share it anywhere. Every click lands in your analytics."
           : "Paste any long URL you actually use. We'll make it short."}
       </p>
 

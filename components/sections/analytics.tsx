@@ -22,7 +22,7 @@ const callouts = [
     icon: LineChart,
     title: "Per-link dashboards",
     description:
-      "Open any short link and get a complete time series — clicks, unique visitors, conversion windows.",
+      "Open any short link and get a complete time series: clicks, unique visitors, conversion windows.",
   },
   {
     icon: Filter,

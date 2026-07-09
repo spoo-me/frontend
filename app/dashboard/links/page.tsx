@@ -603,7 +603,7 @@ export default function LinksPage() {
           {urls.isPending
             ? "…"
             : totalPages > 1
-              ? `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${formatCount(total)}`
+              ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${formatCount(total)}`
               : `${formatCount(total)} link${total === 1 ? "" : "s"}`}
         </span>
         <RefreshControl

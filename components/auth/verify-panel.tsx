@@ -87,7 +87,7 @@ export function VerifyPanel({
       setCode("")
       setStatus("error")
       if (err instanceof SpooApiError && err.status === 400) {
-        setError("That code didn't work — it may have expired. Try again or resend.")
+        setError("That code didn't work. It may have expired; try again or resend.")
       } else if (err instanceof SpooApiError && err.isRateLimit) {
         setError("Too many attempts. Wait a minute, then try again.")
       } else {
@@ -244,7 +244,7 @@ export function VerifyPanel({
             animate={{ opacity: 1, y: 0 }}
             className="text-muted-foreground/70 mt-8 max-w-xs text-xs leading-relaxed"
           >
-            Can&apos;t find it? Check your spam folder — Gmail sometimes files
+            Can&apos;t find it? Check your spam folder. Gmail sometimes files
             codes under Promotions.
           </motion.p>
         )}

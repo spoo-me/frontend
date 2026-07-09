@@ -21,8 +21,8 @@ const fontSerif = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} — open-source link management platform for developers`,
-    template: `%s — ${siteConfig.name}`,
+    default: `${siteConfig.name} · open-source link management platform for developers`,
+    template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,
   keywords: [
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: siteConfig.url,
-    title: `${siteConfig.name} — open-source link management platform`,
+    title: `${siteConfig.name} · open-source link management platform`,
     description: siteConfig.description,
     siteName: siteConfig.name,
   },

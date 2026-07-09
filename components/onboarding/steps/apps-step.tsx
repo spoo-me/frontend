@@ -48,7 +48,7 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
         </span>
       </h1>
       <p className="text-muted-foreground mt-3 max-w-md text-sm leading-relaxed">
-        Shorten from Raycast, your browser, Slack, or a bot in your group chat —
+        Shorten from Raycast, your browser, Slack, or a bot in your group chat;
         every client talks to the same account you just set up.
       </p>
 
@@ -76,7 +76,7 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
                 href={`/apps/${app.slug}`}
                 target="_blank"
                 rel="noopener"
-                aria-label={`${app.name} — opens in a new tab`}
+                aria-label={`${app.name} (opens in a new tab)`}
                 title={app.name}
                 style={{ "--tilt": `${TILTS[i]}deg` } as React.CSSProperties}
                 className="group group/tile border-border/70 bg-card shadow-card hover:border-ring hover:ring-ring/30 flex size-16 rotate-(--tilt) items-center justify-center rounded-2xl border transition-all duration-300 group-hover/deck:rotate-0 hover:z-20 hover:-translate-y-2 hover:scale-105 hover:ring-2 sm:size-19"

@@ -10,9 +10,9 @@ import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
 export const metadata: Metadata = {
-  title: "About — the link platform built for developers",
+  title: "About: the link platform built for developers",
   description:
-    "spoo.me is an open-source, developer-first link management platform — free forever, self-hostable, API-first.",
+    "spoo.me is an open-source, developer-first link management platform: free forever, self-hostable, API-first.",
 }
 
 type Person = { name: string; role: string; avatar: number }
@@ -50,11 +50,11 @@ const team: { label: string; people: Person[] }[] = [
 const pillars = [
   {
     title: "Open by default",
-    body: "Every component of the platform is Apache 2.0 — the link service, dashboard, SDKs, native apps, and docs. Read the source, fork it, run it.",
+    body: "Every component of the platform is Apache 2.0: the link service, dashboard, SDKs, native apps, and docs. Read the source, fork it, run it.",
   },
   {
     title: "Free, no asterisks",
-    body: "No premium tier, no upsell, no metered limits. The complete feature set is available to every account — funded by sponsors, not subscriptions.",
+    body: "No premium tier, no upsell, no metered limits. The complete feature set is available to every account. Funded by sponsors, not subscriptions.",
   },
   {
     title: "API-first",
@@ -130,8 +130,8 @@ export default function AboutPage() {
                 over your own redirect data. spoo was built to flip that pattern.
               </p>
               <p>
-                The complete feature set — analytics, custom domains, API access, every
-                native client — ships free for every user. The entire stack is open source
+                The complete feature set (analytics, custom domains, API access, every
+                native client) ships free for every user. The entire stack is open source
                 and self-hostable, so the option to leave is always one command away. The
                 project is funded by sponsors who believe link infrastructure should be a
                 public utility, not a subscription.

@@ -111,7 +111,7 @@ export function ApiStep({
       </h1>
       <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
         {created
-          ? "Copy it now — the full key is shown only this once."
+          ? "Copy it now. The full key is shown only this once."
           : "Scoped to creating links and reading stats. You can rotate or revoke it any time."}
       </p>
 
@@ -256,7 +256,7 @@ export function ApiStep({
             <DialogHeader>
               <DialogTitle>Try it now</DialogTitle>
               <DialogDescription>
-                Run this with your new key — your first 201 is one paste away.
+                Run this with your new key. Your first 201 is one paste away.
               </DialogDescription>
             </DialogHeader>
 

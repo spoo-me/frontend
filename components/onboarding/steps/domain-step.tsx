@@ -262,12 +262,12 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
         (err.status === 404 || err.status === 403)
       ) {
         setError(
-          "Custom domains are rolling out gradually — your account isn't in the wave yet. Skip for now; we'll email you.",
+          "Custom domains are rolling out gradually. Your account isn't in the wave yet. Skip for now; we'll email you.",
         )
       } else if (err instanceof SpooApiError && err.status === 409) {
         setError("That domain is already registered.")
       } else if (err instanceof SpooApiError && err.isRateLimit) {
-        setError("Domain limit reached for today — finish this one from the dashboard later.")
+        setError("Domain limit reached for today. Finish this one from the dashboard later.")
       } else if (err instanceof SpooApiError) {
         setError(err.message)
       } else {
@@ -318,7 +318,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
               <p className="text-muted-foreground mt-5 text-xs leading-relaxed">
                 Add {created.dns_records.length === 1 ? "this record" : "these records"} at
                 your DNS provider. Verification runs automatically once it
-                propagates — no need to wait here.
+                propagates; no need to wait here.
               </p>
 
               <div className="border-border/60 mt-4 divide-y rounded-xl border font-mono text-[11px]">
@@ -401,7 +401,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
             </div>
             <p className="text-muted-foreground/70 mt-2 text-xs">
               A subdomain like <span className="font-mono">go.acme.com</span> is
-              the usual pick — apex domains work too.
+              the usual pick; apex domains work too.
             </p>
             {error && (
               <p role="alert" className="text-destructive mt-3 text-sm">
@@ -452,7 +452,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 Connect a custom domain
               </h2>
               <p className="text-muted-foreground mx-auto mt-2 max-w-60 flex-1 text-[13px] leading-relaxed">
-                Already have a domain? Links on it build trust — and earn the
+                Already have a domain? Links on it build trust, and earn the
                 clicks to prove it.
               </p>
               {/* Always the primary action — hierarchy doesn't follow the mouse */}

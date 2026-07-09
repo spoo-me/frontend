@@ -33,7 +33,7 @@ export const testimonials: Testimonial[] = [
     shortQuote: [
       "spoo.me is the ",
       { em: "MacGyver of link shorteners" },
-      " — quirky emoji slugs, password locks, click caps, all there. Free, open-source, zero sign-up nonsense. ",
+      ": quirky emoji slugs, password locks, click caps, all there. Free, open-source, zero sign-up nonsense. ",
       { em: "Chaos-proof" },
       " in the best way.",
     ],
