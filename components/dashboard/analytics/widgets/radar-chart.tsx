@@ -10,7 +10,8 @@ import {
   Tooltip,
 } from "recharts"
 
-import { dimensionLabel } from "@/components/dashboard/dim-icon"
+import { cn } from "@/lib/utils"
+import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import type { DimensionRow, StatsDimension } from "@/lib/api"
 import type { BreakdownMetric } from "@/components/dashboard/breakdown-list"
 import {
@@ -22,7 +23,45 @@ import {
  * Top categories on spokes: shape-reading over value-reading — a lopsided
  * blob says "one channel dominates" at a glance. "both" overlays uniques
  * as a quieter second shape, the same twin grammar as the time series.
+ * Spoke labels carry identity marks where the dimension has them.
  */
+
+const ICON_DIMS = new Set(["referrer", "country", "browser", "os"])
+
+/** Angle-axis tick: identity icon + label, aligned by the tick's anchor. */
+function RadarTick(props: {
+  x?: number
+  y?: number
+  textAnchor?: string
+  payload?: { value?: string | number }
+  dimension: Exclude<StatsDimension, "time">
+  lookup: Map<string, string>
+}) {
+  const { x = 0, y = 0, textAnchor = "middle", payload, dimension, lookup } = props
+  const label = String(payload?.value ?? "")
+  const raw = lookup.get(label) ?? label
+  const w = 110
+  const xPos = textAnchor === "middle" ? x - w / 2 : textAnchor === "end" ? x - w : x
+  return (
+    <foreignObject x={xPos} y={y - 9} width={w} height={18}>
+      <div
+        className={cn(
+          "flex h-full min-w-0 items-center gap-1",
+          textAnchor === "middle"
+            ? "justify-center"
+            : textAnchor === "end"
+              ? "justify-end"
+              : "justify-start",
+        )}
+      >
+        <DimensionIcon dimension={dimension} value={raw} className="block size-3 shrink-0" />
+        <span className="text-muted-foreground min-w-0 truncate text-[10px] leading-none">
+          {label}
+        </span>
+      </div>
+    </foreignObject>
+  )
+}
 
 export function BreakdownRadar({
   dimension,
@@ -48,6 +87,11 @@ export function BreakdownRadar({
         })),
     [rows, key, spokes, dimension],
   )
+  // Ticks receive the display label; the icon needs the raw value back.
+  const lookup = React.useMemo(
+    () => new Map(data.map((d) => [d.label, d.value])),
+    [data],
+  )
 
   if (data.length < 3) {
     return (
@@ -64,7 +108,13 @@ export function BreakdownRadar({
           <PolarGrid stroke="var(--border)" strokeOpacity={0.7} />
           <PolarAngleAxis
             dataKey="label"
-            tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
+            tick={
+              ICON_DIMS.has(dimension) ? (
+                <RadarTick dimension={dimension} lookup={lookup} />
+              ) : (
+                { fill: "var(--muted-foreground)", fontSize: 10 }
+              )
+            }
             tickFormatter={(v: string) => (v.length > 10 ? `${v.slice(0, 9)}…` : v)}
           />
           <Tooltip
