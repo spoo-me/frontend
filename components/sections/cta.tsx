@@ -37,7 +37,7 @@ export function CTA() {
       >
         <h2 className="text-foreground text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
           Stop paying for{" "}
-          <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+          <span className="text-muted-foreground italic font-serif font-normal">
             link management.
           </span>
         </h2>

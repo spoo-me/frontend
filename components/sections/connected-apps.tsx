@@ -61,7 +61,7 @@ export function ConnectedApps() {
           title={
             <>
               spoo lives{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 wherever you do.
               </span>
             </>
@@ -119,7 +119,7 @@ export function ConnectedApps() {
               <h3 className="text-foreground text-balance text-3xl font-semibold tracking-tight sm:text-5xl">
                 One core,
                 <br />
-                <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                <span className="text-muted-foreground italic font-serif font-normal">
                   everywhere
                 </span>
                 <span className="text-brand">.</span>

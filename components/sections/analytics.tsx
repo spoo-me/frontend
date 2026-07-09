@@ -65,7 +65,7 @@ export function Analytics() {
           title={
             <>
               Click insights without{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 a separate tool.
               </span>
             </>

@@ -57,7 +57,7 @@ export function Stats() {
           title={
             <>
               Trusted at scale,{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 proven in production.
               </span>
             </>

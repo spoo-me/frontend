@@ -41,7 +41,7 @@ export default function ContactPage() {
               <div className="px-5 pt-28 pb-10 sm:px-9 lg:pb-20">
                 <h1 className="text-foreground text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
                   Talk to{" "}
-                  <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                  <span className="text-muted-foreground italic font-serif font-normal">
                     a human.
                   </span>
                 </h1>

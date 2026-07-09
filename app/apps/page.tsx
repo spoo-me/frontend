@@ -55,7 +55,7 @@ export default function AppsPage() {
             title={
               <>
                 One link platform.{" "}
-                <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                <span className="text-muted-foreground italic font-serif font-normal">
                   Every surface.
                 </span>
               </>

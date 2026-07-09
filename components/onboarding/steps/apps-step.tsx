@@ -43,7 +43,7 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
     <div className="flex w-full flex-col items-center text-center">
       <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
         spoo.me lives{" "}
-        <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+        <span className="text-muted-foreground italic font-serif font-normal">
           wherever you do
         </span>
       </h1>

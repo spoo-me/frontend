@@ -84,7 +84,7 @@ export default function AboutPage() {
               title={
                 <>
                   A link platform,{" "}
-                  <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                  <span className="text-muted-foreground italic font-serif font-normal">
                     built in the open.
                   </span>
                 </>
@@ -147,7 +147,7 @@ export default function AboutPage() {
               title={
                 <>
                   What spoo stands{" "}
-                  <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                  <span className="text-muted-foreground italic font-serif font-normal">
                     for.
                   </span>
                 </>

@@ -74,7 +74,7 @@ const QRCodeDemo = () => {
         className="pattern-dots absolute inset-x-4 top-2 h-44 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
       />
       <div className="relative mt-4 flex justify-center">
-        <div className="border-border/70 bg-card -rotate-3 rounded-xl border p-2.5 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
+        <div className="border-border/70 bg-card -rotate-3 rounded-xl border p-2.5 shadow-float transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
           <div
             aria-label="QR code for spoo.me/ga"
             role="img"
@@ -107,7 +107,7 @@ const DomainBackground = () => {
         {cards.map((c) => (
           <div
             key={c.host}
-            className={`border-border/70 bg-card relative -ml-4 w-[7.5rem] origin-bottom rounded-lg border p-3 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 first:ml-0 group-hover:-translate-y-1 ${c.rot} ${c.z}`}
+            className={`border-border/70 bg-card relative -ml-4 w-[7.5rem] origin-bottom rounded-lg border p-3 shadow-float transition-transform duration-300 first:ml-0 group-hover:-translate-y-1 ${c.rot} ${c.z}`}
           >
             <div className="text-foreground truncate font-mono text-[10px] font-medium">
               {c.host}
@@ -201,7 +201,7 @@ const ExpiryTimeline = () => {
             />
             <div className="text-muted-foreground/70 font-mono text-[10px]">{s.time}</div>
             {s.card ? (
-              <div className="border-border/70 bg-card group-hover:border-border mt-1 inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] transition-colors duration-300">
+              <div className="border-border/70 bg-card group-hover:border-border mt-1 inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 shadow-float-sm transition-colors duration-300">
                 <span className="text-foreground font-mono text-xs font-medium">
                   {s.label}
                 </span>
@@ -245,7 +245,7 @@ const AnalyticsChart = () => {
 
 const Notification = ({ name, description, icon: Icon, time }: NotificationProps) => {
   return (
-    <figure className="border-border/60 bg-card/80 relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border p-3 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
+    <figure className="border-border/60 bg-card/80 relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border p-3 shadow-float-sm backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
       <div className="flex flex-row items-center gap-3">
         <div className="border-border/60 bg-muted/40 flex size-9 shrink-0 items-center justify-center rounded-lg border">
           <Icon className="text-foreground size-4" />
@@ -271,7 +271,7 @@ const AliasDemo = () => {
         className="pattern-dots absolute inset-x-10 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_30%,black,transparent)]"
       />
       <div className="relative mt-7 flex flex-col items-center gap-2.5">
-        <div className="border-border/70 bg-card flex items-center gap-1 rounded-xl border px-4 py-2.5 font-mono text-sm shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55)] transition-transform duration-300 group-hover:-translate-y-0.5">
+        <div className="border-border/70 bg-card flex items-center gap-1 rounded-xl border px-4 py-2.5 font-mono text-sm shadow-float transition-transform duration-300 group-hover:-translate-y-0.5">
           <span className="text-muted-foreground/70">spoo.me/</span>
           {/* crop-mark selection frame */}
           <span className="relative px-2 py-0.5">
@@ -313,7 +313,7 @@ const UtmDemo = () => {
         {params.map((p, i) => (
           <code
             key={p}
-            className={`border-border/70 bg-card text-foreground/90 rounded-md border px-2.5 py-1 font-mono text-[10px] shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:-translate-y-0.5 ${
+            className={`border-border/70 bg-card text-foreground/90 rounded-md border px-2.5 py-1 font-mono text-[10px] shadow-float-sm transition-transform duration-300 group-hover:-translate-y-0.5 ${
               i === 1 ? "translate-x-6" : i === 2 ? "-translate-x-4" : ""
             }`}
           >
@@ -423,7 +423,7 @@ export function Features() {
           title={
             <>
               Everything you need.{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 Nothing you don&apos;t.
               </span>
             </>

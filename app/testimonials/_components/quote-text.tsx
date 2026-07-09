@@ -11,7 +11,7 @@ export function QuoteText({ segments }: { segments: QuoteSegment[] }) {
         ) : (
           <em
             key={i}
-            className="text-foreground [font-family:var(--font-serif)] font-normal italic"
+            className="text-foreground font-serif font-normal italic"
           >
             {s.em}
           </em>

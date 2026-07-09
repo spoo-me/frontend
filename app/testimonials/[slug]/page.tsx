@@ -312,7 +312,7 @@ export default async function TestimonialDetailPage({
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
             <h2 className="text-foreground text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
               Ship your links the{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 spoo way.
               </span>
             </h2>

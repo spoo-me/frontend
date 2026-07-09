@@ -52,7 +52,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
           title={
             <>
               An API your team will{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 actually enjoy.
               </span>
             </>

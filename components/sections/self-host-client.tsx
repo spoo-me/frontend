@@ -42,7 +42,7 @@ export function SelfHostClient() {
           title={
             <>
               Run spoo.me on{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 your own metal.
               </span>
             </>

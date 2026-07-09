@@ -23,7 +23,7 @@ export function Testimonials() {
           title={
             <>
               Real teams, shipping with{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 spoo.
               </span>
             </>

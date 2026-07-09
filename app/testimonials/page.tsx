@@ -33,7 +33,7 @@ export default function TestimonialsIndexPage() {
               title={
                 <>
                   Built by us, shaped by{" "}
-                  <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                  <span className="text-muted-foreground italic font-serif font-normal">
                     the people using it.
                   </span>
                 </>

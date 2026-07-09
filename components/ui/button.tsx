@@ -5,16 +5,20 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg[data-icon=inline-end]]:transition-transform [&_svg[data-icon=inline-end]]:duration-200 hover:[&_svg[data-icon=inline-end]]:translate-x-0.5",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
+        // Kumo emphasis recipe (@cloudflare/kumo Button, variant=primary):
+        // gradient from base+15% white to base, 1px inset top highlight at
+        // +30%, ring at -10%; hover brightens the gradient start. Dark mode
+        // primary is near-white so the bevel flips downward instead.
         default:
-          "bg-primary text-primary-foreground shadow-soft [a]:hover:bg-primary/80 dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
+          "text-primary-foreground [--btn-c:var(--primary)] [--btn-from:color-mix(in_oklch,var(--btn-c),white_15%)] [--btn-hi:color-mix(in_oklch,var(--btn-c),white_30%)] [--btn-ring:color-mix(in_oklch,var(--btn-c),black_10%)] [--btn-to:var(--btn-c)] border-(--btn-ring) bg-linear-to-b from-(--btn-from) to-(--btn-to) shadow-[inset_0_1px_0_0_var(--btn-hi)] hover:from-(--btn-hi) dark:[--btn-from:var(--btn-c)] dark:[--btn-to:color-mix(in_oklch,var(--btn-c),black_12%)] dark:shadow-none dark:hover:brightness-[0.96]",
         outline:
-          "border-border bg-background shadow-soft hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.3)]",
+          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-soft hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:

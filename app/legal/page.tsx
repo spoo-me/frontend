@@ -42,7 +42,7 @@ export default function LegalIndexPage() {
                 title={
                   <>
                     The paperwork,{" "}
-                    <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                    <span className="text-muted-foreground italic font-serif font-normal">
                       kept honest.
                     </span>
                   </>

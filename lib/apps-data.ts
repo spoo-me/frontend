@@ -21,7 +21,7 @@ export const connectedApps: ConnectedApp[] = [
     category: "extension",
     tagline: "Shorten links from Raycast in milliseconds",
     description:
-      "Native Raycast extension. Shorten, view analytics, manage links — all without leaving your launcher.",
+      "Native Raycast extension. Shorten, view analytics, manage links, all without leaving your launcher.",
     iconKey: "raycast",
     color: "#FF6363",
     url: "https://raycast.com/store",
@@ -48,7 +48,7 @@ export const connectedApps: ConnectedApp[] = [
     slug: "chrome",
     name: "Chrome Extension",
     category: "extension",
-    tagline: "spoo-snap — one-click shorten any tab",
+    tagline: "spoo-snap: one-click shorten any tab",
     description:
       "Built with WXT + React 19 + TypeScript. Shorten current tab, manage links, view analytics in side panel.",
     iconKey: "chrome",
@@ -71,7 +71,7 @@ export const connectedApps: ConnectedApp[] = [
     category: "desktop",
     tagline: "Native WinUI 3 desktop client",
     description:
-      "spooWASDK — fluent native Windows app built with WinUI 3 and C#. Acrylic UI, system tray, hotkeys.",
+      "spooWASDK: fluent native Windows app built with WinUI 3 and C#. Acrylic UI, system tray, hotkeys.",
     iconKey: "windows",
     color: "#00A4EF",
     url: "https://github.com/spoo-me/spooWASDK/releases",
@@ -96,7 +96,7 @@ export const connectedApps: ConnectedApp[] = [
     category: "bot",
     tagline: "Shorten & track from any Discord server",
     description:
-      "spoo-bot — slash commands, code samples in 19+ languages, chart generation, server-wide analytics.",
+      "spoo-bot: slash commands, code samples in 19+ languages, chart generation, server-wide analytics.",
     iconKey: "discord",
     color: "#5865F2",
     url: "https://discord.com/api/oauth2/authorize",
@@ -170,7 +170,7 @@ export const connectedApps: ConnectedApp[] = [
     slug: "sdk-python",
     name: "Python SDK",
     category: "sdk",
-    tagline: "py_spoo_url — pip install and ship",
+    tagline: "py_spoo_url: pip install and ship",
     description:
       "Full async SDK with matplotlib chart generation and geopandas heatmap support. Published on PyPI.",
     iconKey: "python",
@@ -223,7 +223,7 @@ export const connectedApps: ConnectedApp[] = [
     slug: "sdk-go",
     name: "Go SDK",
     category: "sdk",
-    tagline: "Idiomatic Go — context-aware, zero-deps",
+    tagline: "Idiomatic Go: context-aware, zero-deps",
     description:
       "Idiomatic Go client with context cancellation. Perfect for serverless and cloud-native apps.",
     iconKey: "go",
@@ -238,7 +238,7 @@ export const connectedApps: ConnectedApp[] = [
     slug: "sdk-cpp",
     name: "C++ SDK",
     category: "sdk",
-    tagline: "Modern C++20 — header-only, embeddable",
+    tagline: "Modern C++20: header-only, embeddable",
     description:
       "Header-only C++20 client. Built on libcurl. For native apps, games, embedded.",
     iconKey: "cpp",
@@ -273,7 +273,7 @@ export const connectedApps: ConnectedApp[] = [
     category: "bot",
     tagline: "Drop-in node for n8n automation flows",
     description:
-      "Native n8n node — shorten links inside any workflow, branch on click stats, sync with the rest of your stack.",
+      "Native n8n node: shorten links inside any workflow, branch on click stats, sync with the rest of your stack.",
     iconKey: "n8n",
     color: "#EA4B71",
     url: "https://n8n.io",
@@ -287,7 +287,7 @@ export const connectedApps: ConnectedApp[] = [
     category: "bot",
     tagline: "Connect spoo to 6000+ apps via Zapier",
     description:
-      "Official Zapier integration — trigger Zaps on new clicks, create short links from any app in your stack.",
+      "Official Zapier integration: trigger Zaps on new clicks, create short links from any app in your stack.",
     iconKey: "zapier",
     color: "#FF4F00",
     url: "https://zapier.com",

@@ -27,7 +27,7 @@ export default function PricingPage() {
                 title={
                   <>
                     Pricing that scales{" "}
-                    <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+                    <span className="text-muted-foreground italic font-serif font-normal">
                       with you.
                     </span>
                   </>

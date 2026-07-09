@@ -36,7 +36,7 @@ export function DashboardPreview() {
           title={
             <>
               Click insights without{" "}
-              <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+              <span className="text-muted-foreground italic font-serif font-normal">
                 a separate tool.
               </span>
             </>
@@ -203,7 +203,7 @@ function Main() {
         <div>
           <h3 className="text-foreground text-2xl font-semibold tracking-tight sm:text-3xl">
             spring
-            <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+            <span className="text-muted-foreground italic font-serif font-normal">
               /launch
             </span>
           </h3>
