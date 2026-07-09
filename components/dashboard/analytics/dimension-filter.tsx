@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Command as CommandPrimitive } from "cmdk"
 import { Check } from "lucide-react"
 
@@ -37,6 +37,8 @@ export function DimensionFilter({
 }) {
   const [open, setOpen] = React.useState(false)
 
+  // Options load eagerly in the background (not on open) so the popover is
+  // instant, and a range change keeps the old list visible while refetching.
   const options = useQuery({
     queryKey: ["stats", "dim-options", dimension, range.from, range.to],
     queryFn: () =>
@@ -45,8 +47,8 @@ export function DimensionFilter({
         endDate: range.to,
         groupBy: [dimension],
       }),
-    enabled: open,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   })
 
   const rows = (options.data?.metrics?.[`clicks_by_${dimension}`] ?? []) as Array<{

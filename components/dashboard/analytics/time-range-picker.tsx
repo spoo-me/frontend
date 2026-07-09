@@ -23,6 +23,53 @@ import {
  * draft — parse box / calendar + presets / start-end inputs — committed by
  * Apply. Trigger shows the humanized applied value.
  */
+
+/**
+ * Editable "YYYY-MM-DD HH:mm" text field. The calendar above owns date
+ * picking; this is for precise text entry, so it never opens the native
+ * datetime popup. Commits on blur or Enter, reverts on invalid input.
+ */
+function DateTimeText({
+  label,
+  value,
+  onCommit,
+}: {
+  label: string
+  value: Date | null
+  onCommit: (d: Date) => void
+}) {
+  const fmt = (d: Date | null) => (d ? toLocalInput(d).replace("T", " ") : "")
+  const [raw, setRaw] = React.useState(fmt(value))
+  const time = value?.getTime() ?? null
+  React.useEffect(() => {
+    setRaw(time === null ? "" : fmt(new Date(time)))
+  }, [time])
+
+  const commit = (next: string) => {
+    const t = next.trim()
+    if (!t) return setRaw(fmt(value))
+    const d = new Date(t.replace(" ", "T"))
+    if (!isNaN(d.getTime())) onCommit(d)
+    else setRaw(fmt(value))
+  }
+
+  return (
+    <label className="space-y-1">
+      <span className="text-muted-foreground text-xs">{label}</span>
+      <Input
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit(e.currentTarget.value)
+        }}
+        placeholder="2026-01-01 00:00"
+        spellCheck={false}
+        className="h-8 font-mono text-xs"
+      />
+    </label>
+  )
+}
 export function TimeRangePicker({
   value,
   onApply,
@@ -36,26 +83,30 @@ export function TimeRangePicker({
   placeholder?: string
 }) {
   const [open, setOpen] = React.useState(false)
-  const fallback = React.useMemo(() => presetRange("30d")!, [])
-  const [draft, setDraft] = React.useState<TimeRange>(value ?? fallback)
+  // Null draft = nothing selected yet; the popover must not pretend a range
+  // is active when the applied value is "all time".
+  const [draft, setDraft] = React.useState<TimeRange | null>(value)
   const [expr, setExpr] = React.useState("")
   const parsed = expr ? parseExpression(expr) : null
 
   React.useEffect(() => {
     if (open) {
-      setDraft(value ?? fallback)
+      setDraft(value)
       setExpr("")
     }
-  }, [open, value, fallback])
+  }, [open, value])
 
   const effective = parsed ?? draft
 
   const apply = () => {
+    if (!effective) return
     onApply(effective)
     setOpen(false)
   }
 
-  const calendarRange: DateRange = { from: effective.from, to: effective.to }
+  const calendarRange: DateRange | undefined = effective
+    ? { from: effective.from, to: effective.to }
+    : undefined
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   return (
@@ -116,7 +167,7 @@ export function TimeRangePicker({
                   "aria-selected:bg-accent/50 aria-selected:text-accent-foreground",
               }}
               selected={calendarRange}
-              defaultMonth={effective.from}
+              defaultMonth={effective?.from}
               onSelect={(r) => {
                 if (!r?.from) return
                 const to = r.to ?? r.from
@@ -136,7 +187,7 @@ export function TimeRangePicker({
           </div>
           <div className="w-40 shrink-0 p-1.5">
             {PRESETS.map((p) => {
-              const active = effective.preset === p.token
+              const active = effective?.preset === p.token
               return (
                 <button
                   key={p.token}
@@ -162,36 +213,26 @@ export function TimeRangePicker({
 
         {/* Start / End + footer */}
         <div className="border-border/60 grid grid-cols-2 gap-3 border-t px-3 py-3">
-          <label className="space-y-1">
-            <span className="text-muted-foreground text-xs">Start</span>
-            <Input
-              type="datetime-local"
-              value={toLocalInput(effective.from)}
-              onChange={(e) => {
-                const d = new Date(e.target.value)
-                if (!isNaN(d.getTime())) {
-                  setExpr("")
-                  setDraft({ from: d, to: effective.to })
-                }
-              }}
-              className="h-8 font-mono text-xs"
-            />
-          </label>
-          <label className="space-y-1">
-            <span className="text-muted-foreground text-xs">End</span>
-            <Input
-              type="datetime-local"
-              value={toLocalInput(effective.to)}
-              onChange={(e) => {
-                const d = new Date(e.target.value)
-                if (!isNaN(d.getTime())) {
-                  setExpr("")
-                  setDraft({ from: effective.from, to: d })
-                }
-              }}
-              className="h-8 font-mono text-xs"
-            />
-          </label>
+          <DateTimeText
+            label="Start"
+            value={effective?.from ?? null}
+            onCommit={(d) => {
+              setExpr("")
+              setDraft({ from: d, to: effective?.to ?? new Date() })
+            }}
+          />
+          <DateTimeText
+            label="End"
+            value={effective?.to ?? null}
+            onCommit={(d) => {
+              setExpr("")
+              setDraft({
+                from:
+                  effective?.from ?? new Date(new Date(d).setHours(0, 0, 0, 0)),
+                to: d,
+              })
+            }}
+          />
         </div>
         <div className="border-border/60 flex h-12 items-center justify-between border-t px-3">
           <span className="text-muted-foreground text-xs">{tz}</span>
@@ -208,7 +249,11 @@ export function TimeRangePicker({
                 Clear
               </Button>
             )}
-            <Button size="sm" onClick={apply} disabled={effective.from >= effective.to}>
+            <Button
+              size="sm"
+              onClick={apply}
+              disabled={!effective || effective.from >= effective.to}
+            >
               Apply
             </Button>
           </span>

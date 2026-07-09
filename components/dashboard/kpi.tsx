@@ -28,7 +28,7 @@ export function KpiCard({
 }) {
   const hasFooterRow = delta != null || footer != null
   return (
-    <Panel className={cn("flex flex-col", className)}>
+    <Panel className={cn("bg-shell flex flex-col", className)}>
       <div className="flex-1 px-4 pt-3.5 pb-3">
         <div className="label-mono text-muted-foreground">{label}</div>
         <div className="mt-2 flex items-baseline gap-1.5">

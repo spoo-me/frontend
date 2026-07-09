@@ -13,6 +13,7 @@ import { FaWindows } from "react-icons/fa6"
 import { SiAndroid, SiApple, SiLinux } from "react-icons/si"
 
 import { cn } from "@/lib/utils"
+import { faviconUrl } from "@/lib/favicon"
 
 /**
  * Identity icons for dimension values (SPEC §7): favicons for referrers,
@@ -38,7 +39,7 @@ function Favicon({ domain, className }: { domain: string; className?: string }) 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`}
+      src={faviconUrl(domain)}
       alt=""
       loading="lazy"
       onError={() => setFailed(true)}

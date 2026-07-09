@@ -65,3 +65,9 @@ export function domainOf(url: string | null | undefined): string {
     return ""
   }
 }
+
+/** Percent change between two counts; null when there is no baseline. */
+export function pctChange(now: number, before: number): number | null {
+  if (!before) return null
+  return ((now - before) / before) * 100
+}
