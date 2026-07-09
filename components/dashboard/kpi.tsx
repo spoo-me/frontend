@@ -21,7 +21,7 @@ export function KpiCard({
   label: string
   /** Quiet annotation after the label (e.g. a stat widget's scope chip). */
   badge?: React.ReactNode
-  value: string
+  value: React.ReactNode
   sub?: string
   /** Percent change; sign carries direction. */
   delta?: number | null

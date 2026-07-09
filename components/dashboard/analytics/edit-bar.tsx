@@ -44,6 +44,7 @@ import {
   catalogMatch,
   catalogTitle,
   SERIES_METRIC_META as METRICS,
+  STAT_VIZ_META,
   TS_VIZ,
   WIDGET_CATALOG,
   widgetIcon,
@@ -242,9 +243,16 @@ export function EditBar({
         ? BD_VIZ.filter(
             (v) => v.value !== "map" || selected.config.dimension === "country",
           )
-        : null
-  const selectedViz =
-    selected && selected.kind !== "stat" ? selected.config.viz : null
+        : selected?.kind === "stat"
+          ? STAT_VIZ_META.filter(
+              (v) => v.value !== "gauge" || selected.config.metric === "unique_rate",
+            )
+          : null
+  const selectedViz = selected
+    ? selected.kind === "stat"
+      ? (selected.config.viz ?? "number")
+      : selected.config.viz
+    : null
   const currentVizOption =
     vizOptions?.find((v) => v.value === selectedViz) ?? null
   // Stat tiles have a fixed metric identity; series widgets choose theirs.

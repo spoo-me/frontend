@@ -26,6 +26,9 @@ export type StatMetric =
   | "unique_rate"
   | "clicks_per_visitor"
 export type SeriesMetric = "total" | "unique" | "both"
+/** Stat tile faces: plain number, rolling odometer digits, or (percentage
+    metrics only) a quiet gauge arc. Absent = number. */
+export type StatViz = "number" | "gauge" | "odometer"
 export type TimeseriesViz =
   | "area"
   | "line"
@@ -39,6 +42,7 @@ export type BreakdownViz =
   | "donut"
   | "pie"
   | "treemap"
+  | "scatter"
   | "map"
   | "table"
 
@@ -94,7 +98,7 @@ type WidgetExtras = {
   scope?: WidgetScope
 }
 
-export type StatConfig = { metric: StatMetric } & WidgetExtras
+export type StatConfig = { metric: StatMetric; viz?: StatViz } & WidgetExtras
 export type TimeseriesConfig = {
   viz: TimeseriesViz
   metric: SeriesMetric
@@ -152,6 +156,9 @@ export const breakdownColumnCount = (w: number) => (w >= 8 ? 10 : w >= 5 ? 8 : 5
 // Treemap density scales with AREA — a wider or taller map fits more tiles.
 export const treemapSegments = (w: number, h: number) =>
   Math.min(24, Math.max(5, Math.round((w * h) / 3.5)))
+// Scatter points are cheap; scale generously with area.
+export const scatterPointLimit = (w: number, h: number) =>
+  Math.min(60, Math.max(12, Math.round(w * h * 0.9)))
 
 /* ---------- per-kind spec ---------- */
 
@@ -251,9 +258,11 @@ const BREAKDOWN_VIZ: readonly BreakdownViz[] = [
   "donut",
   "pie",
   "treemap",
+  "scatter",
   "map",
   "table",
 ]
+const STAT_VIZ: readonly StatViz[] = ["number", "gauge", "odometer"]
 
 function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(v as T) ? (v as T) : fallback
@@ -288,8 +297,13 @@ function normalizeConfig(kind: WidgetKind, raw: unknown): Widget["config"] {
     extras.accent = cfg.accent as Accent
   const scope = normalizeScope(cfg.scope)
   if (scope) extras.scope = scope
-  if (kind === "stat")
-    return { metric: pick(cfg.metric, STAT_METRICS, "total_clicks"), ...extras }
+  if (kind === "stat") {
+    const metric = pick(cfg.metric, STAT_METRICS, "total_clicks")
+    let viz = pick(cfg.viz, STAT_VIZ, "number")
+    // A gauge needs a bounded scale; only the percentage metric has one.
+    if (viz === "gauge" && metric !== "unique_rate") viz = "number"
+    return { metric, ...(viz !== "number" ? { viz } : {}), ...extras }
+  }
   if (kind === "timeseries")
     return {
       viz: pick(cfg.viz, TIMESERIES_VIZ, "area"),
@@ -465,7 +479,7 @@ export function withWidgetDuplicated(
     or `compare: null`. */
 export type WidgetConfigPatch = Partial<{
   metric: StatMetric | SeriesMetric
-  viz: TimeseriesViz | BreakdownViz
+  viz: TimeseriesViz | BreakdownViz | StatViz
   dimension: BreakdownDimension
   title: string
   accent: Accent

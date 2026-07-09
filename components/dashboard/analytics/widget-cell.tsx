@@ -63,6 +63,7 @@ export function WidgetCell({
       case "stat":
         return (
           <StatWidget
+            key={`view:${w.config.viz ?? "number"}`}
             config={w.config}
             h={w.grid.h}
             stats={stats}

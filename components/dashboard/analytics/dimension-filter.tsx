@@ -29,6 +29,7 @@ export function DimensionFilter({
   onChange,
   compact,
   className,
+  modal,
 }: {
   dimension: Exclude<StatsDimension, "time">
   label: string
@@ -40,6 +41,9 @@ export function DimensionFilter({
   compact?: boolean
   /** Extra classes for the trigger button (e.g. w-full in form grids). */
   className?: string
+  /** Set when hosted inside a modal dialog: the dialog's scroll lock
+      otherwise swallows wheel events in the portaled list. */
+  modal?: boolean
 }) {
   const [open, setOpen] = React.useState(false)
 
@@ -75,7 +79,7 @@ export function DimensionFilter({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={modal}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

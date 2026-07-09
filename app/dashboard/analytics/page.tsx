@@ -286,8 +286,11 @@ export default function AnalyticsPage() {
     if (!editing) return
     const onClick = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null
+      // A detached target means the click already re-rendered its owner
+      // away (e.g. the bar morphing states) — that's an inside click.
+      if (!t || !t.isConnected) return
       if (
-        t?.closest(
+        t.closest(
           "[data-widget-id], [data-edit-bar], [data-radix-popper-content-wrapper], [role=dialog], [role=alertdialog], [data-sonner-toaster]"
         )
       )

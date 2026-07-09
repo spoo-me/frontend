@@ -1,15 +1,18 @@
 import {
   Activity,
+  ArrowUp01,
   Building2,
   ChartArea,
   ChartBar,
   ChartColumn,
   ChartLine,
   ChartPie,
+  ChartScatter,
   Compass,
   Donut,
   Gauge,
   Globe2,
+  Hash,
   Layers,
   LayoutDashboard,
   Link2,
@@ -28,6 +31,7 @@ import type {
   BreakdownViz,
   SeriesMetric,
   StatMetric,
+  StatViz,
   TimeseriesViz,
   Widget,
   WidgetConfigPatch,
@@ -178,8 +182,19 @@ export const BD_VIZ: Array<{
   { value: "donut", icon: Donut, label: "Donut" },
   { value: "pie", icon: ChartPie, label: "Pie" },
   { value: "treemap", icon: LayoutDashboard, label: "Treemap" },
+  { value: "scatter", icon: ChartScatter, label: "Scatter" },
   { value: "map", icon: MapIcon, label: "Map" },
   { value: "table", icon: Table2, label: "Table" },
+]
+/** Stat tile faces; gauge is gated to percentage metrics by the callers. */
+export const STAT_VIZ_META: Array<{
+  value: StatViz
+  icon: React.ElementType
+  label: string
+}> = [
+  { value: "number", icon: Hash, label: "Number" },
+  { value: "gauge", icon: Gauge, label: "Gauge" },
+  { value: "odometer", icon: ArrowUp01, label: "Odometer" },
 ]
 export const SERIES_METRIC_META: Array<{
   value: SeriesMetric

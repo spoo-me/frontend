@@ -22,6 +22,7 @@ import {
   type ScopeDimension,
   type SeriesMetric,
   type StatMetric,
+  type StatViz,
   type TimeseriesViz,
   type Widget,
   type WidgetConfigPatch,
@@ -34,6 +35,7 @@ import {
   BD_VIZ,
   SERIES_METRIC_META,
   STAT_META,
+  STAT_VIZ_META,
   TS_VIZ,
 } from "@/components/dashboard/analytics/widget-meta"
 import { WidgetCell } from "@/components/dashboard/analytics/widget-cell"
@@ -121,6 +123,7 @@ export function WidgetComposer({
   const [x, setX] = React.useState<XAxis>("time")
   const [statMetric, setStatMetric] = React.useState<StatMetric>("total_clicks")
   const [seriesMetric, setSeriesMetric] = React.useState<SeriesMetric>("total")
+  const [statViz, setStatViz] = React.useState<StatViz>("number")
   const [tsViz, setTsViz] = React.useState<TimeseriesViz>("area")
   const [bdViz, setBdViz] = React.useState<BreakdownViz>("bars")
   const [title, setTitle] = React.useState("")
@@ -151,7 +154,11 @@ export function WidgetComposer({
         id: "w_preview",
         kind: "stat",
         grid: { x: 0, y: 0, w: 3, h: 3 },
-        config: { metric: statMetric, ...extras },
+        config: {
+          metric: statMetric,
+          ...(statViz !== "number" ? { viz: statViz } : {}),
+          ...extras,
+        },
       }
     if (x === "time")
       return {
@@ -166,11 +173,13 @@ export function WidgetComposer({
       grid: { x: 0, y: 0, w: 6, h: 5 },
       config: { dimension: x, viz: bdViz, metric: seriesMetric, ...extras },
     }
-  }, [x, statMetric, seriesMetric, tsViz, bdViz, title, accent, cleanScope])
+  }, [x, statMetric, seriesMetric, statViz, tsViz, bdViz, title, accent, cleanScope])
 
   const chartOptions =
     kind === "stat"
-      ? null
+      ? STAT_VIZ_META.filter(
+          (v) => v.value !== "gauge" || statMetric === "unique_rate",
+        )
       : kind === "timeseries"
         ? TS_VIZ
         : BD_VIZ.filter((v) => v.value !== "map" || x === "country")
@@ -248,7 +257,13 @@ export function WidgetComposer({
               {kind === "stat" ? (
                 <Select
                   value={statMetric}
-                  onValueChange={(v) => setStatMetric(v as StatMetric)}
+                  onValueChange={(v) => {
+                    const m = v as StatMetric
+                    setStatMetric(m)
+                    // Gauges only exist for the percentage metric.
+                    if (m !== "unique_rate" && statViz === "gauge")
+                      setStatViz("number")
+                  }}
                 >
                   <SelectTrigger size="sm" className="w-full text-xs">
                     <SelectValue />
@@ -280,36 +295,33 @@ export function WidgetComposer({
                 </Select>
               )}
             </div>
-            {chartOptions && (
-              <div className="space-y-1.5">
-                <FieldLabel>Chart</FieldLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  {chartOptions.map((o) => {
-                    const active =
-                      kind === "timeseries" ? tsViz === o.value : bdViz === o.value
-                    return (
-                      <button
-                        key={o.value}
-                        type="button"
-                        title={o.label}
-                        aria-label={o.label}
-                        onClick={() =>
-                          kind === "timeseries"
-                            ? setTsViz(o.value as TimeseriesViz)
-                            : setBdViz(o.value as BreakdownViz)
-                        }
-                        className={cn(
-                          "border-border/60 text-muted-foreground hover:text-foreground flex size-8 items-center justify-center rounded-lg border transition-colors duration-150",
-                          active && "border-foreground/35 bg-accent/60 text-foreground",
-                        )}
-                      >
-                        <o.icon className="size-4" strokeWidth={1.75} />
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+            <div className="space-y-2">
+              <FieldLabel>Chart</FieldLabel>
+              <Select
+                value={
+                  kind === "stat" ? statViz : kind === "timeseries" ? tsViz : bdViz
+                }
+                onValueChange={(v) =>
+                  kind === "stat"
+                    ? setStatViz(v as StatViz)
+                    : kind === "timeseries"
+                      ? setTsViz(v as TimeseriesViz)
+                      : setBdViz(v as BreakdownViz)
+                }
+              >
+                <SelectTrigger size="sm" className="w-full text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {chartOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value} className="text-xs">
+                      <o.icon className="size-3.5" strokeWidth={1.75} />
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <FieldLabel>Scope</FieldLabel>
               <p className="text-muted-foreground/60 text-[11px] leading-snug">
@@ -328,6 +340,7 @@ export function WidgetComposer({
                       setScope((s) => ({ ...s, [f.dim]: values }))
                     }
                     className="w-full justify-start"
+                    modal
                   />
                 ))}
               </div>

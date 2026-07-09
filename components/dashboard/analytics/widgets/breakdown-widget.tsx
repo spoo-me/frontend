@@ -6,6 +6,7 @@ import {
   ChartBar,
   ChartColumn,
   ChartPie,
+  ChartScatter,
   Donut,
   LayoutDashboard,
   Map as MapIcon,
@@ -23,6 +24,7 @@ import {
   breakdownTableFullCols,
   donutLegend,
   donutSegments,
+  scatterPointLimit,
   treemapSegments,
   type BreakdownConfig,
 } from "@/lib/analytics-layout"
@@ -32,6 +34,7 @@ import { CountryMap } from "@/components/dashboard/analytics/country-map"
 import { DonutChart } from "@/components/dashboard/analytics/widgets/donut-chart"
 import { ColumnChart } from "@/components/dashboard/analytics/widgets/column-chart"
 import { TreemapChart } from "@/components/dashboard/analytics/widgets/treemap-chart"
+import { BreakdownScatter } from "@/components/dashboard/analytics/widgets/scatter-chart"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -43,6 +46,7 @@ const BD_CHART_ICONS = {
   donut: Donut,
   pie: ChartPie,
   treemap: LayoutDashboard,
+  scatter: ChartScatter,
   map: MapIcon,
 } as const
 
@@ -215,6 +219,14 @@ export function BreakdownWidget({
                 rows={rows}
                 metric={metric}
                 segments={expanded ? 18 : treemapSegments(w, h)}
+                onSelect={onSelect}
+              />
+            ) : viz === "scatter" ? (
+              <BreakdownScatter
+                dimension={dimension}
+                rows={rows}
+                metric={metric}
+                limit={expanded ? 60 : scatterPointLimit(w, h)}
                 onSelect={onSelect}
               />
             ) : viz === "bars" ? (
