@@ -434,6 +434,8 @@ export type StatsQuery = {
 
 function weightShare(links: MockLink[], shortCodes?: string[] | null) {
   const all = links.reduce((a, l) => a + l.weight, 0)
+  // A fresh workspace has no links: no traffic at all, not NaN.
+  if (!all) return 0
   if (!shortCodes?.length) return 1
   const sel = links
     .filter((l) => shortCodes.includes(l.alias))

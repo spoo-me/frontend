@@ -219,8 +219,13 @@ async function handle(req: NextRequest, path: string[]) {
       } catch {
         /* best effort */
       }
-      g.__spooMock = initial()
-      return json({ success: true, note: "mock state reset" })
+      // ?mode=fresh = a brand-new account with zero data everywhere, but
+      // onboarding done so the dashboard renders (empty-state testing).
+      const fresh = params.get("mode") === "fresh"
+      g.__spooMock = fresh
+        ? { ...initial(), links: [], domains: [], keys: [], grants: [] }
+        : initial()
+      return json({ success: true, note: fresh ? "mock reset (fresh account)" : "mock state reset" })
     }
 
     /* ---------- auth ---------- */
