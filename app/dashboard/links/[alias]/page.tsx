@@ -152,7 +152,11 @@ export default function LinkDetailPage() {
         />
         <KpiCard
           label="Avg redirect"
-          value={s ? `${s.summary.avg_redirection_time}ms` : "–"}
+          value={
+            s?.summary.avg_redirection_time != null
+              ? `${s.summary.avg_redirection_time}ms`
+              : "–"
+          }
         />
       </div>
 

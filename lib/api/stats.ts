@@ -28,7 +28,7 @@ export type StatsResponse = {
     unique_clicks: number
     first_click: string | null
     last_click: string | null
-    avg_redirection_time: number
+    avg_redirection_time: number | null
   }
   /** Keyed "clicks_by_{dimension}"; time series under "clicks_by_time". */
   metrics: Record<string, Array<TimeBucket | DimensionRow>> | null

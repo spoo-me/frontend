@@ -141,6 +141,12 @@ export default function DashboardOverviewPage() {
     urls.data && domains.data && keys.data && grants.data,
   )
 
+  // Big overview panels use the dotted-zone empty grammar (like Top links),
+  // not the compact in-chart text the dense analytics widgets use.
+  const overviewSeries = s ? timeSeriesOf(s) : []
+  const hasClicks = overviewSeries.some((b) => b.clicks > 0)
+  const refRows = s ? dimensionRowsOf(s, "referrer") : []
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       <span className="label-mono text-muted-foreground/60">Overview</span>
@@ -169,7 +175,11 @@ export default function DashboardOverviewPage() {
         />
         <KpiCard
           label="Avg redirect"
-          value={s ? `${s.summary.avg_redirection_time}ms` : "–"}
+          value={
+            s?.summary.avg_redirection_time != null
+              ? `${s.summary.avg_redirection_time}ms`
+              : "–"
+          }
           footer={`average over ${DAYS}d`}
         />
       </div>
@@ -225,8 +235,14 @@ export default function DashboardOverviewPage() {
         <Panel className="bg-background mt-0 rounded-[14px] p-4">
           {stats.isPending ? (
             <Skeleton className="h-[220px] w-full" />
+          ) : hasClicks ? (
+            <ClicksChart series={overviewSeries} height={220} />
           ) : (
-            <ClicksChart series={s ? timeSeriesOf(s) : []} height={220} />
+            <div className="pattern-dots flex h-[220px] items-center justify-center rounded-lg">
+              <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+                no clicks yet
+              </span>
+            </div>
           )}
         </Panel>
       </div>
@@ -299,12 +315,14 @@ export default function DashboardOverviewPage() {
           <Panel className="bg-background mt-0 rounded-[14px] p-2">
             {stats.isPending ? (
               <ListSkeleton />
+            ) : refRows.length ? (
+              <BreakdownList dimension="referrer" rows={refRows} limit={6} />
             ) : (
-              <BreakdownList
-                dimension="referrer"
-                rows={s ? dimensionRowsOf(s, "referrer") : []}
-                limit={6}
-              />
+              <div className="pattern-dots m-2 flex h-48 items-center justify-center rounded-lg">
+                <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+                  no clicks yet
+                </span>
+              </div>
             )}
           </Panel>
         </div>

@@ -543,7 +543,8 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
       unique_clicks: uniqueTotal,
       first_click: new Date(q.startMs).toISOString(),
       last_click: series.findLast((b) => b.clicks > 0)?.bucket ?? null,
-      avg_redirection_time: 38 + Math.round(mulberry32(SEED)() * 14),
+      // No redirects happened = no latency to average. null, not vibes.
+      avg_redirection_time: total ? 38 + Math.round(mulberry32(SEED)() * 14) : null,
     },
     metrics,
     computed_metrics: {
