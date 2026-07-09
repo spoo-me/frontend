@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { ArrowUpRight } from "lucide-react"
+import { motion } from "motion/react"
 
 import { listCustomDomains, type UrlListItem } from "@/lib/api"
 import { formatCount, formatWhen } from "@/lib/format"
@@ -42,11 +43,20 @@ export function LinkSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full gap-0 overflow-y-auto p-0 sm:max-w-md">
         {!link ? (
-          <div className="text-muted-foreground/60 p-6 font-mono text-xs">loading…</div>
+          <>
+            <SheetTitle className="sr-only">Link details</SheetTitle>
+            <div className="text-muted-foreground/60 p-6 font-mono text-xs">
+              loading…
+            </div>
+          </>
         ) : (
           <>
-            <div className="border-border/60 bg-muted/30 border-b px-5 pt-5 pb-4">
-              <SheetTitle className="flex items-center gap-2 text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+              className="border-border/60 bg-muted border-b px-5 pt-5 pb-4 dark:bg-muted/40">
+              <SheetTitle className="flex items-center gap-2 pr-8 text-left">
                 <span className="text-foreground truncate font-mono text-sm font-medium">
                   {(link.domain ?? "spoo.me") + "/" + link.alias}
                 </span>
@@ -94,11 +104,16 @@ export function LinkSheet({
                 Open full page for analytics and history
                 <ArrowUpRight className="size-3" />
               </Link>
-            </div>
+            </motion.div>
 
-            <div className="px-5 py-5">
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: 0.12 }}
+              className="px-5 py-5"
+            >
               <LinkSettingsForm link={link} domains={domainOptions} />
-            </div>
+            </motion.div>
           </>
         )}
       </SheetContent>

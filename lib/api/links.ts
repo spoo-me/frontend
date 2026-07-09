@@ -12,6 +12,19 @@ export type ShortUrl = {
 
 export type UrlStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "BLOCKED"
 
+/** Planned capabilities, shared by create and edit. */
+export type GeoRule = { country: string; url: string }
+/** Each variant receives its weight % of traffic; the original destination
+    keeps the remainder. Weights sum to at most 100. */
+export type AbVariant = { url: string; weight: number }
+export type MetaTags = {
+  title?: string
+  description?: string
+  image?: string
+  /** theme-color: Discord tints the embed accent with it. */
+  color?: string
+}
+
 export type UrlListItem = {
   id: string
   alias: string | null
@@ -23,9 +36,14 @@ export type UrlListItem = {
   private_stats: boolean | null
   block_bots: boolean | null
   password_set: boolean
+  /** Plaintext password for the owner, when the backend exposes it. */
+  password?: string | null
   total_clicks: number | null
   last_click: string | null
   domain: string | null
+  geo_rules?: GeoRule[] | null
+  ab_variants?: AbVariant[] | null
+  meta_tags?: MetaTags | null
 }
 
 export type UrlListResponse = {
@@ -51,6 +69,11 @@ export function shorten(input: {
   domain?: string
   block_bots?: boolean
   private_stats?: boolean
+  /** Planned capabilities — typed now so the UI is contract-ready; the
+      backend accepts-and-ignores until each ships. */
+  geo_rules?: GeoRule[]
+  ab_variants?: AbVariant[]
+  meta_tags?: MetaTags
 }) {
   return authedFetch("/api/v1/shorten", jsonInit("POST", input)).then((r) =>
     parse<ShortUrl>(r),
@@ -105,6 +128,9 @@ export type UpdateUrlInput = Partial<{
   private_stats: boolean
   status: "ACTIVE" | "INACTIVE"
   domain: string | null
+  geo_rules: GeoRule[] | null
+  ab_variants: AbVariant[] | null
+  meta_tags: MetaTags | null
 }>
 
 export function updateUrl(urlId: string, input: UpdateUrlInput) {

@@ -16,6 +16,7 @@ import { toast } from "sonner"
 
 import { deleteUrl, setUrlStatus, type UrlListItem } from "@/lib/api"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,8 @@ export function LinkActions({
   const router = useRouter()
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
+  const [confirmText, setConfirmText] = React.useState("")
+  const confirmed = confirmText.trim().toLowerCase() === "delete"
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["urls"] })
@@ -63,9 +66,12 @@ export function LinkActions({
       setUrlStatus(link.id, link.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"),
     onSuccess: (next) => {
       invalidate()
-      toast.success(next.status === "ACTIVE" ? "Link activated" : "Link deactivated")
+      toast.success(
+        next.status === "ACTIVE" ? "Link activated" : "Link deactivated"
+      )
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't update"),
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Couldn't update"),
   })
 
   // Delete is destructive → confirm dialog (SPEC §5).
@@ -76,7 +82,8 @@ export function LinkActions({
       toast.success("Link deleted")
       onDeleted?.()
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't delete"),
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Couldn't delete"),
   })
 
   const short = shortUrlOf(link)
@@ -99,11 +106,13 @@ export function LinkActions({
           <DropdownMenuItem
             onSelect={() => {
               navigator.clipboard.writeText(short)
-              toast.success("Copied", { description: short.replace(/^https?:\/\//, "") })
+              toast.success("Copied", {
+                description: short.replace(/^https?:\/\//, ""),
+              })
             }}
           >
             <Copy />
-            Copy short link
+            Copy link
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => window.open(short, "_blank")}>
             <ExternalLink />
@@ -125,35 +134,83 @@ export function LinkActions({
             </>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onSelect={() => setConfirmOpen(true)}>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => setConfirmOpen(true)}
+          >
             <Trash2 />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete {(link.domain ?? "spoo.me") + "/" + link.alias}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              The short link stops working immediately and its analytics are
-              deleted. This can&apos;t be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => remove.mutate()}
-              className="bg-destructive text-white hover:bg-destructive/90"
-            >
-              Delete link
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* The dialog is portaled but React events still bubble to the owning
+          row: swallow them so an overlay click can't open the link sheet,
+          and treat it as dismiss instead. */}
+      <span
+        onClick={(e) => {
+          e.stopPropagation()
+          if (
+            (e.target as HTMLElement).closest?.(
+              "[data-slot=alert-dialog-overlay]"
+            )
+          ) {
+            setConfirmOpen(false)
+            setConfirmText("")
+          }
+        }}
+      >
+        <AlertDialog
+          open={confirmOpen}
+          onOpenChange={(open) => {
+            setConfirmOpen(open)
+            if (!open) setConfirmText("")
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete {(link.domain ?? "spoo.me") + "/" + link.alias}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                The short link stops working immediately and its analytics are
+                deleted. This can&apos;t be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                Type <span className="font-mono text-foreground">delete</span>{" "}
+                to confirm.
+              </p>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="delete"
+                spellCheck={false}
+                autoComplete="off"
+                className="h-9 font-mono text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && confirmed) {
+                    setConfirmOpen(false)
+                    setConfirmText("")
+                    remove.mutate()
+                  }
+                }}
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={!confirmed}
+                onClick={() => remove.mutate()}
+              >
+                Delete link
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </span>
     </>
   )
 }

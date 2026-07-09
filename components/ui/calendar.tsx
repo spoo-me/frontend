@@ -22,7 +22,7 @@ function Calendar({
         month: "flex flex-col gap-4",
         month_caption: "flex justify-center pt-1 relative items-center",
         caption_label: "text-sm font-medium",
-        nav: "flex items-center justify-between absolute inset-x-1 top-1",
+        nav: "z-10 flex items-center justify-between absolute inset-x-1 top-1",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
@@ -34,12 +34,12 @@ function Calendar({
         month_grid: "w-full border-collapse",
         weekdays: "flex",
         weekday:
-          "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+          "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]",
         week: "flex w-full mt-2",
-        day: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 size-8",
+        day: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 h-8 w-10",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "size-8 p-0 font-normal aria-selected:opacity-100",
+          "h-8 w-10 p-0 font-normal aria-selected:opacity-100",
         ),
         range_start: "day-range-start rounded-l-md",
         range_end: "day-range-end rounded-r-md",

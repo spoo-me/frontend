@@ -1,77 +1,86 @@
 "use client"
 
 import * as React from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Dialog as DialogPrimitive } from "radix-ui"
+import { motion } from "motion/react"
 import {
   Check,
   ChevronDown,
   CircleAlert,
-  Copy,
   CornerDownLeft,
+  Crosshair,
   Dices,
-  Gauge,
-  Globe,
-  KeyRound,
   Link2,
   LoaderCircle,
-  Timer,
-  X,
+  Plus,
+  ShieldCheck,
+  Tags,
 } from "lucide-react"
 import { toast } from "sonner"
 
-import { cn } from "@/lib/utils"
 import {
   checkAlias,
   listCustomDomains,
   shorten,
   SpooApiError,
+  type CustomDomain,
 } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DateTimeField } from "@/components/dashboard/date-time-field"
+import { PasswordInput } from "@/components/dashboard/password-input"
+import { Kbd } from "@/components/dashboard/kbd"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  completeGeoRules,
+  completeVariants,
+  emptyMetaDraft,
+  GeoRulesEditor,
+  looksLikeUrl,
+  MetaTagsEditor,
+  metaTagsOf,
+  normalizeUrl,
+  VariantsEditor,
+  variantTotal,
+  type GeoRuleDraft,
+  type MetaDraft,
+  type VariantDraft,
+} from "@/components/dashboard/links/link-feature-editors"
 
 const OPEN_EVENT = "spoo:new-link"
 
-export function openLinkComposer() {
-  window.dispatchEvent(new Event(OPEN_EVENT))
+export function openLinkComposer(opts?: { domain?: string }) {
+  window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: opts }))
 }
 
-/** Forgiving URL normalization — missing scheme is fine, never scolded. */
-function normalizeUrl(raw: string): string {
-  const v = raw.trim()
-  if (!v) return v
-  if (/^https?:\/\//i.test(v)) return v
-  return `https://${v}`
-}
-
-function looksLikeUrl(raw: string): boolean {
-  const v = normalizeUrl(raw)
-  try {
-    const u = new URL(v)
-    return u.hostname.includes(".")
-  } catch {
-    return false
-  }
-}
-
-/** Password suggester: 3 memorable words + digits, copyable at a glance. */
+/** Suggesters: memorable words, no lookalike characters. */
 const WORDS =
   "amber basil cedar delta ember fable garnet hazel indigo juniper koala lumen maple nectar onyx pixel quartz raven sable tundra umber velvet willow zephyr".split(
     " ",
   )
-function suggestPassword() {
-  const pick = () => WORDS[Math.floor(Math.random() * WORDS.length)]
-  const num = Math.floor(10 + Math.random() * 89)
-  return `${pick()}-${pick()}-${num}`
-}
-
-type OptionKey = "alias" | "password" | "expiry" | "maxClicks"
+const pickWord = () => WORDS[Math.floor(Math.random() * WORDS.length)]
+const suggestPassword = () =>
+  `${pickWord()}-${pickWord()}-${Math.floor(10 + Math.random() * 89)}`
+const suggestAlias = () =>
+  `${pickWord()}-${Math.floor(10 + Math.random() * 89)}`
 
 const EXPIRY_PRESETS: Array<[label: string, hours: number]> = [
   ["1 day", 24],
@@ -84,35 +93,101 @@ function toLocalInputValue(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+/** Same field anatomy as the link settings form — create and edit are
+    siblings and should read as one product. */
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-foreground mb-2.5 text-xs font-medium">{label}</Label>
+      {children}
+      {hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>}
+    </div>
+  )
+}
+
 export function LinkComposer() {
+  const router = useRouter()
+  const pathname = usePathname()
   const queryClient = useQueryClient()
   const [open, setOpen] = React.useState(false)
-  const [longUrl, setLongUrl] = React.useState("")
-  const [expanded, setExpanded] = React.useState<OptionKey | null>(null)
+  const [tab, setTab] = React.useState("basic")
 
+  const [longUrl, setLongUrl] = React.useState("")
   const [alias, setAlias] = React.useState("")
   const [domain, setDomain] = React.useState("spoo.me")
   const [password, setPassword] = React.useState("")
+  const [passwordVisible, setPasswordVisible] = React.useState(false)
   const [expiry, setExpiry] = React.useState("")
   const [maxClicks, setMaxClicks] = React.useState("")
-
-  const urlRef = React.useRef<HTMLInputElement>(null)
+  // One draft row ready to fill: an empty section behind an add-button is
+  // a click tax; incomplete drafts never travel.
+  const [geoRules, setGeoRules] = React.useState<GeoRuleDraft[]>([
+    { country: "", url: "" },
+  ])
+  const [variants, setVariants] = React.useState<VariantDraft[]>([
+    { url: "", weight: "" },
+  ])
+  const [meta, setMeta] = React.useState<MetaDraft>(emptyMetaDraft())
+  const [blockBots, setBlockBots] = React.useState(false)
+  const [privateStats, setPrivateStats] = React.useState(false)
 
   React.useEffect(() => {
-    const onOpen = () => setOpen(true)
+    const onOpen = (e: Event) => {
+      // reset() ran on close, so a preset here can't leak between opens.
+      const preset = (e as CustomEvent<{ domain?: string } | undefined>).detail
+      if (preset?.domain) {
+        setDomain(preset.domain)
+      } else {
+        // Context default: any entry point (topbar, N, palette) used while
+        // standing on a live domain's page starts the link on that domain.
+        const id = pathname.match(/^\/dashboard\/domains\/([^/]+)$/)?.[1]
+        const dom = id
+          ? queryClient.getQueryData<CustomDomain>(["domains", id])
+          : undefined
+        if (dom?.status === "ACTIVE") setDomain(dom.fqdn)
+      }
+      setOpen(true)
+    }
     window.addEventListener(OPEN_EVENT, onOpen)
     return () => window.removeEventListener(OPEN_EVENT, onOpen)
-  }, [])
+  }, [pathname, queryClient])
 
   const reset = () => {
+    setTab("basic")
     setLongUrl("")
     setAlias("")
     setDomain("spoo.me")
     setPassword("")
     setExpiry("")
     setMaxClicks("")
-    setExpanded(null)
+    setGeoRules([{ country: "", url: "" }])
+    setVariants([{ url: "", weight: "" }])
+    setMeta(emptyMetaDraft())
+    setBlockBots(false)
+    setPrivateStats(false)
   }
+
+  // Animated tab height: measure the active panel, glide the container.
+  const panelRef = React.useRef<HTMLDivElement>(null)
+  const [panelH, setPanelH] = React.useState<number | undefined>(undefined)
+  React.useEffect(() => {
+    if (!open) return
+    const el = panelRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setPanelH(entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [open])
 
   // Active custom domains join the alias control (integrated, ref SPEC §5).
   const domains = useQuery({
@@ -123,24 +198,43 @@ export function LinkComposer() {
   })
   const activeDomains = [
     "spoo.me",
-    ...(domains.data?.items.filter((d) => d.status === "ACTIVE").map((d) => d.fqdn) ?? []),
+    ...(domains.data?.items
+      .filter((d) => d.status === "ACTIVE")
+      .map((d) => d.fqdn) ?? []),
   ]
 
-  // Live alias availability, debounced, quiet inline states.
-  const [aliasState, setAliasState] = React.useState<
-    "idle" | "checking" | "available" | "taken" | "invalid"
-  >("idle")
+  // Live alias availability: idle/invalid/checking derive from the current
+  // input; only the server verdict lives in state (keyed to the alias it
+  // answered, so stale answers can't label fresh input).
+  const [verdict, setVerdict] = React.useState<{
+    alias: string
+    available: boolean
+  } | null>(null)
+  const aliasFormatValid = /^[a-zA-Z0-9_-]{3,16}$/.test(alias)
   React.useEffect(() => {
-    if (!alias) return setAliasState("idle")
-    if (!/^[a-zA-Z0-9_-]{3,16}$/.test(alias)) return setAliasState("invalid")
-    setAliasState("checking")
+    if (!alias || !/^[a-zA-Z0-9_-]{3,16}$/.test(alias)) return
     const t = setTimeout(() => {
       checkAlias(alias)
-        .then((r) => setAliasState(r.available ? "available" : "taken"))
-        .catch(() => setAliasState("idle"))
+        .then((r) => setVerdict({ alias, available: r.available }))
+        .catch(() => {})
     }, 350)
     return () => clearTimeout(t)
   }, [alias])
+  const aliasState: "idle" | "checking" | "available" | "taken" | "invalid" =
+    !alias
+      ? "idle"
+      : !aliasFormatValid
+        ? "invalid"
+        : verdict?.alias === alias
+          ? verdict.available
+            ? "available"
+            : "taken"
+          : "checking"
+
+  const geoPayload = completeGeoRules(geoRules)
+  const variantPayload = completeVariants(variants)
+  const metaPayload = metaTagsOf(meta)
+  const weights = variantTotal(variants)
 
   const create = useMutation({
     mutationFn: () =>
@@ -153,6 +247,11 @@ export function LinkComposer() {
           ? { expire_after: Math.floor(new Date(expiry).getTime() / 1000) }
           : {}),
         ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
+        ...(blockBots ? { block_bots: true } : {}),
+        ...(privateStats ? { private_stats: true } : {}),
+        ...(geoPayload.length ? { geo_rules: geoPayload } : {}),
+        ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
+        ...(metaPayload ? { meta_tags: metaPayload } : {}),
       }),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["urls"] })
@@ -170,10 +269,12 @@ export function LinkComposer() {
     },
     onError: (err) => {
       if (err instanceof SpooApiError && err.field === "alias") {
-        setExpanded("alias")
-        setAliasState("taken")
+        setTab("basic")
+        setVerdict({ alias, available: false })
       } else {
-        toast.error(err instanceof Error ? err.message : "Couldn't create the link")
+        toast.error(
+          err instanceof Error ? err.message : "Couldn't create the link",
+        )
       }
     },
   })
@@ -181,6 +282,7 @@ export function LinkComposer() {
   const canCreate =
     looksLikeUrl(longUrl) &&
     !create.isPending &&
+    weights <= 100 &&
     (alias === "" || aliasState === "available" || aliasState === "checking")
 
   const submit = () => {
@@ -189,306 +291,355 @@ export function LinkComposer() {
 
   const normalized = normalizeUrl(longUrl)
   const showNormalization =
-    longUrl.trim().length > 3 && normalized !== longUrl.trim() && looksLikeUrl(longUrl)
+    longUrl.trim().length > 3 &&
+    normalized !== longUrl.trim() &&
+    looksLikeUrl(longUrl)
 
-  const optionChip = (
-    key: OptionKey,
-    icon: React.ElementType,
+  const basicSet = expiry !== "" || maxClicks !== ""
+  const securitySet = password !== "" || blockBots || privateStats
+  const targetingSet = geoPayload.length > 0 || variantPayload.length > 0
+
+  /** The dot = this tab holds a value; visible without visiting it. */
+  const tabDot = (set: boolean) =>
+    set ? <span className="bg-brand size-1.5 rounded-full" /> : null
+
+  /** shadcn tab trigger with the active cell SLIDING between tabs (same
+      layout-animation grammar as Segmented) instead of teleporting. */
+  const tabTrigger = (
+    value: string,
+    Icon: React.ElementType,
     label: string,
-    set: boolean,
-    summary?: string,
-  ) => {
-    const Icon = icon
-    const active = expanded === key
-    return (
-      <button
-        key={key}
-        type="button"
-        onClick={() => setExpanded(active ? null : key)}
-        className={cn(
-          "flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors duration-150",
-          set
-            ? "border-brand/30 bg-brand/8 text-foreground"
-            : "border-border/60 text-muted-foreground hover:text-foreground hover:bg-accent/50 border-dashed",
-          active && "border-solid",
-        )}
-      >
-        <Icon className="size-3" strokeWidth={1.75} />
-        {set && summary ? summary : label}
-      </button>
-    )
-  }
+    isSet = false,
+  ) => (
+    <TabsTrigger
+      value={value}
+      className="data-active:bg-transparent data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-transparent"
+    >
+      {tab === value && (
+        <motion.span
+          layoutId="composer-active-tab"
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="bg-background dark:border-input dark:bg-input/30 absolute inset-0 rounded-md border border-transparent shadow-sm dark:shadow-none"
+        />
+      )}
+      <span className="relative flex items-center gap-1.5">
+        <Icon data-icon="inline-start" />
+        <span className="max-sm:sr-only">{label}</span>
+        {tabDot(isSet)}
+      </span>
+    </TabsTrigger>
+  )
 
   return (
-    <DialogPrimitive.Root
+    <Dialog
       open={open}
       onOpenChange={(v) => {
         setOpen(v)
         if (!v) reset()
       }}
     >
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 z-50 bg-black/25 dark:bg-black/50" />
-        <DialogPrimitive.Content
-          onOpenAutoFocus={(e) => {
+      <DialogContent
+        className="sm:max-w-2xl"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit()
+          // Figma/Notion grammar: mod+1..4 jumps between the dialog's tabs.
+          if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "4") {
             e.preventDefault()
-            urlRef.current?.focus()
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit()
-          }}
-          className="data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-[16%] left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 outline-none sm:max-w-xl"
-        >
-          <DialogPrimitive.Title className="sr-only">New link</DialogPrimitive.Title>
-          <DialogPrimitive.Description className="sr-only">
-            Shorten a URL
-          </DialogPrimitive.Description>
+            setTab(
+              (["basic", "security", "targeting", "metadata"] as const)[
+                Number(e.key) - 1
+              ],
+            )
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>New link</DialogTitle>
+          <DialogDescription>
+            Everything except the destination is optional.
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="border-border/60 bg-muted dark:bg-popover overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgba(0,0,0,0.06),0_16px_48px_-12px_rgba(0,0,0,0.18)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.5),0_16px_48px_-12px_rgba(0,0,0,0.6)]">
-            {/* URL input on the shell */}
-            <div className="flex items-center gap-2.5 px-4">
-              <Link2 className="text-muted-foreground/70 size-4 shrink-0" strokeWidth={1.75} />
-              <input
-                ref={urlRef}
-                value={longUrl}
-                onChange={(e) => setLongUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !expanded) submit()
-                }}
-                placeholder="Paste or type a destination URL…"
-                spellCheck={false}
-                autoComplete="off"
-                className="placeholder:text-muted-foreground/60 h-12 w-full bg-transparent text-sm outline-none"
-              />
-            </div>
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="w-full">
+            {tabTrigger("basic", Link2, "Basic", basicSet)}
+            {tabTrigger("security", ShieldCheck, "Security", securitySet)}
+            {tabTrigger("targeting", Crosshair, "Targeting", targetingSet)}
+            {tabTrigger("metadata", Tags, "Metadata", Boolean(metaPayload))}
+          </TabsList>
 
-            {/* Inner panel */}
-            <div className="border-border/60 bg-popover dark:bg-secondary/50 mx-2 rounded-xl border">
-              <div className="flex flex-wrap items-center gap-1.5 px-3 py-2.5">
-                {optionChip(
-                  "alias",
-                  Globe,
-                  "Alias",
-                  alias !== "" || domain !== "spoo.me",
-                  `${domain}/${alias || "…"}`,
-                )}
-                {optionChip("password", KeyRound, "Password", password !== "", "Password set")}
-                {optionChip(
-                  "expiry",
-                  Timer,
-                  "Expires",
-                  expiry !== "",
-                  expiry ? new Date(expiry).toLocaleDateString() : undefined,
-                )}
-                {optionChip(
-                  "maxClicks",
-                  Gauge,
-                  "Max clicks",
-                  maxClicks !== "",
-                  maxClicks ? `${maxClicks} clicks` : undefined,
-                )}
-                {showNormalization && (
-                  <span className="text-muted-foreground/70 ml-auto hidden font-mono text-[11px] sm:block">
-                    → {normalized.slice(0, 42)}
-                    {normalized.length > 42 ? "…" : ""}
-                  </span>
-                )}
-              </div>
+          {/* Each tab sizes to its content; the height glides between
+              tabs (response to a click, not a shift). */}
+          <div
+            style={{ height: panelH }}
+            className="overflow-hidden transition-[height] duration-200 ease-out"
+          >
+            <div ref={panelRef} className="min-h-[392px] pt-3">
+              <TabsContent value="basic" className="space-y-5">
+                <Field
+                  label="Destination"
+                  hint={
+                    showNormalization ? `Saved as ${normalized}` : undefined
+                  }
+                >
+                  <Textarea
+                    value={longUrl}
+                    onChange={(e) =>
+                      setLongUrl(e.target.value.replace(/\n/g, ""))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        submit()
+                      }
+                    }}
+                    placeholder="https://example.com/some/very/long/url"
+                    spellCheck={false}
+                    autoComplete="off"
+                    autoFocus
+                    rows={3}
+                    className="min-h-20 resize-none font-mono text-xs leading-relaxed"
+                  />
+                </Field>
 
-              {expanded && (
-                <div className="border-border/60 border-t px-3 py-3">
-                  {expanded === "alias" && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-1.5">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="border-border/60 bg-muted/40 text-foreground hover:bg-accent/60 flex h-8 shrink-0 items-center gap-1 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150"
-                            >
-                              {domain}
-                              <ChevronDown className="text-muted-foreground size-3" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            {activeDomains.map((d) => (
-                              <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
-                                <span className="font-mono text-xs">{d}</span>
-                                {d === domain && <Check className="ml-auto size-3.5" />}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <span className="text-muted-foreground font-mono text-xs">/</span>
-                        <div className="relative flex-1">
-                          <Input
-                            value={alias}
-                            onChange={(e) => setAlias(e.target.value)}
-                            placeholder="custom-alias (optional)"
-                            spellCheck={false}
-                            autoComplete="off"
-                            className="h-8 pr-8 font-mono text-xs"
-                          />
-                          <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-                            {aliasState === "checking" && (
-                              <LoaderCircle className="text-muted-foreground size-3.5 animate-spin" />
-                            )}
-                            {aliasState === "available" && (
-                              <Check className="text-live size-3.5" />
-                            )}
-                            {(aliasState === "taken" || aliasState === "invalid") && (
-                              <CircleAlert className="text-destructive size-3.5" />
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      <p
-                        className={cn(
-                          "min-h-4 text-xs",
-                          aliasState === "taken" || aliasState === "invalid"
-                            ? "text-destructive"
-                            : "text-muted-foreground/70",
-                        )}
-                      >
-                        {aliasState === "taken" && "That alias is taken, try another."}
-                        {aliasState === "invalid" &&
-                          "3–16 characters: letters, numbers, - and _"}
-                        {aliasState === "available" && `${domain}/${alias} is available.`}
-                        {(aliasState === "idle" || aliasState === "checking") &&
-                          "Leave empty for a random alias."}
-                      </p>
-                    </div>
-                  )}
-
-                  {expanded === "password" && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-1.5">
-                        <Input
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Password to unlock this link"
-                          spellCheck={false}
-                          autoComplete="off"
-                          className="h-8 font-mono text-xs"
-                        />
-                        <Button
+                <Field
+                  label="Short link"
+                  hint={
+                    aliasState === "taken"
+                      ? "That alias is taken, try another."
+                      : aliasState === "invalid"
+                        ? "3–16 characters: letters, numbers, - and _"
+                        : aliasState === "available"
+                          ? `${domain}/${alias} is available.`
+                          : "Leave the alias empty for a random one."
+                  }
+                >
+                  <div className="flex items-center gap-1.5">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
                           type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 shrink-0"
-                          onClick={() => setPassword(suggestPassword())}
+                          aria-label="Choose a domain"
+                          className="shadow-soft border-input text-foreground hover:bg-accent/40 dark:bg-input/30 flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                         >
-                          <Dices data-icon="inline-start" />
-                          Suggest
-                        </Button>
-                        {password && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label="Clear password"
-                            onClick={() => setPassword("")}
+                          {domain}
+                          <ChevronDown className="text-muted-foreground size-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-44">
+                        {activeDomains.map((d) => (
+                          <DropdownMenuItem
+                            key={d}
+                            onSelect={() => setDomain(d)}
                           >
-                            <X />
-                          </Button>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground/70 text-xs">
-                        Visitors will need this to reach the destination.
-                      </p>
-                    </div>
-                  )}
-
-                  {expanded === "expiry" && (
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <Input
-                          type="datetime-local"
-                          value={expiry}
-                          onChange={(e) => setExpiry(e.target.value)}
-                          className="h-8 w-auto font-mono text-xs"
-                        />
-                        {EXPIRY_PRESETS.map(([label, hours]) => (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={() =>
-                              setExpiry(
-                                toLocalInputValue(
-                                  new Date(Date.now() + hours * 3_600_000),
-                                ),
-                              )
-                            }
-                            className="border-border/60 text-muted-foreground hover:text-foreground hover:bg-accent/50 h-8 rounded-lg border px-2.5 text-xs transition-colors duration-150"
-                          >
-                            {label}
-                          </button>
+                            <span className="font-mono text-xs">{d}</span>
+                            {d === domain && (
+                              <Check className="ml-auto size-3.5" />
+                            )}
+                          </DropdownMenuItem>
                         ))}
-                        {expiry && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label="Clear expiry"
-                            onClick={() => setExpiry("")}
-                          >
-                            <X />
-                          </Button>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            setOpen(false)
+                            router.push("/dashboard/domains")
+                          }}
+                        >
+                          <Plus className="size-3.5" />
+                          <span className="text-xs">Connect a domain</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <span className="text-muted-foreground font-mono text-xs">
+                      /
+                    </span>
+                    <div className="relative flex-1">
+                      <Input
+                        value={alias}
+                        onChange={(e) => setAlias(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") submit()
+                        }}
+                        placeholder="custom-alias"
+                        spellCheck={false}
+                        autoComplete="off"
+                        className="h-9 pr-8 font-mono text-xs"
+                      />
+                      <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
+                        {aliasState === "checking" && (
+                          <LoaderCircle className="text-muted-foreground size-3.5 animate-spin" />
                         )}
-                      </div>
-                      <p className="text-muted-foreground/70 text-xs">
-                        The link stops redirecting after this moment.
-                      </p>
+                        {aliasState === "available" && (
+                          <Check className="text-live size-3.5" />
+                        )}
+                        {(aliasState === "taken" ||
+                          aliasState === "invalid") && (
+                          <CircleAlert className="text-destructive size-3.5" />
+                        )}
+                      </span>
                     </div>
-                  )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      className="size-9 shrink-0"
+                      aria-label="Suggest an alias"
+                      onClick={() => setAlias(suggestAlias())}
+                    >
+                      <Dices />
+                    </Button>
+                  </div>
+                </Field>
 
-                  {expanded === "maxClicks" && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-1.5">
-                        <Input
-                          type="number"
-                          min={1}
-                          value={maxClicks}
-                          onChange={(e) => setMaxClicks(e.target.value)}
-                          placeholder="e.g. 500"
-                          className="h-8 w-32 font-mono text-xs"
-                        />
-                        {maxClicks && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label="Clear max clicks"
-                            onClick={() => setMaxClicks("")}
-                          >
-                            <X />
-                          </Button>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground/70 text-xs">
-                        The link deactivates after this many clicks.
-                      </p>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <Field
+                    label="Expiration"
+                    hint="The link stops redirecting after this moment."
+                  >
+                    <DateTimeField
+                      value={expiry}
+                      onChange={setExpiry}
+                      placeholder="Never"
+                      className="h-9 w-full"
+                    />
+                    <div className="flex items-center gap-1">
+                      {EXPIRY_PRESETS.map(([label, hours]) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() =>
+                            setExpiry(
+                              toLocalInputValue(
+                                new Date(Date.now() + hours * 3_600_000),
+                              ),
+                            )
+                          }
+                          className="border-border/60 text-muted-foreground hover:text-foreground hover:bg-accent/50 h-6 rounded-md border px-2 text-[11px] transition-colors duration-150"
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
-                  )}
+                  </Field>
+
+                  <Field
+                    label="Max clicks"
+                    hint="The link deactivates after this many clicks."
+                  >
+                    <Input
+                      type="number"
+                      min={1}
+                      value={maxClicks}
+                      onChange={(e) => setMaxClicks(e.target.value)}
+                      placeholder="Unlimited"
+                      className="h-9 font-mono text-xs"
+                    />
+                  </Field>
                 </div>
-              )}
-            </div>
+              </TabsContent>
 
-            {/* Footer on the shell */}
-            <div className="flex h-14 items-center justify-between px-3.5">
-              <span className="text-muted-foreground/70 text-xs">
-                {create.isPending ? "Creating…" : ""}
-              </span>
-              <Button size="sm" disabled={!canCreate} onClick={submit}>
-                Create link
-                <span className="bg-primary-foreground/15 ml-1 flex size-4 items-center justify-center rounded">
-                  <CornerDownLeft className="size-2.5" />
-                </span>
-              </Button>
+              <TabsContent value="security" className="space-y-5">
+                <Field
+                  label="Password"
+                  hint="Visitors will need this to reach the destination."
+                >
+                  <div className="flex items-center gap-1.5">
+                    <PasswordInput
+                      value={password}
+                      onChange={setPassword}
+                      visible={passwordVisible}
+                      onVisibleChange={setPasswordVisible}
+                      placeholder="None"
+                      className="[&_input]:h-9"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 shrink-0"
+                      onClick={() => {
+                        setPassword(suggestPassword())
+                        setPasswordVisible(true)
+                      }}
+                    >
+                      <Dices data-icon="inline-start" />
+                      Suggest
+                    </Button>
+                  </div>
+                </Field>
+
+                {/* Same switch group as the edit sheet: bot blocking guards
+                    the click budget; private stats guards the numbers. */}
+                <div className="border-border/60 divide-border/60 divide-y rounded-xl border">
+                  <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
+                    <span>
+                      <span className="text-foreground block text-xs font-medium">
+                        Block bots
+                      </span>
+                      <span className="text-muted-foreground/70 text-xs">
+                        Crawlers get a preview page instead of the redirect.
+                      </span>
+                    </span>
+                    <Switch
+                      checked={blockBots}
+                      onCheckedChange={setBlockBots}
+                    />
+                  </label>
+                  <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
+                    <span>
+                      <span className="text-foreground block text-xs font-medium">
+                        Private stats
+                      </span>
+                      <span className="text-muted-foreground/70 text-xs">
+                        Only you can see this link&apos;s analytics.
+                      </span>
+                    </span>
+                    <Switch
+                      checked={privateStats}
+                      onCheckedChange={setPrivateStats}
+                    />
+                  </label>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="targeting" className="space-y-5">
+                <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
+                <VariantsEditor variants={variants} onChange={setVariants} />
+              </TabsContent>
+
+              <TabsContent value="metadata">
+                <MetaTagsEditor
+                  value={meta}
+                  onChange={setMeta}
+                  domain={domain}
+                  alias={alias}
+                  preview="side"
+                />
+              </TabsContent>
             </div>
           </div>
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+        </Tabs>
+
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!canCreate} onClick={submit}>
+            {create.isPending && (
+              <LoaderCircle className="size-3.5 animate-spin" />
+            )}
+            Create link
+            <Kbd className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80 ml-1">
+              <CornerDownLeft className="size-2.5" />
+            </Kbd>
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
