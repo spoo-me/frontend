@@ -10,6 +10,7 @@ import {
   CornerDownLeft,
   Globe,
   Keyboard,
+  LayoutGrid,
   Link2,
   Monitor,
   Moon,
@@ -26,6 +27,7 @@ import { Logo } from "@/components/shared/logo"
 import { dashboardFlags, dashboardNav } from "@/components/dashboard/nav"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
 import { openShortcutsHelp } from "@/components/dashboard/shortcuts-help"
+import { requestAnalyticsEditMode } from "@/components/dashboard/analytics/edit-mode"
 
 const OPEN_EVENT = "spoo:dashboard-command-menu"
 
@@ -261,6 +263,22 @@ export function DashboardCommandMenu() {
                     }}
                   >
                     New link
+                  </Item>
+                  <Item
+                    icon={LayoutGrid}
+                    onSelect={() => {
+                      setOpen(false)
+                      // Land on analytics first; the page's listener flips it
+                      // into edit mode once mounted.
+                      if (window.location.pathname !== "/dashboard/analytics") {
+                        router.push("/dashboard/analytics")
+                        setTimeout(requestAnalyticsEditMode, 400)
+                      } else {
+                        requestAnalyticsEditMode()
+                      }
+                    }}
+                  >
+                    Edit dashboard layout
                   </Item>
                 </CommandPrimitive.Group>
 

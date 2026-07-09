@@ -257,15 +257,22 @@ export function layoutsEqual(a: AnalyticsLayout, b: AnalyticsLayout): boolean {
 
 /* ---------- pure ops (each returns a new, normalized doc) ---------- */
 
-/** Apply the grid rectangles RGL reports after a drag/resize commit. */
+/** Apply grid rectangles from a drag/resize commit or keyboard nudge,
+    clamped to each kind's minimums and the column bounds. */
 export function applyGridChange(
   l: AnalyticsLayout,
   items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>,
 ): AnalyticsLayout {
   const byId = new Map(items.map((it) => [it.i, it]))
-  const widgets = l.widgets.map((w) => {
-    const it = byId.get(w.id)
-    return it ? { ...w, grid: { x: it.x, y: it.y, w: it.w, h: it.h } } : w
+  const widgets = l.widgets.map((widget) => {
+    const it = byId.get(widget.id)
+    if (!it) return widget
+    const spec = WIDGET_SPEC[widget.kind]
+    const w = Math.min(GRID.cols, Math.max(spec.minW, Math.round(it.w)))
+    const h = Math.max(spec.minH, Math.round(it.h))
+    const x = Math.min(GRID.cols - w, Math.max(0, Math.round(it.x)))
+    const y = Math.max(0, Math.round(it.y))
+    return { ...widget, grid: { x, y, w, h } }
   })
   return { version: 1, widgets: normalizeGrid(widgets) }
 }
