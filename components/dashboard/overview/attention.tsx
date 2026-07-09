@@ -11,19 +11,25 @@ import { Panel, SectionHeader } from "@/components/dashboard/section"
 
 /**
  * The queue that answers "can I close this tab?": things that will break
- * (or already broke) if ignored, ranked by severity, each row phrased as
- * the situation + a jump to the fix. On a good day it is ONE quiet
- * all-clear line — reassurance is part of the briefing, so the block
- * renders either way. The row type is deliberately generic (tone, text,
- * href) so future backend items (security flags with appeal, broken
- * destinations) slot in without UI changes.
+ * (or already broke) if ignored. Rows are columnar so four problems scan
+ * as four distinct shapes, not four sentences: category tag → subject in
+ * mono → quiet detail → the action. On a good day the whole block is ONE
+ * all-clear line. The item type is deliberately generic so future backend
+ * residents (security flags with appeal, broken destinations) slot in.
  */
 
 type Item = {
   key: string
   severity: number // 1 = worst
   tone: "red" | "amber"
-  text: string
+  /** Short mono category tag: what KIND of problem. */
+  category: string
+  /** The resource, in mono: /alias or fqdn. */
+  subject: string
+  /** Quiet context: what exactly is wrong. */
+  detail: string
+  /** The verb on the right edge. */
+  action: string
   href: string
 }
 
@@ -42,7 +48,10 @@ export function buildAttentionItems(
         key: `dom-${d.id}`,
         severity: 1,
         tone: "red",
-        text: `${d.fqdn} is ${d.status.toLowerCase()} and not serving links`,
+        category: "domain",
+        subject: d.fqdn,
+        detail: `${d.status.toLowerCase()}, not serving links`,
+        action: "Review",
         href: `/dashboard/domains/${d.id}`,
       })
     } else if (d.last_verification_error) {
@@ -50,7 +59,10 @@ export function buildAttentionItems(
         key: `dom-${d.id}`,
         severity: 1,
         tone: "red",
-        text: `verification failing for ${d.fqdn}`,
+        category: "domain",
+        subject: d.fqdn,
+        detail: "verification failing",
+        action: "Fix DNS",
         href: `/dashboard/domains/${d.id}`,
       })
     } else if (d.status === "PENDING" || d.status === "VERIFYING") {
@@ -58,7 +70,10 @@ export function buildAttentionItems(
         key: `dom-${d.id}`,
         severity: 2,
         tone: "amber",
-        text: `finish verifying ${d.fqdn}`,
+        category: "domain",
+        subject: d.fqdn,
+        detail: "waiting on verification",
+        action: "Verify",
         href: `/dashboard/domains/${d.id}`,
       })
     }
@@ -73,7 +88,15 @@ export function buildAttentionItems(
           key: `exp-${l.id}`,
           severity: 2,
           tone: "amber",
-          text: `/${l.alias} expires ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}`,
+          category: "expiry",
+          subject: `/${l.alias}`,
+          detail:
+            days === 0
+              ? "expires today"
+              : days === 1
+                ? "expires tomorrow"
+                : `expires in ${days} days`,
+          action: "Extend",
           href: `/dashboard/links/${l.alias}`,
         })
       }
@@ -89,9 +112,12 @@ export function buildAttentionItems(
         key: `cap-${l.id}`,
         severity: capped ? 1 : 2,
         tone: capped ? "red" : "amber",
-        text: capped
-          ? `/${l.alias} hit its click cap (${l.total_clicks}/${l.max_clicks}) and stopped serving`
-          : `/${l.alias} at ${l.total_clicks}/${l.max_clicks} clicks, close to its cap`,
+        category: "cap",
+        subject: `/${l.alias}`,
+        detail: capped
+          ? `hit its cap (${l.total_clicks}/${l.max_clicks}), stopped serving`
+          : `${l.total_clicks}/${l.max_clicks} clicks used`,
+        action: capped ? "Raise cap" : "Review",
         href: `/dashboard/links/${l.alias}`,
       })
     }
@@ -102,14 +128,17 @@ export function buildAttentionItems(
     .filter((l) => l.alias && (l.status === "EXPIRED" || l.status === "BLOCKED"))
     .slice(0, 2)
   for (const l of dead) {
+    const blocked = l.status === "BLOCKED"
     items.push({
       key: `dead-${l.id}`,
-      severity: l.status === "BLOCKED" ? 1 : 3,
-      tone: l.status === "BLOCKED" ? "red" : "amber",
-      text:
-        l.status === "BLOCKED"
-          ? `/${l.alias} is blocked`
-          : `/${l.alias} expired ${formatWhen(l.last_click)}`,
+      severity: blocked ? 1 : 3,
+      tone: blocked ? "red" : "amber",
+      category: blocked ? "blocked" : "expired",
+      subject: `/${l.alias}`,
+      detail: blocked
+        ? "blocked and not serving"
+        : `expired, last click ${formatWhen(l.last_click)}`,
+      action: "Review",
       href: `/dashboard/links/${l.alias}`,
     })
   }
@@ -118,6 +147,11 @@ export function buildAttentionItems(
 }
 
 const MAX_ROWS = 4
+
+const TAG_TONES = {
+  red: "bg-destructive/10 text-destructive dark:bg-destructive/15",
+  amber: "bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400",
+} as const
 
 export function Attention({
   links,
@@ -170,16 +204,23 @@ export function Attention({
               className="hover:bg-accent/40 group flex h-11 items-center gap-3 px-4 transition-colors duration-150"
             >
               <span
-                aria-hidden
                 className={cn(
-                  "size-1.5 shrink-0 rounded-full",
-                  item.tone === "red" ? "bg-destructive" : "bg-amber-500",
+                  "label-mono w-[4.5rem] shrink-0 rounded px-1.5 py-0.5 text-center text-[10px] whitespace-nowrap",
+                  TAG_TONES[item.tone],
                 )}
-              />
-              <span className="text-foreground min-w-0 flex-1 truncate text-sm">
-                {item.text}
+              >
+                {item.category}
               </span>
-              <ArrowUpRight className="text-muted-foreground/0 group-hover:text-muted-foreground size-3.5 shrink-0 transition-colors duration-150" />
+              <span className="text-foreground shrink-0 font-mono text-[13px]">
+                {item.subject}
+              </span>
+              <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+                {item.detail}
+              </span>
+              <span className="text-muted-foreground group-hover:text-foreground flex shrink-0 items-center gap-1 text-xs transition-colors duration-150">
+                {item.action}
+                <ArrowUpRight className="size-3" />
+              </span>
             </Link>
           ))
         )}

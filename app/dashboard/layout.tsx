@@ -12,6 +12,7 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardTopbar } from "@/components/dashboard/topbar"
 import { LinkComposer } from "@/components/dashboard/links/composer"
 import { SearchParamsKeeper } from "@/components/dashboard/search-params-keeper"
+import { SetupChecklist } from "@/components/dashboard/setup-checklist"
 import { ShortcutsHelp } from "@/components/dashboard/shortcuts-help"
 
 export default function DashboardLayout({
@@ -69,6 +70,7 @@ export default function DashboardLayout({
       <DashboardCommandMenu />
       <LinkComposer />
       <SearchParamsKeeper />
+      <SetupChecklist />
       <ShortcutsHelp />
       <Toaster
         position="bottom-right"
