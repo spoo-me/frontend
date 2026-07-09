@@ -37,8 +37,12 @@ function IconTick(props: {
   const { x = 0, y = 0, payload, dimension } = props
   const value = String(payload?.value ?? "")
   return (
-    <foreignObject x={x - 8} y={y + 4} width={16} height={16}>
-      <DimensionIcon dimension={dimension} value={value} className="size-4" />
+    // Flex-centered block icon: an inline img sits on the text baseline
+    // and its descender gap pushes it past the box, clipping the mark.
+    <foreignObject x={x - 9} y={y + 2} width={18} height={18}>
+      <div className="flex h-full w-full items-center justify-center **:block">
+        <DimensionIcon dimension={dimension} value={value} className="size-4" />
+      </div>
     </foreignObject>
   )
 }
@@ -110,7 +114,7 @@ export function ColumnChart({
             }}
             tickLine={false}
             axisLine={false}
-            height={26}
+            height={30}
             tick={
               ICON_AXIS_DIMENSIONS.has(dimension) ? (
                 <IconTick dimension={dimension} />
