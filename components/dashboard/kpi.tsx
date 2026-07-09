@@ -9,6 +9,7 @@ import { Panel } from "@/components/dashboard/section"
  */
 export function KpiCard({
   label,
+  badge,
   value,
   sub,
   delta,
@@ -18,6 +19,8 @@ export function KpiCard({
   className,
 }: {
   label: string
+  /** Quiet annotation after the label (e.g. a stat widget's scope chip). */
+  badge?: React.ReactNode
   value: string
   sub?: string
   /** Percent change; sign carries direction. */
@@ -33,7 +36,10 @@ export function KpiCard({
   return (
     <Panel className={cn("bg-shell flex flex-col", className)}>
       <div className="px-4 pt-3.5 pb-3">
-        <div className="label-mono text-muted-foreground">{label}</div>
+        <div className="label-mono text-muted-foreground flex min-w-0 items-center gap-1.5">
+          <span className="truncate">{label}</span>
+          {badge}
+        </div>
         <div className="mt-2 flex items-baseline gap-1.5">
           <span className="text-foreground font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums">
             {value}

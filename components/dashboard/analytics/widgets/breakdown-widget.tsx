@@ -59,6 +59,7 @@ export function BreakdownWidget({
   h,
   rows,
   loading,
+  disjoint,
   editing,
   expanded,
   onExpandedChange,
@@ -71,6 +72,8 @@ export function BreakdownWidget({
   h: number
   rows: DimensionRow[]
   loading: boolean
+  /** Scope and board filters exclude each other — nothing to show. */
+  disjoint?: boolean
   editing?: boolean
   expanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
@@ -123,6 +126,7 @@ export function BreakdownWidget({
     <WidgetShell
       icon={meta.icon}
       title={config.title ?? meta.title}
+      scope={config.scope}
       editing={editing}
       onRemove={onRemove}
       panelClassName={
@@ -169,6 +173,10 @@ export function BreakdownWidget({
     >
       {loading ? (
         <Skeleton className="m-2 h-[calc(100%-16px)] w-auto" />
+      ) : disjoint ? (
+        <div className="text-muted-foreground/70 flex h-full items-center justify-center px-6 text-center text-xs">
+          scope excluded by board filters
+        </div>
       ) : (
         /* Overlapping crossfade: views stay absolutely positioned so the
            panel is never empty mid-switch; padding lives inside each view. */

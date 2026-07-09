@@ -8,6 +8,7 @@ import {
   Ellipsis,
   ExternalLink,
   Pause,
+  Pin,
   Play,
   ScanLine,
   Trash2,
@@ -15,6 +16,8 @@ import {
 import { toast } from "sonner"
 
 import { deleteUrl, setUrlStatus, type UrlListItem } from "@/lib/api"
+import { MAX_WIDGETS } from "@/lib/analytics-layout"
+import { useAnalyticsLayout } from "@/hooks/use-analytics-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -51,9 +54,32 @@ export function LinkActions({
 }) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const lay = useAnalyticsLayout()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [confirmText, setConfirmText] = React.useState("")
   const confirmed = confirmText.trim().toLowerCase() === "delete"
+
+  // Pin: land this link's clicks chart on the analytics board, already
+  // scoped and titled. One click means one click — no dialog.
+  const pin = () => {
+    const alias = link.alias
+    if (!alias) return
+    if (lay.layout.widgets.length >= MAX_WIDGETS) {
+      toast.error("The analytics board is full")
+      return
+    }
+    lay.addWidget("timeseries", {
+      scope: { short_code: [alias] },
+      title: `/${alias}`,
+    })
+    toast.success("Pinned to Analytics", {
+      description: `Clicks over time for /${link.alias}`,
+      action: {
+        label: "View",
+        onClick: () => router.push("/dashboard/analytics"),
+      },
+    })
+  }
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["urls"] })
@@ -123,6 +149,10 @@ export function LinkActions({
           >
             <ScanLine />
             Full page
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={pin}>
+            <Pin />
+            Pin to dashboard
           </DropdownMenuItem>
           {canToggle && (
             <>

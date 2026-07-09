@@ -1,19 +1,34 @@
 import {
+  Activity,
   Building2,
   ChartArea,
+  ChartBar,
+  ChartColumn,
   ChartLine,
+  ChartPie,
   Compass,
+  Donut,
   Gauge,
   Globe2,
+  Layers,
+  LayoutDashboard,
   Link2,
+  Map as MapIcon,
   MapPin,
   MonitorSmartphone,
+  MousePointerClick,
+  Table2,
+  TrendingUp,
+  Users,
 } from "lucide-react"
 
 import type {
   Accent,
   BreakdownDimension,
+  BreakdownViz,
+  SeriesMetric,
   StatMetric,
+  TimeseriesViz,
   Widget,
   WidgetConfigPatch,
   WidgetKind,
@@ -138,6 +153,43 @@ export function catalogMatch(
     return true // timeseries
   })
 }
+
+/** The viz registries: one list per kind, shared by the edit bar's
+    default-view dropdown and the constructor's chart tiles. */
+export const TS_VIZ: Array<{
+  value: TimeseriesViz
+  icon: React.ElementType
+  label: string
+}> = [
+  { value: "area", icon: ChartArea, label: "Area" },
+  { value: "line", icon: ChartLine, label: "Line" },
+  { value: "step", icon: Activity, label: "Step" },
+  { value: "bars", icon: ChartColumn, label: "Bars" },
+  { value: "cumulative", icon: TrendingUp, label: "Cumulative" },
+  { value: "table", icon: Table2, label: "Table" },
+]
+export const BD_VIZ: Array<{
+  value: BreakdownViz
+  icon: React.ElementType
+  label: string
+}> = [
+  { value: "bars", icon: ChartBar, label: "Bars" },
+  { value: "columns", icon: ChartColumn, label: "Columns" },
+  { value: "donut", icon: Donut, label: "Donut" },
+  { value: "pie", icon: ChartPie, label: "Pie" },
+  { value: "treemap", icon: LayoutDashboard, label: "Treemap" },
+  { value: "map", icon: MapIcon, label: "Map" },
+  { value: "table", icon: Table2, label: "Table" },
+]
+export const SERIES_METRIC_META: Array<{
+  value: SeriesMetric
+  icon: React.ElementType
+  label: string
+}> = [
+  { value: "total", icon: MousePointerClick, label: "Total clicks" },
+  { value: "unique", icon: Users, label: "Unique visitors" },
+  { value: "both", icon: Layers, label: "Both" },
+]
 
 /** Chart ink presets resolve to per-theme CSS variables (globals.css). */
 export const ACCENT_VARS: Record<Accent, string> = {

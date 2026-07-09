@@ -33,7 +33,12 @@ const fullFmt = new Intl.DateTimeFormat("en", {
   hour: "numeric",
 })
 
-type Datum = TimeBucket & { t: number }
+type Datum = TimeBucket & {
+  t: number
+  /** Previous-period ghost values, re-indexed onto this bucket's t. */
+  prev_clicks?: number
+  prev_unique?: number
+}
 
 /** Draw duration; the animate flag holds slightly longer so nothing cancels it. */
 const ANIM_MS = 700
@@ -42,14 +47,17 @@ function ChartTooltip({
   active,
   payload,
   hourly,
+  metric,
 }: {
   active?: boolean
   payload?: Array<{ payload: Datum }>
   hourly: boolean
+  metric: ChartMetric
 }) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload
   const rate = d.clicks ? Math.round((d.unique_clicks / d.clicks) * 100) : 0
+  const prev = metric === "unique" ? d.prev_unique : d.prev_clicks
   return (
     <div className="min-w-[168px] overflow-hidden rounded-lg border border-border/60 bg-popover shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)]">
       <div className="border-b border-border/60 bg-muted/40 px-3 py-1.5">
@@ -60,6 +68,7 @@ function ChartTooltip({
       <div className="space-y-1 px-3 py-2">
         <Row swatch="fill" label="Clicks" value={formatCount(d.clicks)} />
         <Row swatch="ring" label="Unique" value={formatCount(d.unique_clicks)} />
+        {prev != null && <Row label="Previous" value={formatCount(prev)} muted />}
         <div className="mt-1.5 border-t border-border/60 pt-1.5">
           <Row label="Unique rate" value={`${rate}%`} muted />
         </div>
@@ -106,6 +115,7 @@ export type ChartMetric = "total" | "unique" | "both"
 
 export function ClicksChart({
   series,
+  prevSeries,
   hourly = false,
   height = 240,
   metric = "total",
@@ -114,6 +124,9 @@ export function ClicksChart({
   onRangeSelect,
 }: {
   series: TimeBucket[]
+  /** The equal-length window before the range; drawn as a dashed neutral
+      ghost aligned bucket-for-bucket (area/line/step/cumulative only). */
+  prevSeries?: TimeBucket[]
   hourly?: boolean
   height?: number | string
   /** total / unique swap the solid series; "both" overlays uniques dashed. */
@@ -135,19 +148,40 @@ export function ClicksChart({
   // Gradient ids are document-global; multiple chart instances with
   // different accents must not share one.
   const fillId = React.useId()
+  const ghost = !!prevSeries && variant !== "bars"
   const data: Datum[] = React.useMemo(() => {
-    const base = series.map((b) => ({ ...b, t: new Date(b.bucket).getTime() }))
+    let base: Datum[] = series.map((b) => ({
+      ...b,
+      t: new Date(b.bucket).getTime(),
+    }))
+    if (ghost) {
+      // The previous window is re-indexed onto the current buckets' t so
+      // both periods share one x axis, aligned bucket-for-bucket.
+      base = base.map((b, i) => ({
+        ...b,
+        prev_clicks: prevSeries![i]?.clicks,
+        prev_unique: prevSeries![i]?.unique_clicks,
+      }))
+    }
     if (variant !== "cumulative") return base
     // Running totals: the tooltip then reads "clicks so far", which is the
     // honest reading of a cumulative curve.
     let clicks = 0
     let unique = 0
+    let prevClicks = 0
+    let prevUnique = 0
     return base.map((b) => ({
       ...b,
       clicks: (clicks += b.clicks),
       unique_clicks: (unique += b.unique_clicks),
+      ...(b.prev_clicks != null
+        ? {
+            prev_clicks: (prevClicks += b.prev_clicks),
+            prev_unique: (prevUnique += b.prev_unique ?? 0),
+          }
+        : {}),
     }))
-  }, [series, variant])
+  }, [series, prevSeries, ghost, variant])
   const tickFmt = hourly ? hourFmt : dayFmt
 
   // Animation = data change, and recharts can't be trusted to deliver it:
@@ -158,8 +192,8 @@ export function ClicksChart({
   // recharts' update interpolation is used only to morph metric switches.
   const dataIdentity = React.useMemo(
     () =>
-      `${data.length}:${data[0]?.t ?? 0}:${data[data.length - 1]?.clicks ?? 0}:${data[data.length - 1]?.t ?? 0}`,
-    [data]
+      `${data.length}:${data[0]?.t ?? 0}:${data[data.length - 1]?.clicks ?? 0}:${data[data.length - 1]?.t ?? 0}:${ghost ? "g" : ""}`,
+    [data, ghost]
   )
   const [drawnData, setDrawnData] = React.useState<string | null>(null)
   const draw = drawnData !== dataIdentity
@@ -292,7 +326,7 @@ export function ClicksChart({
               allowDecimals={false}
             />
             <Tooltip
-              content={<ChartTooltip hourly={hourly} />}
+              content={<ChartTooltip hourly={hourly} metric={metric} />}
               cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.06 }}
             />
             <Bar
@@ -363,13 +397,28 @@ export function ClicksChart({
               allowDecimals={false}
             />
             <Tooltip
-              content={<ChartTooltip hourly={hourly} />}
+              content={<ChartTooltip hourly={hourly} metric={metric} />}
               cursor={{
                 stroke: "var(--muted-foreground)",
                 strokeDasharray: "3 4",
                 strokeOpacity: 0.5,
               }}
             />
+            {/* Ghost first so the live series paints over it. */}
+            {ghost && (
+              <Area
+                type={variant === "step" ? "stepAfter" : "monotone"}
+                dataKey={metric === "unique" ? "prev_unique" : "prev_clicks"}
+                stroke="var(--muted-foreground)"
+                strokeOpacity={0.45}
+                strokeWidth={1.25}
+                strokeDasharray="4 3"
+                fill="none"
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
+              />
+            )}
             <Area
               type={variant === "step" ? "stepAfter" : "monotone"}
               dataKey={metric === "unique" ? "unique_clicks" : "clicks"}

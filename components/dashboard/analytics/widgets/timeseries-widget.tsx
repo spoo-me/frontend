@@ -38,6 +38,8 @@ export function TimeseriesWidget({
   config,
   loading,
   stats,
+  prevStats,
+  disjoint,
   editing,
   expanded,
   onExpandedChange,
@@ -48,6 +50,10 @@ export function TimeseriesWidget({
   config: TimeseriesConfig
   loading: boolean
   stats?: StatsResponse
+  /** Previous equal-length window; drawn as a ghost when compare is on. */
+  prevStats?: StatsResponse
+  /** Scope and board filters exclude each other — nothing to show. */
+  disjoint?: boolean
   editing?: boolean
   expanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
@@ -64,6 +70,13 @@ export function TimeseriesWidget({
   )
   const { metric } = config
   const series = React.useMemo(() => (stats ? timeSeriesOf(stats) : []), [stats])
+  const prevSeries = React.useMemo(
+    () =>
+      config.compare === "previous" && prevStats
+        ? timeSeriesOf(prevStats)
+        : undefined,
+    [config.compare, prevStats],
+  )
   const hourly = stats?.time_bucket_info.strategy === "hourly"
 
   const timeRows = React.useMemo(() => [...series].reverse(), [series])
@@ -92,6 +105,7 @@ export function TimeseriesWidget({
     <WidgetShell
       icon={ChartLine}
       title={config.title ?? "Clicks over time"}
+      scope={config.scope}
       editing={editing}
       onRemove={onRemove}
       panelClassName={
@@ -140,6 +154,10 @@ export function TimeseriesWidget({
     >
       {loading ? (
         <Skeleton className="h-full w-full" />
+      ) : disjoint ? (
+        <div className="text-muted-foreground/70 flex h-full items-center justify-center px-6 text-center text-xs">
+          scope excluded by board filters
+        </div>
       ) : (
         <>
           {/* One chart layer only: the parent re-keys this widget when the
@@ -153,6 +171,7 @@ export function TimeseriesWidget({
           >
             <ClicksChart
               series={series}
+              prevSeries={prevSeries}
               hourly={hourly}
               height="100%"
               metric={metric}

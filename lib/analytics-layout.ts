@@ -70,17 +70,36 @@ export const ACCENTS = [
 ] as const
 export type Accent = (typeof ACCENTS)[number]
 
+/** Dimensions a widget can be scoped to — the same six the global filter
+    chips speak. `short_code` merges against the toolbar's link filter. */
+export const SCOPE_DIMENSIONS = [
+  "short_code",
+  "referrer",
+  "country",
+  "browser",
+  "os",
+  "city",
+] as const
+export type ScopeDimension = (typeof SCOPE_DIMENSIONS)[number]
+/** A widget's own lens: values OR within a dimension, AND across dimensions,
+    AND with the board's global filters. */
+export type WidgetScope = Partial<Record<ScopeDimension, string[]>>
+
 type WidgetExtras = {
   /** Custom display name; absent = the catalog title. */
   title?: string
   /** Chart ink; absent = violet (the brand default). */
   accent?: Accent
+  /** Per-widget filters; absent = the widget reads the board's shared lens. */
+  scope?: WidgetScope
 }
 
 export type StatConfig = { metric: StatMetric } & WidgetExtras
 export type TimeseriesConfig = {
   viz: TimeseriesViz
   metric: SeriesMetric
+  /** Overlay the equal-length window before the range as a ghost line. */
+  compare?: "previous"
 } & WidgetExtras
 export type BreakdownConfig = {
   dimension: BreakdownDimension
@@ -240,6 +259,26 @@ function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T):
   return allowed.includes(v as T) ? (v as T) : fallback
 }
 
+/** Clamp anything scope-shaped into a valid WidgetScope, or drop it. */
+function normalizeScope(raw: unknown): WidgetScope | undefined {
+  if (!isRecord(raw)) return undefined
+  const scope: WidgetScope = {}
+  for (const dim of SCOPE_DIMENSIONS) {
+    const values = raw[dim]
+    if (!Array.isArray(values)) continue
+    const clean = [
+      ...new Set(
+        values
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim().slice(0, 80))
+          .filter(Boolean),
+      ),
+    ].slice(0, 10)
+    if (clean.length) scope[dim] = clean
+  }
+  return Object.keys(scope).length ? scope : undefined
+}
+
 function normalizeConfig(kind: WidgetKind, raw: unknown): Widget["config"] {
   const cfg = isRecord(raw) ? raw : {}
   const extras: WidgetExtras = {}
@@ -247,12 +286,15 @@ function normalizeConfig(kind: WidgetKind, raw: unknown): Widget["config"] {
     extras.title = cfg.title.trim().slice(0, 40)
   if (ACCENTS.includes(cfg.accent as Accent) && cfg.accent !== "violet")
     extras.accent = cfg.accent as Accent
+  const scope = normalizeScope(cfg.scope)
+  if (scope) extras.scope = scope
   if (kind === "stat")
     return { metric: pick(cfg.metric, STAT_METRICS, "total_clicks"), ...extras }
   if (kind === "timeseries")
     return {
       viz: pick(cfg.viz, TIMESERIES_VIZ, "area"),
       metric: pick(cfg.metric, SERIES_METRICS, "total"),
+      ...(cfg.compare === "previous" ? { compare: "previous" as const } : {}),
       ...extras,
     }
   const dimension = pick(cfg.dimension, BREAKDOWN_DIMENSIONS, "referrer")
@@ -419,13 +461,16 @@ export function withWidgetDuplicated(
 }
 
 /** Loose patch shape — `normalizeConfig` clamps whatever lands per kind.
-    Clearing overrides: pass `title: ""` or `accent: "violet"`. */
+    Clearing overrides: pass `title: ""`, `accent: "violet"`, `scope: null`
+    or `compare: null`. */
 export type WidgetConfigPatch = Partial<{
   metric: StatMetric | SeriesMetric
   viz: TimeseriesViz | BreakdownViz
   dimension: BreakdownDimension
   title: string
   accent: Accent
+  scope: WidgetScope | null
+  compare: "previous" | null
 }>
 
 export function withWidgetConfig(
@@ -441,4 +486,37 @@ export function withWidgetConfig(
     } as Widget
   })
   return { version: 1, widgets }
+}
+
+/* ---------- scope composition ---------- */
+
+/** Compose the board's global lens with a widget's own scope: values OR
+    within a dimension, AND across sources — both present means intersection.
+    An empty intersection can't be expressed as a stats query (an empty list
+    means "no filter"), so it returns "disjoint" and the caller renders the
+    honest empty state without fetching. */
+export function mergeScope(
+  globalLinks: string[],
+  globalFilters: Partial<Record<Exclude<ScopeDimension, "short_code">, string[]>>,
+  scope: WidgetScope | undefined,
+):
+  | { links: string[] | undefined; filters: Record<string, string[]> }
+  | "disjoint" {
+  const both = (a?: string[], b?: string[]): string[] | undefined => {
+    if (a?.length && b?.length) {
+      const set = new Set(a)
+      return b.filter((v) => set.has(v)) // may be [] = disjoint
+    }
+    return a?.length ? a : b?.length ? b : undefined
+  }
+  const links = both(globalLinks, scope?.short_code)
+  if (links !== undefined && links.length === 0) return "disjoint"
+  const filters: Record<string, string[]> = {}
+  for (const dim of SCOPE_DIMENSIONS) {
+    if (dim === "short_code") continue
+    const merged = both(globalFilters[dim], scope?.[dim])
+    if (merged !== undefined && merged.length === 0) return "disjoint"
+    if (merged) filters[dim] = merged
+  }
+  return { links, filters }
 }

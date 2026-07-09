@@ -3,26 +3,23 @@
 import * as React from "react"
 import { motion } from "motion/react"
 import {
-  Activity,
-  ChartArea,
-  ChartBar,
-  ChartColumn,
-  ChartLine,
-  ChartPie,
-  Donut,
+  ArrowLeft,
+  Building2,
+  Compass,
+  Copy,
   Ellipsis,
-  Layers,
-  LayoutDashboard,
-  Map as MapIcon,
-  MousePointerClick,
+  Funnel,
+  Globe2,
+  History,
+  Link2,
+  MapPin,
+  MonitorSmartphone,
   Plus,
   Redo2,
   RotateCcw,
-  Table2,
+  SquarePen,
   Trash2,
-  TrendingUp,
   Undo2,
-  Users,
   X,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -31,16 +28,23 @@ import { cn } from "@/lib/utils"
 import {
   ACCENTS,
   type AnalyticsLayout,
-  type BreakdownViz,
+  type ScopeDimension,
   type SeriesMetric,
-  type TimeseriesViz,
   type Widget,
   type WidgetConfigPatch,
 } from "@/lib/analytics-layout"
+import { DimensionFilter } from "@/components/dashboard/analytics/dimension-filter"
+import { WidgetComposer } from "@/components/dashboard/analytics/widget-composer"
+import type { WidgetStatsCtx } from "@/hooks/use-widget-stats"
+import type { TimeRange } from "@/components/dashboard/analytics/time-range"
+import type { WidgetKind } from "@/lib/analytics-layout"
 import {
   ACCENT_VARS,
+  BD_VIZ,
   catalogMatch,
   catalogTitle,
+  SERIES_METRIC_META as METRICS,
+  TS_VIZ,
   WIDGET_CATALOG,
   widgetIcon,
 } from "@/components/dashboard/analytics/widget-meta"
@@ -82,33 +86,24 @@ import { Textarea } from "@/components/ui/textarea"
  * view, accent, reset, delete). No panel, no drawer — a command bar.
  */
 
-const TS_VIZ: Array<{ value: TimeseriesViz; icon: React.ElementType; label: string }> = [
-  { value: "area", icon: ChartArea, label: "Area" },
-  { value: "line", icon: ChartLine, label: "Line" },
-  { value: "step", icon: Activity, label: "Step" },
-  { value: "bars", icon: ChartColumn, label: "Bars" },
-  { value: "cumulative", icon: TrendingUp, label: "Cumulative" },
-  { value: "table", icon: Table2, label: "Table" },
-]
-const BD_VIZ: Array<{ value: BreakdownViz; icon: React.ElementType; label: string }> = [
-  { value: "bars", icon: ChartBar, label: "Bars" },
-  { value: "columns", icon: ChartColumn, label: "Columns" },
-  { value: "donut", icon: Donut, label: "Donut" },
-  { value: "pie", icon: ChartPie, label: "Pie" },
-  { value: "treemap", icon: LayoutDashboard, label: "Treemap" },
-  { value: "map", icon: MapIcon, label: "Map" },
-  { value: "table", icon: Table2, label: "Table" },
-]
-const METRICS: Array<{ value: SeriesMetric; icon: React.ElementType; label: string }> = [
-  { value: "total", icon: MousePointerClick, label: "Total clicks" },
-  { value: "unique", icon: Users, label: "Unique visitors" },
-  { value: "both", icon: Layers, label: "Both" },
-]
 const METRIC_SHORT: Record<SeriesMetric, string> = {
   total: "Total",
   unique: "Unique",
   both: "Both",
 }
+/** The six scopeable dimensions, with filter-chip labels (not card titles). */
+const SCOPE_FIELDS: Array<{
+  dim: ScopeDimension
+  label: string
+  icon: React.ElementType
+}> = [
+  { dim: "short_code", label: "Links", icon: Link2 },
+  { dim: "referrer", label: "Referrer", icon: Globe2 },
+  { dim: "country", label: "Country", icon: MapPin },
+  { dim: "browser", label: "Browser", icon: Compass },
+  { dim: "os", label: "OS", icon: MonitorSmartphone },
+  { dim: "city", label: "City", icon: Building2 },
+]
 
 function BarDivider() {
   return <span aria-hidden className="bg-border/60 mx-0.5 h-4 w-px shrink-0" />
@@ -149,11 +144,17 @@ function BarIconButton({
 export function EditBar({
   layout,
   selected,
+  range,
+  cellCtx,
+  rangeLabel,
+  deltaLabel,
   canUndo,
   canRedo,
   onUndo,
   onRedo,
   onAdd,
+  onAddCustom,
+  onDuplicate,
   onRemove,
   onResetWidget,
   onConfigChange,
@@ -164,11 +165,20 @@ export function EditBar({
 }: {
   layout: AnalyticsLayout
   selected: Widget | null
+  /** The board's time range — scope pickers list values from it. */
+  range: TimeRange
+  /** The same data context the board's cells use; powers the constructor's
+      live preview. */
+  cellCtx: WidgetStatsCtx
+  rangeLabel: string
+  deltaLabel: string
   canUndo: boolean
   canRedo: boolean
   onUndo: () => void
   onRedo: () => void
   onAdd: (entryKey: string) => void
+  onAddCustom: (kind: WidgetKind, seed: WidgetConfigPatch) => void
+  onDuplicate: (id: string) => void
   onRemove: (id: string) => void
   onResetWidget: (id: string) => void
   onConfigChange: (id: string, patch: WidgetConfigPatch) => void
@@ -182,6 +192,28 @@ export function EditBar({
   const [importOpen, setImportOpen] = React.useState(false)
   const [importText, setImportText] = React.useState("")
   const [importError, setImportError] = React.useState(false)
+  // Mounted on demand: the constructor's preview queries live only while
+  // it's open, and every open starts from a fresh draft.
+  const [composerOpen, setComposerOpen] = React.useState(false)
+  // Scope sub-state is keyed to the widget it was opened for: selecting a
+  // different widget (or deselecting) falls back to the widget state.
+  const [scopeFor, setScopeFor] = React.useState<string | null>(null)
+  const scopeOpen = !!selected && scopeFor === selected.id
+
+  // Esc closes the scope state before the page's deselect handler runs.
+  // Capture phase; an open picker popover gets to close itself first.
+  React.useEffect(() => {
+    if (!scopeOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      if (document.querySelector("[data-radix-popper-content-wrapper]")) return
+      e.preventDefault()
+      e.stopPropagation()
+      setScopeFor(null)
+    }
+    window.addEventListener("keydown", onKey, true)
+    return () => window.removeEventListener("keydown", onKey, true)
+  }, [scopeOpen])
 
   const exportLayout = async () => {
     await navigator.clipboard.writeText(JSON.stringify(layout, null, 2))
@@ -244,7 +276,47 @@ export function EditBar({
           layout
           className="border-border/60 bg-popover/95 pointer-events-auto flex items-center gap-1 rounded-full border p-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]"
         >
-          {selected ? (
+          {selected && scopeOpen ? (
+            /* ── scope state: this widget's own lens ──────────────────── */
+            <>
+              <BarIconButton label="Back" onClick={() => setScopeFor(null)}>
+                <ArrowLeft className="size-3.5" strokeWidth={1.75} />
+              </BarIconButton>
+              {selectedIconEl}
+              <span className="label-mono text-muted-foreground/60 px-1 text-[10px]">
+                Scope
+              </span>
+              <BarDivider />
+              <span className="flex items-center gap-1.5 px-1">
+                {SCOPE_FIELDS.map((f) => (
+                  <DimensionFilter
+                    key={f.dim}
+                    compact
+                    dimension={f.dim}
+                    label={f.label}
+                    icon={f.icon}
+                    range={range}
+                    selected={selected.config.scope?.[f.dim] ?? []}
+                    onChange={(values) =>
+                      onConfigChange(selected.id, {
+                        scope: { ...selected.config.scope, [f.dim]: values },
+                      })
+                    }
+                  />
+                ))}
+              </span>
+              <BarDivider />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={!selected.config.scope}
+                onClick={() => onConfigChange(selected.id, { scope: null })}
+              >
+                Clear
+              </Button>
+            </>
+          ) : selected ? (
             /* ── widget state ─────────────────────────────────────────── */
             <>
               {selectedIconEl}
@@ -321,6 +393,23 @@ export function EditBar({
                         {m.label}
                       </DropdownMenuCheckboxItem>
                     ))}
+                    {selected.kind === "timeseries" && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuCheckboxItem
+                          className="whitespace-nowrap"
+                          checked={selected.config.compare === "previous"}
+                          onCheckedChange={(on) =>
+                            onConfigChange(selected.id, {
+                              compare: on ? "previous" : null,
+                            })
+                          }
+                        >
+                          <History className="size-3.5" strokeWidth={1.75} />
+                          vs previous
+                        </DropdownMenuCheckboxItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -366,6 +455,26 @@ export function EditBar({
                 </DropdownMenuContent>
               </DropdownMenu>
               <BarDivider />
+              <BarIconButton
+                label="Scope"
+                onClick={() => setScopeFor(selected.id)}
+              >
+                <span className="relative flex">
+                  <Funnel className="size-3.5" strokeWidth={1.75} />
+                  {selected.config.scope && (
+                    <span
+                      aria-hidden
+                      className="bg-brand absolute -top-0.5 -right-0.5 size-1.5 rounded-full"
+                    />
+                  )}
+                </span>
+              </BarIconButton>
+              <BarIconButton
+                label="Duplicate"
+                onClick={() => onDuplicate(selected.id)}
+              >
+                <Copy className="size-3.5" strokeWidth={1.75} />
+              </BarIconButton>
               <BarIconButton
                 label="Reset chart"
                 onClick={() => onResetWidget(selected.id)}
@@ -421,6 +530,12 @@ export function EditBar({
                       })}
                     </React.Fragment>
                   ))}
+                  <DropdownMenuSeparator />
+                  {/* The authoring door: scoped widgets aren't catalog items. */}
+                  <DropdownMenuItem onSelect={() => setComposerOpen(true)}>
+                    <SquarePen className="size-3.5" strokeWidth={1.75} />
+                    Custom chart…
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <BarDivider />
@@ -470,6 +585,18 @@ export function EditBar({
           )}
         </motion.div>
       </motion.div>
+
+      {composerOpen && (
+        <WidgetComposer
+          onOpenChange={(v) => setComposerOpen(v)}
+          ctx={cellCtx}
+          range={range}
+          rangeLabel={rangeLabel}
+          deltaLabel={deltaLabel}
+          widgetCount={layout.widgets.length}
+          onAdd={onAddCustom}
+        />
+      )}
 
       <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
         <AlertDialogContent>

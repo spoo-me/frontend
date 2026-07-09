@@ -23,8 +23,9 @@ import {
   MonitorSmartphone,
   Plus,
 } from "lucide-react"
-import { dimensionRowsOf, getStats, type StatsDimension } from "@/lib/api"
+import { getStats, type StatsDimension } from "@/lib/api"
 import type { Widget } from "@/lib/analytics-layout"
+import type { WidgetStatsCtx } from "@/hooks/use-widget-stats"
 import { FilterChip } from "@/components/dashboard/filter-chip"
 import { Button } from "@/components/ui/button"
 import { TimeRangePicker } from "@/components/dashboard/analytics/time-range-picker"
@@ -42,16 +43,8 @@ import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { onAnalyticsEditMode } from "@/components/dashboard/analytics/edit-mode"
 import { EditBar } from "@/components/dashboard/analytics/edit-bar"
 import { MobileStack, WidgetGrid } from "@/components/dashboard/analytics/widget-grid"
-import { WidgetRemoveButton } from "@/components/dashboard/analytics/widget-shell"
-import {
-  ACCENT_VARS,
-  DIMENSION_META,
-  STAT_META,
-  WIDGET_CATALOG,
-} from "@/components/dashboard/analytics/widget-meta"
-import { StatWidget } from "@/components/dashboard/analytics/widgets/stat-widget"
-import { TimeseriesWidget } from "@/components/dashboard/analytics/widgets/timeseries-widget"
-import { BreakdownWidget } from "@/components/dashboard/analytics/widgets/breakdown-widget"
+import { WidgetCell } from "@/components/dashboard/analytics/widget-cell"
+import { WIDGET_CATALOG } from "@/components/dashboard/analytics/widget-meta"
 
 const FILTER_DIMS = [
   { key: "link", dim: "short_code", label: "Links", icon: Link2 },
@@ -335,75 +328,32 @@ export default function AnalyticsPage() {
   }
 
   /* ---------- widget rendering ---------- */
-  const renderWidget = (w: Widget) => {
-    const accentStyle = {
-      "--chart-accent": ACCENT_VARS[w.config.accent ?? "violet"],
-    } as React.CSSProperties
-    const body = (() => {
-      switch (w.kind) {
-        case "stat":
-          return (
-            <StatWidget
-              config={w.config}
-              h={w.grid.h}
-              stats={s}
-              prevStats={prev}
-              rangeLabel={rangeLabel}
-              deltaLabel={deltaLabel}
-            />
-          )
-        case "timeseries":
-          return (
-            <TimeseriesWidget
-              key={`view:${w.config.viz}`}
-              config={w.config}
-              loading={stats.isPending}
-              stats={s}
-              editing={editing}
-              expanded={expandId === w.id}
-              onExpandedChange={
-                editing ? undefined : (v) => handleExpand(v ? w.id : null)
-              }
-              onConfigChange={(p) => lay.updateWidgetConfig(w.id, p)}
-              onRangeSelect={(rFrom, rTo) => applyRange({ from: rFrom, to: rTo })}
-              onRemove={() => lay.removeWidget(w.id)}
-            />
-          )
-        case "breakdown": {
-          const meta = DIMENSION_META[w.config.dimension]
-          return (
-            <BreakdownWidget
-              key={`view:${w.config.viz}`}
-              config={w.config}
-              w={w.grid.w}
-              h={w.grid.h}
-              rows={s ? dimensionRowsOf(s, w.config.dimension) : []}
-              loading={stats.isPending}
-              editing={editing}
-              expanded={expandId === w.id}
-              onExpandedChange={
-                editing ? undefined : (v) => handleExpand(v ? w.id : null)
-              }
-              onConfigChange={(p) => lay.updateWidgetConfig(w.id, p)}
-              onSelect={toggleFilter(meta.filterKey)}
-              onRemove={() => lay.removeWidget(w.id)}
-            />
-          )
-        }
-      }
-    })()
-    return (
-      <div className="relative h-full" style={accentStyle}>
-        {body}
-        {editing && w.kind === "stat" && (
-          <WidgetRemoveButton
-            title={STAT_META[w.config.metric].label}
-            onRemove={() => lay.removeWidget(w.id)}
-          />
-        )}
-      </div>
-    )
+  // Per-widget data context: unscoped widgets read the shared queries,
+  // scoped widgets fetch through their own lens (use-widget-stats).
+  const widgetCtx: WidgetStatsCtx = {
+    range,
+    links,
+    filters,
+    refreshEvery,
+    shared: { stats: s, prev, loading: stats.isPending },
   }
+  const renderWidget = (w: Widget) => (
+    <WidgetCell
+      widget={w}
+      ctx={widgetCtx}
+      editing={editing}
+      expanded={expandId === w.id}
+      rangeLabel={rangeLabel}
+      deltaLabel={deltaLabel}
+      onExpandedChange={
+        editing ? undefined : (v) => handleExpand(v ? w.id : null)
+      }
+      onConfigChange={(p) => lay.updateWidgetConfig(w.id, p)}
+      onRemove={() => lay.removeWidget(w.id)}
+      onRangeSelect={(rFrom, rTo) => applyRange({ from: rFrom, to: rTo })}
+      onToggleFilter={(key, v) => toggleFilter(key)(v)}
+    />
+  )
 
 
   return (
@@ -518,6 +468,10 @@ export default function AnalyticsPage() {
             key="edit-bar"
             layout={lay.layout}
             selected={selected}
+            range={range}
+            cellCtx={widgetCtx}
+            rangeLabel={rangeLabel}
+            deltaLabel={deltaLabel}
             canUndo={lay.canUndo}
             canRedo={lay.canRedo}
             onUndo={lay.undo}
@@ -526,6 +480,8 @@ export default function AnalyticsPage() {
               const entry = WIDGET_CATALOG.find((e) => e.key === entryKey)
               if (entry) setSelectedId(lay.addWidget(entry.kind, entry.seed))
             }}
+            onAddCustom={(kind, seed) => setSelectedId(lay.addWidget(kind, seed))}
+            onDuplicate={(id) => setSelectedId(lay.duplicateWidget(id))}
             onRemove={lay.removeWidget}
             onResetWidget={lay.resetWidget}
             onConfigChange={lay.updateWidgetConfig}

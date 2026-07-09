@@ -27,6 +27,8 @@ export function DimensionFilter({
   range,
   selected,
   onChange,
+  compact,
+  className,
 }: {
   dimension: Exclude<StatsDimension, "time">
   label: string
@@ -34,6 +36,10 @@ export function DimensionFilter({
   range: TimeRange
   selected: string[]
   onChange: (values: string[]) => void
+  /** Icon-only trigger with a corner count — for tight hosts (edit bar). */
+  compact?: boolean
+  /** Extra classes for the trigger button (e.g. w-full in form grids). */
+  className?: string
 }) {
   const [open, setOpen] = React.useState(false)
 
@@ -74,15 +80,26 @@ export function DimensionFilter({
         <Button
           variant="outline"
           size="sm"
-          className={cn("h-8", selected.length > 0 && "border-brand/40")}
-        >
-          <Icon data-icon="inline-start" />
-          {label}
-          {selected.length > 0 && (
-            <span className="bg-brand/10 text-brand ml-0.5 rounded-full px-1.5 font-mono text-[10px] tabular-nums">
-              {selected.length}
-            </span>
+          aria-label={label}
+          title={compact ? label : undefined}
+          className={cn(
+            compact ? "relative size-7 p-0" : "h-8",
+            selected.length > 0 && "border-brand/40",
+            className,
           )}
+        >
+          <Icon data-icon={compact ? undefined : "inline-start"} />
+          {!compact && label}
+          {selected.length > 0 &&
+            (compact ? (
+              <span className="bg-brand/15 text-brand absolute -top-1.5 -right-1.5 flex size-3.5 items-center justify-center rounded-full font-mono text-[9px] tabular-nums">
+                {selected.length}
+              </span>
+            ) : (
+              <span className="bg-brand/10 text-brand ml-0.5 rounded-full px-1.5 font-mono text-[10px] tabular-nums">
+                {selected.length}
+              </span>
+            ))}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">
