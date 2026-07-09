@@ -3,15 +3,18 @@
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
 import {
+  Bubbles,
   ChartBar,
   ChartColumn,
   ChartPie,
   ChartScatter,
   Donut,
   LayoutDashboard,
+  LoaderCircle,
   Map as MapIcon,
   Maximize2,
   Minimize2,
+  Radar,
   Table2,
 } from "lucide-react"
 
@@ -22,8 +25,10 @@ import {
   breakdownBarLimit,
   breakdownColumnCount,
   breakdownTableFullCols,
+  bubbleLimit,
   donutLegend,
   donutSegments,
+  radarSpokes,
   scatterPointLimit,
   treemapSegments,
   type BreakdownConfig,
@@ -35,6 +40,9 @@ import { DonutChart } from "@/components/dashboard/analytics/widgets/donut-chart
 import { ColumnChart } from "@/components/dashboard/analytics/widgets/column-chart"
 import { TreemapChart } from "@/components/dashboard/analytics/widgets/treemap-chart"
 import { BreakdownScatter } from "@/components/dashboard/analytics/widgets/scatter-chart"
+import { RadialChart } from "@/components/dashboard/analytics/widgets/radial-chart"
+import { BreakdownRadar } from "@/components/dashboard/analytics/widgets/radar-chart"
+import { BubbleChart } from "@/components/dashboard/analytics/widgets/bubble-chart"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -46,6 +54,9 @@ const BD_CHART_ICONS = {
   donut: Donut,
   pie: ChartPie,
   treemap: LayoutDashboard,
+  radial: LoaderCircle,
+  radar: Radar,
+  bubbles: Bubbles,
   scatter: ChartScatter,
   map: MapIcon,
 } as const
@@ -219,6 +230,30 @@ export function BreakdownWidget({
                 rows={rows}
                 metric={metric}
                 segments={expanded ? 18 : treemapSegments(w, h)}
+                onSelect={onSelect}
+              />
+            ) : viz === "radial" ? (
+              <RadialChart
+                dimension={dimension}
+                rows={rows}
+                metric={metric}
+                segments={expanded ? 6 : donutSegments(h)}
+                legend={expanded || donutLegend(w)}
+                onSelect={onSelect}
+              />
+            ) : viz === "radar" ? (
+              <BreakdownRadar
+                dimension={dimension}
+                rows={rows}
+                metric={metric}
+                spokes={expanded ? 8 : radarSpokes(w)}
+              />
+            ) : viz === "bubbles" ? (
+              <BubbleChart
+                dimension={dimension}
+                rows={rows}
+                metric={metric}
+                limit={expanded ? 30 : bubbleLimit(w, h)}
                 onSelect={onSelect}
               />
             ) : viz === "scatter" ? (

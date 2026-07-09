@@ -35,6 +35,7 @@ export type TimeseriesViz =
   | "step"
   | "bars"
   | "cumulative"
+  | "calendar"
   | "table"
 export type BreakdownViz =
   | "bars"
@@ -42,6 +43,9 @@ export type BreakdownViz =
   | "donut"
   | "pie"
   | "treemap"
+  | "radial"
+  | "radar"
+  | "bubbles"
   | "scatter"
   | "map"
   | "table"
@@ -159,6 +163,11 @@ export const treemapSegments = (w: number, h: number) =>
 // Scatter points are cheap; scale generously with area.
 export const scatterPointLimit = (w: number, h: number) =>
   Math.min(60, Math.max(12, Math.round(w * h * 0.9)))
+// Bubble packing gets crowded past ~30; scale with area below that.
+export const bubbleLimit = (w: number, h: number) =>
+  Math.min(30, Math.max(8, Math.round((w * h) / 1.5)))
+// Radar spokes: readable between 5 and 8.
+export const radarSpokes = (w: number) => (w >= 6 ? 8 : 6)
 
 /* ---------- per-kind spec ---------- */
 
@@ -250,6 +259,7 @@ const TIMESERIES_VIZ: readonly TimeseriesViz[] = [
   "step",
   "bars",
   "cumulative",
+  "calendar",
   "table",
 ]
 const BREAKDOWN_VIZ: readonly BreakdownViz[] = [
@@ -258,6 +268,9 @@ const BREAKDOWN_VIZ: readonly BreakdownViz[] = [
   "donut",
   "pie",
   "treemap",
+  "radial",
+  "radar",
+  "bubbles",
   "scatter",
   "map",
   "table",

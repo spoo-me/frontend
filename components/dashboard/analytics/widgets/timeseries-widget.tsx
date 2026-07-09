@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   Activity,
+  CalendarDays,
   ChartArea,
   ChartColumn,
   ChartLine,
@@ -17,6 +18,7 @@ import { formatCount } from "@/lib/format"
 import { timeSeriesOf, type StatsResponse } from "@/lib/api"
 import type { TimeseriesConfig } from "@/lib/analytics-layout"
 import { ClicksChart } from "@/components/dashboard/clicks-chart"
+import { CalendarHeatmap } from "@/components/dashboard/analytics/widgets/calendar-heatmap"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
@@ -27,6 +29,7 @@ const TS_CHART_ICONS = {
   step: Activity,
   bars: ChartColumn,
   cumulative: TrendingUp,
+  calendar: CalendarDays,
 } as const
 
 /**
@@ -169,16 +172,25 @@ export function TimeseriesWidget({
               mode !== "chart" && "pointer-events-none opacity-0",
             )}
           >
-            <ClicksChart
-              series={series}
-              prevSeries={prevSeries}
-              hourly={hourly}
-              height="100%"
-              metric={metric}
-              variant={chartViz}
-              expanded={expanded}
-              onRangeSelect={onRangeSelect}
-            />
+            {chartViz === "calendar" ? (
+              <CalendarHeatmap
+                series={series}
+                hourly={hourly}
+                metric={metric}
+                onRangeSelect={onRangeSelect}
+              />
+            ) : (
+              <ClicksChart
+                series={series}
+                prevSeries={prevSeries}
+                hourly={hourly}
+                height="100%"
+                metric={metric}
+                variant={chartViz}
+                expanded={expanded}
+                onRangeSelect={onRangeSelect}
+              />
+            )}
           </div>
           <div
             className={cn(
