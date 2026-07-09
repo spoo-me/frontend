@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowUpRight, CircleAlert } from "lucide-react"
+import { ArrowUpRight, ChevronDown, ChevronUp, CircleAlert } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import type { CustomDomain, UrlListItem } from "@/lib/api"
@@ -167,9 +167,11 @@ export function Attention({
     () => buildAttentionItems(links, domains),
     [links, domains],
   )
+  // Overflow expands IN PLACE — the hidden items don't share a page.
+  const [expanded, setExpanded] = React.useState(false)
   if (!ready) return null
-  const shown = items.slice(0, MAX_ROWS)
-  const overflow = items.length - shown.length
+  const shown = expanded ? items : items.slice(0, MAX_ROWS)
+  const overflow = items.length - MAX_ROWS
 
   return (
     <div className="mt-8">
@@ -178,13 +180,18 @@ export function Attention({
         title="Needs attention"
         action={
           overflow > 0 ? (
-            <Link
-              href="/dashboard/links"
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
               className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors duration-150"
             >
-              {overflow} more
-              <ArrowUpRight className="size-3" />
-            </Link>
+              {expanded ? "show less" : `${overflow} more`}
+              {expanded ? (
+                <ChevronUp className="size-3" />
+              ) : (
+                <ChevronDown className="size-3" />
+              )}
+            </button>
           ) : undefined
         }
       />
