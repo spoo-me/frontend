@@ -156,18 +156,19 @@
     /* Choropleth base landmass: light needs real contrast against the
        near-white panel; dark reuses the muted ramp it already sits on. */
     --map-base: color-mix(in oklab, var(--muted-foreground) 16%, var(--background));
-    /* Chart ink presets (widget accents) — hotter/darker on light */
+    /* Chart ink presets (widget accents): Tailwind's gamut-edge oklch ramp,
+       600 weights — light needs hot, dark ink to pop on white. */
     --chart-violet: var(--brand);
-    --chart-indigo: oklch(0.51 0.19 275);
-    --chart-blue: oklch(0.55 0.19 260);
-    --chart-sky: oklch(0.6 0.14 235);
-    --chart-teal: oklch(0.56 0.12 190);
-    --chart-emerald: oklch(0.58 0.15 160);
-    --chart-lime: oklch(0.62 0.16 128);
-    --chart-amber: oklch(0.68 0.15 75);
-    --chart-orange: oklch(0.64 0.17 45);
-    --chart-rose: oklch(0.59 0.19 20);
-    --chart-fuchsia: oklch(0.58 0.22 330);
+    --chart-indigo: oklch(0.511 0.262 276.966);
+    --chart-blue: oklch(0.546 0.245 262.881);
+    --chart-sky: oklch(0.588 0.158 241.966);
+    --chart-teal: oklch(0.6 0.118 184.704);
+    --chart-emerald: oklch(0.596 0.145 163.225);
+    --chart-lime: oklch(0.648 0.2 131.684);
+    --chart-amber: oklch(0.666 0.179 58.318);
+    --chart-orange: oklch(0.646 0.222 41.116);
+    --chart-rose: oklch(0.586 0.253 17.585);
+    --chart-fuchsia: oklch(0.591 0.293 322.896);
     --chart-neutral: oklch(0.5 0 0);
 }
 
@@ -208,18 +209,20 @@
     --brand: oklch(0.606 0.25 292.717);
     --live: oklch(0.765 0.177 163.223);
     --map-base: color-mix(in oklab, var(--muted) 55%, var(--background));
-    /* Chart ink presets (widget accents) — brighter on dark */
+    /* Chart ink presets (widget accents): Tailwind's gamut-edge oklch ramp.
+       Deep hues take the 500 weight for saturation, luminous hues the 400
+       weight so they glow on near-black instead of going muddy. */
     --chart-violet: var(--brand);
-    --chart-indigo: oklch(0.68 0.17 275);
-    --chart-blue: oklch(0.7 0.16 260);
-    --chart-sky: oklch(0.75 0.13 235);
-    --chart-teal: oklch(0.76 0.12 190);
-    --chart-emerald: oklch(0.77 0.15 160);
-    --chart-lime: oklch(0.82 0.18 128);
-    --chart-amber: oklch(0.82 0.15 80);
-    --chart-orange: oklch(0.75 0.16 45);
-    --chart-rose: oklch(0.72 0.18 18);
-    --chart-fuchsia: oklch(0.74 0.2 330);
+    --chart-indigo: oklch(0.585 0.233 277.117);
+    --chart-blue: oklch(0.623 0.214 259.815);
+    --chart-sky: oklch(0.746 0.16 232.661);
+    --chart-teal: oklch(0.777 0.152 181.912);
+    --chart-emerald: oklch(0.765 0.177 163.223);
+    --chart-lime: oklch(0.841 0.238 128.85);
+    --chart-amber: oklch(0.828 0.189 84.429);
+    --chart-orange: oklch(0.705 0.213 47.604);
+    --chart-rose: oklch(0.645 0.246 16.439);
+    --chart-fuchsia: oklch(0.667 0.295 322.15);
     --chart-neutral: oklch(0.75 0 0);
 }
 
