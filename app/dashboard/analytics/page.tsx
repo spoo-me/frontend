@@ -41,7 +41,6 @@ import { useIsLgUp } from "@/hooks/use-breakpoint"
 import { RefreshControl } from "@/components/dashboard/refresh-control"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { onAnalyticsEditMode } from "@/components/dashboard/analytics/edit-mode"
-import { EditPanel } from "@/components/dashboard/analytics/edit-panel"
 import { WidgetGrid } from "@/components/dashboard/analytics/widget-grid"
 import { WidgetRemoveButton } from "@/components/dashboard/analytics/widget-shell"
 import {
@@ -218,45 +217,15 @@ export default function AnalyticsPage() {
   const isLgUp = useIsLgUp()
 
   const [editing, setEditing] = React.useState(false)
-  const [selectedId, setSelectedId] = React.useState<string | null>(null)
-  // Derived, not synced: a deleted/discarded widget can't stay selected.
-  const selected = widgets.some((w) => w.id === selectedId) ? selectedId : null
 
   const startEditing = React.useCallback(() => {
     setExpandId(null) // focus mode and edit mode are mutually exclusive
     setEditing(true)
   }, [setExpandId])
-  const stopEditing = () => {
-    setEditing(false)
-    setSelectedId(null)
-  }
+  const stopEditing = () => setEditing(false)
 
   // Command-palette entry point ("Edit dashboard layout").
   React.useEffect(() => onAnalyticsEditMode(startEditing), [startEditing])
-
-  // Keyboard editing on the selected widget: arrows nudge position, shift+
-  // arrows resize. RGL has no keyboard drag; the pure grid ops fill the gap.
-  const { applyGridChange: gridChange } = lay
-  React.useEffect(() => {
-    if (!editing || !selected) return
-    const onKey = (e: KeyboardEvent) => {
-      if (!e.key.startsWith("Arrow")) return
-      const target = e.target as HTMLElement | null
-      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
-      e.preventDefault()
-      const dx = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0
-      const dy = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0
-      const items = widgets.map((w) => {
-        if (w.id !== selected) return { i: w.id, ...w.grid }
-        return e.shiftKey
-          ? { i: w.id, ...w.grid, w: w.grid.w + dx, h: w.grid.h + dy }
-          : { i: w.id, ...w.grid, x: w.grid.x + dx, y: w.grid.y + dy }
-      })
-      gridChange(items)
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [editing, selected, widgets, gridChange])
 
   // mod+S commits the layout draft while the save bar is up. Esc deliberately
   // does NOT discard: a curated draft is expensive, a lingering pill is not.
@@ -392,9 +361,14 @@ export default function AnalyticsPage() {
         <span className="ml-auto flex items-center gap-1.5">
           {isLgUp &&
             (editing ? (
-              <Button size="sm" onClick={stopEditing}>
-                Done
-              </Button>
+              <>
+                <Button variant="ghost" size="sm" onClick={lay.resetAll}>
+                  Reset
+                </Button>
+                <Button size="sm" onClick={stopEditing}>
+                  Done
+                </Button>
+              </>
             ) : (
               <Button variant="outline" size="sm" onClick={startEditing}>
                 <LayoutGrid data-icon="inline-start" />
@@ -468,9 +442,7 @@ export default function AnalyticsPage() {
           <WidgetGrid
             widgets={widgets}
             editing={editing}
-            selectedId={editing ? selected : null}
             expandId={expandId}
-            onSelect={setSelectedId}
             onGridChange={lay.applyGridChange}
             renderWidget={renderWidget}
           />
@@ -492,28 +464,6 @@ export default function AnalyticsPage() {
           ))}
         </div>
       )}
-
-      {/* Floating config panel while editing */}
-      <AnimatePresence>
-        {editing && isLgUp && (
-          <EditPanel
-            key="edit-panel"
-            widgets={widgets}
-            selected={widgets.find((w) => w.id === selected) ?? null}
-            onSelect={setSelectedId}
-            onAdd={(kind) => setSelectedId(lay.addWidget(kind))}
-            onDuplicate={(id) => setSelectedId(lay.duplicateWidget(id))}
-            onRemove={(id) => {
-              lay.removeWidget(id)
-              setSelectedId(null)
-            }}
-            onConfigChange={(id, patch) =>
-              lay.updateWidgetConfig(id, patch, { stage: true })
-            }
-            onResetAll={lay.resetAll}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Layout save bar: exists only while edits are staged — same
           transient-pill grammar as the links bulk bar. */}

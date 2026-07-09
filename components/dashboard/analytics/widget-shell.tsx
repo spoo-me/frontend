@@ -31,11 +31,14 @@ export function WidgetShell({
 }) {
   return (
     <div className="border-border/60 bg-shell relative flex h-full flex-col rounded-2xl border p-0.5">
+      {/* Quick controls stay live in edit mode (data-no-drag keeps them from
+          starting grid drags) — configuration happens in place, not in a
+          side panel. */}
       <SectionHeader
         className="h-9 shrink-0 px-2.5"
         icon={icon}
         title={title}
-        action={!editing ? quickControls : undefined}
+        action={quickControls && <span data-no-drag>{quickControls}</span>}
       />
       <Panel
         className={cn(

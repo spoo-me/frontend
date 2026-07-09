@@ -20,18 +20,14 @@ import { GRID, WIDGET_SPEC, type Widget } from "@/lib/analytics-layout"
 export function WidgetGrid({
   widgets,
   editing,
-  selectedId,
   expandId,
-  onSelect,
   onGridChange,
   renderWidget,
 }: {
   widgets: Widget[]
   editing: boolean
-  selectedId: string | null
   /** Read-mode focus (?expand=): CSS hides siblings, un-positions this cell. */
   expandId: string | null
-  onSelect: (id: string | null) => void
   onGridChange: (
     items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>,
   ) => void
@@ -103,18 +99,18 @@ export function WidgetGrid({
               onClickCapture={
                 editing
                   ? (e) => {
-                      if (interacting.current) return
-                      e.stopPropagation()
-                      onSelect(w.id)
+                      // Swallow only the click that trails a drag/resize so
+                      // releasing a drag can't toggle a filter underneath.
+                      if (interacting.current) {
+                        e.stopPropagation()
+                        e.preventDefault()
+                      }
                     }
                   : undefined
               }
               className={cn(
                 "group/widget",
                 editing && "cursor-grab active:cursor-grabbing",
-                editing &&
-                  selectedId === w.id &&
-                  "ring-brand/60 ring-offset-background rounded-2xl ring-2 ring-offset-2",
               )}
             >
               {renderWidget(w)}
