@@ -4,7 +4,15 @@ import * as React from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { AnimatePresence, motion } from "motion/react"
-import { Check, ChevronDown, ListChecks } from "lucide-react"
+import {
+  Check,
+  ChevronDown,
+  Globe2,
+  KeyRound,
+  Link2,
+  ListChecks,
+  Puzzle,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -60,6 +68,7 @@ export function SetupChecklist() {
   const items = [
     {
       done: (urls.data?.total ?? 0) > 0,
+      icon: Link2,
       label: "Create your first link",
       action: () => openLinkComposer(),
       cta: "Create",
@@ -67,18 +76,21 @@ export function SetupChecklist() {
     {
       done:
         (domains.data?.items.filter((d) => d.status === "ACTIVE").length ?? 0) > 0,
+      icon: Globe2,
       label: "Connect a custom domain",
       href: "/dashboard/domains",
       cta: "Connect",
     },
     {
       done: (keys.data?.items.filter((k) => !k.revoked).length ?? 0) > 0,
+      icon: KeyRound,
       label: "Create an API key",
       href: "/dashboard/developer",
       cta: "Create",
     },
     {
       done: (grants.data?.items.length ?? 0) > 0,
+      icon: Puzzle,
       label: "Install an app or extension",
       href: "/dashboard/apps",
       cta: "Browse",
@@ -144,6 +156,15 @@ export function SetupChecklist() {
                   ) : (
                     <span className="border-border/80 size-4 shrink-0 rounded-full border border-dashed" />
                   )}
+                  <item.icon
+                    className={cn(
+                      "size-3.5 shrink-0",
+                      item.done
+                        ? "text-muted-foreground/40"
+                        : "text-muted-foreground/70",
+                    )}
+                    strokeWidth={1.75}
+                  />
                   <span
                     className={cn(
                       "min-w-0 flex-1 truncate text-[13px]",
