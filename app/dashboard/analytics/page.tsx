@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence } from "motion/react"
 import {
   parseAsArrayOf,
   parseAsIsoDateTime,
@@ -24,10 +24,9 @@ import {
   Plus,
 } from "lucide-react"
 import { dimensionRowsOf, getStats, type StatsDimension } from "@/lib/api"
-import { heightPx, type Widget } from "@/lib/analytics-layout"
+import type { Widget } from "@/lib/analytics-layout"
 import { FilterChip } from "@/components/dashboard/filter-chip"
 import { Button } from "@/components/ui/button"
-import { Kbd, useModKey } from "@/components/dashboard/kbd"
 import { TimeRangePicker } from "@/components/dashboard/analytics/time-range-picker"
 import { DimensionFilter } from "@/components/dashboard/analytics/dimension-filter"
 import {
@@ -41,11 +40,14 @@ import { useIsLgUp } from "@/hooks/use-breakpoint"
 import { RefreshControl } from "@/components/dashboard/refresh-control"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { onAnalyticsEditMode } from "@/components/dashboard/analytics/edit-mode"
-import { WidgetGrid } from "@/components/dashboard/analytics/widget-grid"
+import { EditBar } from "@/components/dashboard/analytics/edit-bar"
+import { MobileStack, WidgetGrid } from "@/components/dashboard/analytics/widget-grid"
 import { WidgetRemoveButton } from "@/components/dashboard/analytics/widget-shell"
 import {
+  ACCENT_VARS,
   DIMENSION_META,
   STAT_META,
+  WIDGET_CATALOG,
 } from "@/components/dashboard/analytics/widget-meta"
 import { StatWidget } from "@/components/dashboard/analytics/widgets/stat-widget"
 import { TimeseriesWidget } from "@/components/dashboard/analytics/widgets/timeseries-widget"
@@ -213,40 +215,75 @@ export default function AnalyticsPage() {
   /* ---------- layout store + editing ---------- */
   const lay = useAnalyticsLayout()
   const widgets = lay.layout.widgets
-  const modKey = useModKey()
   const isLgUp = useIsLgUp()
 
   const [editing, setEditing] = React.useState(false)
+  const [selectedId, setSelectedId] = React.useState<string | null>(null)
+  // Derived, never synced: a deleted/undone widget can't stay selected.
+  const selected = widgets.find((w) => w.id === selectedId) ?? null
 
   const startEditing = React.useCallback(() => {
     setExpandId(null) // focus mode and edit mode are mutually exclusive
     setEditing(true)
   }, [setExpandId])
-  const stopEditing = () => setEditing(false)
+  const stopEditing = () => {
+    setEditing(false)
+    setSelectedId(null)
+  }
 
   // Command-palette entry point ("Edit dashboard layout").
   React.useEffect(() => onAnalyticsEditMode(startEditing), [startEditing])
 
-  // mod+S commits the layout draft while the save bar is up. Esc deliberately
-  // does NOT discard: a curated draft is expensive, a lingering pill is not.
-  const { dirty: layoutDirty, saving: layoutSaving, save: saveLayout } = lay
+  // Edit-mode keyboard: undo/redo, delete, nudge, resize, deselect/exit.
+  const { undo, redo, removeWidget, applyGridChange: gridChange } = lay
   React.useEffect(() => {
-    if (!layoutDirty) return
+    if (!editing) return
     const typing = (el: EventTarget | null) =>
       el instanceof HTMLElement &&
       (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey) || (e.key !== "s" && e.key !== "S")) return
-      e.preventDefault()
+      if (typing(e.target)) return
       const dialogOpen = document.querySelector(
         "[role=dialog][data-state=open], [role=alertdialog][data-state=open]"
       )
-      if (typing(e.target) || dialogOpen || layoutSaving) return
-      saveLayout()
+      if (dialogOpen) return
+      if ((e.metaKey || e.ctrlKey) && (e.key === "z" || e.key === "Z")) {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+        return
+      }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        if (selectedId) setSelectedId(null)
+        else stopEditing()
+        return
+      }
+      if (!selectedId) return
+      const sel = widgets.find((w) => w.id === selectedId)
+      if (!sel) return
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault()
+        removeWidget(selectedId)
+        return
+      }
+      if (!e.key.startsWith("Arrow")) return
+      e.preventDefault()
+      const dx = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0
+      const dy = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0
+      gridChange(
+        widgets.map((w) =>
+          w.id !== selectedId
+            ? { i: w.id, ...w.grid }
+            : e.shiftKey
+              ? { i: w.id, ...w.grid, w: w.grid.w + dx, h: w.grid.h + dy }
+              : { i: w.id, ...w.grid, x: w.grid.x + dx, y: w.grid.y + dy }
+        )
+      )
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [layoutDirty, layoutSaving, saveLayout])
+  })
 
   // Focus mode starts at the top; exiting returns to the saved scroll depth.
   const scrollDepth = React.useRef(0)
@@ -279,10 +316,13 @@ export default function AnalyticsPage() {
 
   /* ---------- widget rendering ---------- */
   const renderWidget = (w: Widget) => {
-    switch (w.kind) {
-      case "stat":
-        return (
-          <div className="relative h-full">
+    const accentStyle = {
+      "--chart-accent": ACCENT_VARS[w.config.accent ?? "violet"],
+    } as React.CSSProperties
+    const body = (() => {
+      switch (w.kind) {
+        case "stat":
+          return (
             <StatWidget
               config={w.config}
               h={w.grid.h}
@@ -291,56 +331,60 @@ export default function AnalyticsPage() {
               rangeLabel={rangeLabel}
               deltaLabel={deltaLabel}
             />
-            {editing && (
-              <WidgetRemoveButton
-                title={STAT_META[w.config.metric].label}
-                onRemove={() => lay.removeWidget(w.id)}
-              />
-            )}
-          </div>
-        )
-      case "timeseries":
-        return (
-          <TimeseriesWidget
-            config={w.config}
-            loading={stats.isPending}
-            stats={s}
-            editing={editing}
-            expanded={expandId === w.id}
-            onExpandedChange={(v) => handleExpand(v ? w.id : null)}
-            onConfigChange={(p) =>
-              lay.updateWidgetConfig(w.id, p, { stage: editing })
-            }
-            onRangeSelect={(rFrom, rTo) => applyRange({ from: rFrom, to: rTo })}
-            onRemove={() => lay.removeWidget(w.id)}
-          />
-        )
-      case "breakdown": {
-        const meta = DIMENSION_META[w.config.dimension]
-        return (
-          <BreakdownWidget
-            config={w.config}
-            w={w.grid.w}
-            h={w.grid.h}
-            rows={s ? dimensionRowsOf(s, w.config.dimension) : []}
-            loading={stats.isPending}
-            editing={editing}
-            expanded={expandId === w.id}
-            onExpandedChange={(v) => handleExpand(v ? w.id : null)}
-            onConfigChange={(p) =>
-              lay.updateWidgetConfig(w.id, p, { stage: editing })
-            }
-            onSelect={toggleFilter(meta.filterKey)}
-            onRemove={() => lay.removeWidget(w.id)}
-          />
-        )
+          )
+        case "timeseries":
+          return (
+            <TimeseriesWidget
+              key={`view:${w.config.viz}`}
+              config={w.config}
+              loading={stats.isPending}
+              stats={s}
+              editing={editing}
+              expanded={expandId === w.id}
+              onExpandedChange={
+                editing ? undefined : (v) => handleExpand(v ? w.id : null)
+              }
+              onConfigChange={(p) => lay.updateWidgetConfig(w.id, p)}
+              onRangeSelect={(rFrom, rTo) => applyRange({ from: rFrom, to: rTo })}
+              onRemove={() => lay.removeWidget(w.id)}
+            />
+          )
+        case "breakdown": {
+          const meta = DIMENSION_META[w.config.dimension]
+          return (
+            <BreakdownWidget
+              key={`view:${w.config.viz}`}
+              config={w.config}
+              w={w.grid.w}
+              h={w.grid.h}
+              rows={s ? dimensionRowsOf(s, w.config.dimension) : []}
+              loading={stats.isPending}
+              editing={editing}
+              expanded={expandId === w.id}
+              onExpandedChange={
+                editing ? undefined : (v) => handleExpand(v ? w.id : null)
+              }
+              onConfigChange={(p) => lay.updateWidgetConfig(w.id, p)}
+              onSelect={toggleFilter(meta.filterKey)}
+              onRemove={() => lay.removeWidget(w.id)}
+            />
+          )
+        }
       }
-    }
+    })()
+    return (
+      <div className="relative h-full" style={accentStyle}>
+        {body}
+        {editing && w.kind === "stat" && (
+          <WidgetRemoveButton
+            title={STAT_META[w.config.metric].label}
+            onRemove={() => lay.removeWidget(w.id)}
+          />
+        )}
+      </div>
+    )
   }
 
-  const mobileWidgets = expandId
-    ? widgets.filter((w) => w.id === expandId)
-    : widgets
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -359,22 +403,12 @@ export default function AnalyticsPage() {
           />
         ))}
         <span className="ml-auto flex items-center gap-1.5">
-          {isLgUp &&
-            (editing ? (
-              <>
-                <Button variant="ghost" size="sm" onClick={lay.resetAll}>
-                  Reset
-                </Button>
-                <Button size="sm" onClick={stopEditing}>
-                  Done
-                </Button>
-              </>
-            ) : (
-              <Button variant="outline" size="sm" onClick={startEditing}>
-                <LayoutGrid data-icon="inline-start" />
-                Edit layout
-              </Button>
-            ))}
+          {isLgUp && !editing && (
+            <Button variant="outline" size="sm" onClick={startEditing}>
+              <LayoutGrid data-icon="inline-start" />
+              Edit layout
+            </Button>
+          )}
           <RefreshControl
             intervalMs={refreshEvery}
             onIntervalChange={setRefreshEvery}
@@ -442,60 +476,52 @@ export default function AnalyticsPage() {
           <WidgetGrid
             widgets={widgets}
             editing={editing}
+            selectedId={editing ? (selected?.id ?? null) : null}
             expandId={expandId}
+            onSelect={setSelectedId}
             onGridChange={lay.applyGridChange}
             renderWidget={renderWidget}
           />
         </div>
       ) : (
-        /* Mobile: read-only single-column stack in reading order. */
-        <div className="mt-5 flex flex-col gap-6 pb-8">
-          {mobileWidgets.map((w) => (
-            <div
-              key={w.id}
-              style={
-                w.kind === "stat" || expandId === w.id
-                  ? undefined
-                  : { height: heightPx(w.grid.h) }
-              }
-            >
-              {renderWidget(w)}
-            </div>
-          ))}
-        </div>
+        <MobileStack
+          widgets={widgets}
+          expandId={expandId}
+          renderWidget={renderWidget}
+        />
       )}
 
-      {/* Layout save bar: exists only while edits are staged — same
-          transient-pill grammar as the links bulk bar. */}
+      {/* The dynamic edit bar: board ops at rest, widget ops on selection. */}
       <AnimatePresence>
-        {lay.dirty && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.97 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-none sticky bottom-8 z-20 mt-4 flex justify-center"
-          >
-            <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border/60 bg-popover/95 p-1.5 pl-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]">
-              <span className="mr-1 font-mono text-xs text-foreground tabular-nums">
-                Layout edited
-              </span>
-              <Button size="sm" disabled={lay.saving} onClick={lay.save}>
-                Save layout
-                <Kbd className="ml-1.5 border-primary-foreground/25 bg-transparent text-primary-foreground/80">
-                  {modKey}S
-                </Kbd>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={lay.saving}
-                onClick={lay.discard}
-              >
-                Discard
-              </Button>
-            </div>
-          </motion.div>
+        {editing && isLgUp && (
+          <EditBar
+            key="edit-bar"
+            layout={lay.layout}
+            selected={selected}
+            canUndo={lay.canUndo}
+            canRedo={lay.canRedo}
+            onUndo={lay.undo}
+            onRedo={lay.redo}
+            onAdd={(entryKey) => {
+              const entry = WIDGET_CATALOG.find((e) => e.key === entryKey)
+              if (entry) setSelectedId(lay.addWidget(entry.kind, entry.seed))
+            }}
+            onRemove={lay.removeWidget}
+            onResetWidget={lay.resetWidget}
+            onConfigChange={lay.updateWidgetConfig}
+            onResetAll={lay.resetAll}
+            onReplaceLayout={(doc) => {
+              const ok =
+                typeof doc === "object" &&
+                doc !== null &&
+                (doc as { version?: unknown }).version === 1 &&
+                Array.isArray((doc as { widgets?: unknown }).widgets)
+              if (ok) lay.replaceLayout(doc)
+              return ok
+            }}
+            onDeselect={() => setSelectedId(null)}
+            onDone={stopEditing}
+          />
         )}
       </AnimatePresence>
     </div>

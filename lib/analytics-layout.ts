@@ -39,13 +39,35 @@ export const BREAKDOWN_DIMENSIONS = [
 ] as const
 export type BreakdownDimension = (typeof BREAKDOWN_DIMENSIONS)[number]
 
-export type StatConfig = { metric: StatMetric }
-export type TimeseriesConfig = { viz: TimeseriesViz; metric: SeriesMetric }
+/** Chart ink presets — applied to the visualization only, never card chrome.
+    Values resolve to per-theme CSS variables (globals.css). */
+export const ACCENTS = [
+  "violet",
+  "emerald",
+  "sky",
+  "amber",
+  "rose",
+  "neutral",
+] as const
+export type Accent = (typeof ACCENTS)[number]
+
+type WidgetExtras = {
+  /** Custom display name; absent = the catalog title. */
+  title?: string
+  /** Chart ink; absent = violet (the brand default). */
+  accent?: Accent
+}
+
+export type StatConfig = { metric: StatMetric } & WidgetExtras
+export type TimeseriesConfig = {
+  viz: TimeseriesViz
+  metric: SeriesMetric
+} & WidgetExtras
 export type BreakdownConfig = {
   dimension: BreakdownDimension
   viz: BreakdownViz
   metric: SeriesMetric
-}
+} & WidgetExtras
 
 export type WidgetGridRect = { x: number; y: number; w: number; h: number }
 export type Widget =
@@ -181,17 +203,28 @@ function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T):
 
 function normalizeConfig(kind: WidgetKind, raw: unknown): Widget["config"] {
   const cfg = isRecord(raw) ? raw : {}
+  const extras: WidgetExtras = {}
+  if (typeof cfg.title === "string" && cfg.title.trim())
+    extras.title = cfg.title.trim().slice(0, 40)
+  if (ACCENTS.includes(cfg.accent as Accent) && cfg.accent !== "violet")
+    extras.accent = cfg.accent as Accent
   if (kind === "stat")
-    return { metric: pick(cfg.metric, STAT_METRICS, "total_clicks") }
+    return { metric: pick(cfg.metric, STAT_METRICS, "total_clicks"), ...extras }
   if (kind === "timeseries")
     return {
       viz: pick(cfg.viz, TIMESERIES_VIZ, "area"),
       metric: pick(cfg.metric, SERIES_METRICS, "total"),
+      ...extras,
     }
   const dimension = pick(cfg.dimension, BREAKDOWN_DIMENSIONS, "referrer")
   let viz = pick(cfg.viz, BREAKDOWN_VIZ, "bars")
   if (viz === "map" && dimension !== "country") viz = "bars"
-  return { dimension, viz, metric: pick(cfg.metric, SERIES_METRICS, "total") }
+  return {
+    dimension,
+    viz,
+    metric: pick(cfg.metric, SERIES_METRICS, "total"),
+    ...extras,
+  }
 }
 
 /** Re-run positions through the exact algorithm the grid renders with, then
@@ -277,22 +310,49 @@ export function applyGridChange(
   return { version: 1, widgets: normalizeGrid(widgets) }
 }
 
-/** New widget enters at the bottom; compaction pulls it into the first gap. */
+/** New widget enters at the bottom; compaction pulls it into the first gap.
+    `seed` restores a specific identity (a stat's metric, a dimension). */
 export function withWidgetAdded(
   l: AnalyticsLayout,
   kind: WidgetKind,
   id: string,
+  seed?: WidgetConfigPatch,
 ): AnalyticsLayout {
   if (l.widgets.length >= MAX_WIDGETS) return l
   const spec = WIDGET_SPEC[kind]
   const y = bottom(l.widgets.map((w) => ({ i: w.id, ...w.grid })))
+  const config = normalizeConfig(kind, { ...spec.defaultConfig, ...seed })
   const widget = {
     id,
     kind,
     grid: { x: 0, y, w: spec.defaultW, h: spec.defaultH },
-    config: structuredClone(spec.defaultConfig),
+    config,
   } as Widget
   return { version: 1, widgets: normalizeGrid([...l.widgets, widget]) }
+}
+
+/** Back to catalog defaults for this widget's identity: default viz/metric,
+    no title/accent overrides, default size. Position stays. */
+export function withWidgetReset(l: AnalyticsLayout, id: string): AnalyticsLayout {
+  const widgets = l.widgets.map((w) => {
+    if (w.id !== id) return w
+    const spec = WIDGET_SPEC[w.kind]
+    const identity =
+      w.kind === "breakdown"
+        ? {
+            dimension: w.config.dimension,
+            viz: w.config.dimension === "country" ? "map" : "bars",
+          }
+        : w.kind === "stat"
+          ? { metric: w.config.metric }
+          : {}
+    return {
+      ...w,
+      grid: { ...w.grid, w: spec.defaultW, h: spec.defaultH },
+      config: normalizeConfig(w.kind, { ...spec.defaultConfig, ...identity }),
+    } as Widget
+  })
+  return { version: 1, widgets: normalizeGrid(widgets) }
 }
 
 export function withWidgetRemoved(l: AnalyticsLayout, id: string): AnalyticsLayout {
@@ -319,11 +379,14 @@ export function withWidgetDuplicated(
   return { version: 1, widgets: normalizeGrid([...l.widgets, copy]) }
 }
 
-/** Loose patch shape — `normalizeConfig` clamps whatever lands per kind. */
+/** Loose patch shape — `normalizeConfig` clamps whatever lands per kind.
+    Clearing overrides: pass `title: ""` or `accent: "violet"`. */
 export type WidgetConfigPatch = Partial<{
   metric: StatMetric | SeriesMetric
   viz: TimeseriesViz | BreakdownViz
   dimension: BreakdownDimension
+  title: string
+  accent: Accent
 }>
 
 export function withWidgetConfig(

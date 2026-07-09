@@ -74,7 +74,7 @@ export function StatWidget({
   return (
     <KpiCard
       className="h-full rounded-2xl"
-      label={meta.label}
+      label={config.title ?? meta.label}
       value={value}
       delta={delta}
       deltaLabel={deltaLabel}

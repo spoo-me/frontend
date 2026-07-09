@@ -156,6 +156,13 @@
     /* Choropleth base landmass: light needs real contrast against the
        near-white panel; dark reuses the muted ramp it already sits on. */
     --map-base: color-mix(in oklab, var(--muted-foreground) 16%, var(--background));
+    /* Chart ink presets (widget accents) — hotter/darker on light */
+    --chart-violet: var(--brand);
+    --chart-emerald: oklch(0.55 0.13 163);
+    --chart-sky: oklch(0.55 0.11 235);
+    --chart-amber: oklch(0.62 0.13 70);
+    --chart-rose: oklch(0.58 0.16 15);
+    --chart-neutral: oklch(0.5 0 0);
 }
 
 .dark {
@@ -195,6 +202,13 @@
     --brand: oklch(0.606 0.25 292.717);
     --live: oklch(0.765 0.177 163.223);
     --map-base: color-mix(in oklab, var(--muted) 55%, var(--background));
+    /* Chart ink presets (widget accents) — brighter on dark */
+    --chart-violet: var(--brand);
+    --chart-emerald: oklch(0.75 0.15 163);
+    --chart-sky: oklch(0.74 0.12 235);
+    --chart-amber: oklch(0.8 0.14 80);
+    --chart-rose: oklch(0.72 0.16 15);
+    --chart-neutral: oklch(0.75 0 0);
 }
 
 @layer base {
@@ -414,8 +428,8 @@
    focus keeps everything mounted; the CSS hides siblings and un-positions
    the focused cell — stylesheet !important beats RGL's inline styles). */
 .react-grid-item.react-grid-placeholder {
-  background: color-mix(in oklab, var(--brand) 5%, transparent);
-  border: 1.5px dashed color-mix(in oklab, var(--brand) 45%, transparent);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  border: 1.5px dashed color-mix(in oklab, var(--foreground) 30%, transparent);
   border-radius: 16px;
   opacity: 1;
 }
@@ -465,3 +479,4 @@
 .gate-appear {
   animation: gate-appear 200ms ease-out 300ms backwards;
 }
+

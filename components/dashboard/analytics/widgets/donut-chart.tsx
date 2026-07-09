@@ -89,7 +89,7 @@ export function DonutChart({
     const rest = sorted.slice(segments)
     const n = top.length
     const ramp = (i: number) =>
-      `color-mix(in oklab, var(--brand) ${Math.round(88 - i * (64 / Math.max(n - 1, 1)))}%, var(--background))`
+      `color-mix(in oklab, var(--chart-accent, var(--brand)) ${Math.round(88 - i * (64 / Math.max(n - 1, 1)))}%, var(--background))`
     const out: Slice[] = top.map((r, i) => ({ ...r, fill: ramp(i) }))
     if (rest.length) {
       out.push({

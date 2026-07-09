@@ -301,11 +301,11 @@ export function CountryMap({
                     "transition-[fill-opacity,stroke] duration-150",
                     row && onSelect && "cursor-pointer"
                   )}
-                  fill={row ? "var(--brand)" : "var(--map-base)"}
+                  fill={row ? "var(--chart-accent, var(--brand))" : "var(--map-base)"}
                   fillOpacity={
                     row ? 0.16 + 0.66 * Math.sqrt(max ? v / max : 0) : 1
                   }
-                  stroke={hovered ? "var(--brand)" : "var(--background)"}
+                  stroke={hovered ? "var(--chart-accent, var(--brand))" : "var(--background)"}
                   strokeWidth={hovered ? 1.25 : 0.75}
                   vectorEffect="non-scaling-stroke"
                   onMouseMove={(e) => {

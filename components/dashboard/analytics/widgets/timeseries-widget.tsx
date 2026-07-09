@@ -45,7 +45,10 @@ export function TimeseriesWidget({
   onRangeSelect: (from: Date, to: Date) => void
   onRemove?: () => void
 }) {
-  const { viz, metric } = config
+  // The shell toggle is a transient peek; the persisted default lives in
+  // config.viz and the parent re-keys this component when it changes.
+  const [view, setView] = React.useState(config.viz)
+  const { metric } = config
   const series = React.useMemo(() => (stats ? timeSeriesOf(stats) : []), [stats])
   const hourly = stats?.time_bucket_info.strategy === "hourly"
 
@@ -74,7 +77,7 @@ export function TimeseriesWidget({
   return (
     <WidgetShell
       icon={ChartLine}
-      title="Clicks over time"
+      title={config.title ?? "Clicks over time"}
       editing={editing}
       onRemove={onRemove}
       panelClassName={
@@ -92,8 +95,8 @@ export function TimeseriesWidget({
             ]}
           />
           <Segmented
-            value={viz}
-            onChange={(v) => onConfigChange({ viz: v })}
+            value={view}
+            onChange={setView}
             options={[
               { value: "area", icon: ChartArea, ariaLabel: "area chart view" },
               { value: "line", icon: ChartLine, ariaLabel: "line chart view" },
@@ -128,7 +131,7 @@ export function TimeseriesWidget({
               key={v}
               className={cn(
                 "absolute inset-0 p-4 transition-opacity duration-150 ease-out",
-                viz !== v && "pointer-events-none opacity-0",
+                view !== v && "pointer-events-none opacity-0",
               )}
             >
               <ClicksChart
@@ -145,7 +148,7 @@ export function TimeseriesWidget({
           <div
             className={cn(
               "absolute inset-0 transition-opacity duration-150 ease-out",
-              viz !== "table" && "pointer-events-none opacity-0",
+              view !== "table" && "pointer-events-none opacity-0",
             )}
           >
             <div className="h-full overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">

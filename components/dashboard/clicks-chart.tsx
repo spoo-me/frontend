@@ -124,6 +124,9 @@ export function ClicksChart({
       selection (snapped to buckets, end bucket included) is handed here. */
   onRangeSelect?: (from: Date, to: Date) => void
 }) {
+  // Gradient ids are document-global; multiple chart instances with
+  // different accents must not share one.
+  const fillId = React.useId()
   const data: Datum[] = React.useMemo(
     () => series.map((b) => ({ ...b, t: new Date(b.bucket).getTime() })),
     [series]
@@ -214,9 +217,9 @@ export function ClicksChart({
     <ReferenceArea
       x1={Math.min(drag.a, drag.b)}
       x2={Math.max(drag.a, drag.b)}
-      fill="var(--brand)"
+      fill="var(--chart-accent, var(--brand))"
       fillOpacity={0.08}
-      stroke="var(--brand)"
+      stroke="var(--chart-accent, var(--brand))"
       strokeOpacity={0.3}
     />
   )
@@ -277,7 +280,7 @@ export function ClicksChart({
             />
             <Bar
               dataKey={metric === "unique" ? "unique_clicks" : "clicks"}
-              fill="var(--brand)"
+              fill="var(--chart-accent, var(--brand))"
               fillOpacity={0.75}
               radius={[3, 3, 0, 0]}
               maxBarSize={28}
@@ -289,7 +292,7 @@ export function ClicksChart({
             {metric === "both" && (
               <Bar
                 dataKey="unique_clicks"
-                fill="var(--brand)"
+                fill="var(--chart-accent, var(--brand))"
                 fillOpacity={0.3}
                 radius={[3, 3, 0, 0]}
                 maxBarSize={28}
@@ -307,11 +310,11 @@ export function ClicksChart({
             {...dragHandlers}
           >
             <defs>
-              <linearGradient id="clicksFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.18} />
+              <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--chart-accent, var(--brand))" stopOpacity={0.18} />
                 <stop
                   offset="100%"
-                  stopColor="var(--brand)"
+                  stopColor="var(--chart-accent, var(--brand))"
                   stopOpacity={0.01}
                 />
               </linearGradient>
@@ -353,11 +356,11 @@ export function ClicksChart({
             <Area
               type="monotone"
               dataKey={metric === "unique" ? "unique_clicks" : "clicks"}
-              stroke="var(--brand)"
+              stroke="var(--chart-accent, var(--brand))"
               strokeWidth={1.75}
-              fill={variant === "line" ? "none" : "url(#clicksFill)"}
+              fill={variant === "line" ? "none" : `url(#${fillId})`}
               dot={false}
-              activeDot={{ r: 3.5, fill: "var(--brand)", strokeWidth: 0 }}
+              activeDot={{ r: 3.5, fill: "var(--chart-accent, var(--brand))", strokeWidth: 0 }}
               isAnimationActive={morph}
               animationDuration={ANIM_MS}
               animationEasing="ease-out"
@@ -367,13 +370,13 @@ export function ClicksChart({
               <Area
                 type="monotone"
                 dataKey="unique_clicks"
-                stroke="var(--brand)"
+                stroke="var(--chart-accent, var(--brand))"
                 strokeWidth={1.25}
                 strokeDasharray="4 3"
                 strokeOpacity={0.55}
                 fill="none"
                 dot={false}
-                activeDot={{ r: 3, fill: "var(--brand)", strokeWidth: 0 }}
+                activeDot={{ r: 3, fill: "var(--chart-accent, var(--brand))", strokeWidth: 0 }}
                 isAnimationActive={morph}
                 animationDuration={ANIM_MS}
                 animationEasing="ease-out"

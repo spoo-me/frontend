@@ -11,8 +11,11 @@ import {
 } from "lucide-react"
 
 import type {
+  Accent,
   BreakdownDimension,
   StatMetric,
+  Widget,
+  WidgetConfigPatch,
   WidgetKind,
 } from "@/lib/analytics-layout"
 
@@ -61,4 +64,87 @@ export const KIND_META: Record<
     hint: "Top values for any dimension",
     icon: ChartLine,
   },
+}
+
+/** The catalog name for a widget's identity (ignores any custom title). */
+export function catalogTitle(w: Widget): string {
+  if (w.kind === "stat") return STAT_META[w.config.metric].label
+  if (w.kind === "timeseries") return "Clicks over time"
+  return DIMENSION_META[w.config.dimension].title
+}
+
+/** A widget's display name: custom title override or the catalog name. */
+export function widgetTitle(w: Widget): string {
+  return w.config.title ?? catalogTitle(w)
+}
+
+export function widgetIcon(w: Widget): React.ElementType {
+  if (w.kind === "breakdown") return DIMENSION_META[w.config.dimension].icon
+  return KIND_META[w.kind].icon
+}
+
+/**
+ * The metric catalog: every block the dashboard can hold. "Add widget" is a
+ * checklist over this list — blocks are metrics, not blank charts.
+ */
+export type CatalogEntry = {
+  key: string
+  kind: WidgetKind
+  group: "Summary" | "Charts"
+  label: string
+  icon: React.ElementType
+  seed?: WidgetConfigPatch
+}
+
+export const WIDGET_CATALOG: CatalogEntry[] = [
+  ...(Object.keys(STAT_META) as StatMetric[]).map((m) => ({
+    key: `stat:${m}`,
+    kind: "stat" as const,
+    group: "Summary" as const,
+    label: STAT_META[m].label,
+    icon: Gauge,
+    seed: { metric: m },
+  })),
+  {
+    key: "timeseries",
+    kind: "timeseries",
+    group: "Charts",
+    label: "Clicks over time",
+    icon: ChartArea,
+  },
+  ...(Object.keys(DIMENSION_META) as BreakdownDimension[]).map((d) => ({
+    key: `breakdown:${d}`,
+    kind: "breakdown" as const,
+    group: "Charts" as const,
+    label: DIMENSION_META[d].title,
+    icon: DIMENSION_META[d].icon,
+    seed: {
+      dimension: d,
+      viz: (d === "country" ? "map" : "bars") as WidgetConfigPatch["viz"],
+    },
+  })),
+]
+
+/** The widget on the board matching a catalog identity, if any. */
+export function catalogMatch(
+  widgets: Widget[],
+  entry: CatalogEntry,
+): Widget | undefined {
+  return widgets.find((w) => {
+    if (w.kind !== entry.kind) return false
+    if (w.kind === "stat") return w.config.metric === entry.seed?.metric
+    if (w.kind === "breakdown")
+      return w.config.dimension === entry.seed?.dimension
+    return true // timeseries
+  })
+}
+
+/** Chart ink presets resolve to per-theme CSS variables (globals.css). */
+export const ACCENT_VARS: Record<Accent, string> = {
+  violet: "var(--chart-violet)",
+  emerald: "var(--chart-emerald)",
+  sky: "var(--chart-sky)",
+  amber: "var(--chart-amber)",
+  rose: "var(--chart-rose)",
+  neutral: "var(--chart-neutral)",
 }

@@ -14,6 +14,7 @@ import {
   withWidgetConfig,
   withWidgetDuplicated,
   withWidgetRemoved,
+  withWidgetReset,
   type AnalyticsLayout,
   type WidgetConfigPatch,
   type WidgetKind,
@@ -21,18 +22,17 @@ import {
 import { deletePageLayout, getPageLayout, putPageLayout } from "@/lib/api"
 
 /**
- * Layout store: localStorage is the committed truth's local mirror (instant
- * paint, cross-tab via the storage event), the server doc wins over the
- * mirror once per mount, and structural edits live in a per-tab draft until
- * the save bar commits them. Config changes made from read-mode quick
- * controls skip the draft and persist silently; changes made while editing
- * stage into the draft so edit mode saves as one unit.
+ * Layout store: every edit commits immediately — localStorage mirror for
+ * instant paint and cross-tab sync, a debounced PUT for the server. Safety
+ * comes from a session-scoped undo/redo history (docs are tiny and every op
+ * is a pure function), not from a draft/save ceremony.
  */
 
 const KEY = "spoo:layout:analytics"
 const CHANGE_EVENT = "spoo:layout-analytics-change"
 const PAGE = "analytics"
 const PUT_DEBOUNCE_MS = 800
+const HISTORY_LIMIT = 50
 
 /* ---------- module-level localStorage store (use-auto-refresh pattern) ---------- */
 
@@ -81,15 +81,7 @@ function subscribe(cb: () => void) {
 
 export function useAnalyticsLayout() {
   const queryClient = useQueryClient()
-  const saved = React.useSyncExternalStore(subscribe, readSaved, () => DEFAULT_LAYOUT)
-  const [draft, setDraft] = React.useState<AnalyticsLayout | null>(null)
-  const draftRef = React.useRef<AnalyticsLayout | null>(null)
-  React.useEffect(() => {
-    draftRef.current = draft
-  })
-
-  const layout = draft ?? saved
-  const dirty = draft !== null
+  const layout = React.useSyncExternalStore(subscribe, readSaved, () => DEFAULT_LAYOUT)
 
   /* ---------- server reconcile: once per mount, server wins over mirror ---------- */
   const serverQ = useQuery({
@@ -100,7 +92,7 @@ export function useAnalyticsLayout() {
     retry: 1,
   })
   React.useEffect(() => {
-    if (!serverQ.isSuccess || draftRef.current) return
+    if (!serverQ.isSuccess) return
     const server =
       serverQ.data.layout == null
         ? DEFAULT_LAYOUT
@@ -108,36 +100,25 @@ export function useAnalyticsLayout() {
     if (!layoutsEqual(server, readSaved())) writeSaved(server)
   }, [serverQ.isSuccess, serverQ.data])
 
-  /* ---------- structural ops → draft ---------- */
-  const applyStructural = React.useCallback(
-    (op: (l: AnalyticsLayout) => AnalyticsLayout) => {
-      setDraft((d) => {
-        const base = readSaved()
-        const next = op(d ?? base)
-        // Landing back where you started (drag out and back, hide then
-        // re-show) means there is nothing to save — the bar melts away.
-        return layoutsEqual(next, base) ? null : next
-      })
-    },
-    [],
-  )
-
-  /* ---------- pref ops → committed when clean, ride the draft when dirty ---------- */
-  // If the silent PUT fails we keep the local mirror; the next mount's
-  // server-wins reconcile may revert the pref. Accepted v1 tradeoff.
+  /* ---------- debounced write-behind ---------- */
+  // If a PUT fails we keep the local mirror; the next mount's server-wins
+  // reconcile may revert. Accepted tradeoff, same as before.
   const putTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const queuePut = React.useCallback((doc: AnalyticsLayout) => {
-    clearTimeout(putTimer.current)
-    putTimer.current = setTimeout(() => {
-      putTimer.current = undefined
-      putPageLayout(PAGE, doc)
-        .then(() => queryClient.setQueryData(["layout", PAGE], { layout: doc }))
-        .catch(() => {})
-    }, PUT_DEBOUNCE_MS)
-  }, [queryClient])
+  const queuePut = React.useCallback(
+    (doc: AnalyticsLayout) => {
+      clearTimeout(putTimer.current)
+      putTimer.current = setTimeout(() => {
+        putTimer.current = undefined
+        putPageLayout(PAGE, doc)
+          .then(() => queryClient.setQueryData(["layout", PAGE], { layout: doc }))
+          .catch(() => {})
+      }, PUT_DEBOUNCE_MS)
+    },
+    [queryClient],
+  )
   React.useEffect(
     () => () => {
-      // Flush a pending silent PUT when navigating away.
+      // Flush a pending PUT when navigating away.
       if (putTimer.current !== undefined) {
         clearTimeout(putTimer.current)
         putPageLayout(PAGE, readSaved()).catch(() => {})
@@ -145,96 +126,115 @@ export function useAnalyticsLayout() {
     },
     [],
   )
-  const applyPref = React.useCallback(
+
+  /* ---------- history ---------- */
+  const undoStack = React.useRef<AnalyticsLayout[]>([])
+  const redoStack = React.useRef<AnalyticsLayout[]>([])
+  // Mirrored into state so render never reads the refs directly.
+  const [history, setHistory] = React.useState({ canUndo: false, canRedo: false })
+  const bumpHistory = React.useCallback(() => {
+    setHistory({
+      canUndo: undoStack.current.length > 0,
+      canRedo: redoStack.current.length > 0,
+    })
+  }, [])
+
+  const apply = React.useCallback(
     (op: (l: AnalyticsLayout) => AnalyticsLayout) => {
-      if (draftRef.current) {
-        setDraft((d) => (d ? op(d) : d))
-        return
-      }
-      const next = op(readSaved())
+      const cur = readSaved()
+      const next = op(cur)
+      if (layoutsEqual(next, cur)) return
+      undoStack.current.push(cur)
+      if (undoStack.current.length > HISTORY_LIMIT) undoStack.current.shift()
+      redoStack.current = []
+      bumpHistory()
       writeSaved(next)
       queuePut(next)
     },
-    [queuePut],
+    [queuePut, bumpHistory],
   )
 
-  /* ---------- lifecycle ---------- */
-  const saveMut = useMutation({
-    mutationFn: (doc: AnalyticsLayout) => putPageLayout(PAGE, doc),
-    onSuccess: (_res, doc) => {
-      writeSaved(doc)
-      setDraft(null)
-      queryClient.setQueryData(["layout", PAGE], { layout: doc })
-    },
-    onError: () =>
-      toast.error("Couldn't save the layout", {
-        description: "Your changes are still here, try again.",
-      }),
-  })
+  const undo = React.useCallback(() => {
+    const prev = undoStack.current.pop()
+    if (!prev) return
+    redoStack.current.push(readSaved())
+    bumpHistory()
+    writeSaved(prev)
+    queuePut(prev)
+  }, [queuePut, bumpHistory])
+
+  const redo = React.useCallback(() => {
+    const next = redoStack.current.pop()
+    if (!next) return
+    undoStack.current.push(readSaved())
+    bumpHistory()
+    writeSaved(next)
+    queuePut(next)
+  }, [queuePut, bumpHistory])
+
+  /* ---------- reset (the one op behind a confirmation) ---------- */
   const resetMut = useMutation({
     mutationFn: () => deletePageLayout(PAGE),
+    onMutate: () => {
+      // Reset is undoable too: the previous doc restores via a normal PUT.
+      undoStack.current.push(readSaved())
+      redoStack.current = []
+      bumpHistory()
+    },
     onSuccess: () => {
       clearSaved()
-      setDraft(null)
       queryClient.setQueryData(["layout", PAGE], { layout: null })
       toast.success("Layout reset to default")
     },
     onError: () => toast.error("Couldn't reset the layout"),
   })
 
-  const save = React.useCallback(() => {
-    if (draftRef.current) saveMut.mutate(draftRef.current)
-  }, [saveMut])
-  const discard = React.useCallback(() => setDraft(null), [])
-  const resetAll = React.useCallback(() => resetMut.mutate(), [resetMut])
-
   return {
     layout,
-    saved,
-    dirty,
-    saving: saveMut.isPending || resetMut.isPending,
-    // structural (always staged in the draft)
+    saving: resetMut.isPending,
+    canUndo: history.canUndo,
+    canRedo: history.canRedo,
+    undo,
+    redo,
     applyGridChange: React.useCallback(
       (items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>) =>
-        applyStructural((l) => applyGridChange(l, items)),
-      [applyStructural],
+        apply((l) => applyGridChange(l, items)),
+      [apply],
     ),
     addWidget: React.useCallback(
-      (kind: WidgetKind) => {
+      (kind: WidgetKind, seed?: WidgetConfigPatch) => {
         const id = newWidgetId()
-        applyStructural((l) => withWidgetAdded(l, kind, id))
+        apply((l) => withWidgetAdded(l, kind, id, seed))
         return id
       },
-      [applyStructural],
+      [apply],
     ),
     removeWidget: React.useCallback(
-      (id: string) => applyStructural((l) => withWidgetRemoved(l, id)),
-      [applyStructural],
+      (id: string) => apply((l) => withWidgetRemoved(l, id)),
+      [apply],
     ),
     duplicateWidget: React.useCallback(
       (id: string) => {
         const nid = newWidgetId()
-        applyStructural((l) => withWidgetDuplicated(l, id, nid))
+        apply((l) => withWidgetDuplicated(l, id, nid))
         return nid
       },
-      [applyStructural],
+      [apply],
     ),
-    // config: silent persist from read-mode quick controls, staged while editing
+    resetWidget: React.useCallback(
+      (id: string) => apply((l) => withWidgetReset(l, id)),
+      [apply],
+    ),
     updateWidgetConfig: React.useCallback(
-      (
-        id: string,
-        patch: WidgetConfigPatch,
-        opts?: { stage?: boolean },
-      ) => {
-        const op = (l: AnalyticsLayout) => withWidgetConfig(l, id, patch)
-        if (opts?.stage) applyStructural(op)
-        else applyPref(op)
-      },
-      [applyStructural, applyPref],
+      (id: string, patch: WidgetConfigPatch) =>
+        apply((l) => withWidgetConfig(l, id, patch)),
+      [apply],
     ),
-    // lifecycle
-    save,
-    discard,
-    resetAll,
+    /** Import a whole doc (export/import); runs through normalize. */
+    replaceLayout: React.useCallback(
+      (doc: unknown) => apply(() => normalizeLayout(doc)),
+      [apply],
+    ),
+    resetAll: React.useCallback(() => resetMut.mutate(), [resetMut]),
   }
 }

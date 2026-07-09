@@ -64,9 +64,13 @@ export function BreakdownWidget({
   const { dimension, metric } = config
   const meta = DIMENSION_META[dimension]
   const hasMap = dimension === "country"
-  // A stale "map" on a non-country widget falls back to bars (normalize also
-  // clamps this; the render guard is belt-and-suspenders).
-  const viz = config.viz === "map" && !hasMap ? "bars" : config.viz
+  // The shell toggle is a transient peek; the persisted default lives in
+  // config.viz and the parent re-keys this component when it changes. A
+  // stale "map" on a non-country widget falls back to bars.
+  const [view, setView] = React.useState(
+    config.viz === "map" && !hasMap ? "bars" : config.viz,
+  )
+  const viz = view === "map" && !hasMap ? "bars" : view
 
   React.useEffect(() => {
     if (!expanded) return
@@ -93,7 +97,7 @@ export function BreakdownWidget({
   return (
     <WidgetShell
       icon={meta.icon}
-      title={meta.title}
+      title={config.title ?? meta.title}
       editing={editing}
       onRemove={onRemove}
       panelClassName={
@@ -112,7 +116,7 @@ export function BreakdownWidget({
           />
           <Segmented
             value={viz}
-            onChange={(v) => onConfigChange({ viz: v })}
+            onChange={setView}
             options={[
               { value: "bars", icon: ChartBar, ariaLabel: "bars view" },
               { value: "donut", icon: ChartPie, ariaLabel: "donut view" },
