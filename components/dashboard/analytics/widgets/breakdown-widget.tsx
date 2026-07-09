@@ -44,6 +44,7 @@ import { RadialChart } from "@/components/dashboard/analytics/widgets/radial-cha
 import { BreakdownRadar } from "@/components/dashboard/analytics/widgets/radar-chart"
 import { BubbleChart } from "@/components/dashboard/analytics/widgets/bubble-chart"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
+import { MetricControl } from "@/components/dashboard/analytics/metric-control"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
@@ -149,14 +150,10 @@ export function BreakdownWidget({
       }
       quickControls={
         <span className="flex items-center gap-1.5">
-          <Segmented
+          <MetricControl
             value={metric}
             onChange={(m) => onConfigChange({ metric: m })}
-            options={[
-              { value: "total", label: "total" },
-              { value: "unique", label: "unique" },
-              { value: "both", label: "both" },
-            ]}
+            compact={w < 6}
           />
           <Segmented
             value={mode}

@@ -52,6 +52,21 @@ export function CalendarHeatmap({
     [series, metric],
   )
 
+  // Cells grow into whatever the grid cell offers (a bigger widget means
+  // bigger day squares, not more dead space around a fixed grid).
+  const ref = React.useRef<HTMLDivElement>(null)
+  const [box, setBox] = React.useState<{ w: number; h: number } | null>(null)
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      if (width > 0 && height > 0) setBox({ w: width, h: height })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   if (!series.length) {
     return (
       <div className="text-muted-foreground/70 flex h-full items-center justify-center text-xs">
@@ -104,6 +119,23 @@ export function CalendarHeatmap({
   const weeks: Array<typeof days> = []
   for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7))
 
+  // Fit: labels take ~34px of width and 15px of height; 3px gaps ride on
+  // top of the cell size. Clamped so tiny widgets stay legible and huge
+  // ones don't turn into a Mondrian.
+  const GAP = 3
+  const cell = box
+    ? Math.max(
+        10,
+        Math.min(
+          36,
+          Math.floor(
+            Math.min((box.w - 34) / weeks.length, (box.h - 15) / 7),
+          ) - GAP,
+        ),
+      )
+    : 16
+  const radius = Math.max(3, Math.round(cell / 6))
+
   // Month label above the first week, and above any week containing a 1st
   // (labelled with THAT month, not the week's start month).
   const monthLabel = (week: typeof days, wi: number) => {
@@ -114,13 +146,14 @@ export function CalendarHeatmap({
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div ref={ref} className="flex h-full w-full items-center justify-center p-4">
       <div className="flex max-h-full gap-1.5">
         <div className="flex shrink-0 flex-col gap-[3px] pt-[15px]" aria-hidden>
           {WEEKDAYS.map((d, i) => (
             <span
               key={i}
-              className="text-muted-foreground/60 flex h-4 items-center pr-1 font-mono text-[9px] leading-none"
+              className="text-muted-foreground/60 flex items-center pr-1 font-mono text-[9px] leading-none"
+              style={{ height: cell }}
             >
               {d}
             </span>
@@ -134,7 +167,9 @@ export function CalendarHeatmap({
               </span>
               {week.map(({ t, bucket }) => {
                 if (!bucket)
-                  return <span key={t} className="aspect-square w-4" />
+                  return (
+                    <span key={t} style={{ width: cell, height: cell }} />
+                  )
                 const v = value(bucket)
                 return (
                   <button
@@ -145,10 +180,15 @@ export function CalendarHeatmap({
                       onRangeSelect?.(new Date(t), new Date(t + DAY_MS))
                     }
                     className={cn(
-                      "aspect-square w-4 rounded-[3px] transition-transform duration-150",
+                      "transition-transform duration-150",
                       onRangeSelect && "cursor-pointer hover:scale-110",
                     )}
-                    style={{ background: stepFill(v, max) }}
+                    style={{
+                      width: cell,
+                      height: cell,
+                      borderRadius: radius,
+                      background: stepFill(v, max),
+                    }}
                   />
                 )
               })}

@@ -77,6 +77,7 @@ export function WidgetCell({
           <TimeseriesWidget
             key={`view:${w.config.viz}`}
             config={w.config}
+            w={w.grid.w}
             loading={loading}
             stats={stats}
             prevStats={prev}

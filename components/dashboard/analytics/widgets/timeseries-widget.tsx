@@ -19,6 +19,7 @@ import { timeSeriesOf, type StatsResponse } from "@/lib/api"
 import type { TimeseriesConfig } from "@/lib/analytics-layout"
 import { ClicksChart } from "@/components/dashboard/clicks-chart"
 import { CalendarHeatmap } from "@/components/dashboard/analytics/widgets/calendar-heatmap"
+import { MetricControl } from "@/components/dashboard/analytics/metric-control"
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
@@ -39,6 +40,7 @@ const TS_CHART_ICONS = {
  */
 export function TimeseriesWidget({
   config,
+  w = 12,
   loading,
   stats,
   prevStats,
@@ -51,6 +53,8 @@ export function TimeseriesWidget({
   onRemove,
 }: {
   config: TimeseriesConfig
+  /** Grid width, drives header control density. */
+  w?: number
   loading: boolean
   stats?: StatsResponse
   /** Previous equal-length window; drawn as a ghost when compare is on. */
@@ -116,14 +120,10 @@ export function TimeseriesWidget({
       }
       quickControls={
         <span className="flex items-center gap-1.5">
-          <Segmented
+          <MetricControl
             value={metric}
             onChange={(m) => onConfigChange({ metric: m })}
-            options={[
-              { value: "total", label: "total" },
-              { value: "unique", label: "unique" },
-              { value: "both", label: "both" },
-            ]}
+            compact={!expanded && w < 6}
           />
           <Segmented
             value={mode}
