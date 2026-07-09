@@ -19,10 +19,16 @@ import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
 
+const TS_CHART_ICONS = {
+  area: ChartArea,
+  line: ChartLine,
+  bars: ChartBar,
+} as const
+
 /**
- * Clicks over time as a widget: area / line / bars / table views. All chart
- * layers stay MOUNTED behind a crossfade — unmounting would replay the draw
- * animation on every view switch.
+ * Clicks over time as a widget. The chart type is composed in the edit bar;
+ * read mode only offers a chart <-> table flip. All chart layers stay
+ * MOUNTED behind a crossfade — unmounting would replay the draw animation.
  */
 export function TimeseriesWidget({
   config,
@@ -45,9 +51,13 @@ export function TimeseriesWidget({
   onRangeSelect: (from: Date, to: Date) => void
   onRemove?: () => void
 }) {
-  // The shell toggle is a transient peek; the persisted default lives in
-  // config.viz and the parent re-keys this component when it changes.
-  const [view, setView] = React.useState(config.viz)
+  // Read mode only flips between the CONFIGURED chart and the table — the
+  // chart type itself is composed in the edit bar. Transient peek; the
+  // parent re-keys this component when the configured default changes.
+  const chartViz = config.viz === "table" ? "area" : config.viz
+  const [mode, setMode] = React.useState<"chart" | "table">(
+    config.viz === "table" ? "table" : "chart",
+  )
   const { metric } = config
   const series = React.useMemo(() => (stats ? timeSeriesOf(stats) : []), [stats])
   const hourly = stats?.time_bucket_info.strategy === "hourly"
@@ -95,12 +105,14 @@ export function TimeseriesWidget({
             ]}
           />
           <Segmented
-            value={view}
-            onChange={setView}
+            value={mode}
+            onChange={setMode}
             options={[
-              { value: "area", icon: ChartArea, ariaLabel: "area chart view" },
-              { value: "line", icon: ChartLine, ariaLabel: "line chart view" },
-              { value: "bars", icon: ChartBar, ariaLabel: "bar chart view" },
+              {
+                value: "chart",
+                icon: TS_CHART_ICONS[chartViz],
+                ariaLabel: "chart view",
+              },
               { value: "table", icon: Table2, ariaLabel: "table view" },
             ]}
           />
@@ -131,7 +143,7 @@ export function TimeseriesWidget({
               key={v}
               className={cn(
                 "absolute inset-0 p-4 transition-opacity duration-150 ease-out",
-                view !== v && "pointer-events-none opacity-0",
+                (mode !== "chart" || chartViz !== v) && "pointer-events-none opacity-0",
               )}
             >
               <ClicksChart
@@ -148,7 +160,7 @@ export function TimeseriesWidget({
           <div
             className={cn(
               "absolute inset-0 transition-opacity duration-150 ease-out",
-              view !== "table" && "pointer-events-none opacity-0",
+              mode !== "table" && "pointer-events-none opacity-0",
             )}
           >
             <div className="h-full overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">

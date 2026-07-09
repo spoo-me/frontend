@@ -30,11 +30,18 @@ import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
 
+const BD_CHART_ICONS = {
+  bars: ChartBar,
+  donut: ChartPie,
+  map: MapIcon,
+} as const
+
 /**
- * One dimension's top values as a widget: bars / donut / table (+ map for
- * countries). Size drives density — the cell's grid height decides how many
- * rows the bars show and how many slices the donut carries; width decides
- * the table's columns and the donut's legend.
+ * One dimension's top values as a widget. The chart type (bars / donut /
+ * map) is composed in the edit bar; read mode only offers a chart <-> table
+ * flip. Size drives density — grid height decides how many rows the bars
+ * show and how many slices the donut carries; width decides the table's
+ * columns and the donut's legend.
  */
 export function BreakdownWidget({
   config,
@@ -64,13 +71,21 @@ export function BreakdownWidget({
   const { dimension, metric } = config
   const meta = DIMENSION_META[dimension]
   const hasMap = dimension === "country"
-  // The shell toggle is a transient peek; the persisted default lives in
-  // config.viz and the parent re-keys this component when it changes. A
-  // stale "map" on a non-country widget falls back to bars.
-  const [view, setView] = React.useState(
-    config.viz === "map" && !hasMap ? "bars" : config.viz,
+  // Read mode only flips between the CONFIGURED chart and the table — the
+  // chart type itself is composed in the edit bar. A stale "map" on a
+  // non-country widget falls back to bars.
+  const configuredChart =
+    config.viz === "table"
+      ? hasMap
+        ? "map"
+        : "bars"
+      : config.viz === "map" && !hasMap
+        ? "bars"
+        : config.viz
+  const [mode, setMode] = React.useState<"chart" | "table">(
+    config.viz === "table" ? "table" : "chart",
   )
-  const viz = view === "map" && !hasMap ? "bars" : view
+  const viz = mode === "table" ? "table" : configuredChart
 
   React.useEffect(() => {
     if (!expanded) return
@@ -115,14 +130,14 @@ export function BreakdownWidget({
             ]}
           />
           <Segmented
-            value={viz}
-            onChange={setView}
+            value={mode}
+            onChange={setMode}
             options={[
-              { value: "bars", icon: ChartBar, ariaLabel: "bars view" },
-              { value: "donut", icon: ChartPie, ariaLabel: "donut view" },
-              ...(hasMap
-                ? [{ value: "map" as const, icon: MapIcon, ariaLabel: "map view" }]
-                : []),
+              {
+                value: "chart",
+                icon: BD_CHART_ICONS[configuredChart],
+                ariaLabel: "chart view",
+              },
               { value: "table", icon: Table2, ariaLabel: "table view" },
             ]}
           />

@@ -167,7 +167,7 @@ export function defaultLayout(): AnalyticsLayout {
       seed("w_time", "timeseries", { x: 0, y: 2, w: 12, h: 5 }, { viz: "area", metric: "total" }),
       seed("w_country", "breakdown", { x: 0, y: 7, w: 6, h: 6 }, { dimension: "country", viz: "map", metric: "total" }),
       seed("w_city", "breakdown", { x: 6, y: 7, w: 6, h: 6 }, { dimension: "city", viz: "bars", metric: "total" }),
-      seed("w_links", "breakdown", { x: 0, y: 13, w: 6, h: 6 }, { dimension: "short_code", viz: "bars", metric: "total" }),
+      seed("w_links", "breakdown", { x: 0, y: 13, w: 6, h: 6 }, { dimension: "short_code", viz: "table", metric: "total" }),
       seed("w_ref", "breakdown", { x: 6, y: 13, w: 6, h: 6 }, { dimension: "referrer", viz: "bars", metric: "total" }),
       seed("w_browser", "breakdown", { x: 0, y: 19, w: 6, h: 6 }, { dimension: "browser", viz: "bars", metric: "total" }),
       seed("w_os", "breakdown", { x: 6, y: 19, w: 6, h: 6 }, { dimension: "os", viz: "bars", metric: "total" }),
