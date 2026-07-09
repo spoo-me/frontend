@@ -43,8 +43,11 @@ export function BubbleChart({
     x: number
     y: number
     row: DimensionRow
+    /** Near the top edge the card flips below so the panel can't clip it. */
+    below: boolean
   } | null>(null)
 
+  const hasData = rows.length > 0
   React.useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -54,7 +57,8 @@ export function BubbleChart({
     })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+    // Re-attach when data arrives: the empty state renders without the ref.
+  }, [hasData])
 
   const bubbles: Bubble[] = React.useMemo(() => {
     if (!size) return []
@@ -102,7 +106,15 @@ export function BubbleChart({
               <g
                 key={b.row.value}
                 onClick={onSelect ? () => onSelect(b.row.value) : undefined}
-                onMouseEnter={() => setHover({ x: b.x, y: b.y - b.r, row: b.row })}
+                onMouseEnter={() => {
+                  const below = b.y - b.r < 132
+                  setHover({
+                    x: b.x,
+                    y: below ? b.y + b.r : b.y - b.r,
+                    row: b.row,
+                    below,
+                  })
+                }}
                 onMouseLeave={() => setHover(null)}
                 className={cn(onSelect && "cursor-pointer")}
               >
@@ -165,7 +177,10 @@ export function BubbleChart({
       )}
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full pb-2"
+          className={cn(
+            "pointer-events-none absolute z-10 -translate-x-1/2",
+            hover.below ? "pt-2" : "-translate-y-full pb-2",
+          )}
           style={{ left: hover.x + 8, top: hover.y + 8 }}
         >
           <DimTooltip active payload={[{ payload: hover.row }]} dimension={dimension} />

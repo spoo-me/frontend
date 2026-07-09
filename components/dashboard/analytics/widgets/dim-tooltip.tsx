@@ -3,12 +3,13 @@
 import { cn } from "@/lib/utils"
 import { formatCount } from "@/lib/format"
 import type { DimensionRow, StatsDimension } from "@/lib/api"
-import { dimensionLabel } from "@/components/dashboard/dim-icon"
+import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 
 /**
  * Shared tooltip card for the categorical charts (donut, pie, columns,
- * treemap): value header, clicks/unique rows, computed unique rate. Same
- * grammar as the time-series ChartTooltip.
+ * treemap, radial, radar, scatter, bubbles): identity icon + value header,
+ * accent-hinted clicks/unique rows, computed unique rate. Same grammar as
+ * the time-series ChartTooltip.
  */
 
 export const OTHER = "__other__"
@@ -40,14 +41,17 @@ export function DimTooltip({
   const rate = d.clicks ? Math.round((d.unique_clicks / d.clicks) * 100) : 0
   return (
     <div className="border-border/60 bg-popover min-w-[168px] overflow-hidden rounded-lg border shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)]">
-      <div className="border-border/60 bg-muted/40 border-b px-3 py-1.5">
-        <span className="text-foreground text-xs font-medium">
+      <div className="border-border/60 bg-muted/40 flex items-center gap-1.5 border-b px-3 py-1.5">
+        {raw !== OTHER && (
+          <DimensionIcon dimension={dimension} value={raw} className="size-3.5 shrink-0" />
+        )}
+        <span className="text-foreground min-w-0 truncate text-xs font-medium">
           {raw === OTHER ? "Other" : dimensionLabel(dimension, raw)}
         </span>
       </div>
       <div className="space-y-1 px-3 py-2">
-        <TooltipRow label="Clicks" value={formatCount(d.clicks)} />
-        <TooltipRow label="Unique" value={formatCount(d.unique_clicks)} />
+        <TooltipRow swatch="fill" label="Clicks" value={formatCount(d.clicks)} />
+        <TooltipRow swatch="ring" label="Unique" value={formatCount(d.unique_clicks)} />
         <div className="border-border/60 mt-1.5 border-t pt-1.5">
           <TooltipRow label="Unique rate" value={`${rate}%`} muted />
         </div>
@@ -57,16 +61,29 @@ export function DimTooltip({
 }
 
 export function TooltipRow({
+  swatch,
   label,
   value,
   muted,
 }: {
+  /** Series hint in the widget's ink, same grammar as ChartTooltip. */
+  swatch?: "fill" | "ring"
   label: string
   value: string
   muted?: boolean
 }) {
   return (
     <div className="flex items-center gap-2">
+      {swatch && (
+        <span
+          className="size-2 shrink-0 rounded-full"
+          style={
+            swatch === "fill"
+              ? { background: "var(--chart-accent, var(--brand))" }
+              : { border: "1px solid var(--chart-accent, var(--brand))" }
+          }
+        />
+      )}
       <span className="text-muted-foreground flex-1 text-xs">{label}</span>
       <span
         className={cn(

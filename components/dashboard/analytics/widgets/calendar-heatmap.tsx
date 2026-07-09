@@ -56,6 +56,7 @@ export function CalendarHeatmap({
   // bigger day squares, not more dead space around a fixed grid).
   const ref = React.useRef<HTMLDivElement>(null)
   const [box, setBox] = React.useState<{ w: number; h: number } | null>(null)
+  const hasData = series.length > 0
   React.useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -65,7 +66,8 @@ export function CalendarHeatmap({
     })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+    // Re-attach when data arrives: the empty state renders without the ref.
+  }, [hasData])
 
   if (!series.length) {
     return (
@@ -75,27 +77,49 @@ export function CalendarHeatmap({
     )
   }
 
-  /* Hourly window: a single strip of hour cells. */
+  /* Hourly window (a day or so of hourly buckets): a labelled strip of
+     hour cells, sized to the panel like the daily grid. Finer-than-daily
+     cells for LONGER ranges need the backend to serve hourly buckets. */
   if (hourly) {
+    const count = series.length
+    const cell = box
+      ? Math.max(
+          10,
+          Math.min(
+            36,
+            Math.floor(Math.min((box.w - 8) / count, box.h - 18)) - 3,
+          ),
+        )
+      : 16
     return (
-      <div className="flex h-full w-full items-center px-4">
-        <div className="grid w-full auto-cols-fr grid-flow-col gap-[3px]">
+      <div ref={ref} className="flex h-full w-full items-center justify-center p-4">
+        <div className="flex gap-[3px]">
           {series.map((b) => {
             const t = new Date(b.bucket)
+            const hour = t.getHours()
             return (
-              <button
-                key={b.bucket}
-                type="button"
-                title={`${hourFmt.format(t)} · ${formatCount(value(b))} ${metric === "unique" ? "unique" : "clicks"}`}
-                onClick={() =>
-                  onRangeSelect?.(t, new Date(t.getTime() + 3_600_000))
-                }
-                className={cn(
-                  "aspect-square min-w-0 rounded-[3px] transition-transform duration-150",
-                  onRangeSelect && "cursor-pointer hover:scale-110",
-                )}
-                style={{ background: stepFill(value(b), max) }}
-              />
+              <div key={b.bucket} className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  title={`${hourFmt.format(t)} · ${formatCount(value(b))} ${metric === "unique" ? "unique" : "clicks"}`}
+                  onClick={() =>
+                    onRangeSelect?.(t, new Date(t.getTime() + 3_600_000))
+                  }
+                  className={cn(
+                    "transition-transform duration-150",
+                    onRangeSelect && "cursor-pointer hover:scale-110",
+                  )}
+                  style={{
+                    width: cell,
+                    height: cell,
+                    borderRadius: Math.max(3, Math.round(cell / 6)),
+                    background: stepFill(value(b), max),
+                  }}
+                />
+                <span className="text-muted-foreground/60 h-3 font-mono text-[9px] leading-none whitespace-nowrap">
+                  {hour % 6 === 0 ? hourFmt.format(t) : ""}
+                </span>
+              </div>
             )
           })}
         </div>

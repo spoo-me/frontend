@@ -474,7 +474,10 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
     series.push({ bucket: new Date(t).toISOString(), clicks, unique_clicks: uniq })
     total += clicks
   }
-  const uniqueTotal = Math.round(total * 0.68)
+  // Sum the jittered buckets instead of a flat ratio: total and unique
+  // then trend DIFFERENTLY, so their deltas and sparklines diverge like
+  // real traffic would.
+  const uniqueTotal = series.reduce((a, b) => a + b.unique_clicks, 0)
 
   const metrics: Record<string, unknown[]> = {}
   if (q.groupBy.includes("time")) metrics["clicks_by_time"] = series
@@ -496,12 +499,13 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
     })
     const rawTotal = rows.reduce((a, r) => a + r.raw, 0)
     metrics[`clicks_by_${dim}`] = rows
-      .map(({ value, raw }) => {
+      .map(({ value, raw }, i) => {
         const clicks = Math.round((raw / rawTotal) * total)
+        const rate = 0.6 + mulberry32(SEED ^ (i * 97) ^ raw)() * 0.2
         return {
           value,
           clicks,
-          unique_clicks: Math.round(clicks * 0.68),
+          unique_clicks: Math.round(clicks * rate),
           percentage: Math.round((raw / rawTotal) * 1000) / 10,
         }
       })
@@ -514,12 +518,13 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
       : links
     const wTotal = pool.reduce((a, l) => a + l.weight, 0)
     metrics["clicks_by_short_code"] = pool
-      .map((l) => {
+      .map((l, i) => {
         const clicks = Math.round((l.weight / wTotal) * total)
+        const rate = 0.6 + mulberry32(SEED ^ (i * 53) ^ l.weight)() * 0.2
         return {
           value: l.alias,
           clicks,
-          unique_clicks: Math.round(clicks * 0.68),
+          unique_clicks: Math.round(clicks * rate),
           percentage: Math.round((l.weight / wTotal) * 1000) / 10,
         }
       })
