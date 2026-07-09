@@ -1,3 +1,5 @@
+import fs from "node:fs"
+import path from "node:path"
 import { NextRequest, NextResponse } from "next/server"
 
 import {
@@ -44,6 +46,25 @@ type MockState = {
   layouts: Record<string, unknown>
 }
 
+/* Layouts survive dev-server restarts on disk — the rest of the mock is
+   cheap to reseed, but wiping a hand-arranged dashboard on every file edit
+   makes the feature feel broken. Gitignored. */
+const LAYOUTS_FILE = path.join(process.cwd(), ".mock-layouts.json")
+function readLayoutsFile(): Record<string, unknown> {
+  try {
+    return JSON.parse(fs.readFileSync(LAYOUTS_FILE, "utf8"))
+  } catch {
+    return {}
+  }
+}
+function writeLayoutsFile(layouts: Record<string, unknown>) {
+  try {
+    fs.writeFileSync(LAYOUTS_FILE, JSON.stringify(layouts, null, 2))
+  } catch {
+    /* best effort */
+  }
+}
+
 const initial = (): MockState => ({
   email: "you@example.com",
   userName: "Aditya",
@@ -53,7 +74,7 @@ const initial = (): MockState => ({
   domains: buildDomains(),
   keys: buildKeys(),
   grants: buildGrants(),
-  layouts: {},
+  layouts: readLayoutsFile(),
 })
 
 // Survives HMR within one dev-server process.
@@ -193,6 +214,11 @@ async function handle(req: NextRequest, path: string[]) {
   switch (route) {
     /* ---------- housekeeping ---------- */
     case "GET /reset": {
+      try {
+        fs.rmSync(LAYOUTS_FILE, { force: true })
+      } catch {
+        /* best effort */
+      }
       g.__spooMock = initial()
       return json({ success: true, note: "mock state reset" })
     }
@@ -601,10 +627,12 @@ async function handle(req: NextRequest, path: string[]) {
       if (!body.layout || typeof body.layout !== "object")
         return fail(422, "invalid_layout", "layout must be an object", "layout")
       s.layouts[key] = body.layout
+      writeLayoutsFile(s.layouts)
       return json({ layout: s.layouts[key] })
     }
     if (req.method === "DELETE") {
       delete s.layouts[key]
+      writeLayoutsFile(s.layouts)
       return new NextResponse(null, { status: 204 })
     }
   }
