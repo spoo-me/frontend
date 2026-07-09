@@ -2,12 +2,14 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowUpRight, History } from "lucide-react"
+import { ArrowUpRight, History, Plus } from "lucide-react"
 
 import type { UrlListItem } from "@/lib/api"
 import { displayUrl, formatCount, formatWhen } from "@/lib/format"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
+import { Button } from "@/components/ui/button"
 import { CopyButton } from "@/components/dashboard/copy-button"
+import { openLinkComposer } from "@/components/dashboard/links/composer"
 import { shortUrlOf } from "@/components/dashboard/links/link-actions"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -74,10 +76,14 @@ export function RecentLinks({
             ))}
           </div>
         ) : (
-          <div className="pattern-dots m-2 flex h-40 items-center justify-center rounded-lg">
+          <div className="pattern-dots m-2 flex h-40 flex-col items-center justify-center gap-3 rounded-lg">
             <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
               no links yet
             </span>
+            <Button size="sm" onClick={() => openLinkComposer()}>
+              <Plus data-icon="inline-start" />
+              New link
+            </Button>
           </div>
         )}
       </Panel>

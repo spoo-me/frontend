@@ -49,7 +49,10 @@ export function TodayCards({ linksTotal }: { linksTotal?: number }) {
     t && y ? pctChange(t.summary.total_clicks, y.summary.total_clicks) : null
   const uniqueDelta =
     t && y ? pctChange(t.summary.unique_clicks, y.summary.unique_clicks) : null
+  // An all-zero day would draw as a flat ink line at the baseline — no
+  // signal, no sparkline.
   const points = t ? timeSeriesOf(t).map((b) => b.clicks) : []
+  const hasSignal = points.some((p) => p > 0)
 
   return (
     <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -58,7 +61,9 @@ export function TodayCards({ linksTotal }: { linksTotal?: number }) {
         value={t ? formatCount(t.summary.total_clicks) : "–"}
         delta={clicksDelta}
         deltaLabel="vs yesterday"
-        chart={points.length >= 2 ? <Sparkline points={points} /> : undefined}
+        chart={
+          hasSignal && points.length >= 2 ? <Sparkline points={points} /> : undefined
+        }
       />
       <KpiCard
         label="Unique · today"

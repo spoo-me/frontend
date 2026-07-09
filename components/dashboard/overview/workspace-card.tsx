@@ -14,6 +14,7 @@ import {
 import type { ApiKey, AppGrant, CustomDomain, UrlListItem } from "@/lib/api"
 import { formatCount, formatWhen } from "@/lib/format"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
+import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/components/dashboard/status-pill"
 
 /**
@@ -35,29 +36,44 @@ function ColumnHeader({
 }: {
   label: string
   href: string
-  action: string
+  /** Omitted when the column is empty — the empty CTA owns the action. */
+  action?: string
 }) {
   return (
     <div className="flex h-8 items-center justify-between">
       <span className="label-mono text-muted-foreground/60 text-[10px]">
         {label}
       </span>
-      <Link
-        href={href}
-        className="text-muted-foreground/70 hover:text-foreground flex items-center gap-0.5 text-[11px] transition-colors duration-150"
-      >
-        {action}
-        <ArrowUpRight className="size-3" />
-      </Link>
+      {action && (
+        <Link
+          href={href}
+          className="text-muted-foreground/70 hover:text-foreground flex items-center gap-0.5 text-[11px] transition-colors duration-150"
+        >
+          {action}
+          <ArrowUpRight className="size-3" />
+        </Link>
+      )}
     </div>
   )
 }
 
-function EmptyLine({ children }: { children: React.ReactNode }) {
+/** Empty columns get a verb, not a shrug. */
+function EmptyCta({
+  note,
+  href,
+  cta,
+}: {
+  note: string
+  href: string
+  cta: string
+}) {
   return (
-    <p className="text-muted-foreground/70 flex h-10 items-center text-xs">
-      {children}
-    </p>
+    <div className="flex h-10 items-center justify-between gap-2">
+      <span className="text-muted-foreground/70 text-xs">{note}</span>
+      <Button asChild variant="outline" size="sm">
+        <Link href={href}>{cta}</Link>
+      </Button>
+    </div>
   )
 }
 
@@ -83,7 +99,7 @@ export function WorkspaceCard({
           <ColumnHeader
             label="Domains"
             href="/dashboard/domains"
-            action={domains.length ? "Manage" : "Add domain"}
+            action={domains.length ? "Manage" : undefined}
           />
           {domains.length ? (
             domains.map((d) => {
@@ -105,13 +121,21 @@ export function WorkspaceCard({
               )
             })
           ) : (
-            <EmptyLine>no custom domains</EmptyLine>
+            <EmptyCta
+              note="no custom domains"
+              href="/dashboard/domains"
+              cta="Add domain"
+            />
           )}
         </div>
 
         {/* Connected apps */}
         <div className="px-4 py-3">
-          <ColumnHeader label="Apps" href="/dashboard/apps" action="Browse" />
+          <ColumnHeader
+            label="Apps"
+            href="/dashboard/apps"
+            action={grants.length ? "Browse" : undefined}
+          />
           {grants.length ? (
             grants.map((g) => {
               const Icon = GRANT_ICONS[g.icon] ?? Puzzle
@@ -131,7 +155,11 @@ export function WorkspaceCard({
               )
             })
           ) : (
-            <EmptyLine>nothing connected</EmptyLine>
+            <EmptyCta
+              note="nothing connected"
+              href="/dashboard/apps"
+              cta="Browse apps"
+            />
           )}
         </div>
 
@@ -140,7 +168,7 @@ export function WorkspaceCard({
           <ColumnHeader
             label="API keys"
             href="/dashboard/developer"
-            action={activeKeys.length ? "Manage" : "Create"}
+            action={activeKeys.length ? "Manage" : undefined}
           />
           {activeKeys.length ? (
             activeKeys.map((k) => (
@@ -158,7 +186,11 @@ export function WorkspaceCard({
               </div>
             ))
           ) : (
-            <EmptyLine>no API keys</EmptyLine>
+            <EmptyCta
+              note="no API keys"
+              href="/dashboard/developer"
+              cta="Create key"
+            />
           )}
         </div>
       </Panel>
