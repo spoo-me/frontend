@@ -14,6 +14,7 @@ export function KpiCard({
   delta,
   deltaLabel = "vs previous period",
   footer,
+  chart,
   className,
 }: {
   label: string
@@ -24,12 +25,14 @@ export function KpiCard({
   deltaLabel?: string
   /** Quiet footer text for cards without a delta (keeps heights uniform). */
   footer?: string
+  /** Optional trend zone between body and footer (stat widgets ≥3h). */
+  chart?: React.ReactNode
   className?: string
 }) {
   const hasFooterRow = delta != null || footer != null
   return (
     <Panel className={cn("bg-shell flex flex-col", className)}>
-      <div className="flex-1 px-4 pt-3.5 pb-3">
+      <div className="px-4 pt-3.5 pb-3">
         <div className="label-mono text-muted-foreground">{label}</div>
         <div className="mt-2 flex items-baseline gap-1.5">
           <span className="text-foreground font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums">
@@ -38,6 +41,7 @@ export function KpiCard({
           {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
         </div>
       </div>
+      <div className="min-h-0 flex-1">{chart}</div>
       {hasFooterRow && (
         <div className="border-border/60 bg-muted/30 flex h-8 items-center justify-between border-t px-4">
           {delta != null ? (

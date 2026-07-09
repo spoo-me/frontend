@@ -1,12 +1,35 @@
 /**
- * The analytics dashboard layout document: one canonical default lives here
- * in code (never materialized per user), user docs are sparse overrides, and
- * `normalizeLayout` is the forward-compat seam — unknown blocks drop, missing
- * registry blocks re-appear with defaults, values clamp to sanctioned sets.
- * Pure data module: no React, no UI imports.
+ * The analytics dashboard layout document. A dashboard is a list of WIDGETS —
+ * each one a data source + visualization + rectangle on a 12-column grid.
+ * One canonical default lives here in code (never materialized per user);
+ * user docs are sparse overrides and `normalizeLayout` is the compatibility
+ * seam: anything unrecognized resets to default, values clamp to sanctioned
+ * sets, and positions are pre-compacted through the same algorithm the grid
+ * renders with, so the stored doc always equals what the user sees.
+ *
+ * Pure data module: no React, no UI imports. Grid math comes from
+ * react-grid-layout/core, which is framework-free.
  */
 
-export const BREAKDOWN_IDS = [
+import {
+  bottom,
+  correctBounds,
+  verticalCompactor,
+  type LayoutItem,
+} from "react-grid-layout/core"
+
+export type WidgetKind = "stat" | "timeseries" | "breakdown"
+
+export type StatMetric =
+  | "total_clicks"
+  | "unique_clicks"
+  | "unique_rate"
+  | "clicks_per_visitor"
+export type SeriesMetric = "total" | "unique" | "both"
+export type TimeseriesViz = "area" | "line" | "bars" | "table"
+export type BreakdownViz = "bars" | "donut" | "table" | "map"
+
+export const BREAKDOWN_DIMENSIONS = [
   "short_code",
   "referrer",
   "country",
@@ -14,58 +37,119 @@ export const BREAKDOWN_IDS = [
   "browser",
   "os",
 ] as const
-export type BreakdownId = (typeof BREAKDOWN_IDS)[number]
+export type BreakdownDimension = (typeof BREAKDOWN_DIMENSIONS)[number]
 
-/** Full-width singleton blocks: the KPI strip and the time chart. They
-    reorder and hide like any card but their span is locked to the full row. */
-export const FIXED_SPAN_IDS = ["kpis", "time"] as const
-export type BlockId = BreakdownId | (typeof FIXED_SPAN_IDS)[number]
-export type BlockType = "breakdown" | "kpis" | "timeseries"
-
-export type HeroView = "chart" | "bars" | "table"
-export type BlockView = "chart" | "table" | "map"
-export type BlockMetric = "total" | "unique" | "both"
-export type BlockSpan = 1 | 2
-
-export type BlockConfig = { view: BlockView; metric: BlockMetric }
-export type LayoutBlock = {
-  id: BlockId
-  type: BlockType
-  span: BlockSpan
-  hidden?: boolean
-  // kpis/timeseries blocks carry the same config shape but ignore it (the
-  // hero's view lives in `hero.view`); one shape keeps normalize simple.
-  config: BlockConfig
-}
-export type AnalyticsLayout = {
-  version: 1
-  hero: { view: HeroView }
-  blocks: LayoutBlock[]
+export type StatConfig = { metric: StatMetric }
+export type TimeseriesConfig = { viz: TimeseriesViz; metric: SeriesMetric }
+export type BreakdownConfig = {
+  dimension: BreakdownDimension
+  viz: BreakdownViz
+  metric: SeriesMetric
 }
 
-const HERO_VIEWS: readonly HeroView[] = ["chart", "bars", "table"]
-const METRICS: readonly BlockMetric[] = ["total", "unique", "both"]
+export type WidgetGridRect = { x: number; y: number; w: number; h: number }
+export type Widget =
+  | { id: string; kind: "stat"; grid: WidgetGridRect; config: StatConfig }
+  | { id: string; kind: "timeseries"; grid: WidgetGridRect; config: TimeseriesConfig }
+  | { id: string; kind: "breakdown"; grid: WidgetGridRect; config: BreakdownConfig }
 
-const typeOf = (id: BlockId): BlockType =>
-  id === "kpis" ? "kpis" : id === "time" ? "timeseries" : "breakdown"
+export type AnalyticsLayout = { version: 1; widgets: Widget[] }
 
-const defaultView = (id: BlockId): BlockView =>
-  id === "country" ? "map" : "chart"
+export const MAX_WIDGETS = 30
 
-const defaultBlock = (id: BlockId): LayoutBlock => ({
-  id,
-  type: typeOf(id),
-  span: id === "kpis" || id === "time" ? 2 : 1,
-  config: { view: defaultView(id), metric: "total" },
-})
+/* ---------- grid geometry ---------- */
 
-const ALL_IDS: readonly BlockId[] = [...FIXED_SPAN_IDS, ...BREAKDOWN_IDS]
+// rowHeight 44 / margin 24 keeps the horizontal geometry pixel-identical to
+// the old fixed page (12 cols in max-w-6xl -> 74px columns, 6w = 564px) and
+// makes the default sizes land on today's card heights.
+export const GRID = {
+  cols: 12,
+  rowHeight: 44,
+  marginX: 24,
+  marginY: 24,
+} as const
+
+/** Rendered pixel height of an h-unit-tall widget: 68h - 24. */
+export const heightPx = (h: number) =>
+  h * GRID.rowHeight + (h - 1) * GRID.marginY
+
+/* ---------- size -> data density ----------
+   More space means more data, not stretched pixels. All are pure functions
+   of grid units so density is knowable without measuring the DOM. */
+
+// Bar rows are 36px + 4px gap; widget chrome = 4 (shell) + 36 (header) + 16 (p-2).
+export const breakdownBarLimit = (h: number) =>
+  Math.max(1, Math.floor((heightPx(h) - 56 + 4) / 40))
+// Visible table rows before scroll: chrome = 40 (shell+header) + 32 (thead).
+export const breakdownTableRows = (h: number) =>
+  Math.max(1, Math.floor((heightPx(h) - 72) / 36))
+export const donutSegments = (h: number) => (heightPx(h) - 56 < 260 ? 4 : 6)
+export const donutLegend = (w: number) => w >= 5
+export const statSparkline = (h: number) => h >= 3
+export const breakdownTableFullCols = (w: number) => w >= 5
+
+/* ---------- per-kind spec ---------- */
+
+export const WIDGET_SPEC: Record<
+  WidgetKind,
+  {
+    minW: number
+    minH: number
+    defaultW: number
+    defaultH: number
+    defaultConfig: Widget["config"]
+  }
+> = {
+  stat: {
+    minW: 2,
+    minH: 2,
+    defaultW: 3,
+    defaultH: 2,
+    defaultConfig: { metric: "total_clicks" },
+  },
+  timeseries: {
+    minW: 4,
+    minH: 3,
+    defaultW: 12,
+    defaultH: 5,
+    defaultConfig: { viz: "area", metric: "total" },
+  },
+  breakdown: {
+    minW: 3,
+    minH: 3,
+    defaultW: 6,
+    defaultH: 6,
+    defaultConfig: { dimension: "referrer", viz: "bars", metric: "total" },
+  },
+}
+
+export const newWidgetId = () => `w_${Math.random().toString(36).slice(2, 8)}`
+
+/* ---------- default dashboard ---------- */
+
+const seed = (
+  id: string,
+  kind: WidgetKind,
+  grid: WidgetGridRect,
+  config: Widget["config"],
+) => ({ id, kind, grid, config }) as Widget
 
 export function defaultLayout(): AnalyticsLayout {
   return {
     version: 1,
-    hero: { view: "chart" },
-    blocks: ALL_IDS.map(defaultBlock),
+    widgets: [
+      seed("w_total", "stat", { x: 0, y: 0, w: 3, h: 2 }, { metric: "total_clicks" }),
+      seed("w_unique", "stat", { x: 3, y: 0, w: 3, h: 2 }, { metric: "unique_clicks" }),
+      seed("w_rate", "stat", { x: 6, y: 0, w: 3, h: 2 }, { metric: "unique_rate" }),
+      seed("w_cpv", "stat", { x: 9, y: 0, w: 3, h: 2 }, { metric: "clicks_per_visitor" }),
+      seed("w_time", "timeseries", { x: 0, y: 2, w: 12, h: 5 }, { viz: "area", metric: "total" }),
+      seed("w_country", "breakdown", { x: 0, y: 7, w: 6, h: 6 }, { dimension: "country", viz: "map", metric: "total" }),
+      seed("w_city", "breakdown", { x: 6, y: 7, w: 6, h: 6 }, { dimension: "city", viz: "bars", metric: "total" }),
+      seed("w_links", "breakdown", { x: 0, y: 13, w: 6, h: 6 }, { dimension: "short_code", viz: "bars", metric: "total" }),
+      seed("w_ref", "breakdown", { x: 6, y: 13, w: 6, h: 6 }, { dimension: "referrer", viz: "bars", metric: "total" }),
+      seed("w_browser", "breakdown", { x: 0, y: 19, w: 6, h: 6 }, { dimension: "browser", viz: "bars", metric: "total" }),
+      seed("w_os", "breakdown", { x: 6, y: 19, w: 6, h: 6 }, { dimension: "os", viz: "bars", metric: "total" }),
+    ],
   }
 }
 
@@ -75,59 +159,94 @@ export const DEFAULT_LAYOUT: AnalyticsLayout = Object.freeze(
   defaultLayout(),
 ) as AnalyticsLayout
 
+/* ---------- normalization ---------- */
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v)
 }
 
-/**
- * Parse anything (old docs, future docs, corrupted docs) into a valid v1
- * layout. A future writer bumps `version`; a v1 reader treats anything it
- * doesn't recognize as default rather than guessing.
- */
-export function normalizeLayout(input: unknown): AnalyticsLayout {
-  if (!isRecord(input) || input.version !== 1) return defaultLayout()
+const SERIES_METRICS: readonly SeriesMetric[] = ["total", "unique", "both"]
+const STAT_METRICS: readonly StatMetric[] = [
+  "total_clicks",
+  "unique_clicks",
+  "unique_rate",
+  "clicks_per_visitor",
+]
+const TIMESERIES_VIZ: readonly TimeseriesViz[] = ["area", "line", "bars", "table"]
+const BREAKDOWN_VIZ: readonly BreakdownViz[] = ["bars", "donut", "table", "map"]
 
-  const heroRaw = isRecord(input.hero) ? input.hero.view : undefined
-  const hero: HeroView = HERO_VIEWS.includes(heroRaw as HeroView)
-    ? (heroRaw as HeroView)
-    : "chart"
+function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
+  return allowed.includes(v as T) ? (v as T) : fallback
+}
 
-  const blocks: LayoutBlock[] = []
-  const seen = new Set<BlockId>()
-  if (Array.isArray(input.blocks)) {
-    for (const raw of input.blocks) {
-      if (!isRecord(raw)) continue
-      const id = raw.id as BlockId
-      if (!ALL_IDS.includes(id) || raw.type !== typeOf(id) || seen.has(id))
-        continue
-      seen.add(id)
-      const fixedSpan = id === "kpis" || id === "time"
-      const cfg = isRecord(raw.config) ? raw.config : {}
-      const allowedViews: BlockView[] =
-        id === "country" ? ["chart", "table", "map"] : ["chart", "table"]
-      blocks.push({
-        id,
-        type: typeOf(id),
-        span: fixedSpan ? 2 : raw.span === 2 ? 2 : 1,
-        ...(raw.hidden === true ? { hidden: true } : {}),
-        config: {
-          view: allowedViews.includes(cfg.view as BlockView)
-            ? (cfg.view as BlockView)
-            : defaultView(id),
-          metric: METRICS.includes(cfg.metric as BlockMetric)
-            ? (cfg.metric as BlockMetric)
-            : "total",
-        },
-      })
+function normalizeConfig(kind: WidgetKind, raw: unknown): Widget["config"] {
+  const cfg = isRecord(raw) ? raw : {}
+  if (kind === "stat")
+    return { metric: pick(cfg.metric, STAT_METRICS, "total_clicks") }
+  if (kind === "timeseries")
+    return {
+      viz: pick(cfg.viz, TIMESERIES_VIZ, "area"),
+      metric: pick(cfg.metric, SERIES_METRICS, "total"),
     }
-  }
-  // Missing kpis/time (docs saved before they became blocks) lead the page,
-  // matching where they always lived; missing breakdowns append at the end.
-  for (const id of [...FIXED_SPAN_IDS].reverse())
-    if (!seen.has(id)) blocks.unshift(defaultBlock(id))
-  for (const id of BREAKDOWN_IDS) if (!seen.has(id)) blocks.push(defaultBlock(id))
+  const dimension = pick(cfg.dimension, BREAKDOWN_DIMENSIONS, "referrer")
+  let viz = pick(cfg.viz, BREAKDOWN_VIZ, "bars")
+  if (viz === "map" && dimension !== "country") viz = "bars"
+  return { dimension, viz, metric: pick(cfg.metric, SERIES_METRICS, "total") }
+}
 
-  return { version: 1, hero: { view: hero }, blocks }
+/** Re-run positions through the exact algorithm the grid renders with, then
+    order the array by reading position — array order IS the mobile stack. */
+function normalizeGrid(widgets: Widget[]): Widget[] {
+  const items: LayoutItem[] = widgets.map((w) => ({ i: w.id, ...w.grid }))
+  const compacted = verticalCompactor.compact(
+    correctBounds(items, { cols: GRID.cols }),
+    GRID.cols,
+  )
+  const byId = new Map(compacted.map((it) => [it.i, it]))
+  return widgets
+    .map((w) => {
+      const it = byId.get(w.id)!
+      return { ...w, grid: { x: it.x, y: it.y, w: it.w, h: it.h } }
+    })
+    .sort((a, b) => a.grid.y - b.grid.y || a.grid.x - b.grid.x)
+}
+
+const KINDS: readonly WidgetKind[] = ["stat", "timeseries", "breakdown"]
+
+/** Parse anything (corrupted docs, future docs, the old blocks model) into a
+    valid layout. Unrecognized shapes reset to the default dashboard. */
+export function normalizeLayout(input: unknown): AnalyticsLayout {
+  if (!isRecord(input) || input.version !== 1 || !Array.isArray(input.widgets))
+    return defaultLayout()
+
+  const widgets: Widget[] = []
+  const seen = new Set<string>()
+  for (const raw of input.widgets) {
+    if (widgets.length >= MAX_WIDGETS) break
+    if (!isRecord(raw)) continue
+    const kind = raw.kind as WidgetKind
+    const id = raw.id
+    if (!KINDS.includes(kind)) continue
+    if (typeof id !== "string" || !id || seen.has(id)) continue
+    seen.add(id)
+    const spec = WIDGET_SPEC[kind]
+    const g = isRecord(raw.grid) ? raw.grid : {}
+    const w = Math.min(
+      GRID.cols,
+      Math.max(spec.minW, Math.round(Number(g.w) || spec.defaultW)),
+    )
+    const h = Math.max(spec.minH, Math.round(Number(g.h) || spec.defaultH))
+    const x = Math.min(GRID.cols - w, Math.max(0, Math.round(Number(g.x) || 0)))
+    const y = Math.max(0, Math.round(Number(g.y) || 0))
+    widgets.push({
+      id,
+      kind,
+      grid: { x, y, w, h },
+      config: normalizeConfig(kind, raw.config),
+    } as Widget)
+  }
+  if (widgets.length === 0) return defaultLayout()
+  return { version: 1, widgets: normalizeGrid(widgets) }
 }
 
 /** Docs are only ever built by this module, so key order is deterministic
@@ -136,67 +255,81 @@ export function layoutsEqual(a: AnalyticsLayout, b: AnalyticsLayout): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-/* ---------- pure ops (each returns a new doc) ---------- */
+/* ---------- pure ops (each returns a new, normalized doc) ---------- */
 
-/** Reorder among VISIBLE blocks; hidden blocks keep their array slots so
-    re-showing a card restores it where the user left it. */
-export function reorderVisible(
+/** Apply the grid rectangles RGL reports after a drag/resize commit. */
+export function applyGridChange(
   l: AnalyticsLayout,
-  activeId: string,
-  overId: string,
+  items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>,
 ): AnalyticsLayout {
-  const vis = l.blocks.filter((b) => !b.hidden)
-  const from = vis.findIndex((b) => b.id === activeId)
-  const to = vis.findIndex((b) => b.id === overId)
-  if (from < 0 || to < 0 || from === to) return l
-  const moved = [...vis]
-  const [item] = moved.splice(from, 1)
-  moved.splice(to, 0, item)
-  let i = 0
-  return { ...l, blocks: l.blocks.map((b) => (b.hidden ? b : moved[i++])) }
-}
-
-function mapBlock(
-  l: AnalyticsLayout,
-  id: BlockId,
-  fn: (b: LayoutBlock) => LayoutBlock,
-): AnalyticsLayout {
-  return { ...l, blocks: l.blocks.map((b) => (b.id === id ? fn(b) : b)) }
-}
-
-export function withSpan(
-  l: AnalyticsLayout,
-  id: BlockId,
-  span: BlockSpan,
-): AnalyticsLayout {
-  return mapBlock(l, id, (b) => ({ ...b, span }))
-}
-
-export function withHidden(
-  l: AnalyticsLayout,
-  id: BlockId,
-  hidden: boolean,
-): AnalyticsLayout {
-  return mapBlock(l, id, (b) => {
-    if (hidden) return { ...b, hidden: true }
-    const rest = { ...b }
-    delete rest.hidden
-    return rest
+  const byId = new Map(items.map((it) => [it.i, it]))
+  const widgets = l.widgets.map((w) => {
+    const it = byId.get(w.id)
+    return it ? { ...w, grid: { x: it.x, y: it.y, w: it.w, h: it.h } } : w
   })
+  return { version: 1, widgets: normalizeGrid(widgets) }
 }
 
-export function withBlockReset(l: AnalyticsLayout, id: BlockId): AnalyticsLayout {
-  return mapBlock(l, id, () => defaultBlock(id))
-}
-
-export function withBlockConfig(
+/** New widget enters at the bottom; compaction pulls it into the first gap. */
+export function withWidgetAdded(
   l: AnalyticsLayout,
-  id: BlockId,
-  patch: Partial<BlockConfig>,
+  kind: WidgetKind,
+  id: string,
 ): AnalyticsLayout {
-  return mapBlock(l, id, (b) => ({ ...b, config: { ...b.config, ...patch } }))
+  if (l.widgets.length >= MAX_WIDGETS) return l
+  const spec = WIDGET_SPEC[kind]
+  const y = bottom(l.widgets.map((w) => ({ i: w.id, ...w.grid })))
+  const widget = {
+    id,
+    kind,
+    grid: { x: 0, y, w: spec.defaultW, h: spec.defaultH },
+    config: structuredClone(spec.defaultConfig),
+  } as Widget
+  return { version: 1, widgets: normalizeGrid([...l.widgets, widget]) }
 }
 
-export function withHeroView(l: AnalyticsLayout, view: HeroView): AnalyticsLayout {
-  return { ...l, hero: { view } }
+export function withWidgetRemoved(l: AnalyticsLayout, id: string): AnalyticsLayout {
+  const widgets = l.widgets.filter((w) => w.id !== id)
+  if (widgets.length === l.widgets.length) return l
+  return { version: 1, widgets: normalizeGrid(widgets) }
+}
+
+/** Duplicate lands directly below the source; neighbors compact around it. */
+export function withWidgetDuplicated(
+  l: AnalyticsLayout,
+  sourceId: string,
+  newId: string,
+): AnalyticsLayout {
+  if (l.widgets.length >= MAX_WIDGETS) return l
+  const src = l.widgets.find((w) => w.id === sourceId)
+  if (!src) return l
+  const copy = {
+    ...src,
+    id: newId,
+    grid: { ...src.grid, y: src.grid.y + src.grid.h },
+    config: structuredClone(src.config),
+  } as Widget
+  return { version: 1, widgets: normalizeGrid([...l.widgets, copy]) }
+}
+
+/** Loose patch shape — `normalizeConfig` clamps whatever lands per kind. */
+export type WidgetConfigPatch = Partial<{
+  metric: StatMetric | SeriesMetric
+  viz: TimeseriesViz | BreakdownViz
+  dimension: BreakdownDimension
+}>
+
+export function withWidgetConfig(
+  l: AnalyticsLayout,
+  id: string,
+  patch: WidgetConfigPatch,
+): AnalyticsLayout {
+  const widgets = l.widgets.map((w) => {
+    if (w.id !== id) return w
+    return {
+      ...w,
+      config: normalizeConfig(w.kind, { ...w.config, ...patch }),
+    } as Widget
+  })
+  return { version: 1, widgets }
 }

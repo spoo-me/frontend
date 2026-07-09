@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Widget grid engine styles, imported here (not in the component) so the
+   overrides further down this file win the cascade. */
+@import "react-grid-layout/css/styles.css";
 
 /* Never scan build output for class candidates — the dev:mock dist dir
    (.next-mock) was created before .gitignore knew it, and minified build
@@ -404,6 +407,52 @@
 }
 .chart-amplitude .recharts-area path {
   vector-effect: non-scaling-stroke;
+}
+
+/* Widget grid (react-grid-layout) — restyle the library defaults to the app
+   grammar, and neutralize it entirely while a widget is expanded (read-mode
+   focus keeps everything mounted; the CSS hides siblings and un-positions
+   the focused cell — stylesheet !important beats RGL's inline styles). */
+.react-grid-item.react-grid-placeholder {
+  background: color-mix(in oklab, var(--brand) 5%, transparent);
+  border: 1.5px dashed color-mix(in oklab, var(--brand) 45%, transparent);
+  border-radius: 16px;
+  opacity: 1;
+}
+.react-grid-item > .react-resizable-handle {
+  width: 24px;
+  height: 24px;
+}
+.react-grid-item > .react-resizable-handle::after {
+  right: 7px;
+  bottom: 7px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted-foreground);
+  border-bottom: 2px solid var(--muted-foreground);
+  border-bottom-right-radius: 4px;
+  opacity: 0.7;
+}
+.react-grid-item.react-draggable-dragging {
+  z-index: 30;
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-grid-item {
+    transition: none !important;
+  }
+}
+[data-expand] .react-grid-layout {
+  height: auto !important;
+}
+[data-expand] .react-grid-item {
+  display: none;
+}
+[data-expand] .react-grid-item[data-expanded] {
+  display: block;
+  position: relative !important;
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
 }
 
 /* Auth-gate splash: invisible for the first beat so fast sessions paint

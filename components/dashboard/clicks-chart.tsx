@@ -112,9 +112,9 @@ export function ClicksChart({
   height?: number | string
   /** total / unique swap the solid series; "both" overlays uniques dashed. */
   metric?: ChartMetric
-  /** "area" draws the line+fill; "bars" renders the same buckets as columns
-      on a category axis ("both" becomes grouped bars). */
-  variant?: "area" | "bars"
+  /** "area" draws the line+fill, "line" the stroke alone; "bars" renders the
+      same buckets as columns on a category axis ("both" = grouped bars). */
+  variant?: "area" | "line" | "bars"
   /** Entering the expanded (focus) view grows the area's amplitude from the
       baseline up into the taller canvas. Purely presentational: the plot
       snaps to its final geometry and a scaleY animation on the area layer
@@ -355,7 +355,7 @@ export function ClicksChart({
               dataKey={metric === "unique" ? "unique_clicks" : "clicks"}
               stroke="var(--brand)"
               strokeWidth={1.75}
-              fill="url(#clicksFill)"
+              fill={variant === "line" ? "none" : "url(#clicksFill)"}
               dot={false}
               activeDot={{ r: 3.5, fill: "var(--brand)", strokeWidth: 0 }}
               isAnimationActive={morph}

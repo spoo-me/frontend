@@ -5,20 +5,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import {
+  applyGridChange,
   DEFAULT_LAYOUT,
   layoutsEqual,
+  newWidgetId,
   normalizeLayout,
-  reorderVisible,
-  withBlockConfig,
-  withBlockReset,
-  withHeroView,
-  withHidden,
-  withSpan,
+  withWidgetAdded,
+  withWidgetConfig,
+  withWidgetDuplicated,
+  withWidgetRemoved,
   type AnalyticsLayout,
-  type BlockConfig,
-  type BlockId,
-  type BlockSpan,
-  type HeroView,
+  type WidgetConfigPatch,
+  type WidgetKind,
 } from "@/lib/analytics-layout"
 import { deletePageLayout, getPageLayout, putPageLayout } from "@/lib/api"
 
@@ -26,8 +24,9 @@ import { deletePageLayout, getPageLayout, putPageLayout } from "@/lib/api"
  * Layout store: localStorage is the committed truth's local mirror (instant
  * paint, cross-tab via the storage event), the server doc wins over the
  * mirror once per mount, and structural edits live in a per-tab draft until
- * the save bar commits them. Pref-only changes (view/metric) skip the draft
- * and persist silently.
+ * the save bar commits them. Config changes made from read-mode quick
+ * controls skip the draft and persist silently; changes made while editing
+ * stage into the draft so edit mode saves as one unit.
  */
 
 const KEY = "spoo:layout:analytics"
@@ -194,34 +193,44 @@ export function useAnalyticsLayout() {
     saved,
     dirty,
     saving: saveMut.isPending || resetMut.isPending,
-    // structural
-    moveBlock: React.useCallback(
-      (activeId: string, overId: string) =>
-        applyStructural((l) => reorderVisible(l, activeId, overId)),
+    // structural (always staged in the draft)
+    applyGridChange: React.useCallback(
+      (items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>) =>
+        applyStructural((l) => applyGridChange(l, items)),
       [applyStructural],
     ),
-    setSpan: React.useCallback(
-      (id: BlockId, span: BlockSpan) => applyStructural((l) => withSpan(l, id, span)),
+    addWidget: React.useCallback(
+      (kind: WidgetKind) => {
+        const id = newWidgetId()
+        applyStructural((l) => withWidgetAdded(l, kind, id))
+        return id
+      },
       [applyStructural],
     ),
-    setHidden: React.useCallback(
-      (id: BlockId, hidden: boolean) =>
-        applyStructural((l) => withHidden(l, id, hidden)),
+    removeWidget: React.useCallback(
+      (id: string) => applyStructural((l) => withWidgetRemoved(l, id)),
       [applyStructural],
     ),
-    resetBlock: React.useCallback(
-      (id: BlockId) => applyStructural((l) => withBlockReset(l, id)),
+    duplicateWidget: React.useCallback(
+      (id: string) => {
+        const nid = newWidgetId()
+        applyStructural((l) => withWidgetDuplicated(l, id, nid))
+        return nid
+      },
       [applyStructural],
     ),
-    // prefs
-    setBlockConfig: React.useCallback(
-      (id: BlockId, patch: Partial<BlockConfig>) =>
-        applyPref((l) => withBlockConfig(l, id, patch)),
-      [applyPref],
-    ),
-    setHeroView: React.useCallback(
-      (view: HeroView) => applyPref((l) => withHeroView(l, view)),
-      [applyPref],
+    // config: silent persist from read-mode quick controls, staged while editing
+    updateWidgetConfig: React.useCallback(
+      (
+        id: string,
+        patch: WidgetConfigPatch,
+        opts?: { stage?: boolean },
+      ) => {
+        const op = (l: AnalyticsLayout) => withWidgetConfig(l, id, patch)
+        if (opts?.stage) applyStructural(op)
+        else applyPref(op)
+      },
+      [applyStructural, applyPref],
     ),
     // lifecycle
     save,
