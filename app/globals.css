@@ -384,17 +384,20 @@
     transform: scaleY(0.4);
   }
 }
-.chart-draw .recharts-area {
+.chart-draw .recharts-area,
+.chart-draw .recharts-bar {
   /* The 150ms head start lets first paint settle so the sweep is seen,
      not spent on dropped frames; backwards-fill keeps it clipped. */
   animation: chart-draw 700ms cubic-bezier(0.33, 1, 0.68, 1) 150ms both;
 }
-.chart-amplitude .recharts-area {
+.chart-amplitude .recharts-area,
+.chart-amplitude .recharts-bar {
   transform-box: fill-box;
   transform-origin: center bottom;
   animation: chart-amplitude 500ms cubic-bezier(0.16, 1, 0.3, 1) 80ms backwards;
 }
-.chart-draw.chart-amplitude .recharts-area {
+.chart-draw.chart-amplitude .recharts-area,
+.chart-draw.chart-amplitude .recharts-bar {
   animation:
     chart-draw 700ms cubic-bezier(0.33, 1, 0.68, 1) 150ms both,
     chart-amplitude 500ms cubic-bezier(0.16, 1, 0.3, 1) 80ms backwards;

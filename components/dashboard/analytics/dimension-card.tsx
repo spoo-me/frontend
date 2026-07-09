@@ -43,6 +43,9 @@ export function DimensionCard({
   view,
   onMetricChange,
   onViewChange,
+  dragHandle,
+  menu,
+  animateLayout = true,
 }: {
   dimension: Exclude<StatsDimension, "time">
   title: string
@@ -57,6 +60,12 @@ export function DimensionCard({
   view: CardView
   onMetricChange: (metric: BreakdownMetric) => void
   onViewChange: (view: CardView) => void
+  /** Layout-editing affordances, composed by the page: the card itself stays
+      dumb — it never imports dnd-kit or layout semantics. */
+  dragHandle?: React.ReactNode
+  menu?: React.ReactNode
+  /** Gate the frame's FLIP animation off while dnd-kit owns the transform. */
+  animateLayout?: boolean
 }) {
   const ExpandIcon = expanded ? Minimize2 : Maximize2
   // Only countries have shapes to paint; a stale "map" pref on any other
@@ -85,13 +94,14 @@ export function DimensionCard({
 
   return (
     <motion.div
-      layout
+      layout={animateLayout}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="group/dim rounded-2xl border border-border/60 bg-shell p-0.5"
     >
       <SectionHeader
         className="h-9 px-2.5"
         icon={icon}
+        lead={dragHandle}
         title={title}
         action={
           <span className="flex items-center gap-1.5">
@@ -121,6 +131,7 @@ export function DimensionCard({
                 { value: "table", icon: Table2, ariaLabel: "table view" },
               ]}
             />
+            {menu}
             {onExpandedChange && (
               <button
                 type="button"

@@ -4,6 +4,8 @@ import * as React from "react"
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   ReferenceArea,
   ResponsiveContainer,
@@ -101,6 +103,7 @@ export function ClicksChart({
   hourly = false,
   height = 240,
   metric = "total",
+  variant = "area",
   expanded = false,
   onRangeSelect,
 }: {
@@ -109,6 +112,9 @@ export function ClicksChart({
   height?: number | string
   /** total / unique swap the solid series; "both" overlays uniques dashed. */
   metric?: ChartMetric
+  /** "area" draws the line+fill; "bars" renders the same buckets as columns
+      on a category axis ("both" becomes grouped bars). */
+  variant?: "area" | "bars"
   /** Entering the expanded (focus) view grows the area's amplitude from the
       baseline up into the taller canvas. Purely presentational: the plot
       snaps to its final geometry and a scaleY animation on the area layer
@@ -182,6 +188,39 @@ export function ClicksChart({
     return () => clearTimeout(t)
   }, [expanded])
 
+  // Both chart variants share the drag plumbing; recharts hands the hovered
+  // bucket via activeLabel on numeric AND category axes alike.
+  const dragHandlers = onRangeSelect
+    ? {
+        onMouseDown: (e: { activeLabel?: string | number } | null) => {
+          const x = dragX(e) ?? hoverX.current
+          if (x != null) setDrag({ a: x, b: x })
+        },
+        onMouseMove: (e: { activeLabel?: string | number } | null) => {
+          const x = dragX(e)
+          if (x == null) return
+          hoverX.current = x
+          setDrag((d) => (d && d.b !== x ? { ...d, b: x } : d))
+        },
+        onMouseUp: commitDrag,
+        onMouseLeave: () => {
+          hoverX.current = null
+          setDrag(null)
+        },
+      }
+    : {}
+  const axisTick = { fill: "var(--muted-foreground)", fontSize: 11 }
+  const selection = drag && drag.a !== drag.b && (
+    <ReferenceArea
+      x1={Math.min(drag.a, drag.b)}
+      x2={Math.max(drag.a, drag.b)}
+      fill="var(--brand)"
+      fillOpacity={0.08}
+      stroke="var(--brand)"
+      strokeOpacity={0.3}
+    />
+  )
+
   return (
     <div
       style={{ height }}
@@ -199,117 +238,149 @@ export function ClicksChart({
         {/* Keyed on the data identity so new data always lays out fresh at
             final geometry under the CSS draw — never a recharts morph from
             a stale dataset. Metric switches stay off the key so they morph. */}
-        <AreaChart
-          key={dataIdentity}
-          data={data}
-          margin={{ top: 8, right: 4, left: 0, bottom: 0 }}
-          onMouseDown={
-            onRangeSelect
-              ? (e) => {
-                  const x = dragX(e) ?? hoverX.current
-                  if (x != null) setDrag({ a: x, b: x })
-                }
-              : undefined
-          }
-          onMouseMove={
-            onRangeSelect
-              ? (e) => {
-                  const x = dragX(e)
-                  if (x == null) return
-                  hoverX.current = x
-                  setDrag((d) => (d && d.b !== x ? { ...d, b: x } : d))
-                }
-              : undefined
-          }
-          onMouseUp={onRangeSelect ? commitDrag : undefined}
-          onMouseLeave={
-            onRangeSelect
-              ? () => {
-                  hoverX.current = null
-                  setDrag(null)
-                }
-              : undefined
-          }
-        >
-          <defs>
-            <linearGradient id="clicksFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.18} />
-              <stop offset="100%" stopColor="var(--brand)" stopOpacity={0.01} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            vertical={false}
-            strokeDasharray="3 4"
-            stroke="var(--border)"
-            strokeOpacity={0.7}
-          />
-          <XAxis
-            dataKey="t"
-            type="number"
-            scale="time"
-            domain={["dataMin", "dataMax"]}
-            tickFormatter={(t: number) => tickFmt.format(t)}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-            tickMargin={8}
-            minTickGap={48}
-          />
-          <YAxis
-            width={44}
-            tickFormatter={(v: number) => formatCount(v)}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-            allowDecimals={false}
-          />
-          <Tooltip
-            content={<ChartTooltip hourly={hourly} />}
-            cursor={{
-              stroke: "var(--muted-foreground)",
-              strokeDasharray: "3 4",
-              strokeOpacity: 0.5,
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey={metric === "unique" ? "unique_clicks" : "clicks"}
-            stroke="var(--brand)"
-            strokeWidth={1.75}
-            fill="url(#clicksFill)"
-            dot={false}
-            activeDot={{ r: 3.5, fill: "var(--brand)", strokeWidth: 0 }}
-            isAnimationActive={morph}
-            animationDuration={ANIM_MS}
-            animationEasing="ease-out"
-          />
-          {drag && drag.a !== drag.b && (
-            <ReferenceArea
-              x1={Math.min(drag.a, drag.b)}
-              x2={Math.max(drag.a, drag.b)}
-              fill="var(--brand)"
-              fillOpacity={0.08}
-              stroke="var(--brand)"
-              strokeOpacity={0.3}
+        {variant === "bars" ? (
+          <BarChart
+            key={dataIdentity}
+            data={data}
+            margin={{ top: 8, right: 4, left: 0, bottom: 0 }}
+            {...dragHandlers}
+          >
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 4"
+              stroke="var(--border)"
+              strokeOpacity={0.7}
             />
-          )}
-          {metric === "both" && (
-            <Area
-              type="monotone"
-              dataKey="unique_clicks"
-              stroke="var(--brand)"
-              strokeWidth={1.25}
-              strokeDasharray="4 3"
-              strokeOpacity={0.55}
-              fill="none"
-              dot={false}
-              activeDot={{ r: 3, fill: "var(--brand)", strokeWidth: 0 }}
+            {/* Category axis: numeric/time axes make recharts guess band
+                widths; buckets are contiguous so equal bands are truthful. */}
+            <XAxis
+              dataKey="t"
+              type="category"
+              tickFormatter={(t) => tickFmt.format(Number(t))}
+              tickLine={false}
+              axisLine={false}
+              tick={axisTick}
+              tickMargin={8}
+              minTickGap={48}
+            />
+            <YAxis
+              width={44}
+              tickFormatter={(v: number) => formatCount(v)}
+              tickLine={false}
+              axisLine={false}
+              tick={axisTick}
+              allowDecimals={false}
+            />
+            <Tooltip
+              content={<ChartTooltip hourly={hourly} />}
+              cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.06 }}
+            />
+            <Bar
+              dataKey={metric === "unique" ? "unique_clicks" : "clicks"}
+              fill="var(--brand)"
+              fillOpacity={0.75}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={28}
               isAnimationActive={morph}
               animationDuration={ANIM_MS}
               animationEasing="ease-out"
             />
-          )}
-        </AreaChart>
+            {selection}
+            {metric === "both" && (
+              <Bar
+                dataKey="unique_clicks"
+                fill="var(--brand)"
+                fillOpacity={0.3}
+                radius={[3, 3, 0, 0]}
+                maxBarSize={28}
+                isAnimationActive={morph}
+                animationDuration={ANIM_MS}
+                animationEasing="ease-out"
+              />
+            )}
+          </BarChart>
+        ) : (
+          <AreaChart
+            key={dataIdentity}
+            data={data}
+            margin={{ top: 8, right: 4, left: 0, bottom: 0 }}
+            {...dragHandlers}
+          >
+            <defs>
+              <linearGradient id="clicksFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.18} />
+                <stop
+                  offset="100%"
+                  stopColor="var(--brand)"
+                  stopOpacity={0.01}
+                />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 4"
+              stroke="var(--border)"
+              strokeOpacity={0.7}
+            />
+            <XAxis
+              dataKey="t"
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              tickFormatter={(t: number) => tickFmt.format(t)}
+              tickLine={false}
+              axisLine={false}
+              tick={axisTick}
+              tickMargin={8}
+              minTickGap={48}
+            />
+            <YAxis
+              width={44}
+              tickFormatter={(v: number) => formatCount(v)}
+              tickLine={false}
+              axisLine={false}
+              tick={axisTick}
+              allowDecimals={false}
+            />
+            <Tooltip
+              content={<ChartTooltip hourly={hourly} />}
+              cursor={{
+                stroke: "var(--muted-foreground)",
+                strokeDasharray: "3 4",
+                strokeOpacity: 0.5,
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey={metric === "unique" ? "unique_clicks" : "clicks"}
+              stroke="var(--brand)"
+              strokeWidth={1.75}
+              fill="url(#clicksFill)"
+              dot={false}
+              activeDot={{ r: 3.5, fill: "var(--brand)", strokeWidth: 0 }}
+              isAnimationActive={morph}
+              animationDuration={ANIM_MS}
+              animationEasing="ease-out"
+            />
+            {selection}
+            {metric === "both" && (
+              <Area
+                type="monotone"
+                dataKey="unique_clicks"
+                stroke="var(--brand)"
+                strokeWidth={1.25}
+                strokeDasharray="4 3"
+                strokeOpacity={0.55}
+                fill="none"
+                dot={false}
+                activeDot={{ r: 3, fill: "var(--brand)", strokeWidth: 0 }}
+                isAnimationActive={morph}
+                animationDuration={ANIM_MS}
+                animationEasing="ease-out"
+              />
+            )}
+          </AreaChart>
+        )}
       </ResponsiveContainer>
     </div>
   )

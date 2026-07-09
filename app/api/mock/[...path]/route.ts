@@ -40,6 +40,8 @@ type MockState = {
   domains: MockDomain[]
   keys: MockKey[]
   grants: ReturnType<typeof buildGrants>
+  /** Per-page dashboard layout overrides, stored opaquely (client owns schema). */
+  layouts: Record<string, unknown>
 }
 
 const initial = (): MockState => ({
@@ -51,6 +53,7 @@ const initial = (): MockState => ({
   domains: buildDomains(),
   keys: buildKeys(),
   grants: buildGrants(),
+  layouts: {},
 })
 
 // Survives HMR within one dev-server process.
@@ -589,6 +592,22 @@ async function handle(req: NextRequest, path: string[]) {
 
   /* ---------- connected apps (device grants) ---------- */
   if (route === "GET /v1/apps") return json({ items: s.grants })
+
+  /* ---------- per-user page layouts (sparse overrides; absent = default) ---------- */
+  if (path[0] === "v1" && path[1] === "me" && path[2] === "layouts" && path[3]) {
+    const key = path[3]
+    if (req.method === "GET") return json({ layout: s.layouts[key] ?? null })
+    if (req.method === "PUT") {
+      if (!body.layout || typeof body.layout !== "object")
+        return fail(422, "invalid_layout", "layout must be an object", "layout")
+      s.layouts[key] = body.layout
+      return json({ layout: s.layouts[key] })
+    }
+    if (req.method === "DELETE") {
+      delete s.layouts[key]
+      return new NextResponse(null, { status: 204 })
+    }
+  }
 
   /* ---------- oauth: one hop, straight back signed-in ---------- */
   if (path[0] === "oauth") {

@@ -9,19 +9,26 @@ export function SectionHeader({
   icon: Icon,
   title,
   action,
+  lead,
   className,
 }: {
   icon?: React.ElementType
   title: string
   action?: React.ReactNode
+  /** Replaces the icon slot (e.g. a drag grip that swaps in on hover). */
+  lead?: React.ReactNode
   className?: string
 }) {
   return (
     <div className={cn("flex h-9 items-center justify-between", className)}>
       <span className="flex items-center gap-2">
-        {Icon && (
-          <Icon className="text-muted-foreground/70 size-3.5" strokeWidth={1.75} />
-        )}
+        {lead ??
+          (Icon && (
+            <Icon
+              className="text-muted-foreground/70 size-3.5"
+              strokeWidth={1.75}
+            />
+          ))}
         <span className="label-mono text-muted-foreground">{title}</span>
       </span>
       {action}
