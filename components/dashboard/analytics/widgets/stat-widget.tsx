@@ -24,6 +24,7 @@ export function StatWidget({
   h,
   stats,
   prevStats,
+  disjoint,
   rangeLabel,
   deltaLabel,
 }: {
@@ -31,6 +32,8 @@ export function StatWidget({
   h: number
   stats?: StatsResponse
   prevStats?: StatsResponse
+  /** Scope and board filters exclude each other — nothing to count. */
+  disjoint?: boolean
   rangeLabel: string
   deltaLabel: string
 }) {
@@ -76,6 +79,19 @@ export function StatWidget({
         return buckets.map((b) => (b.unique_clicks ? b.clicks / b.unique_clicks : 0))
     }
   }, [stats, h, config.metric])
+
+  // Same message the other widget kinds show for an impossible lens.
+  if (disjoint) {
+    return (
+      <KpiCard
+        className="h-full rounded-2xl"
+        label={config.title ?? meta.label}
+        badge={config.scope && <ScopeChip scope={config.scope} />}
+        value="–"
+        footer="scope excluded by board filters"
+      />
+    )
+  }
 
   // Gauge face: percentage metrics only (normalize enforces it too).
   if (config.viz === "gauge" && config.metric === "unique_rate") {

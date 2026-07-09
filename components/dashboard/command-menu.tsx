@@ -250,7 +250,7 @@ export function DashboardCommandMenu() {
                 )}
               >
                 <CommandPrimitive.Empty className="text-muted-foreground px-2.5 py-8 text-center text-sm">
-                  No results.
+                  no results
                 </CommandPrimitive.Empty>
 
                 <CommandPrimitive.Group>

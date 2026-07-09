@@ -436,11 +436,15 @@ export default function AnalyticsPage() {
             <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
               this dashboard is empty
             </span>
-            {isLgUp && (
+            {isLgUp ? (
               <Button size="sm" onClick={startEditing}>
                 <Plus data-icon="inline-start" />
                 Add widgets
               </Button>
+            ) : (
+              <span className="text-muted-foreground/50 text-[11px]">
+                editing needs a larger screen
+              </span>
             )}
           </div>
         </div>

@@ -68,6 +68,7 @@ export function WidgetCell({
             h={w.grid.h}
             stats={stats}
             prevStats={prev}
+            disjoint={disjoint}
             rangeLabel={rangeLabel}
             deltaLabel={deltaLabel}
           />

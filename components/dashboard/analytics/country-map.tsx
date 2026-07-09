@@ -237,6 +237,15 @@ export function CountryMap({
 
   return (
     <div ref={wrapRef} className="relative h-full w-full">
+      {/* Empty board: the base map stays as quiet texture, the message
+          floats over it — siblings say the same thing in the same words. */}
+      {world && !rows.length && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <span className="border-border text-muted-foreground/70 bg-background/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+            no data in this range
+          </span>
+        </div>
+      )}
       {!world ? (
         <Skeleton className="h-full w-full rounded-lg" />
       ) : (

@@ -264,6 +264,22 @@ export function ClicksChart({
       }
     : {}
   const axisTick = { fill: "var(--muted-foreground)", fontSize: 11 }
+
+  // Empty or all-zero window: bare axes read as a bug, not as absence.
+  // Same copy and grammar as every breakdown viz.
+  if (
+    data.length === 0 ||
+    data.every((b) => b.clicks === 0 && b.unique_clicks === 0)
+  ) {
+    return (
+      <div
+        style={{ height }}
+        className="text-muted-foreground/70 flex w-full items-center justify-center text-xs"
+      >
+        no data in this range
+      </div>
+    )
+  }
   const selection = drag && drag.a !== drag.b && (
     <ReferenceArea
       x1={Math.min(drag.a, drag.b)}
