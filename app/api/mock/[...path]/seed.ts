@@ -509,6 +509,8 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
           percentage: Math.round((raw / rawTotal) * 1000) / 10,
         }
       })
+      // The real backend derives rows from events: zero clicks = no row.
+      .filter((r) => r.clicks > 0)
       .sort((a, b) => b.clicks - a.clicks)
   }
 
@@ -528,6 +530,7 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
           percentage: Math.round((l.weight / wTotal) * 1000) / 10,
         }
       })
+      .filter((r) => r.clicks > 0)
       .sort((a, b) => b.clicks - a.clicks)
       .slice(0, 25)
   }
