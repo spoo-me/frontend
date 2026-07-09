@@ -89,6 +89,16 @@ export function WidgetGrid({
     <div
       ref={containerRef}
       data-expand={expandId ? "" : undefined}
+      onClick={
+        editing
+          ? (e) => {
+              // Clicking the canvas (gutters, dots) clears the selection —
+              // the natural way back to the bar's board state.
+              if (!(e.target as HTMLElement).closest("[data-widget-id]"))
+                onSelect(null)
+            }
+          : undefined
+      }
       className={cn(
         "relative",
         editing && "pattern-dots select-none rounded-2xl",
