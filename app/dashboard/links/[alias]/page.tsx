@@ -117,7 +117,7 @@ export default function LinkDetailPage() {
                 <h1 className="text-foreground truncate font-mono text-lg font-semibold tracking-tight">
                   {(link.domain ?? "spoo.me") + "/" + link.alias}
                 </h1>
-                <CopyButton value={shortUrlOf(link)} />
+                <CopyButton value={shortUrlOf(link)} trackAs="copy_short_link" />
                 <StatusPill status={link.status} />
               </div>
               <a

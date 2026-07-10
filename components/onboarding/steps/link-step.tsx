@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { celebrate } from "@/lib/confetti"
-import { trackLinkCreated } from "@/lib/analytics"
+import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
 import {
   checkAlias,
   shorten,
@@ -384,7 +384,10 @@ function QrDialog({
         </div>
 
         <Button
-          onClick={() => downloadQrPng(tileRef.current, `spoo-${created.alias}.png`)}
+          onClick={() => {
+            trackUiAction("qr_downloaded")
+            downloadQrPng(tileRef.current, `spoo-${created.alias}.png`)
+          }}
           size="sm"
           className="justify-self-center"
         >

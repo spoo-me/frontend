@@ -10,11 +10,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Kbd, useModKey } from "@/components/dashboard/kbd"
+import { trackUiAction } from "@/lib/analytics"
 
 const OPEN_EVENT = "spoo:shortcuts-help"
 
 /** Imperative opener so the palette (or anything else) can summon it. */
 export function openShortcutsHelp() {
+  trackUiAction("shortcuts_help_opened")
   window.dispatchEvent(new Event(OPEN_EVENT))
 }
 

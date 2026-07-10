@@ -21,6 +21,7 @@ import {
 import { useTheme } from "next-themes"
 
 import { cn } from "@/lib/utils"
+import { trackUiAction } from "@/lib/analytics"
 import { listCustomDomains, listUrls } from "@/lib/api"
 import { faviconUrl } from "@/lib/favicon"
 import { Logo } from "@/components/shared/logo"
@@ -116,8 +117,14 @@ export function DashboardCommandMenu() {
     if (!next) setQuery("")
   }
 
+  // Effect (not handleOpenChange) so direct setOpen(true) callers count too.
+  React.useEffect(() => {
+    if (open) trackUiAction("command_menu_opened")
+  }, [open])
+
   const go = React.useCallback(
     (href: string) => {
+      trackUiAction("command_executed", href)
       setOpen(false)
       router.push(href)
     },
@@ -396,6 +403,7 @@ export function DashboardCommandMenu() {
                   <Item
                     icon={Sun}
                     onSelect={() => {
+                      trackUiAction("command_executed", "theme:light")
                       setOpen(false)
                       setTheme("light")
                     }}
@@ -405,6 +413,7 @@ export function DashboardCommandMenu() {
                   <Item
                     icon={Moon}
                     onSelect={() => {
+                      trackUiAction("command_executed", "theme:dark")
                       setOpen(false)
                       setTheme("dark")
                     }}
@@ -414,6 +423,7 @@ export function DashboardCommandMenu() {
                   <Item
                     icon={Monitor}
                     onSelect={() => {
+                      trackUiAction("command_executed", "theme:system")
                       setOpen(false)
                       setTheme("system")
                     }}

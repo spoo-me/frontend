@@ -343,7 +343,7 @@ export default function DeveloperPage() {
                 <code className="ph-no-capture text-foreground min-w-0 flex-1 truncate font-mono text-xs">
                   {newToken}
                 </code>
-                <CopyButton value={newToken} />
+                <CopyButton value={newToken} trackAs="copy_api_key" />
               </div>
               <div className="text-muted-foreground flex items-start gap-2 text-xs">
                 <TriangleAlert className="text-amber-600 mt-0.5 size-3.5 shrink-0 dark:text-amber-400" />

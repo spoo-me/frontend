@@ -111,6 +111,14 @@ export function trackLinkDeleted() {
   capture("link_deleted")
 }
 
+export function trackLinksBulkAction(
+  action: string,
+  count: number,
+  failed: number,
+) {
+  capture("links_bulk_action", { action: action.toLowerCase(), count, failed })
+}
+
 /* ---------- API keys ---------- */
 
 export function trackApiKeyCreated(
@@ -144,8 +152,26 @@ export function trackDomainVerified(daysToVerify: number | null) {
 
 /* ---------- widget board ---------- */
 
-export function trackWidgetAdded(kind: string, page: string) {
-  capture("widget_added", { widget_kind: kind, page })
+export type WidgetAddSource = "gallery" | "custom" | "pin"
+
+export function trackWidgetAdded(kind: string, page: string, source: WidgetAddSource) {
+  capture("widget_added", { widget_kind: kind, page, source })
+}
+
+export function trackWidgetRemoved(kind: string | null, page: string) {
+  capture("widget_removed", { ...(kind ? { widget_kind: kind } : {}), page })
+}
+
+export function trackWidgetDuplicated(kind: string | null, page: string) {
+  capture("widget_duplicated", { ...(kind ? { widget_kind: kind } : {}), page })
+}
+
+export function trackWidgetConfigUpdated(page: string, changed: string[]) {
+  capture("widget_config_updated", { page, changed_fields: changed.sort() })
+}
+
+export function trackBoardGridChanged(page: string) {
+  capture("board_grid_changed", { page })
 }
 
 export function trackBoardLayoutReset(page: string) {
@@ -158,6 +184,37 @@ export function trackBoardLayoutExported(page: string) {
 
 export function trackBoardLayoutImported(page: string) {
   capture("board_layout_imported", { page })
+}
+
+/* ---------- micro-features ---------- */
+
+/** Small affordances worth knowing anyone ever uses (copy buttons, the
+    palette, suggesters, undo…). One event with an enum property, so the
+    whole discovery matrix is a single breakdown-by-action chart — and the
+    union keeps the action list from sprawling into free-text. */
+export type UiAction =
+  | "copy_short_link"
+  | "copy_api_key"
+  | "copy_dns_record"
+  | "command_menu_opened"
+  | "command_executed"
+  | "shortcuts_help_opened"
+  | "stats_refreshed"
+  | "alias_suggested"
+  | "password_suggested"
+  | "qr_downloaded"
+  | "board_undo"
+  | "board_redo"
+  | "board_filter_applied"
+  | "time_range_changed"
+  | "links_searched"
+  | "links_filtered"
+  | "links_sorted"
+
+/** `detail` is a low-cardinality qualifier (a preset token, a filter key,
+    a command target) — never free text or user content. */
+export function trackUiAction(action: UiAction, detail?: string) {
+  capture("ui_action", { action, ...(detail ? { detail } : {}) })
 }
 
 /* ---------- onboarding ---------- */

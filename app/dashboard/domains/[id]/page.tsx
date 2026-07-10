@@ -153,7 +153,7 @@ function CopyCell({ value }: { value: string }) {
   return (
     <span className="flex min-w-0 items-center gap-1">
       <span className="text-foreground truncate font-mono text-xs">{value}</span>
-      <CopyButton value={value} className="size-5 [&_svg]:size-3" />
+      <CopyButton value={value} trackAs="copy_dns_record" className="size-5 [&_svg]:size-3" />
     </span>
   )
 }

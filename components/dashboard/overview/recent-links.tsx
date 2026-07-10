@@ -71,7 +71,7 @@ export function RecentLinks({
                 <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
                   {formatCount(l.total_clicks ?? 0)}
                 </span>
-                <CopyButton value={shortUrlOf(l)} />
+                <CopyButton value={shortUrlOf(l)} trackAs="copy_short_link" />
               </div>
             ))}
           </div>

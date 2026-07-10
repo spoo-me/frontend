@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-import { trackLinkCreated } from "@/lib/analytics"
+import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
 import {
   checkAlias,
   fetchUrlMetadata,
@@ -629,7 +629,10 @@ export function LinkComposer() {
                       size="icon-sm"
                       className="size-9 shrink-0"
                       aria-label="Suggest an alias"
-                      onClick={() => setAlias(suggestAlias())}
+                      onClick={() => {
+                        trackUiAction("alias_suggested")
+                        setAlias(suggestAlias())
+                      }}
                     >
                       <Dices />
                     </Button>
@@ -709,6 +712,7 @@ export function LinkComposer() {
                       size="sm"
                       className="h-9 shrink-0"
                       onClick={() => {
+                        trackUiAction("password_suggested")
                         setPassword(suggestPassword())
                         setPasswordVisible(true)
                       }}
