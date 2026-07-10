@@ -44,8 +44,12 @@ export function LinkSheet({
       {/* Full width on phones: the base primitive's w-3/4 leaves a useless
           blurred sliver of the list and starves the form. The data-variant
           override is what actually beats data-[side=right]:w-3/4; ≥sm the
-          primitive's max-w-sm cap keeps the desktop overlay as-is. */}
-      <SheetContent side="right" className="gap-0 overflow-y-auto p-0 data-[side=right]:w-full">
+          sheet widens past the primitive's max-w-sm, which read cramped
+          for the settings form. */}
+      <SheetContent
+        side="right"
+        className="gap-0 overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-lg"
+      >
         {!link ? (
           <>
             <SheetTitle className="sr-only">Link details</SheetTitle>
