@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { logout as apiLogout, me, type AuthUser } from "@/lib/api"
 
@@ -12,6 +12,9 @@ import { logout as apiLogout, me, type AuthUser } from "@/lib/api"
  */
 
 export const SESSION_KEY = ["session", "me"] as const
+
+/** Cross-tab session sync — sign-out in one tab flips the others. */
+const SESSION_CHANNEL = "spoo:session"
 
 type AuthState = {
   user: AuthUser | null
@@ -47,18 +50,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data ?? null
   }, [refetch])
 
+  // Post through the SAME channel object that listens: BroadcastChannel
+  // skips only the posting instance, so a throwaway sender channel would
+  // echo the message back into this very tab's listener.
+  const channelRef = React.useRef<BroadcastChannel | null>(null)
+
+  const broadcast = React.useCallback((event: "signed-in" | "signed-out") => {
+    try {
+      channelRef.current?.postMessage(event)
+    } catch {
+      // BroadcastChannel unavailable — cross-tab sync degrades gracefully
+    }
+  }, [])
+
   const setUser = React.useCallback(
     (user: AuthUser | null) => {
       queryClient.setQueryData(SESSION_KEY, user)
+      if (user) broadcast("signed-in")
     },
-    [queryClient],
+    [queryClient, broadcast],
   )
 
   const signOut = React.useCallback(async () => {
     await apiLogout().catch(() => undefined)
-    // Drop EVERYTHING cached — never leak one account's data into the next.
-    queryClient.clear()
+    // A /auth/me that departed while cookies were still valid must not land
+    // after we flip to signed-out and resurrect the session.
+    await queryClient.cancelQueries({ queryKey: SESSION_KEY })
+    // Flip the LIVE session query to null. (Never clear()/remove it: the
+    // active observer stays subscribed to the orphaned query object and a
+    // later setQueryData writes to a NEW cache entry it can't see — the
+    // header keeps rendering the old user until a hard refresh.)
     queryClient.setQueryData(SESSION_KEY, null)
+    // Drop everything else cached — never leak one account's data into the
+    // next. Signed-out views unmount, so orphaning their observers is fine.
+    queryClient.removeQueries({
+      predicate: (q) => q.queryHash !== hashKey(SESSION_KEY),
+    })
+    // The pre-hydration auth hint must not survive sign-out (the dashboard
+    // gate effect also drops it, but it isn't mounted when signing out from
+    // marketing pages).
+    try {
+      localStorage.removeItem("spoo:authed")
+      document.documentElement.classList.remove("authed")
+    } catch {
+      // ignore — worst case the gate flashes optimistically once
+    }
+    broadcast("signed-out")
+  }, [queryClient, broadcast])
+
+  // Cross-tab: another tab signed in/out — re-sync this tab's session.
+  React.useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return
+    const ch = new BroadcastChannel(SESSION_CHANNEL)
+    channelRef.current = ch
+    ch.onmessage = (e: MessageEvent) => {
+      if (e.data === "signed-out") queryClient.setQueryData(SESSION_KEY, null)
+      void queryClient.invalidateQueries({ queryKey: SESSION_KEY })
+    }
+    return () => {
+      channelRef.current = null
+      ch.close()
+    }
+  }, [queryClient])
+
+  // bfcache: a back/forward restore replays the old DOM without re-running
+  // effects or fetches — re-check the session so a stale header can't stick.
+  React.useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted)
+        void queryClient.invalidateQueries({ queryKey: SESSION_KEY })
+    }
+    window.addEventListener("pageshow", onPageShow)
+    return () => window.removeEventListener("pageshow", onPageShow)
   }, [queryClient])
 
   const value = React.useMemo(

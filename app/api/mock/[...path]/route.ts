@@ -700,6 +700,11 @@ async function handle(req: NextRequest, path: string[]) {
       return json({ user: user() })
     }
     case "POST /auth/refresh":
+      // Mirror the real backend: no refresh cookie → no new session.
+      // (Unconditionally re-minting cookies made sign-out impossible — the
+      // first 401'd /auth/me would refresh itself straight back in.)
+      if (!req.cookies.has("refresh_token"))
+        return fail(401, "not_authenticated", "Not signed in")
       return withSession(json({ success: true }))
     case "POST /auth/send-verification":
       return json({ success: true, expires_in: 600 })
