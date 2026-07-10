@@ -9,8 +9,10 @@ import {
   ChevronDown,
   Globe,
   ImageIcon,
+  Info,
   Pipette,
   Plus,
+  RotateCcw,
   Upload,
   X,
 } from "lucide-react"
@@ -277,7 +279,9 @@ export function prefillHasData(m: UrlMetadata | null | undefined): boolean {
     carries the upstream status ("… HTML page (status 403)"): a forbidden
     or challenged fetch means the DESTINATION refuses crawlers, which
     deserves its own line — writing tags by hand still works fine. */
-export function metaFetchNotice(err: unknown): string {
+export type MetaFetchNotice = string | { title: string; body: string }
+
+export function metaFetchNotice(err: unknown): MetaFetchNotice {
   if (err instanceof SpooApiError) {
     if (err.isRateLimit)
       return "preview fetches are rate limited, try again in a minute"
@@ -285,7 +289,13 @@ export function metaFetchNotice(err: unknown): string {
       err.code === "unfetchable" &&
       /\b(?:status|http)\s*403\b|forbidden|challenge/i.test(err.message)
     )
-      return "this destination blocks fetches. write your own tags."
+      // The destination challenges OUR fetcher, not the social crawlers:
+      // its own tags (if any) still unfurl when the link is shared. Only
+      // the mirror here is blind — rendered as an info box, not an error.
+      return {
+        title: "this destination blocked our fetch of its meta tags",
+        body: "if it serves its own tags, social platforms still show them as is. tags you write here replace them.",
+      }
   }
   return "couldn't fetch a preview from this destination"
 }
@@ -318,14 +328,20 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-/** Quiet mono state tag for a section header — same anatomy as the
-    attention-queue category tags, but always muted: color stays reserved
-    for attention severity. */
-export function StateTag({ children }: { children: React.ReactNode }) {
+/** In-input restore affordance: copies the destination's fetched value
+    back into one field of a still-custom card. The header's "Reset to
+    destination" is the different, bigger move (back to live inherit). */
+function RestoreBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <span className="label-mono bg-muted/60 text-muted-foreground/70 rounded px-1.5 py-0.5 text-[10px] whitespace-nowrap">
-      {children}
-    </span>
+    <button
+      type="button"
+      aria-label={`Restore the destination's ${label}`}
+      title={`Restore the destination's ${label}`}
+      onClick={onClick}
+      className="text-muted-foreground/60 hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors duration-150"
+    >
+      <RotateCcw className="size-3.5" />
+    </button>
   )
 }
 
@@ -771,6 +787,7 @@ export function MetaTagsEditor({
   loading = false,
   notice,
   problem: problemProp,
+  source,
 }: {
   value: MetaDraft
   onChange: (value: MetaDraft) => void
@@ -781,13 +798,16 @@ export function MetaTagsEditor({
   /** Destination fetch in flight: the fields pulse in place (opacity only,
       zero layout shift) — the fields themselves are the loading surface. */
   loading?: boolean
-  /** Quiet muted status line (fetch failures, mirroring helper); yields
-      to any problem and to a rejected upload. The slot is height-reserved
-      so it swaps between states without shifting the fields. */
-  notice?: string | null
+  /** Fetch-failure status: a quiet one-liner, or {title, body} for cases
+      that deserve explanation (blocked destinations). Yields to any
+      problem and to a rejected upload; rendered only when present. */
+  notice?: MetaFetchNotice | null
   /** Validation override: pass null to suppress while an uncustomized
       prefill is display-only and never travels. undefined = compute here. */
   problem?: string | null
+  /** The destination's fetched values. When set (customized card), fields
+      that diverge from it grow an in-input restore affordance. */
+  source?: MetaDraft
 }) {
   const [previewOn, setPreviewOn] = React.useState<MetaPlatform>("x")
   // Rejected file picks (wrong type / oversize) never touch the draft, so
@@ -819,44 +839,89 @@ export function MetaTagsEditor({
 
   const imageValue = value.image.trim()
   const imageUploaded = isMetaImageDataUri(imageValue)
-  const line = problem ?? uploadError ?? notice
+  const noticeLine = typeof notice === "string" ? notice : null
+  const noticeBox =
+    notice && typeof notice === "object" && !problem && !uploadError
+      ? notice
+      : null
+  const line = problem ?? uploadError ?? noticeLine
+  // A field earns a restore affordance when the card is custom (source
+  // set), the destination actually has a value there, and ours diverges.
+  const restorable = (key: "title" | "description" | "image") =>
+    source !== undefined &&
+    source[key].trim() !== "" &&
+    value[key].trim() !== source[key].trim()
 
   const fields = (
     <div className={cn("min-w-0 flex-1 space-y-5", loading && "animate-pulse")}>
-      {/* One reserved line — problem > upload error > status — so the
-          states swap in place instead of shifting the fields below. */}
-      <p
-        aria-live="polite"
-        className={cn(
-          "min-h-4 text-xs",
-          problem || uploadError ? "text-destructive" : "text-muted-foreground/70",
-        )}
-      >
-        {line}
-      </p>
+      {/* Rendered only when there is something to say — problem > upload
+          error > fetch notice — so the resting states carry no dead band. */}
+      {line && (
+        <p
+          aria-live="polite"
+          className={cn(
+            "text-xs",
+            problem || uploadError
+              ? "text-destructive"
+              : "text-muted-foreground/70",
+          )}
+        >
+          {line}
+        </p>
+      )}
+      {noticeBox && (
+        <div
+          aria-live="polite"
+          className="border-border/60 space-y-1 rounded-lg border px-3.5 py-3"
+        >
+          <p className="text-foreground/80 flex items-center gap-2 text-xs">
+            <Info className="text-muted-foreground size-3.5 shrink-0" />
+            {noticeBox.title}
+          </p>
+          <p className="text-muted-foreground/70 pl-[22px] text-xs">
+            {noticeBox.body}
+          </p>
+        </div>
+      )}
       <Field
         label="Social title"
         hint="Overrides the destination's Open Graph title."
       >
-        <Input
-          value={value.title}
-          onChange={(e) => patch({ title: e.target.value })}
-          placeholder="From the destination"
-          maxLength={META_TITLE_MAX}
-          className="h-9 text-xs"
-        />
+        <div className="relative">
+          <Input
+            value={value.title}
+            onChange={(e) => patch({ title: e.target.value })}
+            placeholder="From the destination"
+            maxLength={META_TITLE_MAX}
+            className={cn("h-9 text-xs", restorable("title") && "pr-8")}
+          />
+          {restorable("title") && (
+            <RestoreBtn
+              label="title"
+              onClick={() => patch({ title: source!.title })}
+            />
+          )}
+        </div>
       </Field>
       <Field
         label="Social description"
         hint="Shown under the title in link previews."
       >
-        <Input
-          value={value.description}
-          onChange={(e) => patch({ description: e.target.value })}
-          placeholder="From the destination"
-          maxLength={META_DESCRIPTION_MAX}
-          className="h-9 text-xs"
-        />
+        <div className="relative">
+          <Input
+            value={value.description}
+            onChange={(e) => patch({ description: e.target.value })}
+            placeholder="From the destination"
+            maxLength={META_DESCRIPTION_MAX}
+            className={cn("h-9 text-xs", restorable("description") && "pr-8")}
+          />
+          {restorable("description") && (
+            <RestoreBtn
+              label="description"
+              onClick={() => patch({ description: source!.description })}
+            />
+          )}
+        </div>
       </Field>
       <Field
         label="Social image"
@@ -881,13 +946,24 @@ export function MetaTagsEditor({
               </button>
             </span>
           ) : (
-            <Input
-              value={value.image}
-              onChange={(e) => patch({ image: e.target.value })}
-              placeholder="https://example.com/og.png"
-              spellCheck={false}
-              className="h-9 flex-1 font-mono text-xs"
-            />
+            <div className="relative min-w-0 flex-1">
+              <Input
+                value={value.image}
+                onChange={(e) => patch({ image: e.target.value })}
+                placeholder="https://example.com/og.png"
+                spellCheck={false}
+                className={cn(
+                  "h-9 font-mono text-xs",
+                  restorable("image") && "pr-8",
+                )}
+              />
+              {restorable("image") && (
+                <RestoreBtn
+                  label="image"
+                  onClick={() => patch({ image: source!.image })}
+                />
+              )}
+            </div>
           )}
           {/* Typing a URL and uploading are alternatives; last action wins. */}
           <Button

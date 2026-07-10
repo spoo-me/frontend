@@ -59,7 +59,6 @@ import {
   MetaTagsEditor,
   metaTagsOf,
   metaTagsProblem,
-  StateTag,
   VariantsEditor,
   variantTotal,
   type GeoRuleDraft,
@@ -369,17 +368,16 @@ export function LinkSettingsForm({
   const metaPayload = metaCustomized ? (metaTagsOf(meta) ?? null) : null
   if (!sameMetaTags(metaPayload, link.meta_tags)) patch.meta_tags = metaPayload
   const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
-  // Mirroring = uncustomized with a fetch worth showing: the header tag
-  // and helper line say so; an empty or failed fetch stays tagless (the
-  // notice already covers errors).
+  // Mirroring = uncustomized with a fetch worth showing: the header's
+  // live dot says so; an empty or failed fetch stays bare (the notice
+  // covers errors).
   const metaMirroring =
     !metaCustomized && destMeta.isSuccess && prefillHasData(destMeta.data)
+  const metaSource = prefillDraftOf(destMeta.data)
   const metaNotice =
     !metaCustomized && destMeta.isError
       ? metaFetchNotice(destMeta.error)
-      : metaMirroring
-        ? "live from the destination. edits freeze a custom card."
-        : null
+      : null
 
   const dirty = Object.keys(patch).length > 0
 
@@ -658,18 +656,18 @@ export function LinkSettingsForm({
       <VariantsEditor variants={variants} onChange={setVariants} />
 
       <div className="space-y-3">
-        {/* Fixed-height header row: the state tag and reset action swap in
-            place — zero layout shift either way. */}
+        {/* Fixed-height header row: the live-dot status and reset action
+            swap in place, zero layout shift either way. */}
         <div className="flex h-7 items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-baseline gap-3">
             <div className="label-mono text-muted-foreground/60 text-[10px]">
               Meta tags
             </div>
-            {metaCustomized ? (
-              <StateTag>custom</StateTag>
-            ) : metaMirroring ? (
-              <StateTag>mirroring destination</StateTag>
-            ) : null}
+            {metaMirroring && (
+              <span className="label-mono text-muted-foreground/40 text-[10px]">
+                fetched from destination
+              </span>
+            )}
           </div>
           {metaCustomized && (
             <button
@@ -695,6 +693,7 @@ export function LinkSettingsForm({
           loading={!metaCustomized && destMeta.isFetching}
           notice={metaNotice}
           problem={metaProblem}
+          source={metaCustomized ? metaSource : undefined}
         />
       </div>
 

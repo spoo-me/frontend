@@ -65,7 +65,6 @@ import {
   prefillDraftOf,
   prefillHasData,
   SectionLabel,
-  StateTag,
   VariantsEditor,
   variantTotal,
   type GeoRuleDraft,
@@ -295,17 +294,16 @@ export function LinkComposer() {
   // prefill never travels and never blocks submit.
   const metaPayload = metaCustomized ? metaTagsOf(meta) : undefined
   const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
-  // Mirroring = uncustomized with a fetch worth showing: the header tag
-  // and helper line say so; an empty or failed fetch stays tagless (the
-  // notice already covers errors).
+  // Mirroring = uncustomized with a fetch worth showing: the header's
+  // live dot says so; an empty or failed fetch stays bare (the notice
+  // covers errors).
   const metaMirroring =
     !metaCustomized && destMeta.isSuccess && prefillHasData(destMeta.data)
+  const metaSource = prefillDraftOf(destMeta.data)
   const metaNotice =
     !metaCustomized && destMeta.isError
       ? metaFetchNotice(destMeta.error)
-      : metaMirroring
-        ? "live from the destination. edits freeze a custom card."
-        : null
+      : null
   const weights = variantTotal(variants)
 
   const create = useMutation({
@@ -685,17 +683,17 @@ export function LinkComposer() {
               </TabsContent>
 
               <TabsContent value="metadata" className="space-y-2">
-                {/* Fixed-height header row: the state tag and reset action
-                    swap in place — zero layout shift between mirrored and
-                    customized states. */}
+                {/* Fixed-height header row: the live-dot status and reset
+                    action swap in place, zero layout shift between mirrored
+                    and customized states. */}
                 <div className="flex h-7 items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-baseline gap-3">
                     <SectionLabel>Meta tags</SectionLabel>
-                    {metaCustomized ? (
-                      <StateTag>custom</StateTag>
-                    ) : metaMirroring ? (
-                      <StateTag>mirroring destination</StateTag>
-                    ) : null}
+                    {metaMirroring && (
+                      <span className="label-mono text-muted-foreground/40 text-[10px]">
+                        fetched from destination
+                      </span>
+                    )}
                   </div>
                   {metaCustomized && (
                     <button
@@ -721,6 +719,7 @@ export function LinkComposer() {
                   loading={!metaCustomized && destMeta.isFetching}
                   notice={metaNotice}
                   problem={metaProblem}
+                  source={metaCustomized ? metaSource : undefined}
                 />
               </TabsContent>
             </div>
