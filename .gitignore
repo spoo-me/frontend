@@ -39,3 +39,8 @@ next-env.d.ts
 
 # local-only planning docs
 /docs/
+
+# agent artifacts, never pushed
+/.claude/
+/.claude-screens/
+/*.png
