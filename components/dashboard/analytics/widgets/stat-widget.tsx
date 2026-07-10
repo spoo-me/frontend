@@ -46,17 +46,18 @@ export function StatWidget({
 
   const value = React.useMemo(() => {
     if (!stats) return "–"
+    // A loaded-but-empty range shows honest zeros, not dashes: siblings
+    // (total/unique) already read 0, and every mainstream analytics
+    // product renders rates over an empty window as 0%.
     switch (config.metric) {
       case "total_clicks":
         return formatCount(stats.summary.total_clicks)
       case "unique_clicks":
         return formatCount(stats.summary.unique_clicks)
       case "unique_rate":
-        return formatPercent(stats.computed_metrics?.unique_click_rate)
+        return formatPercent(stats.computed_metrics?.unique_click_rate ?? 0)
       case "clicks_per_visitor":
-        return stats.computed_metrics
-          ? String(stats.computed_metrics.average_clicks_per_visitor)
-          : "–"
+        return String(stats.computed_metrics?.average_clicks_per_visitor ?? 0)
     }
   }, [stats, config.metric])
 
