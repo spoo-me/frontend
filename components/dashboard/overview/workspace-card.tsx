@@ -3,9 +3,11 @@
 import * as React from "react"
 import Link from "next/link"
 import {
+  AppWindow,
   ArrowUpRight,
   Boxes,
   Command,
+  Globe,
   KeyRound,
   Puzzle,
   SquareTerminal,
@@ -31,10 +33,12 @@ const GRANT_ICONS: Record<string, React.ElementType> = {
 }
 
 function ColumnHeader({
+  icon: Icon,
   label,
   href,
   action,
 }: {
+  icon: React.ElementType
   label: string
   href: string
   /** Omitted when the column is empty — the empty CTA owns the action. */
@@ -42,8 +46,9 @@ function ColumnHeader({
 }) {
   return (
     <div className="flex h-8 items-center justify-between">
-      <span className="label-mono text-muted-foreground/60 text-[10px]">
-        {label}
+      <span className="text-muted-foreground/60 flex items-center gap-1.5">
+        <Icon className="size-3.5" strokeWidth={1.75} />
+        <span className="label-mono text-[10px]">{label}</span>
       </span>
       {action && (
         <Link
@@ -109,6 +114,7 @@ export function WorkspaceCard({
         {/* Domains */}
         <div className="flex min-h-[192px] flex-col px-4 py-3">
           <ColumnHeader
+            icon={Globe}
             label="Domains"
             href="/dashboard/domains"
             action={domains.length ? "Manage" : undefined}
@@ -144,6 +150,7 @@ export function WorkspaceCard({
         {/* Connected apps */}
         <div className="flex min-h-[192px] flex-col px-4 py-3">
           <ColumnHeader
+            icon={AppWindow}
             label="Apps"
             href="/dashboard/apps"
             action={grants.length ? "Browse" : undefined}
@@ -178,6 +185,7 @@ export function WorkspaceCard({
         {/* API keys */}
         <div className="flex min-h-[192px] flex-col px-4 py-3">
           <ColumnHeader
+            icon={KeyRound}
             label="API keys"
             href="/dashboard/developer"
             action={activeKeys.length ? "Manage" : undefined}
