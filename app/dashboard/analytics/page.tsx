@@ -24,6 +24,7 @@ import {
   Plus,
 } from "lucide-react"
 import { getStats, type StatsDimension } from "@/lib/api"
+import { trackUiAction } from "@/lib/analytics"
 import type { Widget } from "@/lib/analytics-layout"
 import type { WidgetStatsCtx } from "@/hooks/use-widget-stats"
 import { FilterChip } from "@/components/dashboard/filter-chip"
@@ -112,6 +113,7 @@ export default function AnalyticsPage() {
   }, [rangeToken, fromMs, toMs, nowMs])
 
   const applyRange = (r: TimeRange) => {
+    trackUiAction("time_range_changed", r.preset ?? "custom")
     if (r.preset) {
       setRangeToken(r.preset === "30d" ? null : r.preset)
       setFrom(null)
@@ -307,6 +309,10 @@ export default function AnalyticsPage() {
   const prevExpand = React.useRef<string | null>(expandId)
   const handleExpand = (id: string | null) => {
     if (id && !expandId) {
+      trackUiAction(
+        "chart_expanded",
+        widgets.find((w) => w.id === id)?.kind,
+      )
       scrollDepth.current =
         document.querySelector("[data-dashboard-scroller]")?.scrollTop ?? 0
     }
@@ -376,7 +382,10 @@ export default function AnalyticsPage() {
             icon={icon}
             range={range}
             selected={values[key]}
-            onChange={(v) => setters[key](v.length ? v : null)}
+            onChange={(v) => {
+              trackUiAction("board_filter_applied", key)
+              setters[key](v.length ? v : null)
+            }}
           />
         ))}
         {/* Below lg the refresh group flows with the wrapping chips —
@@ -493,7 +502,7 @@ export default function AnalyticsPage() {
               const entry = WIDGET_CATALOG.find((e) => e.key === entryKey)
               if (entry) setSelectedId(lay.addWidget(entry.kind, entry.seed))
             }}
-            onAddCustom={(kind, seed) => setSelectedId(lay.addWidget(kind, seed))}
+            onAddCustom={(kind, seed) => setSelectedId(lay.addWidget(kind, seed, "custom"))}
             onDuplicate={(id) => setSelectedId(lay.duplicateWidget(id))}
             onRemove={lay.removeWidget}
             onResetWidget={lay.resetWidget}

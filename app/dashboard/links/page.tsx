@@ -48,6 +48,7 @@ import {
   type UrlListItem,
   type UrlStatus,
 } from "@/lib/api"
+import { trackLinksBulkAction, trackUiAction } from "@/lib/analytics"
 import { displayUrl, domainOf, formatCount, formatWhen } from "@/lib/format"
 import { faviconUrl } from "@/lib/favicon"
 import { Button } from "@/components/ui/button"
@@ -176,6 +177,7 @@ export default function LinksPage() {
   React.useEffect(() => {
     const t = setTimeout(() => {
       if (searchDraft !== q) {
+        if (searchDraft) trackUiAction("links_searched")
         setQ(searchDraft || null)
         setPage(null)
       }
@@ -216,6 +218,28 @@ export default function LinksPage() {
     ...(after ? { createdAfter: after.toISOString() } : {}),
     ...(before ? { createdBefore: before.toISOString() } : {}),
   }
+
+  // Filter/sort usage — one emission per change, skipping the initial
+  // mount so a shared URL with filters baked in doesn't count as a use.
+  const filterKeys = [
+    status && `status:${status}`,
+    protectedOnly && `protected:${protectedOnly}`,
+    limitedOnly && `limited:${limitedOnly}`,
+    (after || before) && "created",
+  ]
+    .filter(Boolean)
+    .join(",")
+  const mountedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (!mountedRef.current) return
+    if (filterKeys) trackUiAction("links_filtered", filterKeys)
+  }, [filterKeys])
+  React.useEffect(() => {
+    if (mountedRef.current) trackUiAction("links_sorted", `${sortBy}:${sortDir}`)
+  }, [sortBy, sortDir])
+  React.useEffect(() => {
+    mountedRef.current = true
+  }, [])
 
   // Bulk selection: ephemeral (not URL state), survives page flips so a
   // selection can span pages. Esc clears it unless a dialog owns the key.
@@ -385,6 +409,7 @@ export default function LinksPage() {
       return { count: ids.length, failed, action, domain, expireAfter }
     },
     onSuccess: ({ count, failed, action, domain, expireAfter }) => {
+      trackLinksBulkAction(action, count, failed)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
       clearSelection()
@@ -1150,10 +1175,11 @@ function LinkRow({
               </span>
               <CopyButton
                 value={shortUrlOf(link)}
+                trackAs="copy_short_link"
                 className="opacity-0 transition-opacity duration-150 [tr:hover_&]:opacity-100"
               />
             </div>
-            <div className="truncate text-xs text-muted-foreground">
+            <div className="ph-no-capture truncate text-xs text-muted-foreground">
               {displayUrl(link.long_url)}
             </div>
           </div>

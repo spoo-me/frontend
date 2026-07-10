@@ -76,7 +76,7 @@ export default function OnboardingLayout({
           {user ? (
             <>
               You&apos;re signed in as{" "}
-              <span className="text-muted-foreground font-medium">
+              <span className="ph-no-capture text-muted-foreground font-medium">
                 {user.email}
               </span>
             </>

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
+import { trackLinkUpdated } from "@/lib/analytics"
 import {
   checkAlias,
   fetchUrlMetadata,
@@ -425,6 +426,7 @@ export function LinkSettingsForm({
   const save = useMutation({
     mutationFn: () => updateUrl(link.id, patch),
     onSuccess: (next) => {
+      trackLinkUpdated(patch)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       setPasswordMode("keep")
       setNewPassword("")

@@ -138,7 +138,7 @@ function ProfilePill({ collapsed }: { collapsed: boolean }) {
                   <span className="text-foreground block truncate text-[13px] font-medium">
                     {name}
                   </span>
-                  <span className="text-muted-foreground block truncate text-[11px]">
+                  <span className="ph-no-capture text-muted-foreground block truncate text-[11px]">
                     {user.email}
                   </span>
                 </span>
@@ -150,7 +150,7 @@ function ProfilePill({ collapsed }: { collapsed: boolean }) {
       <DropdownMenuContent side="top" align="start" className="w-56">
         <DropdownMenuLabel>
           <span className="text-foreground block truncate text-xs font-medium">{name}</span>
-          <span className="text-muted-foreground block truncate text-[11px] font-normal">
+          <span className="ph-no-capture text-muted-foreground block truncate text-[11px] font-normal">
             {user.email}
           </span>
         </DropdownMenuLabel>

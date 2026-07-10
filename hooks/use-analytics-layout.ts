@@ -19,6 +19,16 @@ import {
   type WidgetConfigPatch,
   type WidgetKind,
 } from "@/lib/analytics-layout"
+import {
+  trackBoardGridChanged,
+  trackBoardLayoutReset,
+  trackUiAction,
+  trackWidgetAdded,
+  trackWidgetConfigUpdated,
+  trackWidgetDuplicated,
+  trackWidgetRemoved,
+  type WidgetAddSource,
+} from "@/lib/analytics"
 import { deletePageLayout, getPageLayout, putPageLayout } from "@/lib/api"
 
 /**
@@ -157,6 +167,7 @@ export function useAnalyticsLayout() {
   const undo = React.useCallback(() => {
     const prev = undoStack.current.pop()
     if (!prev) return
+    trackUiAction("board_undo")
     redoStack.current.push(readSaved())
     bumpHistory()
     writeSaved(prev)
@@ -166,6 +177,7 @@ export function useAnalyticsLayout() {
   const redo = React.useCallback(() => {
     const next = redoStack.current.pop()
     if (!next) return
+    trackUiAction("board_redo")
     undoStack.current.push(readSaved())
     bumpHistory()
     writeSaved(next)
@@ -182,6 +194,7 @@ export function useAnalyticsLayout() {
       bumpHistory()
     },
     onSuccess: () => {
+      trackBoardLayoutReset(PAGE)
       clearSaved()
       queryClient.setQueryData(["layout", PAGE], { layout: null })
       toast.success("Layout reset to default")
@@ -197,26 +210,39 @@ export function useAnalyticsLayout() {
     undo,
     redo,
     applyGridChange: React.useCallback(
-      (items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>) =>
-        apply((l) => applyGridChange(l, items)),
+      (items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>) => {
+        // apply() no-ops on equal layouts; the cache reference only moves
+        // when something actually changed — that's the emit condition.
+        const before = readSaved()
+        apply((l) => applyGridChange(l, items))
+        if (readSaved() !== before) trackBoardGridChanged(PAGE)
+      },
       [apply],
     ),
     addWidget: React.useCallback(
-      (kind: WidgetKind, seed?: WidgetConfigPatch) => {
+      (kind: WidgetKind, seed?: WidgetConfigPatch, source: WidgetAddSource = "gallery") => {
         const id = newWidgetId()
         apply((l) => withWidgetAdded(l, kind, id, seed))
+        const hasScope = Object.keys(seed?.scope ?? {}).length > 0
+        trackWidgetAdded(kind, PAGE, source, hasScope)
         return id
       },
       [apply],
     ),
     removeWidget: React.useCallback(
-      (id: string) => apply((l) => withWidgetRemoved(l, id)),
+      (id: string) => {
+        const kind = readSaved().widgets.find((w) => w.id === id)?.kind ?? null
+        apply((l) => withWidgetRemoved(l, id))
+        trackWidgetRemoved(kind, PAGE)
+      },
       [apply],
     ),
     duplicateWidget: React.useCallback(
       (id: string) => {
+        const kind = readSaved().widgets.find((w) => w.id === id)?.kind ?? null
         const nid = newWidgetId()
         apply((l) => withWidgetDuplicated(l, id, nid))
+        trackWidgetDuplicated(kind, PAGE)
         return nid
       },
       [apply],
@@ -226,8 +252,12 @@ export function useAnalyticsLayout() {
       [apply],
     ),
     updateWidgetConfig: React.useCallback(
-      (id: string, patch: WidgetConfigPatch) =>
-        apply((l) => withWidgetConfig(l, id, patch)),
+      (id: string, patch: WidgetConfigPatch) => {
+        const before = readSaved()
+        apply((l) => withWidgetConfig(l, id, patch))
+        if (readSaved() !== before)
+          trackWidgetConfigUpdated(PAGE, Object.keys(patch))
+      },
       [apply],
     ),
     /** Import a whole doc (export/import); runs through normalize. */

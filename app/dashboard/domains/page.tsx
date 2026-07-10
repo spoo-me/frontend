@@ -8,6 +8,7 @@ import { ChevronRight, Globe, Plus } from "lucide-react"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 
+import { trackDomainAdded } from "@/lib/analytics"
 import { createCustomDomain, listCustomDomains, SpooApiError } from "@/lib/api"
 import { formatWhen } from "@/lib/format"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ export default function DomainsPage() {
   const create = useMutation({
     mutationFn: () => createCustomDomain(fqdn.trim().toLowerCase()),
     onSuccess: (dom) => {
+      trackDomainAdded()
       queryClient.invalidateQueries({ queryKey: ["domains"] })
       setAddOpen(false)
       setFqdn("")

@@ -133,7 +133,7 @@ export function checkAlias(alias: string) {
   ).then((r) => parse<{ available: boolean; reason: string | null }>(r))
 }
 
-export function shorten(input: {
+export type ShortenInput = {
   long_url: string
   alias?: string
   password?: string
@@ -151,7 +151,9 @@ export function shorten(input: {
   /** Live on the backend (PR #231); requires a verified account with the
       custom_meta_tags flag — 403 otherwise. */
   meta_tags?: MetaTagsInput
-}) {
+}
+
+export function shorten(input: ShortenInput) {
   return authedFetch("/api/v1/shorten", jsonInit("POST", input)).then((r) =>
     parse<ShortUrl>(r),
   )

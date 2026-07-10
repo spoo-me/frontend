@@ -16,7 +16,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { celebrate } from "@/lib/confetti"
-import { checkAlias, shorten, SpooApiError, type ShortUrl } from "@/lib/api"
+import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
+import {
+  checkAlias,
+  shorten,
+  SpooApiError,
+  type ShortenInput,
+  type ShortUrl,
+} from "@/lib/api"
 
 type AliasState =
   | { kind: "idle" }
@@ -79,10 +86,12 @@ export function LinkStep({
     setPending(true)
     setError(null)
     try {
-      const link = await shorten({
+      const input: ShortenInput = {
         long_url: url.trim(),
         ...(alias ? { alias } : {}),
-      })
+      }
+      const link = await shorten(input)
+      trackLinkCreated(input, "onboarding")
       setCreated(link)
     } catch (err) {
       if (err instanceof SpooApiError && err.status === 409) {
@@ -375,7 +384,10 @@ function QrDialog({
         </div>
 
         <Button
-          onClick={() => downloadQrPng(tileRef.current, `spoo-${created.alias}.png`)}
+          onClick={() => {
+            trackUiAction("qr_downloaded")
+            downloadQrPng(tileRef.current, `spoo-${created.alias}.png`)
+          }}
           size="sm"
           className="justify-self-center"
         >

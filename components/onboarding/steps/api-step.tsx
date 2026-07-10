@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { celebrate } from "@/lib/confetti"
+import { trackApiKeyCreated } from "@/lib/analytics"
 import { CURL_TOKEN_PLACEHOLDER } from "@/lib/onboarding"
 import { siteConfig } from "@/lib/site-config"
 import { createApiKey, SpooApiError, type ApiKeyCreated } from "@/lib/api"
@@ -46,6 +47,10 @@ export function ApiStep({
         description: "Created during onboarding",
         scopes: ["shorten:create", "urls:read", "stats:read"],
       })
+      trackApiKeyCreated(
+        { scopes: ["shorten:create", "urls:read", "stats:read"], hasExpiry: false },
+        "onboarding",
+      )
       setCreated(key)
     } catch (err) {
       if (err instanceof SpooApiError && err.needsVerification) {
@@ -157,7 +162,7 @@ export function ApiStep({
                   />
                   <AnimatedShinyText
                     shimmerWidth={140}
-                    className="text-foreground/80 max-w-none font-mono text-lg font-semibold tracking-tight whitespace-nowrap dark:via-white sm:text-2xl"
+                    className="ph-no-capture text-foreground/80 max-w-none font-mono text-lg font-semibold tracking-tight whitespace-nowrap dark:via-white sm:text-2xl"
                   >
                     {created.token}
                   </AnimatedShinyText>

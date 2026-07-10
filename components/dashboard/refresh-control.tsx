@@ -4,6 +4,7 @@ import * as React from "react"
 import { ChevronDown, RefreshCw } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { trackUiAction } from "@/lib/analytics"
 import { Button } from "@/components/ui/button"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import {
@@ -45,7 +46,10 @@ export function RefreshControl({
         size="icon-sm"
         className="h-8 w-8 rounded-r-none"
         aria-label="Refresh now"
-        onClick={onRefresh}
+        onClick={() => {
+          trackUiAction("stats_refreshed")
+          onRefresh()
+        }}
       >
         <RefreshCw
           className={cn("size-3.5", refreshing && "animate-spin")}

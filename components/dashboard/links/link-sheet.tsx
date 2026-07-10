@@ -68,13 +68,13 @@ export function LinkSheet({
                 <span className="text-foreground truncate font-mono text-sm font-medium">
                   {(link.domain ?? "spoo.me") + "/" + link.alias}
                 </span>
-                <CopyButton value={shortUrlOf(link)} />
+                <CopyButton value={shortUrlOf(link)} trackAs="copy_short_link" />
                 <span className="ml-auto flex items-center gap-1">
                   <StatusPill status={link.status} />
                   <LinkActions link={link} onDeleted={() => onOpenChange(false)} />
                 </span>
               </SheetTitle>
-              <p className="text-muted-foreground mt-1 truncate text-xs">
+              <p className="ph-no-capture text-muted-foreground mt-1 truncate text-xs">
                 {link.long_url}
               </p>
 

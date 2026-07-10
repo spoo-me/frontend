@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner"
 import { motion } from "motion/react"
 
+import { trackUiAction } from "@/lib/analytics"
 import { listAppGrants, revokeAppGrant, type AppGrant } from "@/lib/api"
 import {
   connectedApps,
@@ -259,6 +260,10 @@ export default function AppsPage() {
   const grants = useQuery({ queryKey: ["apps"], queryFn: listAppGrants })
   const items = grants.data?.items ?? []
   const [detail, setDetail] = React.useState<ConnectedApp | null>(null)
+  const openDetail = (app: ConnectedApp) => {
+    trackUiAction("app_explored", app.slug)
+    setDetail(app)
+  }
 
   // Connected apps leave the catalogue; what remains sorts available-first.
   const connectedSlugs = new Set(
@@ -316,7 +321,7 @@ export default function AppsPage() {
               key={app.slug}
               app={app}
               delay={0.1 + i * 0.03}
-              onOpen={setDetail}
+              onOpen={openDetail}
             />
           ))}
         </div>
@@ -331,7 +336,7 @@ export default function AppsPage() {
               key={app.slug}
               app={app}
               delay={0.15 + i * 0.03}
-              onOpen={setDetail}
+              onOpen={openDetail}
             />
           ))}
         </div>

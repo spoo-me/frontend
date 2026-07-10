@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
 import {
   checkAlias,
   fetchUrlMetadata,
@@ -26,6 +27,7 @@ import {
   shorten,
   SpooApiError,
   type CustomDomain,
+  type ShortenInput,
 } from "@/lib/api"
 import { urlProblem } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
@@ -341,23 +343,11 @@ export function LinkComposer() {
   const weights = variantTotal(variants)
 
   const create = useMutation({
-    mutationFn: () =>
-      shorten({
-        long_url: normalizeUrl(longUrl),
-        ...(alias ? { alias } : {}),
-        ...(domain !== "spoo.me" ? { domain } : {}),
-        ...(password ? { password } : {}),
-        ...(expiry
-          ? { expire_after: Math.floor(new Date(expiry).getTime() / 1000) }
-          : {}),
-        ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
-        ...(blockBots ? { block_bots: true } : {}),
-        ...(privateStats ? { private_stats: true } : {}),
-        ...(geoCount ? { geo_rules: geoPayload } : {}),
-        ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
-        ...(metaPayload ? { meta_tags: metaPayload } : {}),
-      }),
-    onSuccess: (created) => {
+    // The payload arrives as mutate() variables so onSuccess can hand the
+    // exact request to analytics.
+    mutationFn: (input: ShortenInput) => shorten(input),
+    onSuccess: (created, input) => {
+      trackLinkCreated(input, "composer")
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
       setOpen(false)
@@ -405,7 +395,22 @@ export function LinkComposer() {
     (alias === "" || aliasState === "available" || aliasState === "checking")
 
   const submit = () => {
-    if (canCreate) create.mutate()
+    if (!canCreate) return
+    create.mutate({
+      long_url: normalizeUrl(longUrl),
+      ...(alias ? { alias } : {}),
+      ...(domain !== "spoo.me" ? { domain } : {}),
+      ...(password ? { password } : {}),
+      ...(expiry
+        ? { expire_after: Math.floor(new Date(expiry).getTime() / 1000) }
+        : {}),
+      ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
+      ...(blockBots ? { block_bots: true } : {}),
+      ...(privateStats ? { private_stats: true } : {}),
+      ...(geoCount ? { geo_rules: geoPayload } : {}),
+      ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
+      ...(metaPayload ? { meta_tags: metaPayload } : {}),
+    })
   }
 
   const normalized = normalizeUrl(longUrl)
@@ -499,7 +504,14 @@ export function LinkComposer() {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={setTab}>
+        <Tabs
+          value={tab}
+          onValueChange={(t) => {
+            // Exploration signal: opening a feature tab, even without saving.
+            if (t !== "basic") trackUiAction("composer_tab_opened", t)
+            setTab(t)
+          }}
+        >
           <TabsList className="w-full">
             {tabTrigger("basic", Link2, "Basic", basicSet)}
             {tabTrigger("security", ShieldCheck, "Security", securitySet)}
@@ -624,7 +636,10 @@ export function LinkComposer() {
                       size="icon-sm"
                       className="size-9 shrink-0"
                       aria-label="Suggest an alias"
-                      onClick={() => setAlias(suggestAlias())}
+                      onClick={() => {
+                        trackUiAction("alias_suggested")
+                        setAlias(suggestAlias())
+                      }}
                     >
                       <Dices />
                     </Button>
@@ -704,6 +719,7 @@ export function LinkComposer() {
                       size="sm"
                       className="h-9 shrink-0"
                       onClick={() => {
+                        trackUiAction("password_suggested")
                         setPassword(suggestPassword())
                         setPasswordVisible(true)
                       }}
