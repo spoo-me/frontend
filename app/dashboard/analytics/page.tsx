@@ -309,6 +309,10 @@ export default function AnalyticsPage() {
   const prevExpand = React.useRef<string | null>(expandId)
   const handleExpand = (id: string | null) => {
     if (id && !expandId) {
+      trackUiAction(
+        "chart_expanded",
+        widgets.find((w) => w.id === id)?.kind,
+      )
       scrollDepth.current =
         document.querySelector("[data-dashboard-scroller]")?.scrollTop ?? 0
     }

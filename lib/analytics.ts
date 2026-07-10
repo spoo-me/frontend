@@ -154,8 +154,13 @@ export function trackDomainVerified(daysToVerify: number | null) {
 
 export type WidgetAddSource = "gallery" | "custom" | "pin"
 
-export function trackWidgetAdded(kind: string, page: string, source: WidgetAddSource) {
-  capture("widget_added", { widget_kind: kind, page, source })
+export function trackWidgetAdded(
+  kind: string,
+  page: string,
+  source: WidgetAddSource,
+  hasScope: boolean,
+) {
+  capture("widget_added", { widget_kind: kind, page, source, has_scope: hasScope })
 }
 
 export function trackWidgetRemoved(kind: string | null, page: string) {
@@ -210,6 +215,9 @@ export type UiAction =
   | "links_searched"
   | "links_filtered"
   | "links_sorted"
+  | "composer_tab_opened"
+  | "chart_expanded"
+  | "app_explored"
 
 /** `detail` is a low-cardinality qualifier (a preset token, a filter key,
     a command target) — never free text or user content. */

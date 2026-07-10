@@ -223,7 +223,8 @@ export function useAnalyticsLayout() {
       (kind: WidgetKind, seed?: WidgetConfigPatch, source: WidgetAddSource = "gallery") => {
         const id = newWidgetId()
         apply((l) => withWidgetAdded(l, kind, id, seed))
-        trackWidgetAdded(kind, PAGE, source)
+        const hasScope = Object.keys(seed?.scope ?? {}).length > 0
+        trackWidgetAdded(kind, PAGE, source, hasScope)
         return id
       },
       [apply],

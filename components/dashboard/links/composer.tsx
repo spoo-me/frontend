@@ -504,7 +504,14 @@ export function LinkComposer() {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={setTab}>
+        <Tabs
+          value={tab}
+          onValueChange={(t) => {
+            // Exploration signal: opening a feature tab, even without saving.
+            if (t !== "basic") trackUiAction("composer_tab_opened", t)
+            setTab(t)
+          }}
+        >
           <TabsList className="w-full">
             {tabTrigger("basic", Link2, "Basic", basicSet)}
             {tabTrigger("security", ShieldCheck, "Security", securitySet)}

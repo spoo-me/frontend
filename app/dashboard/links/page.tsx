@@ -222,9 +222,9 @@ export default function LinksPage() {
   // Filter/sort usage — one emission per change, skipping the initial
   // mount so a shared URL with filters baked in doesn't count as a use.
   const filterKeys = [
-    status && "status",
-    protectedOnly && "protected",
-    limitedOnly && "limited",
+    status && `status:${status}`,
+    protectedOnly && `protected:${protectedOnly}`,
+    limitedOnly && `limited:${limitedOnly}`,
     (after || before) && "created",
   ]
     .filter(Boolean)
