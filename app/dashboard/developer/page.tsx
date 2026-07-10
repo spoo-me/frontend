@@ -235,7 +235,7 @@ export default function DeveloperPage() {
         ) : !items.length ? (
           <div className="pattern-dots m-4 flex h-40 flex-col items-center justify-center gap-3 rounded-lg">
             <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
-              no api keys yet
+              No API keys yet
             </span>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus data-icon="inline-start" />

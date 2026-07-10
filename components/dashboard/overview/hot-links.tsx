@@ -88,7 +88,7 @@ export function HotLinks() {
         ) : (
           <div className="pattern-dots m-2 flex h-40 min-h-[calc(100%-1rem)] items-center justify-center rounded-lg">
             <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
-              a quiet hour
+              A quiet hour
             </span>
           </div>
         )}

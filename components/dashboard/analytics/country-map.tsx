@@ -242,7 +242,7 @@ export function CountryMap({
       {world && !rows.length && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
           <span className="border-border text-muted-foreground/70 bg-background/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
-            no data in this range
+            No data in this range
           </span>
         </div>
       )}

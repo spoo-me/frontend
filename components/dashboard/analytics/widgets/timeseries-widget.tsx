@@ -276,7 +276,7 @@ export function TimeseriesWidget({
                         colSpan={4}
                         className="text-muted-foreground/70 px-3 py-8 text-center text-xs"
                       >
-                        no data in this range
+                        No data in this range
                       </td>
                     </tr>
                   )}

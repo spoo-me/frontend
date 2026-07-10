@@ -288,7 +288,7 @@ export default function AppsPage() {
         ) : !items.length ? (
           <div className="pattern-dots m-4 flex h-40 items-center justify-center rounded-lg">
             <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
-              nothing connected yet
+              Nothing connected yet
             </span>
           </div>
         ) : (

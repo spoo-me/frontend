@@ -776,8 +776,8 @@ export default function LinksPage() {
                     <div className="m-4 flex h-48 flex-col items-center justify-center gap-3 rounded-lg pattern-dots">
                       <span className="rounded-lg border border-dashed border-border px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
                         {q || activeFilterCount
-                          ? "nothing matches these filters"
-                          : "no links yet"}
+                          ? "Nothing matches these filters"
+                          : "No links yet"}
                       </span>
                       {!q && !activeFilterCount && (
                         <Button size="sm" onClick={() => openLinkComposer()}>
