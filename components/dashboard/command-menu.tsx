@@ -26,6 +26,7 @@ import { listCustomDomains, listUrls } from "@/lib/api"
 import { faviconUrl } from "@/lib/favicon"
 import { Logo } from "@/components/shared/logo"
 import { dashboardFlags, dashboardNav } from "@/components/dashboard/nav"
+import { useFeatures } from "@/hooks/use-features"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
 import { openShortcutsHelp } from "@/components/dashboard/shortcuts-help"
 import { requestAnalyticsEditMode } from "@/components/dashboard/analytics/edit-mode"
@@ -109,6 +110,8 @@ export function DashboardCommandMenu() {
   const { setTheme } = useTheme()
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
+  const { features } = useFeatures()
+  const domainsEnabled = features?.custom_domains === "enabled"
   const chordArmed = React.useRef<number | null>(null)
 
   // A reopened palette starts fresh; a stale query reads as a glitch.
@@ -145,10 +148,10 @@ export function DashboardCommandMenu() {
   const domainsQuery = useQuery({
     queryKey: ["domains"],
     queryFn: listCustomDomains,
-    enabled: open,
+    enabled: open && domainsEnabled,
     staleTime: 60_000,
   })
-  const domainResults = q.length >= 2
+  const domainResults = domainsEnabled && q.length >= 2
     ? (domainsQuery.data?.items ?? [])
         .filter((d) => d.fqdn.toLowerCase().includes(q.toLowerCase()))
         .slice(0, 4)
@@ -291,7 +294,9 @@ export function DashboardCommandMenu() {
 
                 {dashboardNav.map((group) => {
                   const items = group.items.filter(
-                    (item) => !item.flag || dashboardFlags[item.flag],
+                    (item) =>
+                      (!item.flag || dashboardFlags[item.flag]) &&
+                      (!item.feature || features?.[item.feature] === "enabled"),
                   )
                   if (!items.length) return null
                   return (

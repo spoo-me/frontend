@@ -24,6 +24,8 @@ import {
   type UrlListItem,
 } from "@/lib/api"
 import { normalizeUrl, urlProblem } from "@/lib/validation"
+import { useFeature } from "@/hooks/use-features"
+import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -271,6 +273,8 @@ export function LinkSettingsForm({
 
   const [longUrl, setLongUrl] = React.useState(link.long_url ?? "")
   const [alias, setAlias] = React.useState(link.alias ?? "")
+  const showMeta = useFeature("custom_meta_tags") === "enabled"
+  const showDomains = useFeature("custom_domains") === "enabled"
   const [domain, setDomain] = React.useState(link.domain ?? "spoo.me")
 
   // Password tri-state: keep (untouched) | set new value | remove.
@@ -499,25 +503,31 @@ export function LinkSettingsForm({
         }
       >
         <div className="flex items-center gap-1.5">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="border-border/60 bg-muted/40 text-foreground hover:bg-accent/60 flex h-9 shrink-0 items-center gap-1 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150"
-              >
-                {domain}
-                <ChevronDown className="text-muted-foreground size-3" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {domains.map((d) => (
-                <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
-                  <span className="font-mono text-xs">{d}</span>
-                  {d === domain && <Check className="ml-auto size-3.5" />}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {showDomains ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="border-border/60 bg-muted/40 text-foreground hover:bg-accent/60 flex h-9 shrink-0 items-center gap-1 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150"
+                >
+                  {domain}
+                  <ChevronDown className="text-muted-foreground size-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {domains.map((d) => (
+                  <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
+                    <span className="font-mono text-xs">{d}</span>
+                    {d === domain && <Check className="ml-auto size-3.5" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <span className="border-border/60 bg-muted/40 text-foreground flex h-9 shrink-0 items-center rounded-lg border px-2.5 font-mono text-xs">
+              {domain}
+            </span>
+          )}
           <span className="text-muted-foreground font-mono text-xs">/</span>
           <div className="relative flex-1">
             <Input
@@ -726,10 +736,15 @@ export function LinkSettingsForm({
         </label>
       </div>
 
-      <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
+      <Velvet feature="geo_targeting">
+        <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
+      </Velvet>
 
-      <VariantsEditor variants={variants} onChange={setVariants} />
+      <Velvet feature="ab_testing">
+        <VariantsEditor variants={variants} onChange={setVariants} />
+      </Velvet>
 
+      {showMeta && (
       <div className="space-y-3">
         {/* Fixed-height header row: the live-dot status and reset action
             swap in place, zero layout shift either way. */}
@@ -783,6 +798,7 @@ export function LinkSettingsForm({
           source={metaCustomized ? metaSource : undefined}
         />
       </div>
+      )}
 
       <div
         className={cn(

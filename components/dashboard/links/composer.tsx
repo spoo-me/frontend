@@ -30,6 +30,8 @@ import {
   type ShortenInput,
 } from "@/lib/api"
 import { urlProblem } from "@/lib/validation"
+import { useFeature } from "@/hooks/use-features"
+import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -163,6 +165,24 @@ export function LinkComposer() {
   const [open, setOpen] = React.useState(false)
   const [tab, setTab] = React.useState("basic")
 
+  // Backend-gated capabilities: hidden features simply don't exist here.
+  const showGeo = useFeature("geo_targeting") === "enabled"
+  const showVariants = useFeature("ab_testing") === "enabled"
+  const showMeta = useFeature("custom_meta_tags") === "enabled"
+  const showDomains = useFeature("custom_domains") === "enabled"
+  const showTargeting = showGeo || showVariants
+  const tabOrder = [
+    "basic",
+    "security",
+    ...(showTargeting ? ["targeting"] : []),
+    ...(showMeta ? ["metadata"] : []),
+  ] as const
+  // Derived, not synced: if features settle mid-session and remove the
+  // active tab, rendering falls back to basic without an effect.
+  const activeTab = tabOrder.includes(tab as (typeof tabOrder)[number])
+    ? tab
+    : "basic"
+
   const [longUrl, setLongUrl] = React.useState("")
   const [alias, setAlias] = React.useState("")
   const [domain, setDomain] = React.useState("spoo.me")
@@ -214,7 +234,7 @@ export function LinkComposer() {
   const destMeta = useQuery({
     queryKey: ["url-metadata", metaFetchUrl],
     queryFn: () => fetchUrlMetadata(metaFetchUrl!),
-    enabled: open && tab === "metadata" && Boolean(metaFetchUrl),
+    enabled: open && activeTab === "metadata" && Boolean(metaFetchUrl),
     staleTime: 10 * 60_000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -284,7 +304,7 @@ export function LinkComposer() {
   const domains = useQuery({
     queryKey: ["domains"],
     queryFn: listCustomDomains,
-    enabled: open,
+    enabled: open && showDomains,
     staleTime: 60_000,
   })
   const activeDomains = [
@@ -459,7 +479,7 @@ export function LinkComposer() {
       value={value}
       className="data-active:bg-transparent data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-transparent"
     >
-      {tab === value && (
+      {activeTab === value && (
         <motion.span
           layoutId="composer-active-tab"
           transition={{ duration: 0.2, ease: "easeOut" }}
@@ -489,11 +509,8 @@ export function LinkComposer() {
           // Figma/Notion grammar: mod+1..4 jumps between the dialog's tabs.
           if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "4") {
             e.preventDefault()
-            setTab(
-              (["basic", "security", "targeting", "metadata"] as const)[
-                Number(e.key) - 1
-              ],
-            )
+            const target = tabOrder[Number(e.key) - 1]
+            if (target) setTab(target)
           }
         }}
       >
@@ -505,7 +522,7 @@ export function LinkComposer() {
         </DialogHeader>
 
         <Tabs
-          value={tab}
+          value={activeTab}
           onValueChange={(t) => {
             // Exploration signal: opening a feature tab, even without saving.
             if (t !== "basic") trackUiAction("composer_tab_opened", t)
@@ -515,8 +532,10 @@ export function LinkComposer() {
           <TabsList className="w-full">
             {tabTrigger("basic", Link2, "Basic", basicSet)}
             {tabTrigger("security", ShieldCheck, "Security", securitySet)}
-            {tabTrigger("targeting", Crosshair, "Targeting", targetingSet)}
-            {tabTrigger("metadata", Tags, "Metadata", Boolean(metaPayload))}
+            {showTargeting &&
+              tabTrigger("targeting", Crosshair, "Targeting", targetingSet)}
+            {showMeta &&
+              tabTrigger("metadata", Tags, "Metadata", Boolean(metaPayload))}
           </TabsList>
 
           {/* Each tab sizes to its content; the height glides between
@@ -567,41 +586,47 @@ export function LinkComposer() {
                   }
                 >
                   <div className="flex items-center gap-1.5">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          aria-label="Choose a domain"
-                          className="shadow-soft border-input text-foreground hover:bg-accent/40 dark:bg-input/30 flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-                        >
-                          {domain}
-                          <ChevronDown className="text-muted-foreground size-3.5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="min-w-44">
-                        {activeDomains.map((d) => (
-                          <DropdownMenuItem
-                            key={d}
-                            onSelect={() => setDomain(d)}
+                    {showDomains ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="Choose a domain"
+                            className="shadow-soft border-input text-foreground hover:bg-accent/40 dark:bg-input/30 flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                           >
-                            <span className="font-mono text-xs">{d}</span>
-                            {d === domain && (
-                              <Check className="ml-auto size-3.5" />
-                            )}
+                            {domain}
+                            <ChevronDown className="text-muted-foreground size-3.5" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="min-w-44">
+                          {activeDomains.map((d) => (
+                            <DropdownMenuItem
+                              key={d}
+                              onSelect={() => setDomain(d)}
+                            >
+                              <span className="font-mono text-xs">{d}</span>
+                              {d === domain && (
+                                <Check className="ml-auto size-3.5" />
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setOpen(false)
+                              router.push("/dashboard/domains")
+                            }}
+                          >
+                            <Plus className="size-3.5" />
+                            <span className="text-xs">Connect a domain</span>
                           </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            setOpen(false)
-                            router.push("/dashboard/domains")
-                          }}
-                        >
-                          <Plus className="size-3.5" />
-                          <span className="text-xs">Connect a domain</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <span className="border-input text-foreground dark:bg-input/30 flex h-9 shrink-0 items-center rounded-lg border px-2.5 font-mono text-xs">
+                        {domain}
+                      </span>
+                    )}
                     <span className="text-muted-foreground font-mono text-xs">
                       /
                     </span>
@@ -773,8 +798,12 @@ export function LinkComposer() {
               </TabsContent>
 
               <TabsContent value="targeting" className="space-y-5">
-                <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
-                <VariantsEditor variants={variants} onChange={setVariants} />
+                <Velvet feature="geo_targeting">
+                  <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
+                </Velvet>
+                <Velvet feature="ab_testing">
+                  <VariantsEditor variants={variants} onChange={setVariants} />
+                </Velvet>
               </TabsContent>
 
               <TabsContent value="metadata" className="space-y-2">

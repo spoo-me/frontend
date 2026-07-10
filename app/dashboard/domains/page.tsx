@@ -9,6 +9,7 @@ import { motion } from "motion/react"
 import { toast } from "sonner"
 
 import { trackDomainAdded } from "@/lib/analytics"
+import { useFeatureGuard } from "@/hooks/use-features"
 import { createCustomDomain, listCustomDomains, SpooApiError } from "@/lib/api"
 import { formatWhen } from "@/lib/format"
 import { Button } from "@/components/ui/button"
@@ -27,12 +28,19 @@ import { StatusPill } from "@/components/dashboard/status-pill"
 
 export default function DomainsPage() {
   const router = useRouter()
+  const domainsEnabled = useFeatureGuard("custom_domains", () =>
+    router.replace("/dashboard"),
+  )
   const queryClient = useQueryClient()
   const [addOpen, setAddOpen] = React.useState(false)
   const [fqdn, setFqdn] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
 
-  const domains = useQuery({ queryKey: ["domains"], queryFn: listCustomDomains })
+  const domains = useQuery({
+    queryKey: ["domains"],
+    queryFn: listCustomDomains,
+    enabled: domainsEnabled,
+  })
 
   const create = useMutation({
     mutationFn: () => createCustomDomain(fqdn.trim().toLowerCase()),

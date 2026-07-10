@@ -10,6 +10,7 @@ import { siteConfig } from "@/lib/site-config"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth/auth-context"
 import { HEARD_FROM_OPTIONS, type OnboardingStash } from "@/lib/onboarding"
+import { useFeature } from "@/hooks/use-features"
 
 export function DoneStep({
   stash,
@@ -19,6 +20,7 @@ export function DoneStep({
   onFinish: (heardFrom?: string) => void
 }) {
   const { user } = useAuth()
+  const showDomains = useFeature("custom_domains") === "enabled"
   const [heardFrom, setHeardFrom] = React.useState<string | null>(null)
 
   React.useEffect(() => {
@@ -62,11 +64,15 @@ export function DoneStep({
           ? undefined
           : { label: "Generate", href: "/dashboard/keys" },
     },
-    {
-      label: "Connect a custom domain",
-      done: false,
-      cta: { label: "Connect", href: "/onboarding/domain" },
-    },
+    ...(showDomains
+      ? [
+          {
+            label: "Connect a custom domain",
+            done: false,
+            cta: { label: "Connect", href: "/onboarding/domain" },
+          },
+        ]
+      : []),
     {
       label: "Explore analytics",
       done: false,

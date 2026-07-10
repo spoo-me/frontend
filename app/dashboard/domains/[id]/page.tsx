@@ -19,6 +19,7 @@ import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { trackDomainVerified } from "@/lib/analytics"
+import { useFeatureGuard } from "@/hooks/use-features"
 import {
   getCustomDomain,
   revokeCustomDomain,
@@ -212,6 +213,9 @@ function Enter({ i, children }: { i: number; children: React.ReactNode }) {
 export default function DomainDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
+  const domainsEnabled = useFeatureGuard("custom_domains", () =>
+    router.replace("/dashboard"),
+  )
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [cascade, setCascade] = React.useState(false)
@@ -219,6 +223,7 @@ export default function DomainDetailPage() {
   const domain = useQuery({
     queryKey: ["domains", params.id],
     queryFn: () => getCustomDomain(params.id),
+    enabled: domainsEnabled,
   })
   const dom = domain.data
 

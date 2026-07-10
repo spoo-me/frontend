@@ -22,6 +22,7 @@ import {
   listUrls,
 } from "@/lib/api"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
+import { useFeature } from "@/hooks/use-features"
 
 /**
  * Setup as a floating companion, not a page block: bottom-right card that
@@ -51,7 +52,12 @@ export function SetupChecklist() {
     queryFn: () =>
       listUrls({ pageSize: 100, sortBy: "created_at", sortOrder: "desc" }),
   })
-  const domains = useQuery({ queryKey: ["domains"], queryFn: listCustomDomains })
+  const showDomains = useFeature("custom_domains") === "enabled"
+  const domains = useQuery({
+    queryKey: ["domains"],
+    queryFn: listCustomDomains,
+    enabled: showDomains,
+  })
   const keys = useQuery({ queryKey: ["keys"], queryFn: listApiKeys })
   const grants = useQuery({ queryKey: ["apps"], queryFn: listAppGrants })
 
@@ -73,14 +79,19 @@ export function SetupChecklist() {
       action: () => openLinkComposer(),
       cta: "Create",
     },
-    {
-      done:
-        (domains.data?.items?.filter((d) => d.status === "ACTIVE").length ?? 0) > 0,
-      icon: Globe2,
-      label: "Connect a custom domain",
-      href: "/dashboard/domains",
-      cta: "Connect",
-    },
+    ...(showDomains
+      ? [
+          {
+            done:
+              (domains.data?.items?.filter((d) => d.status === "ACTIVE")
+                .length ?? 0) > 0,
+            icon: Globe2,
+            label: "Connect a custom domain",
+            href: "/dashboard/domains",
+            cta: "Connect",
+          },
+        ]
+      : []),
     {
       done: (keys.data?.items?.filter((k) => !k.revoked).length ?? 0) > 0,
       icon: KeyRound,
@@ -97,7 +108,9 @@ export function SetupChecklist() {
     },
   ]
   const doneCount = items.filter((i) => i.done).length
-  const ready = Boolean(urls.data && domains.data && keys.data && grants.data)
+  const ready = Boolean(
+    urls.data && (!showDomains || domains.data) && keys.data && grants.data,
+  )
 
   // Fully set up (or not yet known): the companion has no job.
   if (!ready || doneCount === items.length) return null

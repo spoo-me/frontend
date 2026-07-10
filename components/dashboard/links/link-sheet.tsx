@@ -10,6 +10,7 @@ import { listCustomDomains, type UrlListItem } from "@/lib/api"
 import { formatCount, formatWhen } from "@/lib/format"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { StatusPill } from "@/components/dashboard/status-pill"
+import { useFeature } from "@/hooks/use-features"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { LinkActions, shortUrlOf } from "@/components/dashboard/links/link-actions"
 import { LinkSettingsForm } from "@/components/dashboard/links/link-settings-form"
@@ -27,10 +28,11 @@ export function LinkSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const showDomains = useFeature("custom_domains") === "enabled"
   const domains = useQuery({
     queryKey: ["domains"],
     queryFn: listCustomDomains,
-    enabled: open,
+    enabled: open && showDomains,
     staleTime: 60_000,
   })
   const domainOptions = [

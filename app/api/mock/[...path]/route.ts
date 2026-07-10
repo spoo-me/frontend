@@ -1145,6 +1145,23 @@ async function handle(req: NextRequest, path: string[]) {
   if (route === "GET /v1/apps") return json({ items: s.grants })
 
   /* ---------- per-user page layouts (sparse overrides; absent = default) ---------- */
+  /* ---------- feature availability: the walkthrough shows everything ---------- */
+  if (
+    path[0] === "v1" &&
+    path[1] === "me" &&
+    path[2] === "features" &&
+    req.method === "GET"
+  ) {
+    return json({
+      features: {
+        custom_domains: "enabled",
+        geo_targeting: "enabled",
+        custom_meta_tags: "enabled",
+        ab_testing: "enabled",
+      },
+    })
+  }
+
   if (path[0] === "v1" && path[1] === "me" && path[2] === "layouts" && path[3]) {
     const key = path[3]
     if (req.method === "GET") return json({ layout: s.layouts[key] ?? null })

@@ -1,3 +1,4 @@
+import type { FeatureName } from "@/lib/api"
 import {
   AppWindow,
   ChartLine,
@@ -15,6 +16,8 @@ export type DashboardNavItem = {
   icon: LucideIcon
   /** Feature-flagged items render only when their flag is on. */
   flag?: "webhooks" | "billing"
+  /** Backend-gated items render only when /me/features says enabled. */
+  feature?: FeatureName
   /** Match nested routes (e.g. /dashboard/links/abc) for the active state. */
   matchPrefix?: boolean
 }
@@ -56,6 +59,7 @@ export const dashboardNav: DashboardNavGroup[] = [
         title: "Domains",
         href: "/dashboard/domains",
         icon: Globe,
+        feature: "custom_domains",
         matchPrefix: true,
       },
       {

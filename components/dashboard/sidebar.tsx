@@ -33,6 +33,7 @@ import {
   type DashboardNavItem,
 } from "@/components/dashboard/nav"
 import { openDashboardCommandMenu } from "@/components/dashboard/command-menu"
+import { useFeatures } from "@/hooks/use-features"
 
 const COLLAPSE_KEY = "spoo:sidebar-collapsed"
 
@@ -189,6 +190,7 @@ export function SidebarContent({
   onToggleCollapse?: () => void
   onNavigate?: () => void
 }) {
+  const { features } = useFeatures()
   return (
     <div className={cn("flex h-full flex-col", collapsed ? "px-2.5" : "px-4")}>
       <div
@@ -251,7 +253,9 @@ export function SidebarContent({
       <nav aria-label="Dashboard" className="mt-6">
         {dashboardNav.map((group, i) => {
           const items = group.items.filter(
-            (item) => !item.flag || dashboardFlags[item.flag],
+            (item) =>
+              (!item.flag || dashboardFlags[item.flag]) &&
+              (!item.feature || features?.[item.feature] === "enabled"),
           )
           if (!items.length) return null
           return (
