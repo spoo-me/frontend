@@ -70,6 +70,7 @@ export function ShortcutsHelp() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <Group title="Global">
             <Row label="Command palette" keys={[mod, "K"]} />
+            <Row label="Toggle sidebar" keys={[mod, "B"]} />
             <Row label="New link" keys={["N"]} />
             <Row label="Search" keys={["/"]} />
             <Row label="This overlay" keys={["?"]} />

@@ -391,6 +391,20 @@ export function DashboardSidebar() {
     })
   }
 
+  // ⌘B / Ctrl+B toggles the rail (the editor-muscle-memory shortcut).
+  const toggleRef = React.useRef(toggle)
+  toggleRef.current = toggle
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "b" && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
+        e.preventDefault()
+        toggleRef.current()
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
   return (
     <aside
       className={cn(
