@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils"
 import { formatCount } from "@/lib/format"
 import type { TimeBucket } from "@/lib/api"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 /**
  * Structural chart (DIRECTION §3): quiet neutral ink, dashed hairline grid,
@@ -272,11 +273,8 @@ export function ClicksChart({
     data.every((b) => b.clicks === 0 && b.unique_clicks === 0)
   ) {
     return (
-      <div
-        style={{ height }}
-        className="text-muted-foreground/70 flex w-full items-center justify-center text-xs"
-      >
-        no data in this range
+      <div style={{ height }} className="w-full p-1">
+        <EmptyRange />
       </div>
     )
   }

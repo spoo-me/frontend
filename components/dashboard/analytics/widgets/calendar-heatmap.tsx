@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { formatCount } from "@/lib/format"
 import type { TimeBucket } from "@/lib/api"
 import type { ChartMetric } from "@/components/dashboard/clicks-chart"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 /**
  * The contributions grid: one accent-tinted cell per day, columns are
@@ -71,9 +72,7 @@ export function CalendarHeatmap({
 
   if (!series.length) {
     return (
-      <div className="text-muted-foreground/70 flex h-full items-center justify-center text-xs">
-        no data in this range
-      </div>
+      <EmptyRange />
     )
   }
 

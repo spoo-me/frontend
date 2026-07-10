@@ -18,6 +18,7 @@ import {
   DimTooltip,
   TOOLTIP_WRAPPER_STYLE,
 } from "@/components/dashboard/analytics/widgets/dim-tooltip"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 /**
  * Top categories on spokes: shape-reading over value-reading — a lopsided
@@ -95,9 +96,9 @@ export function BreakdownRadar({
 
   if (data.length < 3) {
     return (
-      <div className="text-muted-foreground/70 flex h-full items-center justify-center px-6 text-center text-xs">
-        {rows.length ? "a radar needs at least 3 categories" : "no data in this range"}
-      </div>
+      <EmptyRange
+        label={rows.length ? "a radar needs at least 3 categories" : "no data in this range"}
+      />
     )
   }
 

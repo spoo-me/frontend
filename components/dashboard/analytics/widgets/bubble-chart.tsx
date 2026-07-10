@@ -9,6 +9,7 @@ import type { DimensionRow, StatsDimension } from "@/lib/api"
 import type { BreakdownMetric } from "@/components/dashboard/breakdown-list"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { DimTooltip } from "@/components/dashboard/analytics/widgets/dim-tooltip"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 /**
  * Circle packing: every category is a bubble sized by its count, identity
@@ -89,9 +90,7 @@ export function BubbleChart({
 
   if (!rows.length) {
     return (
-      <div className="text-muted-foreground/70 flex h-full items-center justify-center text-xs">
-        no data in this range
-      </div>
+      <EmptyRange />
     )
   }
 

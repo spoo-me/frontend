@@ -19,6 +19,7 @@ import {
   DimTooltip,
   TOOLTIP_WRAPPER_STYLE,
 } from "@/components/dashboard/analytics/widgets/dim-tooltip"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 /**
  * Volume vs quality: each category is a point at (clicks, unique rate).
@@ -97,9 +98,7 @@ export function BreakdownScatter({
 
   if (!rows.length) {
     return (
-      <div className="text-muted-foreground/70 flex h-full items-center justify-center text-xs">
-        no data in this range
-      </div>
+      <EmptyRange />
     )
   }
 

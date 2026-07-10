@@ -17,6 +17,7 @@ import {
   DimTooltip,
   TOOLTIP_WRAPPER_STYLE,
 } from "@/components/dashboard/analytics/widgets/dim-tooltip"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 /**
  * Concentric rings, activity-rings grammar: the leader is the outermost
@@ -59,9 +60,7 @@ export function RadialChart({
 
   if (!rows.length) {
     return (
-      <div className="text-muted-foreground/70 flex h-full items-center justify-center text-xs">
-        no data in this range
-      </div>
+      <EmptyRange />
     )
   }
 

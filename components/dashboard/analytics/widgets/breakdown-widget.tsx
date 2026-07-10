@@ -51,6 +51,7 @@ import {
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 const BD_CHART_ICONS = {
   bars: ChartBar,
@@ -287,7 +288,7 @@ export function BreakdownWidget({
                 />
               </div>
             ) : (
-              <div className="h-full overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">
+              <div className="flex h-full flex-col overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">
                 <table className="w-full text-sm">
                   <thead className="bg-muted sticky top-0 z-10">
                     <tr className="border-border/60 text-muted-foreground border-b text-left">
@@ -376,18 +377,9 @@ export function BreakdownWidget({
                         </td>
                       </tr>
                     ))}
-                    {!rows.length && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="text-muted-foreground/70 px-3 py-8 text-center text-xs"
-                        >
-                          no data in this range
-                        </td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
+                {!rows.length && <EmptyRange className="flex-1" />}
               </div>
             )}
           </motion.div>

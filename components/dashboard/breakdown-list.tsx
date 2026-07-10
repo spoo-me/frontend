@@ -9,6 +9,7 @@ import {
   dimensionLabel,
 } from "@/components/dashboard/dim-icon"
 import type { DimensionRow } from "@/lib/api"
+import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 export type BreakdownMetric = "total" | "unique" | "both"
 
@@ -48,7 +49,7 @@ export function BreakdownList({
 
   return (
     // Re-key on metric: every mode switch replays the grow-in cascade.
-    <div key={metric} className={cn("space-y-1", className)}>
+    <div key={metric} className={cn("h-full space-y-1", className)}>
       {top.map((row, i) => {
         const primary = metric === "unique" ? row.unique_clicks : row.clicks
         return (
@@ -108,9 +109,7 @@ export function BreakdownList({
         )
       })}
       {!top.length && (
-        <div className="text-muted-foreground/70 px-2.5 py-6 text-center text-xs">
-          no data in this range
-        </div>
+        <EmptyRange />
       )}
     </div>
   )
