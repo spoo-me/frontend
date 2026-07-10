@@ -32,6 +32,10 @@ export function initAnalytics() {
     ui_host: "https://eu.posthog.com",
     defaults: "2026-05-30",
     person_profiles: "identified_only",
+    // Click/scroll/mouse-move heatmaps (viewed via the PostHog toolbar).
+    // Coordinates + element metadata only — no screen content, and billed
+    // as $0 (rides existing events). Session replay stays off.
+    enable_heatmaps: true,
   })
   ready = true
 }
