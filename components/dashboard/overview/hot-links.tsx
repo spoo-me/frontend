@@ -8,6 +8,7 @@ import { ArrowUpRight, Flame } from "lucide-react"
 
 import { dimensionRowsOf, getStats } from "@/lib/api"
 import { formatCount } from "@/lib/format"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -40,6 +41,11 @@ export function HotLinks() {
         className="h-9 px-2.5"
         icon={Flame}
         title="Hot right now"
+        badge={
+          <InfoHint label="What counts as hot">
+            The most clicked links in the last hour, refreshed every minute.
+          </InfoHint>
+        }
         action={
           <Link
             href="/dashboard/analytics"
