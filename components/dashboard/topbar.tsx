@@ -74,7 +74,7 @@ export function DashboardTopbar() {
       <Breadcrumb />
 
       <div className="ml-auto flex items-center gap-2">
-        <Button size="sm" onClick={() => openLinkComposer()}>
+        <Button onClick={() => openLinkComposer()}>
           <Plus data-icon="inline-start" />
           New link
           {/* Keyboard hint means nothing on touch and eats breadcrumb room. */}
