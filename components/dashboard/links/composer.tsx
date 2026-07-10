@@ -49,6 +49,7 @@ import {
 import { DateTimeField } from "@/components/dashboard/date-time-field"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Kbd } from "@/components/dashboard/kbd"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,17 +123,27 @@ function Field({
   label,
   hint,
   error,
+  labelHint,
   children,
 }: {
   label: string
   hint?: string
   /** Blocking problem with the field's value; replaces the hint. */
   error?: string | null
+  /** Help glyph after the label, for behavior a hint line can't carry. */
+  labelHint?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <div className="space-y-2">
-      <Label className="text-foreground mb-2.5 text-xs font-medium">{label}</Label>
+      {labelHint ? (
+        <span className="mb-2.5 flex items-center gap-1.5">
+          <Label className="text-foreground text-xs font-medium">{label}</Label>
+          {labelHint}
+        </span>
+      ) : (
+        <Label className="text-foreground mb-2.5 text-xs font-medium">{label}</Label>
+      )}
       {children}
       {error ? (
         <p className="text-destructive text-xs">{error}</p>
@@ -671,6 +682,12 @@ export function LinkComposer() {
                 <Field
                   label="Password"
                   hint="Visitors will need this to reach the destination."
+                  labelHint={
+                    <InfoHint label="How link passwords work">
+                      Locks the redirect behind a password prompt. At least 8
+                      characters with a letter, a number, and @ or a period.
+                    </InfoHint>
+                  }
                 >
                   <div className="flex items-center gap-1.5">
                     <PasswordInput
@@ -702,8 +719,12 @@ export function LinkComposer() {
                 <div className="border-border/60 divide-border/60 divide-y rounded-xl border">
                   <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
                     <span>
-                      <span className="text-foreground block text-xs font-medium">
+                      <span className="text-foreground flex items-center gap-1.5 text-xs font-medium">
                         Block bots
+                        <InfoHint label="What blocking bots does">
+                          Crawlers and preview bots get an interstitial page;
+                          human visitors redirect normally.
+                        </InfoHint>
                       </span>
                       <span className="text-muted-foreground/70 text-xs">
                         Crawlers get a preview page instead of the redirect.
@@ -716,8 +737,12 @@ export function LinkComposer() {
                   </label>
                   <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
                     <span>
-                      <span className="text-foreground block text-xs font-medium">
+                      <span className="text-foreground flex items-center gap-1.5 text-xs font-medium">
                         Private stats
+                        <InfoHint label="What private stats does">
+                          Turns off the public stats page for this link;
+                          analytics stay visible to you alone.
+                        </InfoHint>
                       </span>
                       <span className="text-muted-foreground/70 text-xs">
                         Only you can see this link&apos;s analytics.
@@ -742,7 +767,13 @@ export function LinkComposer() {
                     and customized states. */}
                 <div className="flex h-7 items-center justify-between">
                   <div className="flex items-baseline gap-3">
-                    <SectionLabel>Meta tags</SectionLabel>
+                    <span className="flex items-center gap-1.5">
+                      <SectionLabel>Meta tags</SectionLabel>
+                      <InfoHint label="What meta tags do">
+                        The social card crawlers see when this link is shared;
+                        overrides the destination&apos;s own card.
+                      </InfoHint>
+                    </span>
                     {metaMirroring && (
                       <span className="label-mono text-muted-foreground/40 text-[10px]">
                         fetched from destination

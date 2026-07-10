@@ -105,7 +105,7 @@ export function WorkspaceCard({
       />
       <Panel className="bg-background divide-border/60 mt-0 grid grid-cols-1 divide-y rounded-[14px] lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {/* Domains */}
-        <div className="px-4 py-3">
+        <div className="min-h-[132px] px-4 py-3">
           <ColumnHeader
             label="Domains"
             href="/dashboard/domains"
@@ -140,7 +140,7 @@ export function WorkspaceCard({
         </div>
 
         {/* Connected apps */}
-        <div className="px-4 py-3">
+        <div className="min-h-[132px] px-4 py-3">
           <ColumnHeader
             label="Apps"
             href="/dashboard/apps"
@@ -174,7 +174,7 @@ export function WorkspaceCard({
         </div>
 
         {/* API keys */}
-        <div className="px-4 py-3">
+        <div className="min-h-[132px] px-4 py-3">
           <ColumnHeader
             label="API keys"
             href="/dashboard/developer"

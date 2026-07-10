@@ -40,6 +40,7 @@ import {
 } from "@/components/dashboard/analytics/widget-meta"
 import { WidgetCell } from "@/components/dashboard/analytics/widget-cell"
 import { DimensionFilter } from "@/components/dashboard/analytics/dimension-filter"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import type { TimeRange } from "@/components/dashboard/analytics/time-range"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -95,7 +96,24 @@ const SCOPE_FIELDS: Array<{
 
 const STAT_METRICS = Object.keys(STAT_META) as StatMetric[]
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function FieldLabel({
+  children,
+  hint,
+  hintLabel,
+}: {
+  children: React.ReactNode
+  hint?: string
+  hintLabel?: string
+}) {
+  if (hint)
+    return (
+      <span className="flex items-center gap-1.5">
+        <span className="label-mono text-muted-foreground/70 block text-[10px]">
+          {children}
+        </span>
+        <InfoHint label={hintLabel ?? "More info"}>{hint}</InfoHint>
+      </span>
+    )
   return (
     <span className="label-mono text-muted-foreground/70 block text-[10px]">
       {children}
@@ -237,7 +255,7 @@ export function WidgetComposer({
               />
             </div>
             <div className="space-y-2">
-              <FieldLabel>X axis</FieldLabel>
+              <FieldLabel hintLabel="How the X axis works" hint="What each point or row represents: time buckets for a series, or a dimension's values for a breakdown.">X axis</FieldLabel>
               <Select value={x} onValueChange={(v) => handleX(v as XAxis)}>
                 <SelectTrigger size="sm" className="w-full text-xs">
                   <SelectValue />
@@ -253,7 +271,7 @@ export function WidgetComposer({
               </Select>
             </div>
             <div className="space-y-2">
-              <FieldLabel>Y axis</FieldLabel>
+              <FieldLabel hintLabel="How the Y axis works" hint="The measure being counted: total clicks, unique visitors, or both.">Y axis</FieldLabel>
               {kind === "stat" ? (
                 <Select
                   value={statMetric}
@@ -296,7 +314,7 @@ export function WidgetComposer({
               )}
             </div>
             <div className="space-y-2">
-              <FieldLabel>Chart</FieldLabel>
+              <FieldLabel hintLabel="Choosing a chart" hint="How the data draws. Some charts need a minimum number of categories to read well.">Chart</FieldLabel>
               <Select
                 value={
                   kind === "stat" ? statViz : kind === "timeseries" ? tsViz : bdViz
@@ -323,7 +341,7 @@ export function WidgetComposer({
               </Select>
             </div>
             <div className="space-y-2">
-              <FieldLabel>Scope</FieldLabel>
+              <FieldLabel hintLabel="How scope works" hint="Filters only this widget's data; the board's shared filters still apply on top.">Scope</FieldLabel>
               <p className="text-muted-foreground/60 text-[11px] leading-snug">
                 Only clicks matching these filters are counted.
               </p>
@@ -346,7 +364,7 @@ export function WidgetComposer({
               </div>
             </div>
             <div className="space-y-2">
-              <FieldLabel>Chart ink</FieldLabel>
+              <FieldLabel hintLabel="What chart ink does" hint="The accent color this widget draws with; purely visual.">Chart ink</FieldLabel>
               <div className="flex flex-wrap items-center gap-1.5">
                 {ACCENTS.map((a) => (
                   <button

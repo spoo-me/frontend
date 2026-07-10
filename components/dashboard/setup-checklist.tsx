@@ -117,8 +117,17 @@ export function SetupChecklist() {
             className="border-border/60 bg-popover/95 text-muted-foreground hover:text-foreground flex h-9 items-center gap-2 rounded-full border px-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm transition-colors duration-150 dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]"
           >
             <ListChecks className="size-3.5" strokeWidth={1.75} />
-            <span className="font-mono text-[11px] tabular-nums">
-              setup {doneCount}/{items.length}
+            <span className="font-mono text-[11px]">setup</span>
+            <span
+              role="progressbar"
+              aria-valuenow={doneCount}
+              aria-valuemax={items.length}
+              className="bg-muted h-1 w-10 overflow-hidden rounded-full"
+            >
+              <span
+                className="bg-foreground block h-full rounded-full transition-[width] duration-500 ease-out"
+                style={{ width: `${(doneCount / items.length) * 100}%` }}
+              />
             </span>
           </motion.button>
         ) : (
@@ -134,8 +143,17 @@ export function SetupChecklist() {
               <span className="label-mono text-muted-foreground flex-1">
                 Finish setting up
               </span>
-              <span className="text-muted-foreground/70 font-mono text-[11px] tabular-nums">
-                {doneCount}/{items.length}
+              <span
+                role="progressbar"
+                aria-valuenow={doneCount}
+                aria-valuemax={items.length}
+                aria-label={`${doneCount} of ${items.length} done`}
+                className="bg-muted h-1 w-14 overflow-hidden rounded-full"
+              >
+                <span
+                  className="bg-foreground block h-full rounded-full transition-[width] duration-500 ease-out"
+                  style={{ width: `${(doneCount / items.length) * 100}%` }}
+                />
               </span>
               <button
                 type="button"
@@ -194,17 +212,6 @@ export function SetupChecklist() {
                     ))}
                 </div>
               ))}
-            </div>
-            <div className="border-border/60 flex items-center gap-3 border-t px-4 py-2.5">
-              <span className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
-                <span
-                  className="bg-brand block h-full rounded-full transition-[width] duration-500 ease-out"
-                  style={{ width: `${(doneCount / items.length) * 100}%` }}
-                />
-              </span>
-              <span className="text-muted-foreground/70 font-mono text-[10px] tabular-nums">
-                {Math.round((doneCount / items.length) * 100)}%
-              </span>
             </div>
           </motion.div>
         )}

@@ -733,9 +733,15 @@ export function LinkSettingsForm({
             swap in place, zero layout shift either way. */}
         <div className="flex h-7 items-center justify-between">
           <div className="flex items-baseline gap-3">
-            <div className="label-mono text-muted-foreground/60 text-[10px]">
-              Meta tags
-            </div>
+            <span className="flex items-center gap-1.5">
+              <div className="label-mono text-muted-foreground/60 text-[10px]">
+                Meta tags
+              </div>
+              <InfoHint label="What meta tags do">
+                The social card crawlers see when this link is shared;
+                overrides the destination&apos;s own card.
+              </InfoHint>
+            </span>
             {metaMirroring && (
               <span className="flex items-center gap-1.5">
                 <span className="label-mono text-muted-foreground/40 text-[10px]">

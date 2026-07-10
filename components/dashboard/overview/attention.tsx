@@ -175,7 +175,9 @@ export function Attention({
   )
   // Overflow expands IN PLACE — the hidden items don't share a page.
   const [expanded, setExpanded] = React.useState(false)
-  if (!ready) return null
+  // Nothing to say = no section. The old all-clear reassurance row read
+  // as furniture the moment the queue was empty.
+  if (!ready || items.length === 0) return null
   const shown = expanded ? items : items.slice(0, MAX_ROWS)
   const overflow = items.length - MAX_ROWS
 
@@ -207,15 +209,7 @@ export function Attention({
         }
       />
       <Panel className="divide-border/60 mt-2 divide-y">
-        {shown.length === 0 ? (
-          <div className="flex h-11 items-center gap-3 px-4">
-            <span aria-hidden className="bg-live size-1.5 shrink-0 rounded-full" />
-            <span className="text-muted-foreground text-sm">
-              all clear, nothing needs you
-            </span>
-          </div>
-        ) : (
-          shown.map((item) => (
+        {shown.map((item) => (
             <Link
               key={item.key}
               href={item.href}
@@ -249,8 +243,7 @@ export function Attention({
                 <ArrowUpRight className="size-3" />
               </span>
             </Link>
-          ))
-        )}
+        ))}
       </Panel>
     </div>
   )

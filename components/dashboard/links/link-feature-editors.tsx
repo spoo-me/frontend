@@ -474,7 +474,13 @@ export function GeoRulesEditor({
   const problem = geoRulesProblem(rules)
   return (
     <div className="space-y-2">
-      <SectionLabel>Geo targeting</SectionLabel>
+      <span className="flex items-center gap-1.5">
+        <SectionLabel>Geo targeting</SectionLabel>
+        <InfoHint label="How geo targeting works">
+          Matches the visitor&apos;s country at redirect time. One rule per
+          country, up to 50; everyone else follows the destination.
+        </InfoHint>
+      </span>
       <p
         className={cn(
           "text-xs",
@@ -547,7 +553,13 @@ export function VariantsEditor({
   const total = variantTotal(variants)
   return (
     <div className="space-y-2">
-      <SectionLabel>A/B testing</SectionLabel>
+      <span className="flex items-center gap-1.5">
+        <SectionLabel>A/B testing</SectionLabel>
+        <InfoHint label="How A/B testing works">
+          Traffic splits between variant URLs by weight. Weights are relative
+          shares, not percentages.
+        </InfoHint>
+      </span>
       <p
         className={cn(
           "text-xs",
