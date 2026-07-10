@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
  * same way. (The countries map keeps its chip-over-basemap variant.)
  */
 export function EmptyRange({
-  label = "no data in this range",
+  label = "No data in this range",
   className,
 }: {
   label?: string

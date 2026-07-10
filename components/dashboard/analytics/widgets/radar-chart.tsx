@@ -97,7 +97,7 @@ export function BreakdownRadar({
   if (data.length < 3) {
     return (
       <EmptyRange
-        label={rows.length ? "a radar needs at least 3 categories" : "no data in this range"}
+        label={rows.length ? "A radar needs at least 3 categories" : "No data in this range"}
       />
     )
   }
