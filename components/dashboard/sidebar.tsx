@@ -255,25 +255,11 @@ export function SidebarContent({
           )
           if (!items.length) return null
           return (
-            <div key={group.label} className={cn(i > 0 && "mt-4")}>
-              {/* Same 28px slot in both states so rows never shift
-                  vertically while the peek animates. */}
-              <div
-                className={cn(
-                  "flex h-7 items-center",
-                  !collapsed && "px-2.5 pb-1",
-                )}
-              >
-                {collapsed ? (
-                  i > 0 && (
-                    <div className="border-border/60 mx-2 w-full border-t" />
-                  )
-                ) : (
-                  <span className="label-mono text-muted-foreground/60">
-                    {group.label}
-                  </span>
-                )}
-              </div>
+            <div key={group.label}>
+              {/* Groups separate by a hairline, not a header — identical
+                  in both rail states so rows never shift while the peek
+                  animates. */}
+              {i > 0 && <div className="border-border/60 mx-2 my-2.5 border-t" />}
               <div className="space-y-0.5">
                 {items.map((item) => (
                   <NavRow
