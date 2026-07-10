@@ -7,35 +7,9 @@ import { AnimatePresence, motion } from "motion/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { SpooApiError, type CustomDomain } from "@/lib/api"
+import { createCustomDomain, SpooApiError, type CustomDomain } from "@/lib/api"
 
 const FQDN_RE = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
-
-/**
- * MOCKED for now — the custom-domains feature flag is still rolling out, so
- * the real POST answers 404 for fresh accounts. Swap back to
- * `createCustomDomain()` from lib/api once onboarding accounts are in the
- * wave; the success UI below already renders the real response shape.
- */
-async function mockCreateDomain(fqdn: string): Promise<CustomDomain> {
-  await new Promise((r) => setTimeout(r, 700))
-  const sub = fqdn.split(".")[0]
-  return {
-    id: "mock",
-    fqdn,
-    status: "PENDING",
-    dns_records: [
-      { type: "CNAME", name: sub, value: "cname.spoo.me", purpose: "routing" },
-      {
-        type: "TXT",
-        name: `_spoo-verify.${sub}`,
-        value: "spoo-verify=pending-rollout",
-        purpose: "ownership",
-      },
-    ],
-    setup_notes: [],
-  }
-}
 
 type Choice = "custom" | "default"
 
@@ -223,7 +197,10 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
   const [connecting, setConnecting] = React.useState(false)
   const [fqdn, setFqdn] = React.useState("")
   const [pending, setPending] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
+  const [notice, setNotice] = React.useState<{
+    tone: "info" | "error"
+    text: string
+  } | null>(null)
   const [created, setCreated] = React.useState<CustomDomain | null>(null)
   const [copied, setCopied] = React.useState<number | null>(null)
 
@@ -251,9 +228,9 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
     e.preventDefault()
     if (!valid || pending) return
     setPending(true)
-    setError(null)
+    setNotice(null)
     try {
-      setCreated(await mockCreateDomain(fqdn.trim().toLowerCase()))
+      setCreated(await createCustomDomain(fqdn.trim().toLowerCase()))
     } catch (err) {
       if (
         err instanceof SpooApiError &&
@@ -261,17 +238,24 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
         // this account (it deliberately doesn't leak feature existence).
         (err.status === 404 || err.status === 403)
       ) {
-        setError(
-          "Custom domains are rolling out gradually. Your account isn't in the wave yet. Skip for now; we'll email you.",
-        )
+        setNotice({
+          tone: "info",
+          text: "Custom domains are rolling out gradually. Your account isn't in the wave yet. Skip for now; we'll email you.",
+        })
       } else if (err instanceof SpooApiError && err.status === 409) {
-        setError("That domain is already registered.")
+        setNotice({ tone: "error", text: "That domain is already registered." })
       } else if (err instanceof SpooApiError && err.isRateLimit) {
-        setError("Domain limit reached for today. Finish this one from the dashboard later.")
+        setNotice({
+          tone: "error",
+          text: "Domain limit reached for today. Finish this one from the dashboard later.",
+        })
       } else if (err instanceof SpooApiError) {
-        setError(err.message)
+        setNotice({ tone: "error", text: err.message })
       } else {
-        setError("Can't reach the server. Check your connection and try again.")
+        setNotice({
+          tone: "error",
+          text: "Can't reach the server. Check your connection and try again.",
+        })
       }
     } finally {
       setPending(false)
@@ -317,38 +301,47 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
 
               <p className="text-muted-foreground mt-5 text-xs leading-relaxed">
                 Add {created.dns_records.length === 1 ? "this record" : "these records"} at
-                your DNS provider. Verification runs automatically once it
-                propagates; no need to wait here.
+                your DNS provider.{" "}
+                {created.verification_method === "cf_http_dcv"
+                  ? "The CNAME routes traffic and the TXT proves ownership; verification and TLS complete automatically once they resolve. No need to wait here."
+                  : "Verification runs automatically once they propagate; no need to wait here."}
               </p>
 
               <div className="border-border/60 mt-4 divide-y rounded-xl border font-mono text-[11px]">
                 {created.dns_records.map((r, i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3">
-                    <span className="label-mono text-muted-foreground w-12 shrink-0 text-[9px]">
-                      {r.type}
-                    </span>
-                    <span className="text-foreground/90 w-24 shrink-0 truncate">
-                      {r.name}
-                    </span>
-                    <span className="text-muted-foreground flex-1 truncate">
-                      {r.value}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void navigator.clipboard.writeText(r.value)
-                        setCopied(i)
-                        setTimeout(() => setCopied(null), 1500)
-                      }}
-                      aria-label={`Copy ${r.type} value`}
-                      className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
-                    >
-                      {copied === i ? (
-                        <Check className="text-live size-3.5" />
-                      ) : (
-                        <Copy className="size-3.5" />
-                      )}
-                    </button>
+                  <div key={i} className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="label-mono text-muted-foreground w-12 shrink-0 text-[9px]">
+                        {r.type}
+                      </span>
+                      <span className="text-foreground/90 w-24 shrink-0 truncate">
+                        {r.name}
+                      </span>
+                      <span className="text-muted-foreground flex-1 truncate">
+                        {r.value}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(r.value)
+                          setCopied(i)
+                          setTimeout(() => setCopied(null), 1500)
+                        }}
+                        aria-label={`Copy ${r.type} value`}
+                        className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+                      >
+                        {copied === i ? (
+                          <Check className="text-live size-3.5" />
+                        ) : (
+                          <Copy className="size-3.5" />
+                        )}
+                      </button>
+                    </div>
+                    {r.purpose && (
+                      <p className="text-muted-foreground/50 mt-1 text-[10px]">
+                        {r.purpose}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -387,7 +380,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 value={fqdn}
                 onChange={(e) => {
                   setFqdn(e.target.value)
-                  setError(null)
+                  setNotice(null)
                 }}
                 placeholder="go.acme.com"
                 autoComplete="off"
@@ -403,11 +396,17 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
               A subdomain like <span className="font-mono">go.acme.com</span> is
               the usual pick; apex domains work too.
             </p>
-            {error && (
-              <p role="alert" className="text-destructive mt-3 text-sm">
-                {error}
-              </p>
-            )}
+            {notice &&
+              // Flag-off is informational, not a failure — stay quiet.
+              (notice.tone === "info" ? (
+                <p role="status" className="text-muted-foreground mt-3 text-sm">
+                  {notice.text}
+                </p>
+              ) : (
+                <p role="alert" className="text-destructive mt-3 text-sm">
+                  {notice.text}
+                </p>
+              ))}
             <button
               type="button"
               onClick={() => setConnecting(false)}

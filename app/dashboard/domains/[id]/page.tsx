@@ -60,6 +60,8 @@ function stepIndex(status: CustomDomain["status"]): number {
   switch (status) {
     case "PENDING":
       return 1
+    // The backend never emits VERIFYING today (verify goes PENDING → ACTIVE
+    // in one hop); kept renderable for future async verification flows.
     case "VERIFYING":
       return 2
     case "ACTIVE":
@@ -174,7 +176,7 @@ function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
         {records.map((rec) => (
           <div
             key={rec.type + rec.name}
-            className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1.5 px-3 py-2.5 sm:h-11 sm:grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] sm:items-center sm:py-0"
+            className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1.5 px-3 py-2.5 sm:grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] sm:items-center"
           >
             <span className="text-muted-foreground self-center font-mono text-[11px]">
               {rec.type}
@@ -182,6 +184,11 @@ function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
             <CopyCell value={rec.name} />
             <span className="sm:hidden" aria-hidden />
             <CopyCell value={rec.value} />
+            {rec.purpose && (
+              <span className="text-muted-foreground/50 col-span-full font-mono text-[10px]">
+                {rec.purpose}
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -287,6 +294,8 @@ export default function DomainDetailPage() {
 
   const current = stepIndex(dom.status)
   const settingUp = dom.status === "PENDING" || dom.status === "VERIFYING"
+  // The shipping path: Cloudflare runs the checks and issues TLS on its own.
+  const httpDcv = dom.verification_method === "cf_http_dcv"
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-8">
@@ -348,37 +357,35 @@ export default function DomainDetailPage() {
             >
               <div className="space-y-2">
                 <p className="text-muted-foreground text-xs">
-                  Add these records at your DNS provider.
+                  {dom.dns_records.length === 1
+                    ? "Add this record at your DNS provider."
+                    : "Add these records at your DNS provider."}
                 </p>
                 <DnsRecordsTable records={dom.dns_records} />
-                {dom.setup_notes[0] && (
-                  <p className="text-muted-foreground/60 text-[11px]">
-                    {dom.setup_notes[0]}
+                {dom.setup_notes.map((note) => (
+                  <p key={note} className="text-muted-foreground/60 text-[11px]">
+                    {note}
                   </p>
-                )}
+                ))}
               </div>
             </SetupStep>
           </Enter>
           <Enter i={2}>
-            <SetupStep n={3} state={stateOf(2, current)} label="Verify ownership">
+            <SetupStep
+              n={3}
+              state={stateOf(2, current)}
+              label={httpDcv ? "Verify & issue TLS" : "Verify ownership"}
+            >
               <div className="space-y-2.5">
                 <p className="text-muted-foreground text-xs">
-                  We confirm the records and provision TLS at the edge.
+                  {httpDcv
+                    ? "The CNAME routes traffic and the TXT proves ownership. Verification and TLS complete automatically once the records resolve."
+                    : "We confirm the records and provision TLS at the edge."}
                 </p>
                 {dom.last_verification_error && (
                   <p className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
                     <TriangleAlert className="mt-px size-3.5 shrink-0" />
                     {dom.last_verification_error}
-                  </p>
-                )}
-                {(dom.cf_status || dom.cf_ssl_status) && (
-                  <p className="text-muted-foreground/70 flex items-center gap-2 font-mono text-[11px]">
-                    <span>edge {dom.cf_status ?? "waiting"}</span>
-                    <span aria-hidden>·</span>
-                    <span>tls {dom.cf_ssl_status ?? "waiting"}</span>
-                    <InfoHint label="About edge and tls states" className="-ml-0.5">
-                      Live provisioning state at Cloudflare&apos;s edge.
-                    </InfoHint>
                   </p>
                 )}
                 <div className="pt-1">
@@ -390,7 +397,7 @@ export default function DomainDetailPage() {
                     {verify.isPending && (
                       <LoaderCircle data-icon="inline-start" className="animate-spin" />
                     )}
-                    {dom.status === "PENDING" ? "Start verification" : "Check again"}
+                    {dom.last_verification_error ? "Check again" : "Start verification"}
                   </Button>
                 </div>
               </div>

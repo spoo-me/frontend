@@ -785,7 +785,7 @@ async function handle(req: NextRequest, path: string[]) {
       if (aliasTaken(alias))
         return fail(409, "alias_taken", "That alias is already taken", "alias")
       const domain = body.domain ? String(body.domain) : null
-      if (domain && !s.domains.some((d) => d.fqdn === domain && d.status === "ACTIVE"))
+      if (domain && !s.domains.some((d) => d.fqdn === domain && d.status === "active"))
         return fail(422, "domain_not_active", "That domain isn't active", "domain")
       const geo = normalizeGeoRules(body.geo_rules)
       if ("err" in geo) return geo.err
@@ -1064,51 +1064,50 @@ async function handle(req: NextRequest, path: string[]) {
       return fail(422, "invalid_fqdn", "Enter a valid domain name", "fqdn")
     if (s.domains.some((d) => d.fqdn === fqdn))
       return fail(409, "domain_exists", "That domain is already registered", "fqdn")
+    // Same two records the real backend stamps at create: the routing CNAME
+    // plus Cloudflare's ownership TXT. Purposes are the backend's strings.
     const dom: MockDomain = {
       id: `dom_${slug()}`,
       fqdn,
-      status: "PENDING",
+      status: "pending",
+      verification_method: "cf_http_dcv",
       created_at: new Date().toISOString(),
       last_verified_at: null,
       last_verification_error: null,
-      cf_status: null,
-      cf_ssl_status: null,
       root_redirect: null,
       not_found_redirect: null,
       custom_robots_txt: null,
       dns_records: [
-        { type: "CNAME", name: fqdn, value: "edge.spoo.me", purpose: "routing" },
+        {
+          type: "CNAME",
+          name: fqdn,
+          value: "customers.spoo.me",
+          purpose: "routes traffic to spoo.me",
+        },
         {
           type: "TXT",
-          name: `_spoo-verify.${fqdn}`,
-          value: `spoo-verify=${slug()}${slug()}`,
-          purpose: "ownership",
+          name: `_cf-custom-hostname.${fqdn}`,
+          value: crypto.randomUUID(),
+          purpose: "proves domain ownership",
         },
       ],
-      setup_notes: ["DNS can take up to an hour to propagate."],
+      setup_notes: [],
     }
     s.domains.unshift(dom)
-    return json(dom)
+    return json(dom, { status: 201 })
   }
   if (path[0] === "v1" && path[1] === "custom-domains" && path[2]) {
     const dom = s.domains.find((d) => d.id === path[2])
     if (!dom) return fail(404, "not_found", "No such domain")
     if (req.method === "GET") return json(dom)
     if (req.method === "POST" && path[3] === "verify") {
-      // Walk the machine one step per verify call: PENDING → VERIFYING → ACTIVE.
-      if (dom.status === "PENDING") {
-        dom.status = "VERIFYING"
-        dom.cf_status = "pending"
-        dom.cf_ssl_status = "pending_validation"
-        dom.last_verification_error =
-          "CNAME record not found yet. DNS may still be propagating"
-      } else if (dom.status === "VERIFYING") {
-        dom.status = "ACTIVE"
-        dom.cf_status = "active"
-        dom.cf_ssl_status = "active"
+      // Real state machine: verify goes PENDING → ACTIVE in one hop (the
+      // backend never emits VERIFYING). Re-verifying ACTIVE just bumps
+      // last_verified_at, mirroring the idempotent self-loop.
+      if (dom.status === "pending" || dom.status === "active") {
+        dom.status = "active"
         dom.last_verified_at = new Date().toISOString()
         dom.last_verification_error = null
-        dom.setup_notes = []
       }
       return json(dom)
     }
@@ -1124,10 +1123,21 @@ async function handle(req: NextRequest, path: string[]) {
       return json(dom)
     }
     if (req.method === "DELETE") {
-      dom.status = "REVOKED"
-      if (params.get("cascade") === "true")
+      // Real revoke returns a receipt, not the domain doc.
+      dom.status = "revoked"
+      const cascade = params.get("cascade") === "true"
+      let urlsDeleted = 0
+      if (cascade) {
+        const before = s.links.length
         s.links = s.links.filter((l) => l.domain !== dom.fqdn)
-      return json(dom)
+        urlsDeleted = before - s.links.length
+      }
+      return json({
+        id: dom.id,
+        fqdn: dom.fqdn,
+        cascade,
+        urls_deleted: urlsDeleted,
+      })
     }
   }
 

@@ -49,15 +49,17 @@ export type MockLink = {
   weight: number
 }
 
+// Mirrors the real CustomDomainResponse wire byte-for-byte: lowercase
+// status, verification_method present, no cf_* fields (the real DTO
+// doesn't expose them).
 export type MockDomain = {
   id: string
   fqdn: string
-  status: "PENDING" | "VERIFYING" | "ACTIVE" | "SUSPENDED" | "REVOKED"
+  status: "pending" | "verifying" | "active" | "suspended" | "revoked"
+  verification_method: "cf_http_dcv"
   created_at: string
   last_verified_at: string | null
   last_verification_error: string | null
-  cf_status: string | null
-  cf_ssl_status: string | null
   root_redirect: string | null
   not_found_redirect: string | null
   custom_robots_txt: string | null
@@ -206,28 +208,36 @@ export function buildLinks(): MockLink[] {
   })
 }
 
+// Record shapes and copy match what the real backend stamps at create time:
+// one routing CNAME to customers.spoo.me plus Cloudflare's ownership TXT at
+// _cf-custom-hostname.<fqdn>. Purposes and setup notes are the backend's
+// exact strings.
 export function buildDomains(): MockDomain[] {
   const rand = mulberry32(SEED + 1)
   return [
     {
       id: "dom_acme",
       fqdn: "go.acme.dev",
-      status: "ACTIVE",
+      status: "active",
+      verification_method: "cf_http_dcv",
       created_at: isoDaysAgo(64, rand),
       last_verified_at: isoDaysAgo(1, rand),
       last_verification_error: null,
-      cf_status: "active",
-      cf_ssl_status: "active",
       root_redirect: "https://acme.dev",
       not_found_redirect: null,
       custom_robots_txt: null,
       dns_records: [
-        { type: "CNAME", name: "go.acme.dev", value: "edge.spoo.me", purpose: "routing" },
+        {
+          type: "CNAME",
+          name: "go.acme.dev",
+          value: "customers.spoo.me",
+          purpose: "routes traffic to spoo.me",
+        },
         {
           type: "TXT",
-          name: "_spoo-verify.go.acme.dev",
-          value: "spoo-verify=k9x2m4p8q1",
-          purpose: "ownership",
+          name: "_cf-custom-hostname.go.acme.dev",
+          value: "b3a91c04-7d2e-4f6a-9c58-1e0d2b7a4f13",
+          purpose: "proves domain ownership",
         },
       ],
       setup_notes: [],
@@ -235,25 +245,34 @@ export function buildDomains(): MockDomain[] {
     {
       id: "dom_zin",
       fqdn: "l.zingzy.dev",
-      status: "VERIFYING",
+      status: "pending",
+      verification_method: "cf_http_dcv",
       created_at: isoDaysAgo(2, rand),
       last_verified_at: null,
-      last_verification_error: "CNAME record not found yet. DNS may still be propagating",
-      cf_status: "pending",
-      cf_ssl_status: "pending_validation",
+      last_verification_error:
+        "DNS isn't reaching us yet - This is normal right after adding the " +
+        "records. Try again in a few minutes.",
       root_redirect: null,
       not_found_redirect: null,
       custom_robots_txt: null,
       dns_records: [
-        { type: "CNAME", name: "l.zingzy.dev", value: "edge.spoo.me", purpose: "routing" },
+        {
+          type: "CNAME",
+          name: "l.zingzy.dev",
+          value: "customers.spoo.me",
+          purpose: "routes traffic to spoo.me",
+        },
         {
           type: "TXT",
-          name: "_spoo-verify.l.zingzy.dev",
-          value: "spoo-verify=t7c3n9w5e2",
-          purpose: "ownership",
+          name: "_cf-custom-hostname.l.zingzy.dev",
+          value: "f7e2d5a8-3b1c-4e9f-8a67-2c4b9d0e1a52",
+          purpose: "proves domain ownership",
         },
       ],
-      setup_notes: ["DNS can take up to an hour to propagate."],
+      setup_notes: [
+        "Cloudflare DNS detected. Set the record to DNS only (grey cloud " +
+          "icon), not Proxied (orange cloud), or verification will fail.",
+      ],
     },
   ]
 }
