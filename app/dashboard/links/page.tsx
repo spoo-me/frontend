@@ -705,7 +705,7 @@ export default function LinksPage() {
       )}
 
       {/* Table */}
-      <Panel className="mt-4">
+      <Panel className="mt-4 flex min-h-[26rem] flex-col">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-muted text-left text-muted-foreground dark:bg-muted/40">
@@ -804,7 +804,7 @@ export default function LinksPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex h-11 items-center justify-between border-t border-border/60 bg-muted/30 px-4">
+          <div className="mt-auto flex h-11 items-center justify-between border-t border-border/60 bg-muted/30 px-4">
             <span className="font-mono text-xs text-muted-foreground tabular-nums">
               page {page} of {totalPages}
             </span>
