@@ -7,7 +7,13 @@ import { ArrowUpRight, ChevronDown, ChevronUp, CircleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { CustomDomain, UrlListItem } from "@/lib/api"
 import { formatWhen } from "@/lib/format"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 /**
  * The queue that answers "can I close this tab?": things that will break
@@ -178,6 +184,11 @@ export function Attention({
       <SectionHeader
         icon={CircleAlert}
         title="Needs attention"
+        badge={
+          <InfoHint label="What lands here">
+            Links and domains that will break or already broke if ignored.
+          </InfoHint>
+        }
         action={
           overflow > 0 ? (
             <button
@@ -210,14 +221,23 @@ export function Attention({
               href={item.href}
               className="hover:bg-accent/40 group flex h-11 items-center gap-3 px-4 transition-colors duration-150"
             >
-              <span
-                className={cn(
-                  "label-mono w-[4.5rem] shrink-0 rounded px-1.5 py-0.5 text-center text-[10px] whitespace-nowrap",
-                  TAG_TONES[item.tone],
-                )}
-              >
-                {item.category}
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      "label-mono w-[4.5rem] shrink-0 rounded px-1.5 py-0.5 text-center text-[10px] whitespace-nowrap",
+                      TAG_TONES[item.tone],
+                    )}
+                  >
+                    {item.category}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {item.tone === "red"
+                    ? "Broken now, needs action."
+                    : "Will break soon."}
+                </TooltipContent>
+              </Tooltip>
               <span className="text-foreground shrink-0 font-mono text-[13px]">
                 {item.subject}
               </span>

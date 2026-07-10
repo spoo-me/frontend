@@ -45,15 +45,12 @@ import {
 import { Ellipsis } from "lucide-react"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
-
-const SCOPE_INFO: Record<(typeof API_KEY_SCOPES)[number], string> = {
-  "shorten:create": "Create short links",
-  "urls:read": "List and read links",
-  "urls:manage": "Edit and delete links",
-  "stats:read": "Read analytics data",
-  "domains:read": "List custom domains",
-  "domains:manage": "Add and remove domains",
-}
+import { SCOPE_INFO, scopeMeaning } from "@/components/dashboard/scopes"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 /** Superuser scope: implies everything, so picking it locks the rest. */
 const ADMIN_SCOPE = "admin:all"
@@ -98,7 +95,15 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
           )}
         </div>
         <div className="text-muted-foreground truncate font-mono text-xs">
-          {apiKey.token_prefix}…{" "}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{apiKey.token_prefix}…</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              The first characters of the key, so you can tell keys apart. The
+              full key is only shown once.
+            </TooltipContent>
+          </Tooltip>{" "}
           <span className="font-sans">
             · created {formatWhen(apiKey.created_at)} · last used{" "}
             {formatWhen(apiKey.last_used_at)}
@@ -117,14 +122,22 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
         </div>
       </div>
       <div className="hidden items-center gap-1 md:flex">
-        {apiKey.scopes.map((s) => (
-          <span
-            key={s}
-            className="border-border/60 bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px]"
-          >
-            {s}
-          </span>
-        ))}
+        {apiKey.scopes.map((s) => {
+          const chip = (
+            <span className="border-border/60 bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px]">
+              {s}
+            </span>
+          )
+          const meaning = scopeMeaning(s)
+          return meaning ? (
+            <Tooltip key={s}>
+              <TooltipTrigger asChild>{chip}</TooltipTrigger>
+              <TooltipContent>{meaning}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <React.Fragment key={s}>{chip}</React.Fragment>
+          )
+        })}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

@@ -1,4 +1,11 @@
+"use client"
+
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 /**
  * Status tint map (DIRECTION §3): dot + text in a soft tint, same hue both
@@ -32,18 +39,37 @@ const DOMAIN_STATUS: Record<string, { tone: Tone; label: string }> = {
   REVOKED: { tone: "red", label: "Revoked" },
 }
 
+/** What a status MEANS for serving behavior — the pill's tooltip copy. */
+const DOMAIN_MEANING: Record<string, string> = {
+  PENDING: "Registered; DNS records not added yet.",
+  VERIFYING: "Checking your DNS records and issuing TLS.",
+  ACTIVE: "Serving links over HTTPS.",
+  SUSPENDED: "Temporarily not serving; links and stats are kept.",
+  REVOKED: "Permanently stopped; can only be re-registered from scratch.",
+}
+
+export function statusMeaning(
+  status: string | null | undefined,
+  kind: "link" | "domain",
+): string | undefined {
+  return kind === "domain" ? DOMAIN_MEANING[status ?? ""] : undefined
+}
+
 export function StatusPill({
   status,
   kind = "link",
+  explain,
   className,
 }: {
   status: string | null | undefined
   kind?: "link" | "domain"
+  /** Hover the pill for what the status means (domain pills only, so far). */
+  explain?: boolean
   className?: string
 }) {
   const map = kind === "domain" ? DOMAIN_STATUS : LINK_STATUS
   const s = map[status ?? ""] ?? { tone: "neutral" as Tone, label: status ?? "–" }
-  return (
+  const pill = (
     <span
       className={cn(
         "inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-full px-2 text-xs font-medium",
@@ -57,5 +83,13 @@ export function StatusPill({
       />
       {s.label}
     </span>
+  )
+  const meaning = explain ? statusMeaning(status, kind) : undefined
+  if (!meaning) return pill
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{pill}</TooltipTrigger>
+      <TooltipContent>{meaning}</TooltipContent>
+    </Tooltip>
   )
 }

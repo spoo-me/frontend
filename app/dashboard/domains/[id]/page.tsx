@@ -43,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { StatusPill } from "@/components/dashboard/status-pill"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
@@ -162,7 +163,12 @@ function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
       <div className="border-border/60 hidden h-8 grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 border-b px-3 sm:grid">
         <span className="label-mono text-muted-foreground/60">Type</span>
         <span className="label-mono text-muted-foreground/60">Name</span>
-        <span className="label-mono text-muted-foreground/60">Value</span>
+        <span className="flex items-center justify-between gap-1.5">
+          <span className="label-mono text-muted-foreground/60">Value</span>
+          <InfoHint label="About these DNS records">
+            Add these at your DNS provider exactly as shown.
+          </InfoHint>
+        </span>
       </div>
       <div className="divide-border/60 divide-y">
         {records.map((rec) => (
@@ -296,7 +302,7 @@ export default function DomainDetailPage() {
           <h1 className="text-foreground truncate font-mono text-xl font-semibold tracking-tight">
             {dom.fqdn}
           </h1>
-          <StatusPill status={dom.status} kind="domain" />
+          <StatusPill status={dom.status} kind="domain" explain />
           {dom.status === "ACTIVE" && (
             <Button
               size="sm"
@@ -370,6 +376,9 @@ export default function DomainDetailPage() {
                     <span>edge {dom.cf_status ?? "waiting"}</span>
                     <span aria-hidden>·</span>
                     <span>tls {dom.cf_ssl_status ?? "waiting"}</span>
+                    <InfoHint label="About edge and tls states" className="-ml-0.5">
+                      Live provisioning state at Cloudflare&apos;s edge.
+                    </InfoHint>
                   </p>
                 )}
                 <div className="pt-1">
@@ -580,13 +589,19 @@ export default function DomainDetailPage() {
               only re-registered from scratch.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <Checkbox
-              checked={cascade}
-              onCheckedChange={(v) => setCascade(v === true)}
-            />
-            Also delete all links on this domain
-          </label>
+          <div className="flex items-center gap-1.5">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox
+                checked={cascade}
+                onCheckedChange={(v) => setCascade(v === true)}
+              />
+              Also delete all links on this domain
+            </label>
+            <InfoHint label="About deleting links with the domain">
+              Deletes every link on this domain and its analytics. Unchecked,
+              the links are kept but stop resolving.
+            </InfoHint>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

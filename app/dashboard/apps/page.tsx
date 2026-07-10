@@ -46,6 +46,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
+import { scopeMeaning } from "@/components/dashboard/scopes"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const GRANT_ICONS: Record<string, React.ElementType> = {
   terminal: TerminalSquare,
@@ -198,14 +204,22 @@ function GrantRow({ grant }: { grant: AppGrant }) {
         </div>
       </div>
       <div className="hidden items-center gap-1 sm:flex">
-        {grant.scopes.slice(0, 3).map((s) => (
-          <span
-            key={s}
-            className="border-border/60 bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px]"
-          >
-            {s}
-          </span>
-        ))}
+        {grant.scopes.slice(0, 3).map((s) => {
+          const chip = (
+            <span className="border-border/60 bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px]">
+              {s}
+            </span>
+          )
+          const meaning = scopeMeaning(s)
+          return meaning ? (
+            <Tooltip key={s}>
+              <TooltipTrigger asChild>{chip}</TooltipTrigger>
+              <TooltipContent>{meaning}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <React.Fragment key={s}>{chip}</React.Fragment>
+          )
+        })}
       </div>
       <Button
         variant="outline"

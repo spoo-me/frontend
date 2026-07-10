@@ -59,12 +59,30 @@ export const DIMENSION_META: Record<
   os: { title: "Operating systems", icon: MonitorSmartphone, filterKey: "os" },
 }
 
-/** Stat tiles: label + the quiet footer note (KpiCard grammar). */
-export const STAT_META: Record<StatMetric, { label: string; footer?: string }> = {
-  total_clicks: { label: "Total clicks" },
-  unique_clicks: { label: "Unique visitors" },
-  unique_rate: { label: "Unique rate", footer: "unique / total" },
-  clicks_per_visitor: { label: "Clicks per visitor", footer: "repeat behavior" },
+/** Stat tiles: label + the quiet footer note (KpiCard grammar) + the
+    header help-tooltip copy (what the number actually counts). */
+export const STAT_META: Record<
+  StatMetric,
+  { label: string; footer?: string; hint: string }
+> = {
+  total_clicks: {
+    label: "Total clicks",
+    hint: "Every redirect served, repeats included.",
+  },
+  unique_clicks: {
+    label: "Unique visitors",
+    hint: "Distinct visitors, de-duplicated.",
+  },
+  unique_rate: {
+    label: "Unique rate",
+    footer: "unique / total",
+    hint: "Share of clicks from first-time visitors.",
+  },
+  clicks_per_visitor: {
+    label: "Clicks per visitor",
+    footer: "repeat behavior",
+    hint: "Average redirects per distinct visitor.",
+  },
 }
 
 /** Add-widget palette entries. */

@@ -109,7 +109,7 @@ export default function DomainsPage() {
                         : `added ${formatWhen(dom.created_at)}`}
                     </span>
                   </span>
-                  <StatusPill status={dom.status} kind="domain" />
+                  <StatusPill status={dom.status} kind="domain" explain />
                   <ChevronRight className="text-muted-foreground/50 size-4" />
                 </Link>
               </motion.li>

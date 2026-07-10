@@ -6,6 +6,7 @@ import { formatCount, formatPercent, pctChange } from "@/lib/format"
 import { timeSeriesOf, type StatsResponse } from "@/lib/api"
 import { statSparkline, type StatConfig } from "@/lib/analytics-layout"
 import { STAT_META } from "@/components/dashboard/analytics/widget-meta"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { KpiCard } from "@/components/dashboard/kpi"
 import { Panel } from "@/components/dashboard/section"
 import { ScopeChip } from "@/components/dashboard/analytics/widget-shell"
@@ -38,6 +39,10 @@ export function StatWidget({
   deltaLabel: string
 }) {
   const meta = STAT_META[config.metric]
+  // Header help sits after the scope chip; same glyph on every tile face.
+  const hint = (
+    <InfoHint label={`What ${meta.label} counts`}>{meta.hint}</InfoHint>
+  )
 
   const value = React.useMemo(() => {
     if (!stats) return "–"
@@ -86,7 +91,12 @@ export function StatWidget({
       <KpiCard
         className="h-full rounded-2xl"
         label={config.title ?? meta.label}
-        badge={config.scope && <ScopeChip scope={config.scope} />}
+        badge={
+          <>
+            {config.scope && <ScopeChip scope={config.scope} />}
+            {hint}
+          </>
+        }
         value="–"
         footer="scope excluded by board filters"
       />
@@ -103,6 +113,7 @@ export function StatWidget({
           <div className="label-mono text-muted-foreground flex min-w-0 items-center gap-1.5">
             <span className="truncate">{config.title ?? meta.label}</span>
             {config.scope && <ScopeChip scope={config.scope} />}
+            {hint}
           </div>
         </div>
         <div className="min-h-0 flex-1 px-4 py-1.5">
@@ -121,7 +132,12 @@ export function StatWidget({
     <KpiCard
       className="h-full rounded-2xl"
       label={config.title ?? meta.label}
-      badge={config.scope && <ScopeChip scope={config.scope} />}
+      badge={
+        <>
+          {config.scope && <ScopeChip scope={config.scope} />}
+          {hint}
+        </>
+      }
       value={config.viz === "odometer" ? <OdometerValue value={value} /> : value}
       delta={delta}
       deltaLabel={deltaLabel}

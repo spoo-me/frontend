@@ -1159,18 +1159,35 @@ function LinkRow({
           </div>
           <span className="ml-auto hidden shrink-0 items-center gap-0.5 sm:flex">
             {link.password_set && (
-              <PropIcon icon={KeyRound} label="Password protected" />
+              <PropIcon
+                icon={KeyRound}
+                label="Visitors need a password to reach the destination."
+              />
             )}
             {link.expire_after != null && (
-              <PropIcon icon={Timer} label="Has expiry" />
+              <PropIcon
+                icon={Timer}
+                label="Stops redirecting at a set moment."
+              />
             )}
             {link.max_clicks != null && (
-              <PropIcon icon={Gauge} label="Click limit" />
+              <PropIcon
+                icon={Gauge}
+                label="Deactivates after a set number of clicks."
+              />
             )}
             {link.private_stats && (
-              <PropIcon icon={EyeOff} label="Private stats" />
+              <PropIcon
+                icon={EyeOff}
+                label="Only you can see this link's analytics."
+              />
             )}
-            {link.block_bots && <PropIcon icon={Bot} label="Bots blocked" />}
+            {link.block_bots && (
+              <PropIcon
+                icon={Bot}
+                label="Crawlers get a preview page, not the redirect."
+              />
+            )}
           </span>
         </div>
       </td>

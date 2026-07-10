@@ -13,6 +13,7 @@ import {
 
 import type { ApiKey, AppGrant, CustomDomain, UrlListItem } from "@/lib/api"
 import { formatCount, formatWhen } from "@/lib/format"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/components/dashboard/status-pill"
@@ -92,7 +93,16 @@ export function WorkspaceCard({
 
   return (
     <div className="border-border/60 bg-shell rounded-2xl border p-0.5">
-      <SectionHeader className="h-9 px-2.5" icon={Boxes} title="Workspace" />
+      <SectionHeader
+        className="h-9 px-2.5"
+        icon={Boxes}
+        title="Workspace"
+        badge={
+          <InfoHint label="What this card shows">
+            The state of your domains, connected apps, and API keys.
+          </InfoHint>
+        }
+      />
       <Panel className="bg-background divide-border/60 mt-0 grid grid-cols-1 divide-y rounded-[14px] lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {/* Domains */}
         <div className="px-4 py-3">
@@ -116,7 +126,7 @@ export function WorkspaceCard({
                   <span className="text-muted-foreground/70 shrink-0 font-mono text-[11px] tabular-nums">
                     {formatCount(count)} links
                   </span>
-                  <StatusPill status={d.status} kind="domain" />
+                  <StatusPill status={d.status} kind="domain" explain />
                 </Link>
               )
             })

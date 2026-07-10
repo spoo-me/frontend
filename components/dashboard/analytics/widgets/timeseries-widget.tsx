@@ -117,6 +117,13 @@ export function TimeseriesWidget({
       icon={ChartLine}
       title={config.title ?? "Clicks over time"}
       scope={config.scope}
+      hint={
+        chartViz === "calendar"
+          ? "Each cell is a day; darker means more clicks. Click a day to zoom the range to it."
+          : prevSeries
+            ? "The dashed ghost line is the previous equal-length period."
+            : undefined
+      }
       editing={editing}
       narrow={narrow}
       onRemove={onRemove}

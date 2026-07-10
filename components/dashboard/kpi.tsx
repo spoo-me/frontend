@@ -1,6 +1,7 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel } from "@/components/dashboard/section"
 
 /**
@@ -53,7 +54,14 @@ export function KpiCard({
           {delta != null ? (
             <>
               <DeltaText value={delta} />
-              <span className="text-muted-foreground/70 text-[11px]">{deltaLabel}</span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-muted-foreground/70 text-[11px]">
+                  {deltaLabel}
+                </span>
+                <InfoHint label="How the delta is computed" className="-mr-1">
+                  Compared with the equal-length window just before this range.
+                </InfoHint>
+              </span>
             </>
           ) : (
             <span className="text-muted-foreground/70 text-[11px]">{footer}</span>

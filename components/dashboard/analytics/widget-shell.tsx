@@ -9,6 +9,7 @@ import {
   type ScopeDimension,
   type WidgetScope,
 } from "@/lib/analytics-layout"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 
@@ -22,6 +23,7 @@ export function WidgetShell({
   icon,
   title,
   scope,
+  hint,
   editing,
   narrow,
   onRemove,
@@ -33,6 +35,8 @@ export function WidgetShell({
   title: string
   /** The widget's own lens; rendered as a quiet chip after the title. */
   scope?: WidgetScope
+  /** Header help-tooltip copy; rendered as a quiet glyph after the chip. */
+  hint?: string
   editing?: boolean
   /** Phone-width cell: the leading icon yields its room to the title so
       long titles ("Clicks over time") survive next to the quick controls. */
@@ -51,7 +55,12 @@ export function WidgetShell({
         className="h-9 shrink-0 px-2.5"
         icon={narrow ? undefined : icon}
         title={title}
-        badge={scope && <ScopeChip scope={scope} />}
+        badge={
+          <>
+            {scope && <ScopeChip scope={scope} />}
+            {hint && <InfoHint label={`About ${title}`}>{hint}</InfoHint>}
+          </>
+        }
         action={quickControls && <span data-no-drag>{quickControls}</span>}
       />
       <Panel

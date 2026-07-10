@@ -5,6 +5,7 @@ import { ChevronDown, RefreshCw } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,8 +69,12 @@ export function RefreshControl({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuLabel className="text-xs text-muted-foreground">
+          <DropdownMenuLabel className="flex items-center justify-between gap-1.5 text-xs text-muted-foreground">
             Auto-refresh
+            <InfoHint label="How auto-refresh works">
+              Silently re-fetches at this interval; pauses while the tab is
+              hidden.
+            </InfoHint>
           </DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={intervalMs === false ? "off" : String(intervalMs)}
