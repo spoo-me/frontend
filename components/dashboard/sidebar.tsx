@@ -70,7 +70,7 @@ function NavRow({
             // the CSS width transition and rubber-band.
             layoutDependency={pathname}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="border-border bg-card absolute inset-0 rounded-lg border"
+            className="border-border/50 bg-card absolute inset-0 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           />
         )}
         <item.icon className="relative size-[15px] shrink-0" strokeWidth={1.75} />
@@ -228,7 +228,7 @@ export function SidebarContent({
         onClick={() => openDashboardCommandMenu()}
         aria-label="Search"
         className={cn(
-          "bg-foreground/6 border-border text-muted-foreground hover:text-foreground hover:bg-foreground/9 flex h-9 items-center gap-2 rounded-lg border text-[13px] transition-colors duration-150",
+          "bg-foreground/6 text-muted-foreground hover:text-foreground hover:bg-foreground/9 border border-transparent flex h-9 items-center gap-2 rounded-lg text-[13px] transition-colors duration-150",
           collapsed ? "justify-center px-0" : "px-2.5",
         )}
       >

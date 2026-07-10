@@ -35,7 +35,7 @@ export function HotLinks() {
   const max = rows[0]?.clicks ?? 1
 
   return (
-    <div className="border-border/60 bg-shell rounded-2xl border p-0.5">
+    <div className="border-border/60 bg-shell flex h-full flex-col rounded-2xl border p-0.5">
       <SectionHeader
         className="h-9 px-2.5"
         icon={Flame}
@@ -50,7 +50,7 @@ export function HotLinks() {
           </Link>
         }
       />
-      <Panel className="bg-background mt-0 rounded-[14px] p-2">
+      <Panel className="bg-background mt-0 flex-1 rounded-[14px] p-2">
         {hot.isPending ? (
           <div className="space-y-1">
             {[88, 71, 62, 48, 39].map((w, i) => (
@@ -86,7 +86,7 @@ export function HotLinks() {
             ))}
           </div>
         ) : (
-          <div className="pattern-dots m-2 flex h-40 items-center justify-center rounded-lg">
+          <div className="pattern-dots m-2 flex h-40 min-h-[calc(100%-1rem)] items-center justify-center rounded-lg">
             <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
               a quiet hour
             </span>
