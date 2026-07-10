@@ -53,7 +53,6 @@ lib/
   utils.ts             — cn() helper
 public/
   brand/               — spoo.me logos
-  demos/               — dashboard screenshots
   icons-3d/            — 3D illustration assets
 ```
 

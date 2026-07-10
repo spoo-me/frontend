@@ -13,7 +13,7 @@ import type { OnboardingPath } from "@/lib/onboarding"
 
 const PANEL = "border-border/60 bg-card shadow-card h-40 w-[19rem] max-w-full overflow-hidden rounded-xl border"
 
-/** Catmull-Rom → cubic bezier, same smooth-line idiom as dashboard-preview. */
+/** Catmull-Rom → cubic bezier smooth-line idiom. */
 function smoothPath(
   points: number[],
   w: number,

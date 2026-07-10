@@ -3,7 +3,7 @@ import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { Hero } from "@/components/sections/hero"
 import { Features } from "@/components/sections/features"
-import { DashboardPreview } from "@/components/sections/dashboard-preview"
+import { DashboardHero } from "@/components/sections/dashboard-hero"
 import { ConnectedApps } from "@/components/sections/connected-apps"
 import { Developer } from "@/components/sections/developer"
 import { Testimonials } from "@/components/sections/testimonials"
@@ -20,7 +20,7 @@ export default function HomePage() {
           <Hero />
           {/* Chapter captions live inside each section's header band */}
           <Section id="analytics">
-            <DashboardPreview />
+            <DashboardHero />
           </Section>
           <Section id="features">
             <Features />
