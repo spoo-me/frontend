@@ -262,7 +262,7 @@ function CountriesPanel() {
   return (
     <div
       className="border-border/60 bg-shell flex flex-col rounded-2xl border p-0.5 lg:col-span-3"
-      style={{ "--chart-accent": "var(--chart-lime)" } as React.CSSProperties}
+      style={{ "--chart-accent": "var(--chart-neutral)" } as React.CSSProperties}
     >
       <SectionHeader
         className="h-10 px-2.5"
