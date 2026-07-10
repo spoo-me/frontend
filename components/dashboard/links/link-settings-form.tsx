@@ -22,6 +22,7 @@ import {
   type UpdateUrlInput,
   type UrlListItem,
 } from "@/lib/api"
+import { normalizeUrl, urlProblem } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -101,11 +103,6 @@ function suggestPassword() {
 }
 function suggestAlias() {
   return `${WORDS[randInt(WORDS.length)]}-${10 + randInt(89)}`
-}
-
-function normalizeUrl(raw: string) {
-  const v = raw.trim()
-  return /^https?:\/\//i.test(v) || v === "" ? v : `https://${v}`
 }
 
 /**
@@ -226,17 +223,36 @@ function describeChanges(link: UrlListItem, patch: UpdateUrlInput): ChangeRow[] 
 function Field({
   label,
   hint,
+  labelHint,
+  error,
   children,
 }: {
   label: string
   hint?: string
+  /** Help glyph after the label (tooltip); for behavior a hint can't carry. */
+  labelHint?: React.ReactNode
+  /** Blocking problem with the field's value; replaces the hint. */
+  error?: string | null
   children: React.ReactNode
 }) {
   return (
     <div className="space-y-2">
-      <Label className="text-foreground mb-2.5 text-xs font-medium">{label}</Label>
+      {labelHint ? (
+        <span className="mb-2.5 flex items-center gap-1.5">
+          <Label className="text-foreground text-xs font-medium">{label}</Label>
+          {labelHint}
+        </span>
+      ) : (
+        <Label className="text-foreground mb-2.5 text-xs font-medium">
+          {label}
+        </Label>
+      )}
       {children}
-      {hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>}
+      {error ? (
+        <p className="text-destructive text-xs">{error}</p>
+      ) : (
+        hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>
+      )}
     </div>
   )
 }
@@ -296,7 +312,10 @@ export function LinkSettingsForm({
     const t = setTimeout(() => setDebouncedUrl(normalizeUrl(longUrl)), 600)
     return () => clearTimeout(t)
   }, [longUrl])
-  const metaFetchUrl = debouncedUrl.startsWith("https://") ? debouncedUrl : null
+  const metaFetchUrl =
+    debouncedUrl.startsWith("https://") && !urlProblem(debouncedUrl)
+      ? debouncedUrl
+      : null
   const destMeta = useQuery({
     queryKey: ["url-metadata", metaFetchUrl],
     queryFn: () => fetchUrlMetadata(metaFetchUrl!),
@@ -319,6 +338,13 @@ export function LinkSettingsForm({
   const [verdict, setVerdict] = React.useState<{
     alias: string
     available: boolean
+  } | null>(null)
+  // Server-side destination verdicts (the DB blocklist can't be mirrored
+  // client-side) render inline like every other URL problem — keyed to the
+  // URL they rejected, so fresh input clears them.
+  const [serverUrlError, setServerUrlError] = React.useState<{
+    url: string
+    message: string
   } | null>(null)
   const aliasFormatValid = /^[a-zA-Z0-9_-]{3,16}$/.test(alias)
   React.useEffect(() => {
@@ -381,6 +407,21 @@ export function LinkSettingsForm({
 
   const dirty = Object.keys(patch).length > 0
 
+  // Destination mirror of the backend rules (lib/validation.ts) — judged
+  // only while the field is actually dirty, and spoken once typing settles
+  // (same debounce as the metadata fetch) so edits aren't scolded midway.
+  const destProblem =
+    patch.long_url === undefined
+      ? null
+      : longUrl.trim() === ""
+        ? "Enter a destination URL."
+        : ((debouncedUrl === normalizeUrl(longUrl)
+            ? urlProblem(longUrl)
+            : null) ??
+          (serverUrlError && serverUrlError.url === normalizeUrl(longUrl)
+            ? serverUrlError.message
+            : null))
+
   const save = useMutation({
     mutationFn: () => updateUrl(link.id, patch),
     onSuccess: (next) => {
@@ -398,6 +439,18 @@ export function LinkSettingsForm({
       onSaved?.(next)
     },
     onError: (err) => {
+      if (err instanceof SpooApiError && err.field === "long_url") {
+        // Blocklist (and any other server-only) rejections render inline
+        // under the destination field, not as a toast.
+        setServerUrlError({
+          url: normalizeUrl(longUrl),
+          message:
+            err.message === "URL is blocked"
+              ? "That destination is blocked on spoo.me."
+              : err.message,
+        })
+        return
+      }
       if (err instanceof SpooApiError && err.field === "alias")
         setVerdict({ alias, available: false })
       toast.error(err instanceof Error ? err.message : "Couldn't save changes")
@@ -407,6 +460,8 @@ export function LinkSettingsForm({
   const canSave =
     dirty &&
     !save.isPending &&
+    (patch.long_url === undefined ||
+      (longUrl.trim() !== "" && !urlProblem(longUrl))) &&
     variantTotal(variants) <= 100 &&
     !geoRulesProblem(geoRules) &&
     !metaProblem &&
@@ -418,7 +473,11 @@ export function LinkSettingsForm({
 
   return (
     <div className="space-y-5">
-      <Field label="Destination">
+      <Field
+        label="Destination"
+        error={destProblem}
+        hint="Where the short link sends visitors."
+      >
         <Input
           value={longUrl}
           onChange={(e) => setLongUrl(e.target.value)}
@@ -488,7 +547,15 @@ export function LinkSettingsForm({
         </div>
       </Field>
 
-      <Field label="Password">
+      <Field
+        label="Password"
+        labelHint={
+          <InfoHint label="How the password is stored">
+            The password is hashed and never shown; replace or remove it,
+            don&apos;t edit it.
+          </InfoHint>
+        }
+      >
         {link.password_set && passwordMode === "keep" ? (
           <div className="flex items-center gap-2">
             {link.password ? (
@@ -582,7 +649,10 @@ export function LinkSettingsForm({
       </Field>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label="Expires">
+        <Field
+          label="Expires"
+          hint="The link stops redirecting after this moment."
+        >
           <div className="flex items-center gap-1.5">
             <DateTimeField
               value={expiry}
@@ -603,7 +673,10 @@ export function LinkSettingsForm({
             )}
           </div>
         </Field>
-        <Field label="Max clicks">
+        <Field
+          label="Max clicks"
+          hint="The link deactivates after this many clicks."
+        >
           <div className="flex items-center gap-1.5">
             <Input
               type="number"
@@ -664,8 +737,14 @@ export function LinkSettingsForm({
               Meta tags
             </div>
             {metaMirroring && (
-              <span className="label-mono text-muted-foreground/40 text-[10px]">
-                fetched from destination
+              <span className="flex items-center gap-1.5">
+                <span className="label-mono text-muted-foreground/40 text-[10px]">
+                  fetched from destination
+                </span>
+                <InfoHint label="About fetched meta tags">
+                  These preview tags are read live from the destination until
+                  you customize them.
+                </InfoHint>
               </span>
             )}
           </div>

@@ -27,6 +27,7 @@ import {
   SpooApiError,
   type CustomDomain,
 } from "@/lib/api"
+import { urlProblem } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,6 +41,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Kbd } from "@/components/dashboard/kbd"
@@ -115,17 +121,24 @@ function toLocalInputValue(d: Date) {
 function Field({
   label,
   hint,
+  error,
   children,
 }: {
   label: string
   hint?: string
+  /** Blocking problem with the field's value; replaces the hint. */
+  error?: string | null
   children: React.ReactNode
 }) {
   return (
     <div className="space-y-2">
       <Label className="text-foreground mb-2.5 text-xs font-medium">{label}</Label>
       {children}
-      {hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>}
+      {error ? (
+        <p className="text-destructive text-xs">{error}</p>
+      ) : (
+        hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>
+      )}
     </div>
   )
 }
@@ -161,6 +174,13 @@ export function LinkComposer() {
   const [metaCustomized, setMetaCustomized] = React.useState(false)
   const [blockBots, setBlockBots] = React.useState(false)
   const [privateStats, setPrivateStats] = React.useState(false)
+  // Server-side destination verdicts (the DB blocklist can't be mirrored
+  // client-side) render inline like every other URL problem — keyed to the
+  // URL they rejected, so fresh input clears them.
+  const [serverUrlError, setServerUrlError] = React.useState<{
+    url: string
+    message: string
+  } | null>(null)
 
   // Destination-tag prefill (GET /api/v1/metadata, PR #231). The long URL
   // debounces ~600ms into a stable key; the fetch itself only runs while
@@ -170,12 +190,14 @@ export function LinkComposer() {
   const [debouncedUrl, setDebouncedUrl] = React.useState("")
   React.useEffect(() => {
     const t = setTimeout(() => {
-      setDebouncedUrl(looksLikeUrl(longUrl) ? normalizeUrl(longUrl) : "")
+      setDebouncedUrl(normalizeUrl(longUrl))
     }, 600)
     return () => clearTimeout(t)
   }, [longUrl])
   const metaFetchUrl =
-    debouncedUrl.startsWith("https://") ? debouncedUrl : null
+    debouncedUrl.startsWith("https://") && !urlProblem(debouncedUrl)
+      ? debouncedUrl
+      : null
   const destMeta = useQuery({
     queryKey: ["url-metadata", metaFetchUrl],
     queryFn: () => fetchUrlMetadata(metaFetchUrl!),
@@ -228,6 +250,7 @@ export function LinkComposer() {
     setBlockBots(false)
     setPrivateStats(false)
     setDebouncedUrl("")
+    setServerUrlError(null)
   }
 
   // Animated tab height: measure the active panel, glide the container.
@@ -344,6 +367,15 @@ export function LinkComposer() {
       if (err instanceof SpooApiError && err.field === "alias") {
         setTab("basic")
         setVerdict({ alias, available: false })
+      } else if (err instanceof SpooApiError && err.field === "long_url") {
+        setTab("basic")
+        setServerUrlError({
+          url: normalizeUrl(longUrl),
+          message:
+            err.message === "URL is blocked"
+              ? "That destination is blocked on spoo.me."
+              : err.message,
+        })
       } else {
         toast.error(
           err instanceof Error ? err.message : "Couldn't create the link",
@@ -353,7 +385,8 @@ export function LinkComposer() {
   })
 
   const canCreate =
-    looksLikeUrl(longUrl) &&
+    longUrl.trim() !== "" &&
+    !urlProblem(longUrl) &&
     !create.isPending &&
     weights <= 100 &&
     !geoProblem &&
@@ -365,6 +398,16 @@ export function LinkComposer() {
   }
 
   const normalized = normalizeUrl(longUrl)
+  // The client mirror speaks only once typing settles (same debounce as the
+  // metadata fetch) so half-typed URLs aren't scolded; the server verdict
+  // stays pinned to the exact URL it rejected.
+  const destProblem =
+    (longUrl.trim() && debouncedUrl === normalized
+      ? urlProblem(longUrl)
+      : null) ??
+    (serverUrlError && serverUrlError.url === normalized
+      ? serverUrlError.message
+      : null)
   const showNormalization =
     longUrl.trim().length > 3 &&
     normalized !== longUrl.trim() &&
@@ -376,7 +419,17 @@ export function LinkComposer() {
 
   /** The dot = this tab holds a value; visible without visiting it. */
   const tabDot = (set: boolean) =>
-    set ? <span className="bg-brand size-1.5 rounded-full" /> : null
+    set ? (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {/* Padded hit area; the visible dot stays size-1.5. */}
+          <span className="-m-1 flex size-3.5 items-center justify-center p-1">
+            <span className="bg-brand size-1.5 rounded-full" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>This tab has a value set.</TooltipContent>
+      </Tooltip>
+    ) : null
 
   /** shadcn tab trigger with the active cell SLIDING between tabs (same
       layout-animation grammar as Segmented) instead of teleporting. */
@@ -453,6 +506,7 @@ export function LinkComposer() {
               <TabsContent value="basic" className="space-y-5">
                 <Field
                   label="Destination"
+                  error={destProblem}
                   hint={
                     showNormalization ? `Saved as ${normalized}` : undefined
                   }

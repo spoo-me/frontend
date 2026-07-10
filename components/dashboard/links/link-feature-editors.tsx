@@ -48,6 +48,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
+import { InfoHint } from "@/components/dashboard/info-hint"
 import { Segmented } from "@/components/dashboard/segmented"
 
 /**
@@ -1084,7 +1085,13 @@ export function MetaTagsEditor({
       )}
     >
       <div className="flex h-7 items-center justify-between">
-        <SectionLabel>Preview</SectionLabel>
+        <span className="flex items-center gap-1.5">
+          <SectionLabel>Preview</SectionLabel>
+          <InfoHint label="About this preview">
+            Approximate preview; each platform renders unfurls a little
+            differently.
+          </InfoHint>
+        </span>
         <Segmented
           value={previewOn}
           onChange={setPreviewOn}

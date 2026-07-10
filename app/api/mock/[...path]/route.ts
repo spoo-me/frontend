@@ -3,6 +3,7 @@ import path from "node:path"
 import { NextRequest, NextResponse } from "next/server"
 import { getAlpha2Codes } from "i18n-iso-countries"
 
+import { LONG_URL_MAX_LENGTH, validDestinationUrl } from "@/lib/validation"
 import {
   buildDomains,
   buildGrants,
@@ -93,6 +94,52 @@ function json(body: unknown, init?: ResponseInit) {
 
 function fail(status: number, code: string, error: string, field?: string) {
   return json({ error, code, ...(field ? { field } : {}) }, { status })
+}
+
+/* Stand-in for the DB-backed blocked-URL regex list (real backend:
+   blocked_url repository, checked after validate_url). These patterns
+   exist so the 400 "URL is blocked" state is testable on :3001. */
+const BLOCKED_URL_PATTERNS = ["malware", "phishing"]
+const urlIsBlocked = (url: string) =>
+  BLOCKED_URL_PATTERNS.some((p) => new RegExp(p).test(url))
+
+/** The real backend's long_url validation, byte-for-byte: the pydantic DTO
+    caps (422, schemas/dto/requests/url.py) then validate_url + blocklist
+    (400, services/url_service.py). `required` = create; PATCH treats
+    undefined/null as "keep". */
+function longUrlFail(raw: unknown, required: boolean): NextResponse | null {
+  if (raw === undefined)
+    return required
+      ? fail(422, "validation_error", "long_url: Field required", "long_url")
+      : null
+  if (raw === null)
+    return required
+      ? fail(
+          422,
+          "validation_error",
+          "long_url: Input should be a valid string",
+          "long_url",
+        )
+      : null
+  if (typeof raw !== "string")
+    return fail(
+      422,
+      "validation_error",
+      "long_url: Input should be a valid string",
+      "long_url",
+    )
+  if (raw.length > LONG_URL_MAX_LENGTH)
+    return fail(
+      422,
+      "validation_error",
+      `long_url: String should have at most ${LONG_URL_MAX_LENGTH} characters`,
+      "long_url",
+    )
+  if (!validDestinationUrl(raw))
+    return fail(400, "validation_error", "URL is not allowed or invalid", "long_url")
+  if (urlIsBlocked(raw))
+    return fail(400, "validation_error", "URL is blocked", "long_url")
+  return null
 }
 
 function user() {
@@ -717,9 +764,11 @@ async function handle(req: NextRequest, path: string[]) {
       return json({ available: !taken, reason: taken ? "taken" : null })
     }
     case "POST /v1/shorten": {
-      const longUrl = String(body.long_url ?? "")
-      if (!/^https?:\/\//.test(longUrl))
-        return fail(422, "invalid_url", "Enter a valid http(s) URL", "long_url")
+      // The DTO accepts `url` as an alias for `long_url` (first alias wins).
+      const rawLong = body.long_url !== undefined ? body.long_url : body.url
+      const longUrlErr = longUrlFail(rawLong, true)
+      if (longUrlErr) return longUrlErr
+      const longUrl = String(rawLong)
       const alias = body.alias ? String(body.alias) : slug()
       if (body.alias && !/^[a-zA-Z0-9_-]{3,16}$/.test(alias))
         return fail(
@@ -857,10 +906,13 @@ async function handle(req: NextRequest, path: string[]) {
       return json(linkItem(link))
     }
     if (req.method === "PATCH") {
-      if (typeof body.long_url === "string") {
-        if (!/^https?:\/\//.test(body.long_url))
-          return fail(422, "invalid_url", "Enter a valid http(s) URL", "long_url")
-        link.long_url = body.long_url
+      // Alias `url` accepted; null = keep; only a CHANGED value revalidates
+      // (services/url_service.py _handle_long_url).
+      const rawLong = body.long_url !== undefined ? body.long_url : body.url
+      if (rawLong !== undefined && rawLong !== null && rawLong !== link.long_url) {
+        const longUrlErr = longUrlFail(rawLong, false)
+        if (longUrlErr) return longUrlErr
+        link.long_url = String(rawLong)
       }
       if (typeof body.alias === "string" && body.alias !== link.alias) {
         if (!/^[a-zA-Z0-9_-]{3,16}$/.test(body.alias))
