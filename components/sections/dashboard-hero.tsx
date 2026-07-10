@@ -14,9 +14,9 @@ import {
   Link2,
   MapPin,
   Maximize2,
+  LayoutDashboard,
   MonitorSmartphone,
   Table2,
-  Zap,
   Filter,
 } from "lucide-react"
 
@@ -289,25 +289,25 @@ function Callouts() {
       icon: LineChart,
       title: "Per-link dashboards",
       description:
-        "Open any short link, get a complete time series: clicks, uniques, conversion windows.",
+        "Open any short link and get its own time series: clicks, unique visitors, repeat behavior.",
     },
     {
       icon: Filter,
       title: "Slice by anything",
       description:
-        "Country, city, device, browser, OS, referrer, UTM. Combine arbitrarily deep.",
+        "Country, city, browser, OS, referrer, link. Stack filters as deep as you like.",
+    },
+    {
+      icon: LayoutDashboard,
+      title: "A board you arrange",
+      description:
+        "Drag, resize, and swap between a dozen chart types: donut to treemap to calendar heatmap.",
     },
     {
       icon: Globe2,
-      title: "Geo heatmaps",
+      title: "Built-in geo maps",
       description:
-        "World-level click distribution out of the box. Ideal for global launches.",
-    },
-    {
-      icon: Zap,
-      title: "Sub-second updates",
-      description:
-        "Streaming counters, no polling. Hot data warm in seconds, history forever.",
+        "World-level click distribution on a choropleth, without a single third-party script.",
     },
   ]
   return (
