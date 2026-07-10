@@ -51,12 +51,15 @@ import {
   geoRulesProblem,
   GeoRulesEditor,
   metaDraftOf,
+  metaFetchNotice,
   prefillDraftOf,
+  prefillHasData,
   sameGeoRules,
   sameMetaTags,
   MetaTagsEditor,
   metaTagsOf,
   metaTagsProblem,
+  StateTag,
   VariantsEditor,
   variantTotal,
   type GeoRuleDraft,
@@ -366,12 +369,17 @@ export function LinkSettingsForm({
   const metaPayload = metaCustomized ? (metaTagsOf(meta) ?? null) : null
   if (!sameMetaTags(metaPayload, link.meta_tags)) patch.meta_tags = metaPayload
   const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
+  // Mirroring = uncustomized with a fetch worth showing: the header tag
+  // and helper line say so; an empty or failed fetch stays tagless (the
+  // notice already covers errors).
+  const metaMirroring =
+    !metaCustomized && destMeta.isSuccess && prefillHasData(destMeta.data)
   const metaNotice =
     !metaCustomized && destMeta.isError
-      ? destMeta.error instanceof SpooApiError && destMeta.error.isRateLimit
-        ? "preview fetches are rate limited, try again in a minute"
-        : "couldn't fetch a preview from this destination"
-      : null
+      ? metaFetchNotice(destMeta.error)
+      : metaMirroring
+        ? "live from the destination. edits freeze a custom card."
+        : null
 
   const dirty = Object.keys(patch).length > 0
 
@@ -381,6 +389,13 @@ export function LinkSettingsForm({
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       setPasswordMode("keep")
       setNewPassword("")
+      // A data-URI upload echoes back as a rehosted CDN https URL — adopt
+      // the echo so the draft matches what the link now stores (otherwise
+      // the form would sit dirty against a value that can never re-match).
+      if (patch.meta_tags !== undefined) {
+        setMeta(metaDraftOf(next.meta_tags))
+        setMetaCustomized(Boolean(next.meta_tags))
+      }
       toast.success("Link updated")
       onSaved?.(next)
     },
@@ -643,11 +658,18 @@ export function LinkSettingsForm({
       <VariantsEditor variants={variants} onChange={setVariants} />
 
       <div className="space-y-3">
-        {/* Fixed-height header row: the reset action appears in place when
-            the tags are customized — zero layout shift either way. */}
+        {/* Fixed-height header row: the state tag and reset action swap in
+            place — zero layout shift either way. */}
         <div className="flex h-7 items-center justify-between">
-          <div className="label-mono text-muted-foreground/60 text-[10px]">
-            Meta tags
+          <div className="flex items-center gap-2">
+            <div className="label-mono text-muted-foreground/60 text-[10px]">
+              Meta tags
+            </div>
+            {metaCustomized ? (
+              <StateTag>custom</StateTag>
+            ) : metaMirroring ? (
+              <StateTag>mirroring destination</StateTag>
+            ) : null}
           </div>
           {metaCustomized && (
             <button

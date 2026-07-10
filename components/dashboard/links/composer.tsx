@@ -57,12 +57,15 @@ import {
   geoRulesProblem,
   GeoRulesEditor,
   looksLikeUrl,
+  metaFetchNotice,
   MetaTagsEditor,
   metaTagsOf,
   metaTagsProblem,
   normalizeUrl,
   prefillDraftOf,
+  prefillHasData,
   SectionLabel,
+  StateTag,
   VariantsEditor,
   variantTotal,
   type GeoRuleDraft,
@@ -292,12 +295,17 @@ export function LinkComposer() {
   // prefill never travels and never blocks submit.
   const metaPayload = metaCustomized ? metaTagsOf(meta) : undefined
   const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
+  // Mirroring = uncustomized with a fetch worth showing: the header tag
+  // and helper line say so; an empty or failed fetch stays tagless (the
+  // notice already covers errors).
+  const metaMirroring =
+    !metaCustomized && destMeta.isSuccess && prefillHasData(destMeta.data)
   const metaNotice =
     !metaCustomized && destMeta.isError
-      ? destMeta.error instanceof SpooApiError && destMeta.error.isRateLimit
-        ? "preview fetches are rate limited, try again in a minute"
-        : "couldn't fetch a preview from this destination"
-      : null
+      ? metaFetchNotice(destMeta.error)
+      : metaMirroring
+        ? "live from the destination. edits freeze a custom card."
+        : null
   const weights = variantTotal(variants)
 
   const create = useMutation({
@@ -677,11 +685,18 @@ export function LinkComposer() {
               </TabsContent>
 
               <TabsContent value="metadata" className="space-y-2">
-                {/* Fixed-height header row: the reset action appears in
-                    place when the draft is customized — zero layout shift
-                    between mirrored and customized states. */}
+                {/* Fixed-height header row: the state tag and reset action
+                    swap in place — zero layout shift between mirrored and
+                    customized states. */}
                 <div className="flex h-7 items-center justify-between">
-                  <SectionLabel>Meta tags</SectionLabel>
+                  <div className="flex items-center gap-2">
+                    <SectionLabel>Meta tags</SectionLabel>
+                    {metaCustomized ? (
+                      <StateTag>custom</StateTag>
+                    ) : metaMirroring ? (
+                      <StateTag>mirroring destination</StateTag>
+                    ) : null}
+                  </div>
                   {metaCustomized && (
                     <button
                       type="button"

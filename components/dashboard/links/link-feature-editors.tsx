@@ -11,6 +11,7 @@ import {
   ImageIcon,
   Pipette,
   Plus,
+  Upload,
   X,
 } from "lucide-react"
 import {
@@ -26,8 +27,10 @@ import {
   GEO_RULE_URL_MAX_LENGTH,
   GEO_RULES_MAX_COUNTRIES,
   META_DESCRIPTION_MAX,
+  META_IMAGE_MAX_BYTES,
   META_IMAGE_URL_MAX,
   META_TITLE_MAX,
+  SpooApiError,
   type AbVariant,
   type GeoRules,
   type MetaTags,
@@ -82,6 +85,23 @@ export function looksLikeUrl(raw: string): boolean {
 }
 
 export const metaColorValid = (c: string) => /^#[0-9a-fA-F]{6}$/.test(c)
+
+/* Data-URI images (backend PR #231 upload path): the server decodes,
+   magic-byte-checks and re-hosts them on the CDN, echoing the https URL
+   back. The wire accepts exactly these three types, ≤512KB decoded. */
+const META_DATA_URI_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/
+
+export const isMetaImageDataUri = (v: string) => v.startsWith("data:")
+
+/** Decoded byte count of a data URI's base64 payload. */
+export function dataUriBytes(uri: string): number {
+  const b64 = uri.slice(uri.indexOf(",") + 1)
+  const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0
+  return Math.max(0, (b64.length * 3) / 4 - pad)
+}
+
+const validMetaImageDataUri = (v: string) =>
+  META_DATA_URI_RE.test(v) && dataUriBytes(v) <= META_IMAGE_MAX_BYTES
 
 /** Canonical wire payload (PR #230 flat map): only complete rows travel;
     first occurrence of a country wins (duplicates block saving anyway —
@@ -143,10 +163,13 @@ export const variantTotal = (variants: VariantDraft[]) =>
 export function metaTagsOf(m: MetaDraft): MetaTagsInput | undefined {
   const title = m.title.trim()
   if (!title) return undefined
+  const image = m.image.trim()
   return {
     title,
     ...(m.description.trim() ? { description: m.description.trim() } : {}),
-    ...(m.image.trim() ? { image: normalizeUrl(m.image) } : {}),
+    // Data URIs travel verbatim (the upload path); URLs get the forgiving
+    // scheme fill like every other URL input.
+    ...(image ? { image: isMetaImageDataUri(image) ? image : normalizeUrl(image) } : {}),
     ...(metaColorValid(m.color) ? { color: m.color.toLowerCase() } : {}),
   }
 }
@@ -165,8 +188,9 @@ export const sameMetaTags = (
 
 /** First blocking problem with the meta draft, or null. Mirrors the server
     DTO rules (PR #231): title mandatory (1–120) whenever anything is set,
-    description ≤240, image https-only / no SVG / ≤2048 chars, color
-    #RRGGBB — so saves never 422 blind. */
+    description ≤240, image https-only / no SVG / ≤2048 chars OR a
+    png/jpeg/webp data URI ≤512KB decoded (the 2048 cap is for URLs only),
+    color #RRGGBB — so saves never 422 blind. */
 export function metaTagsProblem(m: MetaDraft): string | null {
   const title = m.title.trim()
   const hasExtras = Boolean(m.description.trim() || m.image.trim() || m.color.trim())
@@ -177,7 +201,12 @@ export function metaTagsProblem(m: MetaDraft): string | null {
   if (m.description.trim().length > META_DESCRIPTION_MAX)
     return `The description is too long (${META_DESCRIPTION_MAX} characters max).`
   const image = m.image.trim()
-  if (image) {
+  if (image && isMetaImageDataUri(image)) {
+    // Normally unreachable — the upload path validates before it writes —
+    // but a guard keeps a pasted or stale data URI from 400ing blind.
+    if (!validMetaImageDataUri(image))
+      return "The image must be a png, jpeg, or webp under 512KB."
+  } else if (image) {
     const url = normalizeUrl(image)
     if (!looksLikeUrl(image) || !/^https:\/\//.test(url))
       return "The image must be an https:// URL."
@@ -236,6 +265,31 @@ export function prefillDraftOf(m: UrlMetadata | null | undefined): MetaDraft {
   }
 }
 
+/** The fetch produced something the fields can mirror. The header state
+    tag and its helper line show only then — an empty or unusable fetch
+    stays quiet (the notice line already covers errors). */
+export function prefillHasData(m: UrlMetadata | null | undefined): boolean {
+  const d = prefillDraftOf(m)
+  return Boolean(d.title || d.description || d.image || d.color)
+}
+
+/** Metadata fetch failure → notice line. The 422 unfetchable reason
+    carries the upstream status ("… HTML page (status 403)"): a forbidden
+    or challenged fetch means the DESTINATION refuses crawlers, which
+    deserves its own line — writing tags by hand still works fine. */
+export function metaFetchNotice(err: unknown): string {
+  if (err instanceof SpooApiError) {
+    if (err.isRateLimit)
+      return "preview fetches are rate limited, try again in a minute"
+    if (
+      err.code === "unfetchable" &&
+      /\b(?:status|http)\s*403\b|forbidden|challenge/i.test(err.message)
+    )
+      return "this destination blocks fetches. write your own tags."
+  }
+  return "couldn't fetch a preview from this destination"
+}
+
 /* ---------------------------------------------------------- small chrome */
 
 function Field({
@@ -261,6 +315,17 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
     <div className="label-mono text-muted-foreground/60 text-[10px]">
       {children}
     </div>
+  )
+}
+
+/** Quiet mono state tag for a section header — same anatomy as the
+    attention-queue category tags, but always muted: color stays reserved
+    for attention severity. */
+export function StateTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="label-mono bg-muted/60 text-muted-foreground/70 rounded px-1.5 py-0.5 text-[10px] whitespace-nowrap">
+      {children}
+    </span>
   )
 }
 
@@ -564,9 +629,14 @@ function MetaPreview({
   // Keyed to the src it failed on — a new URL gets a fresh chance without
   // any effect-driven reset.
   const [brokenSrc, setBrokenSrc] = React.useState<string | null>(null)
+  // Data URIs (the upload path) render as-is; URLs get the scheme fill.
   const imgSrc =
-    image && looksLikeUrl(image) && brokenSrc !== image
-      ? normalizeUrl(image)
+    image && brokenSrc !== image
+      ? isMetaImageDataUri(image)
+        ? image
+        : looksLikeUrl(image)
+          ? normalizeUrl(image)
+          : null
       : null
   const t = title || "Title from the destination"
   const d = description || "Description from the destination."
@@ -711,26 +781,59 @@ export function MetaTagsEditor({
   /** Destination fetch in flight: the fields pulse in place (opacity only,
       zero layout shift) — the fields themselves are the loading surface. */
   loading?: boolean
-  /** Quiet muted status line (fetch failures); yields to any problem. */
+  /** Quiet muted status line (fetch failures, mirroring helper); yields
+      to any problem and to a rejected upload. The slot is height-reserved
+      so it swaps between states without shifting the fields. */
   notice?: string | null
   /** Validation override: pass null to suppress while an uncustomized
       prefill is display-only and never travels. undefined = compute here. */
   problem?: string | null
 }) {
   const [previewOn, setPreviewOn] = React.useState<MetaPlatform>("x")
+  // Rejected file picks (wrong type / oversize) never touch the draft, so
+  // they report locally; any later image action supersedes the message.
+  const [uploadError, setUploadError] = React.useState<string | null>(null)
+  const fileRef = React.useRef<HTMLInputElement>(null)
   const colorValid = metaColorValid(value.color)
   const problem =
     problemProp === undefined ? metaTagsProblem(value) : problemProp
-  const patch = (partial: Partial<MetaDraft>) =>
+  const patch = (partial: Partial<MetaDraft>) => {
+    if ("image" in partial) setUploadError(null)
     onChange({ ...value, ...partial })
+  }
+
+  const pickFile = (file: File) => {
+    // file.size IS the decoded byte count — the wire cap is on decoded
+    // bytes, not the (4/3 larger) base64 string.
+    if (
+      !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
+      file.size > META_IMAGE_MAX_BYTES
+    ) {
+      setUploadError("The image must be a png, jpeg, or webp under 512KB.")
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => patch({ image: String(reader.result) })
+    reader.readAsDataURL(file)
+  }
+
+  const imageValue = value.image.trim()
+  const imageUploaded = isMetaImageDataUri(imageValue)
+  const line = problem ?? uploadError ?? notice
 
   const fields = (
     <div className={cn("min-w-0 flex-1 space-y-5", loading && "animate-pulse")}>
-      {problem ? (
-        <p className="text-destructive text-xs">{problem}</p>
-      ) : notice ? (
-        <p className="text-muted-foreground/70 text-xs">{notice}</p>
-      ) : null}
+      {/* One reserved line — problem > upload error > status — so the
+          states swap in place instead of shifting the fields below. */}
+      <p
+        aria-live="polite"
+        className={cn(
+          "min-h-4 text-xs",
+          problem || uploadError ? "text-destructive" : "text-muted-foreground/70",
+        )}
+      >
+        {line}
+      </p>
       <Field
         label="Social title"
         hint="Overrides the destination's Open Graph title."
@@ -757,15 +860,59 @@ export function MetaTagsEditor({
       </Field>
       <Field
         label="Social image"
-        hint="https:// only, no SVG. 1200×630 works everywhere."
+        hint="Paste an https:// URL or upload a png, jpeg, or webp. 1200×630 works everywhere."
       >
-        <Input
-          value={value.image}
-          onChange={(e) => patch({ image: e.target.value })}
-          placeholder="https://example.com/og.png"
-          spellCheck={false}
-          className="h-9 font-mono text-xs"
-        />
+        <div className="flex items-center gap-1.5">
+          {imageUploaded ? (
+            /* A raw data URI is unreadable garbage in a text input — show
+               a quiet chip instead. Same h-9 as the input: zero shift. */
+            <span className="border-input dark:bg-input/30 shadow-soft flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border px-3 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+              <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
+                uploaded image · {Math.max(1, Math.round(dataUriBytes(imageValue) / 1024))}
+                KB
+              </span>
+              <button
+                type="button"
+                aria-label="Remove the uploaded image"
+                onClick={() => patch({ image: "" })}
+                className="text-muted-foreground hover:text-foreground shrink-0 transition-colors duration-150"
+              >
+                <X className="size-3.5" />
+              </button>
+            </span>
+          ) : (
+            <Input
+              value={value.image}
+              onChange={(e) => patch({ image: e.target.value })}
+              placeholder="https://example.com/og.png"
+              spellCheck={false}
+              className="h-9 flex-1 font-mono text-xs"
+            />
+          )}
+          {/* Typing a URL and uploading are alternatives; last action wins. */}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="size-9 shrink-0"
+            aria-label="Upload an image"
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload />
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) pickFile(f)
+              // allow re-picking the same file after a remove
+              e.target.value = ""
+            }}
+          />
+        </div>
       </Field>
       <Field
         label="Theme color"

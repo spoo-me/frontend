@@ -35,6 +35,9 @@ export type AbVariant = { url: string; weight: number }
 export const META_TITLE_MAX = 120
 export const META_DESCRIPTION_MAX = 240
 export const META_IMAGE_URL_MAX = 2048
+/** Decoded byte cap for data-URI image uploads (server settings
+    meta_image.upload_max_bytes — 512KB decoded ≈ 683KB on the wire). */
+export const META_IMAGE_MAX_BYTES = 512_000
 
 /** meta_tags as SENT on shorten/PATCH. Whole-object replace; `title` is
     mandatory whenever the object is set (a card without one renders broken

@@ -447,7 +447,8 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
    can't be fetched; 504 upstream_timeout; 429 rate_limit_exceeded at
    20/min. Deterministic fakes: a couple of well-known hosts carry rich
    data, unknown hosts are sparse (title only), path containing "broken"
-   is unfetchable and "slow" times out — so every UI state is testable. */
+   is unfetchable, "blocked" is bot-walled (status 403 reason) and "slow"
+   times out — so every UI state is testable. */
 const META_RICH_HOSTS: Record<
   string,
   {
@@ -502,6 +503,15 @@ function mockMetadata(url: string): NextResponse {
       422,
       "unfetchable",
       "destination is not a fetchable HTML page (connection refused)",
+    )
+  // Bot-walled destination (Cloudflare challenge etc): the real fetcher
+  // surfaces the upstream status in the reason (safe_fetch FetchHardError
+  // "status 403") — same wire shape as every other unfetchable.
+  if (pathLower.includes("blocked"))
+    return fail(
+      422,
+      "unfetchable",
+      "destination is not a fetchable HTML page (status 403)",
     )
   if (pathLower.includes("slow") || pathLower.includes("timeout"))
     return fail(504, "upstream_timeout", "destination did not respond in time")
