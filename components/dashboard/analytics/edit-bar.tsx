@@ -26,6 +26,10 @@ import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import {
+  trackBoardLayoutExported,
+  trackBoardLayoutImported,
+} from "@/lib/analytics"
+import {
   ACCENTS,
   type AnalyticsLayout,
   type ScopeDimension,
@@ -218,6 +222,7 @@ export function EditBar({
 
   const exportLayout = async () => {
     await navigator.clipboard.writeText(JSON.stringify(layout, null, 2))
+    trackBoardLayoutExported("analytics")
     toast.success("Layout copied", {
       description: "Paste it into Import layout anywhere.",
     })
@@ -227,6 +232,7 @@ export function EditBar({
     try {
       const ok = onReplaceLayout(JSON.parse(importText))
       if (!ok) throw new Error("invalid")
+      trackBoardLayoutImported("analytics")
       setImportOpen(false)
       setImportText("")
       setImportError(false)

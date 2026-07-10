@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { trackLinkDeleted } from "@/lib/analytics"
 import { deleteUrl, setUrlStatus, type UrlListItem } from "@/lib/api"
 import { MAX_WIDGETS } from "@/lib/analytics-layout"
 import { useAnalyticsLayout } from "@/hooks/use-analytics-layout"
@@ -104,6 +105,7 @@ export function LinkActions({
   const remove = useMutation({
     mutationFn: () => deleteUrl(link.id),
     onSuccess: () => {
+      trackLinkDeleted()
       invalidate()
       toast.success("Link deleted")
       onDeleted?.()

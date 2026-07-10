@@ -19,6 +19,7 @@ import {
   type WidgetConfigPatch,
   type WidgetKind,
 } from "@/lib/analytics-layout"
+import { trackBoardLayoutReset, trackWidgetAdded } from "@/lib/analytics"
 import { deletePageLayout, getPageLayout, putPageLayout } from "@/lib/api"
 
 /**
@@ -182,6 +183,7 @@ export function useAnalyticsLayout() {
       bumpHistory()
     },
     onSuccess: () => {
+      trackBoardLayoutReset(PAGE)
       clearSaved()
       queryClient.setQueryData(["layout", PAGE], { layout: null })
       toast.success("Layout reset to default")
@@ -205,6 +207,7 @@ export function useAnalyticsLayout() {
       (kind: WidgetKind, seed?: WidgetConfigPatch) => {
         const id = newWidgetId()
         apply((l) => withWidgetAdded(l, kind, id, seed))
+        trackWidgetAdded(kind, PAGE)
         return id
       },
       [apply],

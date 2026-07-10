@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { trackLinkCreated } from "@/lib/analytics"
 import {
   checkAlias,
   fetchUrlMetadata,
@@ -26,6 +27,7 @@ import {
   shorten,
   SpooApiError,
   type CustomDomain,
+  type ShortenInput,
 } from "@/lib/api"
 import { urlProblem } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
@@ -341,23 +343,11 @@ export function LinkComposer() {
   const weights = variantTotal(variants)
 
   const create = useMutation({
-    mutationFn: () =>
-      shorten({
-        long_url: normalizeUrl(longUrl),
-        ...(alias ? { alias } : {}),
-        ...(domain !== "spoo.me" ? { domain } : {}),
-        ...(password ? { password } : {}),
-        ...(expiry
-          ? { expire_after: Math.floor(new Date(expiry).getTime() / 1000) }
-          : {}),
-        ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
-        ...(blockBots ? { block_bots: true } : {}),
-        ...(privateStats ? { private_stats: true } : {}),
-        ...(geoCount ? { geo_rules: geoPayload } : {}),
-        ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
-        ...(metaPayload ? { meta_tags: metaPayload } : {}),
-      }),
-    onSuccess: (created) => {
+    // The payload arrives as mutate() variables so onSuccess can hand the
+    // exact request to analytics.
+    mutationFn: (input: ShortenInput) => shorten(input),
+    onSuccess: (created, input) => {
+      trackLinkCreated(input, "composer")
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
       setOpen(false)
@@ -405,7 +395,22 @@ export function LinkComposer() {
     (alias === "" || aliasState === "available" || aliasState === "checking")
 
   const submit = () => {
-    if (canCreate) create.mutate()
+    if (!canCreate) return
+    create.mutate({
+      long_url: normalizeUrl(longUrl),
+      ...(alias ? { alias } : {}),
+      ...(domain !== "spoo.me" ? { domain } : {}),
+      ...(password ? { password } : {}),
+      ...(expiry
+        ? { expire_after: Math.floor(new Date(expiry).getTime() / 1000) }
+        : {}),
+      ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
+      ...(blockBots ? { block_bots: true } : {}),
+      ...(privateStats ? { private_stats: true } : {}),
+      ...(geoCount ? { geo_rules: geoPayload } : {}),
+      ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
+      ...(metaPayload ? { meta_tags: metaPayload } : {}),
+    })
   }
 
   const normalized = normalizeUrl(longUrl)

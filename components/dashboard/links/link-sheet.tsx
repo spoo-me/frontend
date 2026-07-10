@@ -74,7 +74,7 @@ export function LinkSheet({
                   <LinkActions link={link} onDeleted={() => onOpenChange(false)} />
                 </span>
               </SheetTitle>
-              <p className="text-muted-foreground mt-1 truncate text-xs">
+              <p className="ph-no-capture text-muted-foreground mt-1 truncate text-xs">
                 {link.long_url}
               </p>
 

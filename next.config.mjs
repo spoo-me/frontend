@@ -11,6 +11,22 @@ const SPOO_API_URL =
 // through signup → onboarding → dashboard.
 const MOCK = process.env.SPOO_MOCK === "1"
 
+// PostHog reverse proxy (EU region) — same-origin so events stay first-party
+// and clear ad-block hostlists. Bland path on purpose: /analytics, /posthog
+// and /ingest are all widely blocklisted. Harmless without a key configured
+// (nothing client-side ever calls /relay then).
+const POSTHOG_REWRITES = [
+  {
+    source: "/relay/static/:path*",
+    destination: "https://eu-assets.i.posthog.com/static/:path*",
+  },
+  {
+    source: "/relay/array/:path*",
+    destination: "https://eu-assets.i.posthog.com/array/:path*",
+  },
+  { source: "/relay/:path*", destination: "https://eu.i.posthog.com/:path*" },
+]
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {
@@ -21,12 +37,15 @@ const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
+  // PostHog API paths break under Next's trailing-slash redirect.
+  skipTrailingSlashRedirect: true,
   async rewrites() {
     if (MOCK) {
       return [
         { source: "/auth/:path*", destination: "/api/mock/auth/:path*" },
         { source: "/oauth/:path*", destination: "/api/mock/oauth/:path*" },
         { source: "/api/v1/:path*", destination: "/api/mock/v1/:path*" },
+        ...POSTHOG_REWRITES,
       ]
     }
     // Same-origin proxy to the FastAPI backend: keeps the HttpOnly auth
@@ -36,6 +55,7 @@ const nextConfig = {
       { source: "/auth/:path*", destination: `${SPOO_API_URL}/auth/:path*` },
       { source: "/oauth/:path*", destination: `${SPOO_API_URL}/oauth/:path*` },
       { source: "/api/v1/:path*", destination: `${SPOO_API_URL}/api/v1/:path*` },
+      ...POSTHOG_REWRITES,
     ]
   },
 }

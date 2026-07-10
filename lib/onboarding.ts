@@ -32,6 +32,14 @@ export function isOnboardingStep(v: unknown): v is OnboardingStep {
   return typeof v === "string" && v in STEP_ROUTES
 }
 
+/** Inverse of STEP_ROUTES — which step a pathname renders, if any. */
+export function stepFromRoute(pathname: string): OnboardingStep | null {
+  const hit = (Object.keys(STEP_ROUTES) as OnboardingStep[]).find(
+    (step) => STEP_ROUTES[step] === pathname,
+  )
+  return hit ?? null
+}
+
 /** Client-side stash — artifact recap + attribution, same-device only. */
 export type OnboardingStash = {
   artifact?:

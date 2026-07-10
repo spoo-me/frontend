@@ -18,6 +18,7 @@ import { motion } from "motion/react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
+import { trackDomainVerified } from "@/lib/analytics"
 import {
   getCustomDomain,
   revokeCustomDomain,
@@ -221,6 +222,19 @@ export default function DomainDetailPage() {
   const verify = useMutation({
     mutationFn: () => verifyCustomDomain(params.id),
     onSuccess: (next) => {
+      // Emit only on the PENDING → ACTIVE flip, not on re-verifies.
+      if (next.status === "ACTIVE" && dom?.status !== "ACTIVE")
+        trackDomainVerified(
+          next.created_at
+            ? Math.max(
+                0,
+                Math.round(
+                  (Date.now() - new Date(next.created_at).getTime()) /
+                    86_400_000,
+                ),
+              )
+            : null,
+        )
       invalidate()
       queryClient.setQueryData(["domains", params.id], next)
       if (next.status === "ACTIVE") toast.success(`${next.fqdn} is live`)

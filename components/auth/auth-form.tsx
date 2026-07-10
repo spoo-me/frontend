@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { useAuth } from "@/components/auth/auth-context"
 import { VerifyPanel } from "@/components/auth/verify-panel"
+import { trackLoggedIn, trackSignedUp } from "@/lib/analytics"
 import { login, register, SpooApiError } from "@/lib/api"
 import { PASSWORD_RULES, passwordSatisfies, safeNext } from "@/lib/validation"
 
@@ -84,6 +85,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
     try {
       if (mode === "login") {
         const { user } = await login({ email, password })
+        trackLoggedIn("password")
         setUser(user)
         // Read ?next= at submit time — avoids the useSearchParams Suspense
         // requirement on an otherwise static page.
@@ -93,6 +95,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         router.push(next ?? "/dashboard")
       } else {
         const { user } = await register({ email, password })
+        trackSignedUp("password")
         setUser(user)
         setPending(false)
         setVerifying(true)

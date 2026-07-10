@@ -71,7 +71,7 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="flex flex-col gap-0.5">
+        <DropdownMenuLabel className="ph-no-capture flex flex-col gap-0.5">
           <span className="text-foreground truncate text-sm font-medium">
             {user.user_name ?? user.email.split("@")[0]}
           </span>

@@ -46,7 +46,7 @@ export default function SettingsPage() {
           </Row>
           <Row label="Name">{user.user_name ?? <span className="text-muted-foreground">not set</span>}</Row>
           <Row label="Email">
-            <span className="truncate font-mono text-xs">{user.email}</span>
+            <span className="ph-no-capture truncate font-mono text-xs">{user.email}</span>
             {user.email_verified && (
               <span className="bg-live/10 text-live flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium">
                 <BadgeCheck className="size-3" />

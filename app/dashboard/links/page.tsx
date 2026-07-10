@@ -1153,7 +1153,7 @@ function LinkRow({
                 className="opacity-0 transition-opacity duration-150 [tr:hover_&]:opacity-100"
               />
             </div>
-            <div className="truncate text-xs text-muted-foreground">
+            <div className="ph-no-capture truncate text-xs text-muted-foreground">
               {displayUrl(link.long_url)}
             </div>
           </div>

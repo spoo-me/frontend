@@ -3,6 +3,7 @@
 import * as React from "react"
 import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query"
 
+import { identifyUser, resetUser } from "@/lib/analytics"
 import { logout as apiLogout, me, type AuthUser } from "@/lib/api"
 
 /**
@@ -112,6 +113,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ch.close()
     }
   }, [queryClient])
+
+  // Analytics identity follows the session query — the one place that sees
+  // every path in and out (password login, OAuth completion, cookie-session
+  // reload, sign-out, cross-tab sign-out, expiry). Reset only on a real
+  // identified → signed-out transition: resetting an anonymous session
+  // would rotate its distinct id on every visit.
+  const identifiedRef = React.useRef(false)
+  const user = data ?? null
+  React.useEffect(() => {
+    if (user) {
+      identifyUser(user)
+      identifiedRef.current = true
+    } else if (identifiedRef.current) {
+      resetUser()
+      identifiedRef.current = false
+    }
+  }, [user])
 
   // bfcache: a back/forward restore replays the old DOM without re-running
   // effects or fetches — re-check the session so a stale header can't stick.
