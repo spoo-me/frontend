@@ -69,7 +69,9 @@ function EmptyCta({
   cta: string
 }) {
   return (
-    <div className="flex h-10 items-center justify-between gap-2">
+    // Centered stack in the column body: the note carries the state, the
+    // verb sits under it.
+    <div className="flex flex-1 flex-col items-center justify-center gap-3">
       <span className="text-muted-foreground/70 text-xs">{note}</span>
       <Button asChild variant="outline" size="sm">
         <Link href={href}>{cta}</Link>
@@ -105,7 +107,7 @@ export function WorkspaceCard({
       />
       <Panel className="bg-background divide-border/60 mt-0 grid grid-cols-1 divide-y rounded-[14px] lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {/* Domains */}
-        <div className="min-h-[192px] px-4 py-3">
+        <div className="flex min-h-[192px] flex-col px-4 py-3">
           <ColumnHeader
             label="Domains"
             href="/dashboard/domains"
@@ -132,15 +134,15 @@ export function WorkspaceCard({
             })
           ) : (
             <EmptyCta
-              note="no custom domains"
+              note="No Custom Domains"
               href="/dashboard/domains"
-              cta="Add domain"
+              cta="Add Domain"
             />
           )}
         </div>
 
         {/* Connected apps */}
-        <div className="min-h-[192px] px-4 py-3">
+        <div className="flex min-h-[192px] flex-col px-4 py-3">
           <ColumnHeader
             label="Apps"
             href="/dashboard/apps"
@@ -166,15 +168,15 @@ export function WorkspaceCard({
             })
           ) : (
             <EmptyCta
-              note="nothing connected"
+              note="Nothing Connected"
               href="/dashboard/apps"
-              cta="Browse apps"
+              cta="Browse Apps"
             />
           )}
         </div>
 
         {/* API keys */}
-        <div className="min-h-[192px] px-4 py-3">
+        <div className="flex min-h-[192px] flex-col px-4 py-3">
           <ColumnHeader
             label="API keys"
             href="/dashboard/developer"
@@ -197,9 +199,9 @@ export function WorkspaceCard({
             ))
           ) : (
             <EmptyCta
-              note="no API keys"
+              note="No API Keys"
               href="/dashboard/developer"
-              cta="Create key"
+              cta="Create Key"
             />
           )}
         </div>
