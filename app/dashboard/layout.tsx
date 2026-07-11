@@ -63,7 +63,9 @@ export default function DashboardLayout({
       <DashboardSidebar />
       <div data-dashboard-scroller className="border-border bg-background m-3 flex min-w-0 flex-1 flex-col overflow-y-auto rounded-2xl border lg:ml-0">
         <DashboardTopbar />
-        <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+        {/* flex-col so pages can mt-auto elements (selection bars) to the
+            sheet's bottom even when their content is short. */}
+        <main className="flex flex-1 flex-col px-4 py-6 sm:px-6">{children}</main>
         {/* Scrolling content dissolves into the sheet's bottom edge. Light
             only: dark-on-dark fades just dim the last row without reading
             as a fade. */}

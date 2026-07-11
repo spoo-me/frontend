@@ -519,7 +519,7 @@ export default function LinksPage() {
   )
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
@@ -866,7 +866,7 @@ export default function LinksPage() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.97 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-none sticky bottom-8 z-20 mt-4 flex justify-center"
+            className="pointer-events-none sticky bottom-8 z-20 mt-auto flex justify-center pt-4"
           >
             <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border/60 bg-popover/95 p-1.5 pl-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]">
               <span className="mr-1 font-mono text-xs text-foreground tabular-nums">

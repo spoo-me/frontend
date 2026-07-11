@@ -14,6 +14,9 @@ export default function DashboardTemplate({
 }) {
   return (
     <motion.div
+      // flex chain continues through the entrance wrapper so pages can
+      // mt-auto elements (selection bars) to the sheet bottom.
+      className="flex flex-1 flex-col"
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
