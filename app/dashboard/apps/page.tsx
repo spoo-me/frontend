@@ -62,14 +62,10 @@ const GRANT_ICONS: Record<string, React.ElementType> = {
 
 /** Grants → catalogue slugs, so connected rows share the brand tiles and
  *  already-connected apps drop out of the catalogue below. */
-const GRANT_APP_SLUGS: Record<string, string> = {
-  terminal: "cli",
-  puzzle: "chrome",
-  command: "raycast",
-}
-
+// Grants carry the backend registry key (config/apps.yaml) in `app`;
+// catalogue slugs use the same namespace, so the join is exact.
 const grantApp = (grant: AppGrant) =>
-  connectedApps.find((a) => a.slug === GRANT_APP_SLUGS[grant.icon]) ?? null
+  connectedApps.find((a) => a.slug === grant.app) ?? null
 
 /** Shipped apps first; unshipped sink to the bottom of the grid. */
 const availableFirst = (list: ConnectedApp[]) => [

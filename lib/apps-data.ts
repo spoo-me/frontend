@@ -16,7 +16,7 @@ export type ConnectedApp = {
 
 export const connectedApps: ConnectedApp[] = [
   {
-    slug: "raycast",
+    slug: "spoo-raycast",
     name: "Raycast",
     category: "extension",
     tagline: "Shorten links from Raycast in milliseconds",
@@ -45,7 +45,7 @@ export const connectedApps: ConnectedApp[] = [
     ],
   },
   {
-    slug: "chrome",
+    slug: "spoo-snap",
     name: "Chrome Extension",
     category: "extension",
     tagline: "spoo-snap: one-click shorten any tab",
@@ -66,7 +66,7 @@ export const connectedApps: ConnectedApp[] = [
     status: "live",
   },
   {
-    slug: "windows",
+    slug: "spoo-desktop",
     name: "Windows App",
     category: "desktop",
     tagline: "Native WinUI 3 desktop client",
@@ -91,7 +91,7 @@ export const connectedApps: ConnectedApp[] = [
     ],
   },
   {
-    slug: "discord",
+    slug: "spoo-discord",
     name: "Discord Bot",
     category: "bot",
     tagline: "Shorten & track from any Discord server",
@@ -111,7 +111,7 @@ export const connectedApps: ConnectedApp[] = [
     status: "live",
   },
   {
-    slug: "telegram",
+    slug: "spoo-telegram",
     name: "Telegram Bot",
     category: "bot",
     tagline: "Inline link shortening anywhere on Telegram",
@@ -153,7 +153,7 @@ export const connectedApps: ConnectedApp[] = [
     status: "soon",
   },
   {
-    slug: "slack",
+    slug: "spoo-slack",
     name: "Slack",
     category: "bot",
     tagline: "Shorten + track from any Slack workspace",
@@ -250,7 +250,7 @@ export const connectedApps: ConnectedApp[] = [
     status: "beta",
   },
   {
-    slug: "cli",
+    slug: "spoo-cli",
     name: "spoo CLI",
     category: "cli",
     tagline: "One-command terminal shortener",
@@ -282,7 +282,7 @@ export const connectedApps: ConnectedApp[] = [
     status: "soon",
   },
   {
-    slug: "zapier",
+    slug: "spoo-zapier",
     name: "Zapier",
     category: "bot",
     tagline: "Connect spoo to 6000+ apps via Zapier",

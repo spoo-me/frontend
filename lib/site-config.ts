@@ -87,13 +87,13 @@ export const productLinks: NavLink[] = [
 export const appsFeaturedLinks: NavLink[] = [
   {
     title: "Raycast",
-    href: "/apps/raycast",
+    href: "/apps/spoo-raycast",
     description: "Shorten in milliseconds from the launcher",
     iconKey: "raycast",
   },
   {
     title: "Chrome",
-    href: "/apps/chrome",
+    href: "/apps/spoo-snap",
     description: "spoo-snap, one-click shorten any tab",
     iconKey: "chrome",
   },
@@ -102,19 +102,19 @@ export const appsFeaturedLinks: NavLink[] = [
 export const appsRowLinks: NavLink[] = [
   {
     title: "Discord bot",
-    href: "/apps/discord",
+    href: "/apps/spoo-discord",
     description: "Shorten in any Discord server",
     iconKey: "discord",
   },
   {
     title: "Telegram bot",
-    href: "/apps/telegram",
+    href: "/apps/spoo-telegram",
     description: "Shorten links from any chat",
     iconKey: "telegram",
   },
   {
     title: "Windows app",
-    href: "/apps/windows",
+    href: "/apps/spoo-desktop",
     description: "Native taskbar shortener",
     iconKey: "windows",
   },
@@ -244,10 +244,10 @@ export const footerLinks = {
   ],
   apps: [
     { label: "All apps", href: "/apps" },
-    { label: "Raycast", href: "/apps/raycast" },
-    { label: "Chrome", href: "/apps/chrome" },
-    { label: "Discord bot", href: "/apps/discord" },
-    { label: "Windows app", href: "/apps/windows" },
+    { label: "Raycast", href: "/apps/spoo-raycast" },
+    { label: "Chrome", href: "/apps/spoo-snap" },
+    { label: "Discord bot", href: "/apps/spoo-discord" },
+    { label: "Windows app", href: "/apps/spoo-desktop" },
   ],
   developers: [
     { label: "API reference", href: siteConfig.links.docs, external: true },

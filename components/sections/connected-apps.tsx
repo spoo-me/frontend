@@ -26,25 +26,25 @@ type Placement = {
 
 const placements: Placement[] = [
   // top arc
-  { slug: "raycast",        x: 14, y: 18, size: "lg", variant: "signal", rot: -8 },
+  { slug: "spoo-raycast",        x: 14, y: 18, size: "lg", variant: "signal", rot: -8 },
   { slug: "sdk-rust",       x: 32, y: 16, size: "md", rot:  6 },
   { slug: "sdk-typescript", x: 46, y: 8,  size: "sm", rot: -4 },
-  { slug: "discord",        x: 60, y: 12, size: "md", variant: "brand", rot:  5 },
-  { slug: "windows",        x: 78, y: 18, size: "lg", rot: 10 },
-  { slug: "slack",          x: 90, y: 32, size: "md", variant: "brand", rot: -6 },
+  { slug: "spoo-discord",        x: 60, y: 12, size: "md", variant: "brand", rot:  5 },
+  { slug: "spoo-desktop",        x: 78, y: 18, size: "lg", rot: 10 },
+  { slug: "spoo-slack",          x: 90, y: 32, size: "md", variant: "brand", rot: -6 },
   // left edge
   { slug: "sdk-go",         x:  6, y: 36, size: "md", rot: 12 },
   { slug: "apple",          x: 18, y: 50, size: "xl", variant: "dark", rot: -5 },
-  { slug: "telegram",       x:  8, y: 64, size: "md", rot:  8 },
+  { slug: "spoo-telegram",       x:  8, y: 64, size: "md", rot:  8 },
   // right edge
   { slug: "android",        x: 82, y: 50, size: "xl", rot:  7 },
   { slug: "sdk-cpp",        x: 94, y: 62, size: "sm", rot: -10 },
   // bottom arc
-  { slug: "chrome",         x: 22, y: 82, size: "md", variant: "brand", rot: -9 },
-  { slug: "cli",            x: 38, y: 90, size: "lg", variant: "dark", rot:  5 },
+  { slug: "spoo-snap",         x: 22, y: 82, size: "md", variant: "brand", rot: -9 },
+  { slug: "spoo-cli",            x: 38, y: 90, size: "lg", variant: "dark", rot:  5 },
   { slug: "sdk-python",     x: 56, y: 88, size: "md", rot: -3 },
   { slug: "n8n",            x: 72, y: 84, size: "lg", rot:  7 },
-  { slug: "zapier",         x: 86, y: 84, size: "md", variant: "brand", rot: -6 },
+  { slug: "spoo-zapier",         x: 86, y: 84, size: "md", variant: "brand", rot: -6 },
 ]
 
 export function ConnectedApps() {

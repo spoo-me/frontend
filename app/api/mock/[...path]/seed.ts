@@ -341,7 +341,7 @@ export function buildGrants(): MockGrant[] {
     },
     {
       id: "grant_raycast",
-      app: "raycast",
+      app: "spoo-raycast",
       app_name: "Raycast extension",
       icon: "command",
       scopes: ["shorten:create", "urls:read"],
