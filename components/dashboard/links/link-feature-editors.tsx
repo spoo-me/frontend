@@ -25,8 +25,8 @@ import {
 } from "react-icons/fa6"
 
 import { cn } from "@/lib/utils"
+import { urlProblem } from "@/lib/validation"
 import {
-  GEO_RULE_URL_MAX_LENGTH,
   GEO_RULES_MAX_COUNTRIES,
   META_DESCRIPTION_MAX,
   META_IMAGE_MAX_BYTES,
@@ -131,8 +131,9 @@ export const sameGeoRules = (a: GeoRules, b: GeoRules | null | undefined) => {
 }
 
 /** First blocking problem with the geo drafts, or null. Mirrors the server
-    validators (PR #230): one rule per country, at most 50 countries, URL
-    within the long_url length bound — so saves never 400 blind. */
+    validators (PR #230): one rule per country, at most 50 countries, and
+    each URL through the same checks as the destination (length, format,
+    spoo.me loops) — so saves never 400 blind. */
 export function geoRulesProblem(rules: GeoRuleDraft[]): string | null {
   const seen = new Set<string>()
   for (const r of rules) {
@@ -140,11 +141,10 @@ export function geoRulesProblem(rules: GeoRuleDraft[]): string | null {
     if (seen.has(r.country))
       return `${dimensionLabel("country", r.country)} has two rules. Each country gets one.`
     seen.add(r.country)
-    if (
-      looksLikeUrl(r.url) &&
-      normalizeUrl(r.url).length > GEO_RULE_URL_MAX_LENGTH
-    )
-      return `The ${dimensionLabel("country", r.country)} URL is too long (${GEO_RULE_URL_MAX_LENGTH.toLocaleString()} characters max).`
+    if (looksLikeUrl(r.url)) {
+      const bad = urlProblem(r.url)
+      if (bad) return `${dimensionLabel("country", r.country)}: ${bad}`
+    }
   }
   if (seen.size > GEO_RULES_MAX_COUNTRIES)
     return `At most ${GEO_RULES_MAX_COUNTRIES} country rules per link.`
