@@ -34,7 +34,7 @@ export const connectedApps: ConnectedApp[] = [
       "Edit, pause, delete from Raycast",
       "QR code generation",
     ],
-    status: "live",
+    status: "soon",
     gallery: [
       "/apps/raycast/spoo-1.png",
       "/apps/raycast/spoo-2.png",
@@ -63,7 +63,7 @@ export const connectedApps: ConnectedApp[] = [
       "Stats inline",
       "Firefox-compatible",
     ],
-    status: "live",
+    status: "soon",
   },
   {
     slug: "spoo-desktop",
@@ -74,9 +74,12 @@ export const connectedApps: ConnectedApp[] = [
       "spooWASDK: fluent native Windows app built with WinUI 3 and C#. Acrylic UI, system tray, hotkeys.",
     iconKey: "windows",
     color: "#00A4EF",
-    url: "https://github.com/spoo-me/spooWASDK/releases",
+    url: "https://apps.microsoft.com/detail/9mtwpjxlb0gr",
     github: "https://github.com/spoo-me/spooWASDK",
-    install: [{ label: "Download .msix", command: "Latest release on GitHub" }],
+    install: [
+      { label: "Microsoft Store", command: "Get it on the Microsoft Store" },
+      { label: "Download .msix", command: "Latest release on GitHub" },
+    ],
     features: [
       "Native Mica/Acrylic UI",
       "System tray quick-shorten",
@@ -108,7 +111,7 @@ export const connectedApps: ConnectedApp[] = [
       "Chart generation",
       "Server analytics",
     ],
-    status: "live",
+    status: "soon",
   },
   {
     slug: "spoo-telegram",
@@ -122,7 +125,7 @@ export const connectedApps: ConnectedApp[] = [
     url: "https://t.me/spoo_me_bot",
     install: [{ label: "Open in Telegram", command: "@spoo_me_bot" }],
     features: ["Inline mode", "Click tracking", "Custom alias", "QR codes"],
-    status: "beta",
+    status: "soon",
   },
   {
     slug: "android",
