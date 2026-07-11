@@ -11,6 +11,7 @@ import {
   SiDiscord,
   SiGithub,
   SiGo,
+  SiGoogle,
   SiGooglechrome,
   SiInstagram,
   SiN8N,
@@ -70,6 +71,7 @@ const dual =
 
 export const BrandIcons = {
   github:     wrap(SiGithub),
+  google:     wrap(SiGoogle),
   raycast:    wrap(SiRaycast),
   chrome:     dual(wrap(SiGooglechrome), ChromeColor),
   windows:    Windows,

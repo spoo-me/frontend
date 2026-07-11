@@ -35,6 +35,17 @@ type MockState = {
   email: string
   userName: string | null
   verified: boolean
+  passwordSet: boolean
+  /** Linked OAuth providers — mirrors AuthProviderInfo + the provider's pfp. */
+  providers: Array<{
+    provider: "google" | "github" | "discord"
+    email: string
+    linked_at: string | null
+    /** Picture URL the provider gave us (feeds /dashboard/profile-pictures). */
+    picture: string | null
+  }>
+  /** Active profile picture — mirrors UserPfp on the session. */
+  pfp: { url: string; source: string } | null
   onboarding: {
     step: string | null
     path: "links" | "api" | null
@@ -71,6 +82,22 @@ const initial = (): MockState => ({
   email: "you@example.com",
   userName: "Aditya",
   verified: true,
+  passwordSet: true,
+  providers: [
+    {
+      provider: "github",
+      email: "you@example.com",
+      linked_at: "2026-05-14T09:12:00+00:00",
+      picture: "/api/mock/avatar/github",
+    },
+    {
+      provider: "google",
+      email: "you@gmail.com",
+      linked_at: "2026-06-02T18:40:00+00:00",
+      picture: "/api/mock/avatar/google",
+    },
+  ],
+  pfp: null,
   onboarding: { step: "completed", path: "links", completed: true },
   links: buildLinks(),
   domains: buildDomains(),
@@ -150,9 +177,13 @@ function user() {
     email_verified: s.verified,
     user_name: s.userName,
     plan: "free",
-    password_set: true,
-    auth_providers: [{ provider: "github", email: s.email, linked_at: null }],
-    pfp: null,
+    password_set: s.passwordSet,
+    auth_providers: s.providers.map((p) => ({
+      provider: p.provider,
+      email: p.email,
+      linked_at: p.linked_at,
+    })),
+    pfp: s.pfp,
   }
 }
 
@@ -661,7 +692,15 @@ async function handle(req: NextRequest, path: string[]) {
       // onboarding done so the dashboard renders (empty-state testing).
       const fresh = params.get("mode") === "fresh"
       g.__spooMock = fresh
-        ? { ...initial(), links: [], domains: [], keys: [], grants: [] }
+        ? {
+            ...initial(),
+            links: [],
+            domains: [],
+            keys: [],
+            grants: [],
+            providers: [],
+            pfp: null,
+          }
         : initial()
       return json({ success: true, note: fresh ? "mock reset (fresh account)" : "mock state reset" })
     }
@@ -674,6 +713,8 @@ async function handle(req: NextRequest, path: string[]) {
         userName: body.user_name ? String(body.user_name) : null,
         verified: false, // signup walks the OTP beat
         links: [],
+        providers: [], // email signup starts with no linked providers
+        pfp: null,
         onboarding: { step: null, path: null, completed: false },
       }
       return withSession(
@@ -1179,11 +1220,110 @@ async function handle(req: NextRequest, path: string[]) {
     }
   }
 
-  /* ---------- oauth: one hop, straight back signed-in ---------- */
+  /* ---------- oauth provider management (fixed paths first, like the
+     real router: /oauth/providers must not be captured by /{provider}) --- */
+
+  // DELETE /oauth/providers/{name}/unlink — real errors byte-for-byte:
+  // 400 when it's the only auth method, 404 when not linked. pfp survives
+  // an unlink (the real service only $pulls the provider entry).
+  if (
+    path[0] === "oauth" &&
+    path[1] === "providers" &&
+    path[2] &&
+    path[3] === "unlink" &&
+    req.method === "DELETE"
+  ) {
+    const s = state()
+    const name = path[2]
+    const remaining = s.providers.filter((p) => p.provider !== name)
+    if (!s.passwordSet && remaining.length === 0)
+      return fail(400, "validation_error", "cannot unlink last authentication method")
+    if (remaining.length === s.providers.length)
+      return fail(404, "not_found", "provider not found or already unlinked")
+    s.providers = remaining
+    return json({ success: true, message: `${name} unlinked successfully` })
+  }
+
+  // GET /oauth/{provider}/link — the real route 302s to the provider's
+  // consent screen and its callback lands on the app. The mock collapses
+  // the round trip: link instantly, bounce back to settings.
+  if (path[0] === "oauth" && path[1] && path[2] === "link" && req.method === "GET") {
+    const s = state()
+    const name = path[1] as MockState["providers"][number]["provider"]
+    if (!["google", "github", "discord"].includes(name))
+      return fail(404, "not_found", `'${name}' OAuth not configured`)
+    if (!s.providers.some((p) => p.provider === name)) {
+      s.providers.push({
+        provider: name,
+        email: name === "google" ? "you@gmail.com" : `you@${name}.dev`,
+        linked_at: new Date().toISOString(),
+        picture: `/api/mock/avatar/${name}`,
+      })
+    }
+    return NextResponse.redirect(new URL("/dashboard/settings", req.url), {
+      status: 302,
+    })
+  }
+
+  /* ---------- profile pictures (real path: /dashboard/profile-pictures) -- */
+
+  if (path[0] === "dashboard" && path[1] === "profile-pictures") {
+    const s = state()
+    if (req.method === "GET") {
+      return json({
+        pictures: s.providers
+          .filter((p) => p.picture)
+          .map((p) => ({
+            id: `${p.provider}_mock_${p.provider}_uid`,
+            url: p.picture!,
+            source: p.provider,
+            is_current: s.pfp?.url === p.picture,
+          })),
+      })
+    }
+    if (req.method === "POST") {
+      const id = String(body.picture_id ?? "")
+      const match = s.providers.find(
+        (p) => p.picture && id.startsWith(`${p.provider}_`),
+      )
+      if (!match) return fail(404, "not_found", "picture not found")
+      s.pfp = { url: match.picture!, source: match.provider }
+      return json({ message: "Profile picture updated successfully" })
+    }
+  }
+
+  // GET /api/mock/avatar/{provider} — generated stand-in for the distinct
+  // pfp each provider would serve (direct path, no rewrite involved).
+  if (path[0] === "avatar" && path[1]) {
+    const hues: Record<string, string> = {
+      github: "#24292f",
+      google: "#886ee7",
+      discord: "#5865f2",
+    }
+    const fill = hues[path[1]] ?? "#71717a"
+    const letter = path[1].charAt(0).toUpperCase()
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${fill}"/><text x="32" y="41" text-anchor="middle" font-family="ui-monospace,monospace" font-size="28" fill="#fafafa">${letter}</text></svg>`
+    return new NextResponse(svg, {
+      headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" },
+    })
+  }
+
+  /* ---------- oauth sign-in: one hop, straight back signed-in ---------- */
   if (path[0] === "oauth") {
+    const provider = (path[1] ?? "github") as MockState["providers"][number]["provider"]
     g.__spooMock = {
       ...initial(),
       email: `you@${path[1] ?? "oauth"}.dev`,
+      passwordSet: false, // pure OAuth account until they set one
+      providers: [
+        {
+          provider,
+          email: `you@${path[1] ?? "oauth"}.dev`,
+          linked_at: new Date().toISOString(),
+          picture: `/api/mock/avatar/${provider}`,
+        },
+      ],
+      pfp: { url: `/api/mock/avatar/${provider}`, source: provider },
     }
     return withSession(
       NextResponse.redirect(new URL("/onboarding", req.url), { status: 302 }),

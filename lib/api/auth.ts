@@ -62,6 +62,45 @@ export function verifyEmail(code: string) {
   )
 }
 
+/* ── OAuth provider management + profile pictures ─────────────────────────
+   The session (auth_providers, password_set, pfp) is the read model; these
+   are the mutations. Linking is a browser navigation, not a fetch: the
+   backend 302s to the provider's consent screen. */
+
+export const OAUTH_PROVIDERS = ["google", "github", "discord"] as const
+export type OAuthProviderName = (typeof OAUTH_PROVIDERS)[number]
+
+/** href for the link flow — use on an <a>, never fetch it. */
+export function oauthLinkHref(provider: OAuthProviderName) {
+  return `/oauth/${provider}/link`
+}
+
+export function unlinkProvider(provider: OAuthProviderName) {
+  return authedFetch(`/oauth/providers/${provider}/unlink`, {
+    method: "DELETE",
+  }).then((r) => parse<{ success: boolean; message: string }>(r))
+}
+
+export type ProfilePicture = {
+  id: string
+  url: string
+  source: string
+  is_current: boolean
+}
+
+export function listProfilePictures() {
+  return authedFetch("/dashboard/profile-pictures", { method: "GET" }).then(
+    (r) => parse<{ pictures: ProfilePicture[] }>(r),
+  )
+}
+
+export function setProfilePicture(pictureId: string) {
+  return authedFetch(
+    "/dashboard/profile-pictures",
+    jsonInit("POST", { picture_id: pictureId }),
+  ).then((r) => parse<{ message: string }>(r))
+}
+
 export function requestPasswordReset(email: string) {
   return fetch("/auth/request-password-reset", jsonInit("POST", { email })).then(
     (r) => parse<{ success: boolean }>(r),
