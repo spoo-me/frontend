@@ -29,6 +29,9 @@ const POSTHOG_REWRITES = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Self-contained server bundle for the Docker image — runtime needs only
+  // .next/standalone + .next/static + public, no node_modules install.
+  output: "standalone",
   turbopack: {
     root: import.meta.dirname,
   },
@@ -39,6 +42,8 @@ const nextConfig = {
   },
   // PostHog API paths break under Next's trailing-slash redirect.
   skipTrailingSlashRedirect: true,
+  // Don't advertise the framework (Caddy strips Server the same way).
+  poweredByHeader: false,
   async rewrites() {
     if (MOCK) {
       return [

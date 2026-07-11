@@ -1,0 +1,22 @@
+# Build context = source + lockfile only. Everything the image needs is
+# produced inside the build stages.
+node_modules
+.next
+.next-mock
+.git
+.github
+
+# Env files never bake into the image — NEXT_PUBLIC_* comes via build args.
+.env*
+
+# Local-only noise
+docs
+.claude
+.claude-screens
+*.md
+*.log
+*.png
+.DS_Store
+.mock-layouts.json
+tsconfig.tsbuildinfo
+.playwright-mcp
