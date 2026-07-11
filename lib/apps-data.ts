@@ -202,7 +202,7 @@ export const connectedApps: ConnectedApp[] = [
       { label: "bun", command: "bun add spoo-me" },
     ],
     features: ["Edge-runtime ready", "Zero deps", "Fully typed", "Tree-shakeable"],
-    status: "live",
+    status: "soon",
   },
   {
     slug: "sdk-rust",
@@ -232,7 +232,7 @@ export const connectedApps: ConnectedApp[] = [
     github: "https://github.com/spoo-me/spoo-go",
     install: [{ label: "go get", command: "go get github.com/spoo-me/spoo-go" }],
     features: ["context.Context", "Zero deps", "Idiomatic errors", "Streaming analytics"],
-    status: "live",
+    status: "soon",
   },
   {
     slug: "sdk-cpp",
@@ -247,7 +247,7 @@ export const connectedApps: ConnectedApp[] = [
     github: "https://github.com/spoo-me/spoo-cpp",
     install: [{ label: "vcpkg", command: "vcpkg install spoo" }],
     features: ["Header-only", "C++20", "libcurl-based", "CMake first-class"],
-    status: "beta",
+    status: "soon",
   },
   {
     slug: "spoo-cli",
