@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
 import { Check, Copy, Link2, Loader2 } from "lucide-react"
 
@@ -74,51 +73,50 @@ export function AliasClaim({
 
   if (state.kind === "claimed") {
     return (
-      <div className="w-full rounded-xl border border-border/60 bg-background/45 p-1 shadow-soft">
-        <div className="flex items-center gap-1 px-1">
-          <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2">
-            <Link2 className="size-4 shrink-0 text-live" />
-            <a
-              href={state.short}
-              target="_blank"
-              rel="noreferrer"
-              className="truncate font-medium font-mono text-foreground text-sm hover:text-foreground/80"
-            >
-              {state.short.replace(/^https?:\/\//, "")}
-            </a>
-          </div>
-          <Button
-            onClick={async () => {
-              await navigator.clipboard.writeText(state.short)
-              setCopied(true)
-              setTimeout(() => setCopied(false), 1600)
-            }}
-            size="sm"
-            variant="outline"
-            className="h-9"
+      <div className="flex items-center gap-2">
+        {/* Crop-mark frame: the house "you made an artifact" motif. */}
+        <div className="relative px-5 py-3">
+          <span
+            aria-hidden
+            className="absolute top-0 left-0 size-3 border-foreground/50 border-t border-l"
+          />
+          <span
+            aria-hidden
+            className="absolute top-0 right-0 size-3 border-foreground/50 border-t border-r"
+          />
+          <span
+            aria-hidden
+            className="absolute bottom-0 left-0 size-3 border-foreground/50 border-b border-l"
+          />
+          <span
+            aria-hidden
+            className="absolute right-0 bottom-0 size-3 border-foreground/50 border-r border-b"
+          />
+          <a
+            href={state.short}
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono font-semibold text-foreground text-xl tracking-tight transition-colors duration-150 hover:text-foreground/80"
           >
-            {copied ? (
-              <>
-                <Check className="size-3.5" data-icon="inline-start" />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="size-3.5" data-icon="inline-start" />
-                Copy
-              </>
-            )}
-          </Button>
+            {state.short.replace(/^https?:\/\//, "")}
+          </a>
         </div>
-        <p className="px-3 pt-1 pb-2 font-mono text-[11px] text-muted-foreground/70">
-          made anonymously ·{" "}
-          <Link
-            href="/signup"
-            className="underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
-          >
-            sign up to keep it editable
-          </Link>
-        </p>
+        <button
+          type="button"
+          aria-label={copied ? "Copied" : "Copy short link"}
+          onClick={async () => {
+            await navigator.clipboard.writeText(state.short)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1600)
+          }}
+          className={
+            copied
+              ? "flex size-7 shrink-0 items-center justify-center rounded-md text-live"
+              : "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
+          }
+        >
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+        </button>
       </div>
     )
   }

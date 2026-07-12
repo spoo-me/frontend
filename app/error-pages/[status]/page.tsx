@@ -52,14 +52,6 @@ const TITLES: Record<View, string> = {
   "5xx": "Something went wrong",
 }
 
-const CAPTIONS: Record<View, string> = {
-  "404": "Not found",
-  "410": "Link ended",
-  "451": "Link blocked",
-  "429": "Rate limited",
-  "5xx": "Server error",
-}
-
 type Params = {
   params: Promise<{ status: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -86,7 +78,7 @@ export default async function ErrorPage({ params, searchParams }: Params) {
   const view = resolveView(status, code)
 
   return (
-    <ErrorShell status={status} caption={CAPTIONS[view]}>
+    <ErrorShell status={status}>
       {view === "404" ? (
         <NotFoundBody from={from} />
       ) : view === "410" ? (

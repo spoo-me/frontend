@@ -46,7 +46,7 @@ export function NotFoundBody({ from }: { from?: string }) {
   }, [alias])
 
   return (
-    <div className="flex flex-col items-start gap-10 sm:flex-row sm:items-center sm:gap-6">
+    <div className="flex flex-col items-start gap-10 sm:flex-row sm:items-center sm:gap-10">
       <div className="min-w-0 flex-1">
         {alias ? (
           <>
@@ -101,7 +101,7 @@ export function NotFoundBody({ from }: { from?: string }) {
           </>
         )}
       </div>
-      <Fisherman className="w-48 shrink-0 self-center text-foreground/30 sm:w-56 sm:self-auto" />
+      <Fisherman className="w-56 shrink-0 self-center text-foreground/30 sm:w-80 sm:self-auto" />
     </div>
   )
 }
