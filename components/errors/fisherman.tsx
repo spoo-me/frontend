@@ -1,17 +1,16 @@
 /**
- * The 404's last glyph: the SAME "4" as the first one, dashed and molded
- * into a fisherman —
+ * The 404's last glyph: the SAME "4" as the first one, but as a dashed
+ * OUTLINE — every stroke double-edged at the solid glyph's stroke width
+ * (~26 units on this 160x205 cap box), counter triangle included — and
+ * molded into a fisherman:
  *
- *   the diagonal  = his rod
- *   the crossbar  = the pier he sits on
- *   the stem      = the fishing line, continuing past the baseline,
- *                   through the waterline, to a hook that drifts
+ *   the diagonal   = his rod, rising to the stem top
+ *   the crossbar   = the pier deck he sits on (its two edges ARE the
+ *                    double-lined deck)
+ *   the stem       = the line: double-edged to the baseline, then a
+ *                    single thread sinking past the waterline to the hook
  *
- * Geometry traced from the solid Geist 4: glyph box 160x205 units
- * (cap-height aspect ~1.28), apex/stem at x=127, crossbar at 70% height
- * overshooting right, diagonal foot at the left edge. The parent offsets
- * the svg by the cap-top inset so it top-aligns with the solid numerals;
- * everything below y=205 is the sunken line.
+ * He sits inside the 4's counter, legs over the deck edge.
  */
 export function FishermanGlyph({
   className,
@@ -32,24 +31,27 @@ export function FishermanGlyph({
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {/* the 4, stroke by stroke: diagonal (rod), crossbar (pier), stem */}
-      <path d="M127 0 L0 143" strokeDasharray="7 6" />
-      <path d="M0 143 H160" strokeDasharray="7 6" />
-      <path d="M127 0 V205" strokeDasharray="7 6" />
-      {/* the stem keeps going: the line sinks past the waterline */}
-      <path d="M127 205 V420" strokeWidth="1.5" strokeDasharray="3 7" />
+      {/* the 4's outer contour, one dashed pass */}
+      <path
+        d="M130 0 L130 130 L160 130 L160 156 L130 156 L130 205 L104 205 L104 156 L0 156 L0 130 L104 0 Z"
+        strokeDasharray="7 6"
+      />
+      {/* the counter (the triangle window he shelters in) */}
+      <path d="M104 34 L104 130 L30 130 Z" strokeDasharray="7 6" />
+      {/* the stem narrows into the line and sinks past the waterline */}
+      <path d="M117 205 V420" strokeWidth="1.5" strokeDasharray="3 7" />
       <g className="[animation:hook-bob_3.4s_ease-in-out_infinite] motion-reduce:animate-none">
-        <path d="M127 420 q0 12 -9 12 q-8 0 -8 -9" strokeWidth="1.5" />
+        <path d="M117 420 q0 12 -9 12 q-8 0 -8 -9" strokeWidth="1.5" />
       </g>
-      {/* the fisherman, molded into the diagonal: he grips the rod, sits
-          on the crossbar, legs over the pier edge */}
+      {/* the fisherman, seated in the counter on the deck's top edge,
+          rod overhead, legs over the front of the pier */}
       <g strokeDasharray="4 4">
-        <circle cx="28" cy="96" r="9" />
-        <path d="M30 105 L38 140" />
-        <path d="M33 112 L46 94" />
-        <path d="M38 140 L62 144" />
-        <path d="M62 144 V172" />
-        <path d="M62 172 l8 2" />
+        <circle cx="66" cy="86" r="8" />
+        <path d="M68 95 L74 126" />
+        <path d="M70 102 L78 74" />
+        <path d="M74 126 L94 130" />
+        <path d="M94 130 V158" />
+        <path d="M94 158 l8 2" />
       </g>
     </svg>
   )
