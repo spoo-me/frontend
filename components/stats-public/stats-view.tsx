@@ -154,9 +154,15 @@ export function PublicStatsView({
             {link.status !== "active" && (
               <>
                 {" · "}
+                {/* StatusPill's tone map, as plain mono ink: amber for
+                    expired, destructive for blocked, muted otherwise. */}
                 <span
                   className={
-                    link.status === "blocked" ? "text-destructive" : undefined
+                    link.status === "blocked"
+                      ? "text-destructive"
+                      : link.status === "expired"
+                        ? "text-amber-700 dark:text-amber-400"
+                        : undefined
                   }
                 >
                   {link.status}
