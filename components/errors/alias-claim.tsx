@@ -1,8 +1,9 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
-import { Check, Copy, Link2, Loader2 } from "lucide-react"
+import { ArrowUpRight, ChartColumn, Check, Copy, Link2, Loader2 } from "lucide-react"
 
 import { celebrate } from "@/lib/confetti"
 import { trackUiAction } from "@/lib/analytics"
@@ -61,6 +62,8 @@ export function AliasClaim({
       setState({ kind: "claimed", short: data.short_url })
       trackUiAction("error_alias_claimed", alias ? "alias" : "freeform")
       celebrate(buttonRef.current)
+      // The fisherman's scene listens for this: something just bit.
+      window.dispatchEvent(new CustomEvent("spoo:alias-claimed"))
       onClaimed?.()
     } catch (err) {
       setState({
@@ -72,51 +75,52 @@ export function AliasClaim({
   }
 
   if (state.kind === "claimed") {
+    // The link itself already headlines the page; what's left is what you
+    // DO with it. Stats first among the quiet ones — that page is the
+    // product making its own case.
+    const aliasPath = (() => {
+      try {
+        return new URL(state.short).pathname.replace(/^\//, "")
+      } catch {
+        return ""
+      }
+    })()
     return (
-      <div className="flex items-center gap-2">
-        {/* Crop-mark frame: the house "you made an artifact" motif. */}
-        <div className="relative px-5 py-3">
-          <span
-            aria-hidden
-            className="absolute top-0 left-0 size-3 border-foreground/50 border-t border-l"
-          />
-          <span
-            aria-hidden
-            className="absolute top-0 right-0 size-3 border-foreground/50 border-t border-r"
-          />
-          <span
-            aria-hidden
-            className="absolute bottom-0 left-0 size-3 border-foreground/50 border-b border-l"
-          />
-          <span
-            aria-hidden
-            className="absolute right-0 bottom-0 size-3 border-foreground/50 border-r border-b"
-          />
-          <a
-            href={state.short}
-            target="_blank"
-            rel="noreferrer"
-            className="font-mono font-semibold text-foreground text-xl tracking-tight transition-colors duration-150 hover:text-foreground/80"
-          >
-            {state.short.replace(/^https?:\/\//, "")}
-          </a>
-        </div>
-        <button
-          type="button"
-          aria-label={copied ? "Copied" : "Copy short link"}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          size="lg"
           onClick={async () => {
             await navigator.clipboard.writeText(state.short)
             setCopied(true)
             setTimeout(() => setCopied(false), 1600)
           }}
-          className={
-            copied
-              ? "flex size-7 shrink-0 items-center justify-center rounded-md text-live"
-              : "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
-          }
         >
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-        </button>
+          {copied ? (
+            <Check data-icon="inline-start" className="size-3.5 text-live" />
+          ) : (
+            <Copy data-icon="inline-start" className="size-3.5" />
+          )}
+          {copied ? "Copied" : "Copy link"}
+        </Button>
+        {aliasPath && (
+          <Button asChild variant="outline" size="lg">
+            <Link href={`/stats/${aliasPath}`}>
+              <ChartColumn data-icon="inline-start" className="size-3.5" />
+              Live stats
+            </Link>
+          </Button>
+        )}
+        <Button
+          asChild
+          variant="ghost"
+          size="lg"
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <a href={state.short} target="_blank" rel="noreferrer">
+            Open
+            <ArrowUpRight data-icon="inline-end" className="size-3.5" />
+          </a>
+        </Button>
       </div>
     )
   }
