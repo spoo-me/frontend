@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth/auth-context"
 import { HEARD_FROM_OPTIONS, type OnboardingStash } from "@/lib/onboarding"
 import { useFeature } from "@/hooks/use-features"
 
-export function DoneStep({
+export function RecapStep({
   stash,
   onFinish,
 }: {

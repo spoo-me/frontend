@@ -2,11 +2,11 @@
 
 import * as React from "react"
 
-import { DoneStep } from "@/components/onboarding/steps/done-step"
+import { RecapStep } from "@/components/onboarding/steps/recap-step"
 import { useOnboarding } from "@/components/onboarding/use-onboarding"
 import { loadStash, saveStash, type OnboardingStash } from "@/lib/onboarding"
 
-export default function DonePage() {
+export default function RecapPage() {
   const { complete } = useOnboarding()
   const [stash, setStash] = React.useState<OnboardingStash>({})
 
@@ -14,7 +14,7 @@ export default function DonePage() {
   React.useEffect(() => setStash(loadStash()), [])
 
   return (
-    <DoneStep
+    <RecapStep
       stash={stash}
       onFinish={(heardFrom) => {
         if (heardFrom) saveStash({ heardFrom })

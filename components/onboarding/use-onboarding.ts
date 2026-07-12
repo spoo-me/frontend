@@ -14,7 +14,7 @@ import {
   type OnboardingPath,
   type OnboardingStep,
 } from "@/lib/onboarding"
-import { putOnboardingState } from "@/lib/api"
+import { completeOnboarding, putOnboardingState } from "@/lib/api"
 
 /**
  * Step navigation for the route-per-step flow: pushes the next route and
@@ -50,7 +50,7 @@ export function useOnboarding() {
       heardFrom: stash.heardFrom,
       artifactKind: stash.artifact?.kind ?? null,
     })
-    putOnboardingState({ step: "completed" }).catch(() => {})
+    completeOnboarding(stash.heardFrom).catch(() => {})
     router.push("/dashboard")
   }, [router])
 
