@@ -8,6 +8,8 @@ export type StatsDimension =
   | "city"
   | "referrer"
   | "short_code"
+  /** v1 legacy only: known-bot hits on the public stats payload. */
+  | "bots"
 
 export type TimeBucket = {
   bucket: string
@@ -66,7 +68,7 @@ export type StatsParams = {
 
 type WireEntry = Record<string, unknown>
 
-type StatsWire = {
+export type StatsWire = {
   summary?: {
     total_clicks?: number
     unique_clicks?: number
@@ -146,7 +148,7 @@ function zipDim(
   return out
 }
 
-function adaptStats(wire: StatsWire): StatsResponse {
+export function adaptStats(wire: StatsWire): StatsResponse {
   const metrics = wire.metrics ?? {}
   const tbi = wire.time_bucket_info
   const intervalMin =
