@@ -33,6 +33,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
+import { PRICING_ENABLED } from "@/lib/flags"
 import {
   appsFeaturedLinks,
   appsRowLinks,
@@ -74,7 +75,16 @@ function resolve(link: NavLink): Entry {
 
 const pages: Entry[] = [
   { title: "Home", href: "/", iconKey: "home", icon: Home },
-  { title: "Pricing", href: "/pricing", iconKey: "fileText", icon: FileText },
+  ...(PRICING_ENABLED
+    ? [
+        {
+          title: "Pricing",
+          href: "/pricing",
+          iconKey: "fileText",
+          icon: FileText,
+        },
+      ]
+    : []),
   { title: "All apps", href: "/apps", iconKey: "boxes", icon: Boxes },
   {
     title: "Customer stories",

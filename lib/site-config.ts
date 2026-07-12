@@ -1,3 +1,5 @@
+import { PRICING_ENABLED } from "@/lib/flags"
+
 export const siteConfig = {
   name: "spoo.me",
   url: "https://spoo.me",
@@ -39,7 +41,7 @@ export const navLinks = [
   { label: "Features", href: "/#features" },
   { label: "Apps", href: "/apps" },
   { label: "Developers", href: "/#developers" },
-  { label: "Pricing", href: "/pricing" },
+  ...(PRICING_ENABLED ? [{ label: "Pricing", href: "/pricing" }] : []),
   { label: "Docs", href: siteConfig.links.docs, external: true },
 ] as const
 
@@ -239,7 +241,7 @@ export const footerLinks = {
   product: [
     { label: "Features", href: "/#features" },
     { label: "Analytics", href: "/#analytics" },
-    { label: "Pricing", href: "/pricing" },
+    ...(PRICING_ENABLED ? [{ label: "Pricing", href: "/pricing" }] : []),
     { label: "Self-host", href: "/#self-host" },
   ],
   apps: [

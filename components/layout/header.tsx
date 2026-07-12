@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
+import { PRICING_ENABLED } from "@/lib/flags"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -180,16 +181,18 @@ export function Header() {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/pricing"
-                      className="rounded-lg px-2.5 py-1.5 font-medium text-muted-foreground text-sm hover:bg-muted/0 hover:text-foreground"
-                    >
-                      Pricing
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
+                {PRICING_ENABLED && (
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/pricing"
+                        className="rounded-lg px-2.5 py-1.5 font-medium text-muted-foreground text-sm hover:bg-muted/0 hover:text-foreground"
+                      >
+                        Pricing
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )}
               </NavigationMenuList>
             </NavigationMenu>
           </div>
@@ -672,15 +675,17 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           onClose={onClose}
         />
 
-        <div className="mt-2 border-border/60 border-t pt-3">
-          <Link
-            href="/pricing"
-            onClick={onClose}
-            className="flex items-center gap-2 rounded-lg px-2 py-2 font-medium text-foreground text-sm hover:bg-muted/50"
-          >
-            Pricing
-          </Link>
-        </div>
+        {PRICING_ENABLED && (
+          <div className="mt-2 border-border/60 border-t pt-3">
+            <Link
+              href="/pricing"
+              onClick={onClose}
+              className="flex items-center gap-2 rounded-lg px-2 py-2 font-medium text-foreground text-sm hover:bg-muted/50"
+            >
+              Pricing
+            </Link>
+          </div>
+        )}
 
         <MobileAuthActions onClose={onClose} />
 
