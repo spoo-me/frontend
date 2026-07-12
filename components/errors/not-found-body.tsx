@@ -5,7 +5,6 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { AliasClaim } from "@/components/errors/alias-claim"
-import { Fisherman } from "@/components/errors/fisherman"
 
 /** Creatable-alias shape (mirrors the backend + mock validator). */
 const ALIAS_RE = /^[a-zA-Z0-9_-]{3,16}$/
@@ -22,7 +21,7 @@ function aliasFrom(from?: string): string | null {
  * The 404. When the missing path is a claimable alias, the page flips from
  * dead end to product moment: check availability live, offer to claim it
  * on the spot. Everything else gets the honest typo copy. The fisherman
- * fishes either way; nothing is biting.
+ * lives in the shell's watermark scene, fishing either way.
  */
 export function NotFoundBody({ from }: { from?: string }) {
   const alias = aliasFrom(from)
@@ -46,8 +45,8 @@ export function NotFoundBody({ from }: { from?: string }) {
   }, [alias])
 
   return (
-    <div className="flex flex-col items-start gap-10 sm:flex-row sm:items-center sm:gap-10">
-      <div className="min-w-0 flex-1">
+    <div className="max-w-xl">
+      <div className="min-w-0">
         {alias ? (
           <>
             <h1 className="font-mono font-semibold text-3xl text-foreground tracking-tight">
@@ -101,7 +100,6 @@ export function NotFoundBody({ from }: { from?: string }) {
           </>
         )}
       </div>
-      <Fisherman className="w-56 shrink-0 self-center text-foreground/30 sm:w-80 sm:self-auto" />
     </div>
   )
 }

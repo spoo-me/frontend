@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <ErrorShell status="404">
+    <ErrorShell status="404" fisher>
       <NotFoundBody />
     </ErrorShell>
   )

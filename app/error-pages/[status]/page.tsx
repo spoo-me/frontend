@@ -78,7 +78,7 @@ export default async function ErrorPage({ params, searchParams }: Params) {
   const view = resolveView(status, code)
 
   return (
-    <ErrorShell status={status}>
+    <ErrorShell status={status} fisher={view === "404"}>
       {view === "404" ? (
         <NotFoundBody from={from} />
       ) : view === "410" ? (
