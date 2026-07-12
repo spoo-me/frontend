@@ -101,7 +101,7 @@ export function Stats() {
               </div>
               <div className="label-mono text-foreground mt-3">clicks served</div>
               <div className="text-muted-foreground mt-1 text-sm">
-                across every region, in real time
+                for creators everywhere
               </div>
             </div>
           </div>

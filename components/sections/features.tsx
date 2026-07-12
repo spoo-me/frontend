@@ -1,16 +1,18 @@
 "use client"
 
-import { useState, lazy, Suspense } from "react"
+import { lazy, Suspense } from "react"
 import {
-  BarChart,
+  ArrowRight,
+  Bell,
   Code,
+  Copy,
   Globe,
   Globe2,
-  QrCode,
+  GripVertical,
+  LayoutDashboard,
+  MapPin,
+  Share2,
   Timer,
-  Bell,
-  Settings,
-  Tag,
   TrendingUp,
   Webhook,
 } from "lucide-react"
@@ -19,7 +21,6 @@ import type { LucideIcon } from "lucide-react"
 import { BentoCard, BentoGrid } from "@/components/magicui/bento-grid"
 import { AnimatedList } from "@/components/magicui/animated-list"
 import { Skeleton } from "@/components/ui/skeleton"
-import { BaseQr, encodeData } from "simple-qrbtf"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Band, GutterHatch } from "@/components/shared/section-shell"
 
@@ -59,119 +60,66 @@ const notifications: NotificationProps[] = [
   },
 ]
 
-const QRCodeDemo = () => {
-  const qrData = encodeData({ text: "https://spoo.me/ga" })
-  const svg = BaseQr({
-    qrcode: qrData,
-    otherColor: "currentColor",
-    posColor: "currentColor",
-  })
-
-  return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
-      <div
-        aria-hidden
-        className="pattern-dots absolute inset-x-4 top-2 h-44 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
-      />
-      <div className="relative mt-4 flex justify-center">
-        <div className="border-border/70 bg-card -rotate-3 rounded-xl border p-2.5 shadow-float transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-0">
-          <div
-            aria-label="QR code for spoo.me/ga"
-            role="img"
-            className="text-foreground/90 size-16 [&_svg]:size-full"
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-          <div className="text-muted-foreground mt-1.5 text-center font-mono text-[9px]">
-            spoo.me/ga
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* Fanned mini link-cards on a dotted patch — branded domains as physical artifacts */
-const DomainBackground = () => {
-  const cards = [
-    { host: "go.acme.dev", path: "/launch", rot: "-rotate-6", z: "z-10" },
-    { host: "l.berlin.cafe", path: "/menu", rot: "rotate-1", z: "z-20" },
-    { host: "spoo.me", path: "/ga", rot: "rotate-6", z: "z-30" },
+/* Domain detail as a diptych — the setup (DNS records + live status) and the
+   payoff (your links, on your domain). The onboarding wizard's grammar. */
+const DomainDemo = () => {
+  const records = [
+    { type: "CNAME", name: "links", value: "spoo.me" },
+    { type: "TXT", name: "_spoo", value: "spoo-verify=8f3a…" },
+  ]
+  const links = [
+    { path: "/launch", nudge: "" },
+    { path: "/docs", nudge: "ml-4" },
+    { path: "/careers", nudge: "ml-1.5" },
   ]
   return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)]">
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_22%,#000_100%)]">
       <div
         aria-hidden
-        className="pattern-dots absolute inset-x-4 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_75%_90%_at_50%_35%,black,transparent)]"
+        className="pattern-dots absolute inset-x-8 top-2 h-48 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_40%,black,transparent)]"
       />
-      <div className="relative mt-6 flex justify-center [mask-image:linear-gradient(to_right,transparent,black_18%,black_82%,transparent)]">
-        {cards.map((c) => (
-          <div
-            key={c.host}
-            className={`border-border/70 bg-card relative -ml-4 w-[7.5rem] origin-bottom rounded-lg border p-3 shadow-float transition-transform duration-300 first:ml-0 group-hover:-translate-y-1 ${c.rot} ${c.z}`}
-          >
-            <div className="text-foreground truncate font-mono text-[10px] font-medium">
-              {c.host}
+      <div className="relative mx-auto mt-8 flex w-full max-w-xl items-center justify-center gap-5 px-6 transition-transform duration-300 group-hover:-translate-y-1">
+        <div className="border-border/70 bg-card w-72 shrink-0 overflow-hidden rounded-xl border shadow-float">
+          <div className="border-border/60 flex items-center justify-between border-b px-3.5 py-2.5">
+            <span className="text-foreground font-mono text-[11px] font-medium">
+              links.acme.dev
+            </span>
+            <span className="bg-live/10 text-live flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[9px]">
+              <span className="bg-live size-1 rounded-full" />
+              active
+            </span>
+          </div>
+          <div className="divide-border/60 divide-y">
+            {records.map((r) => (
+              <div
+                key={r.type}
+                className="flex items-center gap-3 px-3.5 py-2 font-mono text-[10px]"
+              >
+                <span className="text-muted-foreground/70 w-11 shrink-0">{r.type}</span>
+                <span className="text-foreground/90 w-10 shrink-0">{r.name}</span>
+                <span className="text-muted-foreground flex-1 truncate">{r.value}</span>
+                <Copy className="text-muted-foreground/40 size-3 shrink-0" strokeWidth={1.75} />
+              </div>
+            ))}
+            <div className="text-muted-foreground/70 flex items-center gap-3 px-3.5 py-2 font-mono text-[10px]">
+              <span className="w-11 shrink-0">SSL</span>
+              <span>auto · issued mar 12</span>
             </div>
-            <div className="text-muted-foreground font-mono text-[10px]">{c.path}</div>
-            <div className="bg-brand/50 mt-2.5 h-1 w-3/4 rounded-full" />
-            <div className="bg-muted mt-1 h-1 w-1/2 rounded-full" />
           </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-const APIDemo = () => {
-  return (
-    <div className="absolute right-10 top-10 origin-top scale-90 rounded-md border transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] group-hover:scale-100">
-      <div className="w-full max-w-xs bg-card/60 backdrop-blur-sm p-3 rounded-lg border border-border/60">
-        <div className="flex items-center mb-2 gap-1">
-          <div className="w-2 h-2 rounded-full bg-red-500/60"></div>
-          <div className="w-2 h-2 rounded-full bg-yellow-500/60"></div>
-          <div className="w-2 h-2 rounded-full bg-green-500/60"></div>
         </div>
-        <div className="text-xs font-mono bg-background/60 p-2 rounded text-muted-foreground">
-          <div>
-            fetch(<span className="text-brand">&apos;api/shorten&apos;</span>,{"{"}
-          </div>
-          <div className="pl-4">
-            method: <span className="text-foreground/90">&apos;POST&apos;</span>,
-          </div>
-          <div className="pl-4">body: JSON.stringify({"{"}</div>
-          <div className="pl-8">
-            url: <span className="text-brand">&apos;https://...&apos;</span>
-          </div>
-          <div className="pl-4">{"}"})</div>
-          <div>{"}"});</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const CustomizationDemo = () => {
-  const [activeColor, setActiveColor] = useState(0)
-  const colors = ["#8A63D2", "#3694FF", "#FF7A50", "#00D0BF"]
-
-  return (
-    <div className="absolute left-4 top-8 scale-90 transition-all duration-300 ease-out group-hover:scale-100 [mask-image:linear-gradient(to_top,transparent_60%,#000_100%)] inset-0 flex justify-center p-4">
-      <div className="flex flex-col items-center">
-        <div className="w-40 h-12 bg-card/60 rounded-md mb-3 flex items-center justify-center border border-border/60 relative">
-          <div
-            className="absolute inset-x-0 -top-1 h-1 rounded-t-md"
-            style={{ backgroundColor: colors[activeColor] }}
-          ></div>
-          <span className="text-sm font-medium">yourlink.co/brand</span>
-        </div>
-        <div className="flex space-x-2">
-          {colors.map((color, index) => (
-            <button
-              key={index}
-              className={`w-6 h-6 rounded-full border-2 transition-all ${activeColor === index ? "scale-110 border-foreground" : "border-transparent"}`}
-              style={{ backgroundColor: color }}
-              onClick={() => setActiveColor(index)}
-            />
+        <ArrowRight
+          className="text-muted-foreground/50 hidden size-4 shrink-0 sm:block"
+          strokeWidth={1.75}
+        />
+        <div className="hidden flex-col gap-1.5 sm:flex">
+          {links.map((l) => (
+            <div
+              key={l.path}
+              className={`border-border/70 bg-card w-fit rounded-lg border px-2.5 py-1.5 font-mono text-[10px] shadow-float-sm ${l.nudge}`}
+            >
+              <span className="text-foreground font-medium">links.acme.dev</span>
+              <span className="text-muted-foreground">{l.path}</span>
+            </div>
           ))}
         </div>
       </div>
@@ -179,65 +127,229 @@ const CustomizationDemo = () => {
   )
 }
 
-/* Lifecycle timeline with dashed spine — created → live threshold → expiry */
-const ExpiryTimeline = () => {
-  const stops = [
-    { time: "mar 14", label: "link created", card: false },
-    { time: "apr 02", label: "+1,000 clicks", card: true },
-    { time: "in 30 days", label: "expires", card: false },
-  ]
+/* The unfurl you control — tag chips above, the resulting Discord-anatomy
+   embed below (same anatomy as the dashboard's MetaPreview, fed fixtures). */
+const MetaTagsDemo = () => {
   return (
-    <div className="absolute inset-x-6 top-6 transition-transform duration-300 group-hover:-translate-y-1 [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
-      <ul className="border-border/80 ml-1.5 flex flex-col gap-3.5 border-l border-dashed pl-4">
-        {stops.map((s) => (
-          <li key={s.label} className="relative">
-            <span
-              aria-hidden
-              className={`absolute -left-[21.5px] top-1.5 size-2 rounded-full border ${
-                s.card
-                  ? "border-brand bg-brand/40"
-                  : "border-border bg-background"
-              }`}
-            />
-            <div className="text-muted-foreground/70 font-mono text-[10px]">{s.time}</div>
-            {s.card ? (
-              <div className="border-border/70 bg-card group-hover:border-border mt-1 inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 shadow-float-sm transition-colors duration-300">
-                <span className="text-foreground font-mono text-xs font-medium">
-                  {s.label}
-                </span>
-                <span className="bg-live relative inline-flex size-1.5 rounded-full" />
-              </div>
-            ) : (
-              <div className="text-foreground mt-0.5 text-xs font-medium">{s.label}</div>
-            )}
-          </li>
-        ))}
-      </ul>
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_22%,#000_100%)]">
+      <div
+        aria-hidden
+        className="pattern-dots absolute inset-x-6 top-2 h-44 opacity-70 [mask-image:radial-gradient(ellipse_70%_90%_at_50%_35%,black,transparent)]"
+      />
+      <div className="relative mx-auto mt-7 flex w-fit flex-col items-center gap-2.5 transition-transform duration-300 group-hover:-translate-y-1">
+        <div className="flex items-center gap-1.5 font-mono text-[9px]">
+          <span className="border-border/60 bg-card text-muted-foreground rounded-md border px-1.5 py-0.5">
+            og:title
+          </span>
+          <span className="border-border/60 bg-card text-muted-foreground rounded-md border px-1.5 py-0.5">
+            og:image
+          </span>
+          <span className="border-border/60 bg-card text-muted-foreground flex items-center gap-1 rounded-md border px-1.5 py-0.5">
+            <span className="bg-brand size-1.5 rounded-full" />
+            theme
+          </span>
+        </div>
+        <div className="flex w-56 overflow-hidden rounded-[4px] bg-[#f2f3f5] shadow-float dark:bg-[#2b2d31]">
+          <div className="bg-brand w-1 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-1 p-2.5 pl-2">
+            <p className="text-[9px] text-neutral-500 dark:text-neutral-400">spoo.me</p>
+            <p className="truncate text-[11px] font-semibold text-[#006ce7] dark:text-[#00a8fc]">
+              Spring launch, everything new
+            </p>
+            <p className="line-clamp-1 text-[10px] text-neutral-700 dark:text-neutral-300">
+              Release notes, demos, and the changelog.
+            </p>
+            {/* og:image — logo-on-field, the shape real brand og images take */}
+            <div className="flex h-16 items-center justify-center overflow-hidden rounded bg-neutral-200/70 dark:bg-neutral-800">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/logo-black.png"
+                alt=""
+                className="h-5 w-auto opacity-80 dark:hidden"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/logo-white.png"
+                alt=""
+                className="hidden h-5 w-auto opacity-80 dark:block"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
-const AnalyticsChart = () => {
+/* Origins and rules, no journeys — the dotted world as backdrop, the routing
+   table as the artifact. The catch-all is spelled out, arrows share a column
+   (paths sit in a fixed-width mono slot so every → lands on the same x). */
+const GEO_RULES = [
+  { code: "FR", flag: "fr", path: "/shop-fr" },
+  { code: "US", flag: "us", path: "/shop-us" },
+  { code: "DE", flag: "de", path: "/shop-de" },
+]
+
+const GeoDemo = () => {
   return (
-    <div className="absolute right-1 top-2 h-[300px] w-full scale-75 border-none transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_10%,#000_100%)] group-hover:scale-90">
-      <div className="flex items-end space-x-2">
-        <Suspense
-          fallback={
-            <Skeleton className="h-[300px] w-full bg-card rounded-lg" />
-          }
-        >
-          <WorldMap
-            lineColor="#8B5CF6"
-            dots={[
-              { start: { lat: 64.2008, lng: -149.4937 }, end: { lat: 34.0522, lng: -118.2437 } },
-              { start: { lat: 64.2008, lng: -149.4937 }, end: { lat: -15.7975, lng: -47.8919 } },
-              { start: { lat: -15.7975, lng: -47.8919 }, end: { lat: 38.7223, lng: -9.1393 } },
-              { start: { lat: 51.5074, lng: -0.1278 }, end: { lat: 28.6139, lng: 77.209 } },
-              { start: { lat: 28.6139, lng: 77.209 }, end: { lat: 43.1332, lng: 131.9113 } },
-              { start: { lat: 28.6139, lng: 77.209 }, end: { lat: -1.2921, lng: 36.8219 } },
-            ]}
-          />
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
+      <div className="absolute inset-x-2 top-1 opacity-80">
+        <Suspense fallback={<Skeleton className="aspect-[2/1] w-full rounded-lg" />}>
+          <WorldMap dots={[]} />
         </Suspense>
+        {/* origin dots for the rule countries: US, FR, DE */}
+        <span
+          aria-hidden
+          className="bg-foreground/50 absolute top-[28%] left-[23%] size-1.5 rounded-full"
+        />
+        <span
+          aria-hidden
+          className="bg-foreground/50 absolute top-[23%] left-[50.5%] size-1.5 rounded-full"
+        />
+        <span
+          aria-hidden
+          className="bg-foreground/50 absolute top-[20.5%] left-[54%] size-1.5 rounded-full"
+        />
+      </div>
+      <div className="relative mx-auto mt-16 w-60 max-w-[calc(100%-3rem)]">
+        <div className="border-border/70 bg-card overflow-hidden rounded-lg border font-mono text-[10px] shadow-float transition-transform duration-300 group-hover:-translate-y-1">
+          <div className="divide-border/60 divide-y">
+            {GEO_RULES.map((r) => (
+              <div key={r.code} className="flex items-center gap-2 px-3 py-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://flagcdn.com/w40/${r.flag}.png`}
+                  alt=""
+                  loading="lazy"
+                  className="h-2.5 w-3.5 rounded-[2px] object-cover"
+                />
+                <span className="text-foreground/90">{r.code}</span>
+                <span className="ml-auto flex items-center gap-2">
+                  <span className="text-muted-foreground/50">→</span>
+                  <span className="text-foreground w-[8ch] font-medium">{r.path}</span>
+                </span>
+              </div>
+            ))}
+            <div className="flex items-center gap-2 px-3 py-2">
+              <Globe2 className="text-muted-foreground size-3.5 shrink-0" strokeWidth={1.75} />
+              <span className="text-muted-foreground">everywhere else</span>
+              <span className="ml-auto flex items-center gap-2">
+                <span className="text-muted-foreground/50">→</span>
+                <span className="text-foreground w-[8ch] font-medium">/shop</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* The widget board mid-edit — real tile shapes plus the grid engine's own
+   drag grammar: dashed drop target, lifted card. One glance says movable. */
+const DashboardDemo = () => {
+  const bars = [40, 65, 35, 80, 55, 70]
+  return (
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_22%,#000_100%)]">
+      <div
+        aria-hidden
+        className="pattern-dots absolute inset-x-8 top-2 h-44 opacity-60 [mask-image:radial-gradient(ellipse_55%_90%_at_50%_35%,black,transparent)]"
+      />
+      <div className="relative mx-auto mt-7 grid w-full max-w-xl auto-rows-[4.25rem] grid-cols-3 gap-2 px-8">
+        <div className="border-border/70 bg-card rounded-lg border p-2.5 shadow-float-sm">
+          <div className="label-mono text-muted-foreground text-[9px]">clicks</div>
+          <div className="text-foreground mt-1.5 font-mono text-lg leading-none font-semibold tracking-tight tabular-nums">
+            12.4k
+          </div>
+        </div>
+        <div className="border-border/70 bg-card flex items-end gap-1.5 rounded-lg border p-2.5 shadow-float-sm">
+          {bars.map((h, i) => (
+            <span
+              key={i}
+              className={`w-full rounded-[2px] ${i === 3 ? "bg-foreground/45" : "bg-foreground/15"}`}
+              style={{ height: `${h}%` }}
+            />
+          ))}
+        </div>
+        <div className="border-border/70 bg-card flex flex-col justify-center gap-1.5 rounded-lg border p-2.5 shadow-float-sm">
+          {[
+            { w: "78%", label: "chrome" },
+            { w: "46%", label: "safari" },
+          ].map((row) => (
+            <div key={row.label} className="relative h-[18px] overflow-hidden rounded-[3px]">
+              <span
+                className="bg-muted absolute inset-y-0 left-0 rounded-[3px]"
+                style={{ width: row.w }}
+              />
+              <span className="text-muted-foreground relative block truncate pl-1.5 font-mono text-[9px] leading-[18px]">
+                {row.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        {/* drop target — the grid engine's placeholder, verbatim grammar */}
+        <div className="rounded-lg border-[1.5px] border-dashed border-foreground/30 bg-foreground/[0.04]" />
+        {/* the tile being dragged — settles square on hover */}
+        <div className="border-border/70 bg-card relative translate-x-2 -rotate-2 rounded-lg border p-2.5 shadow-float transition-transform duration-300 group-hover:translate-x-0 group-hover:rotate-0">
+          <div className="flex items-center gap-1">
+            <GripVertical className="text-muted-foreground/50 size-3" strokeWidth={1.75} />
+            <span className="label-mono text-muted-foreground text-[9px]">devices</span>
+          </div>
+          <div className="mt-2 flex items-end gap-1.5">
+            {[55, 30, 70, 45].map((h, i) => (
+              <span
+                key={i}
+                className="bg-foreground/15 w-full rounded-[2px]"
+                style={{ height: `${h / 3.5}px` }}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="border-border/70 bg-card rounded-lg border p-2.5 shadow-float-sm">
+          <svg viewBox="0 0 64 24" className="h-full w-full" preserveAspectRatio="none">
+            <polyline
+              points="0,20 10,16 20,17 30,10 40,12 52,5 64,8"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              className="text-foreground/40"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* Request and response, bare panel — the wire itself, no window chrome. */
+const ApiDemo = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
+      <div
+        aria-hidden
+        className="pattern-dots absolute inset-x-8 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_35%,black,transparent)]"
+      />
+      <div className="relative mx-auto mt-8 w-full max-w-[20rem] px-4">
+        <div className="border-border/70 bg-card overflow-hidden rounded-xl border font-mono text-[10px] leading-relaxed whitespace-nowrap shadow-float transition-transform duration-300 group-hover:-translate-y-1">
+          <div className="px-3.5 py-2.5">
+            <div>
+              <span className="text-emerald-600/90 dark:text-emerald-400/90">POST</span>
+              <span className="text-foreground/90"> /api/shorten</span>
+            </div>
+            <div className="text-muted-foreground/60">authorization: spoo_8f3a…</div>
+            <div className="text-muted-foreground">
+              {'{ "url": "https://acme.dev/spring" }'}
+            </div>
+          </div>
+          <div className="border-border/60 bg-muted/30 border-t px-3.5 py-2.5">
+            <span className="text-live">200</span>
+            <span className="text-muted-foreground"> · </span>
+            <span className="text-muted-foreground">{'{ "short_url": "'}</span>
+            <span className="text-foreground font-medium">spoo.me/spring</span>
+            <span className="text-muted-foreground">{'" }'}</span>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -262,69 +374,6 @@ const Notification = ({ name, description, icon: Icon, time }: NotificationProps
   )
 }
 
-/* Alias picker — floating input artifact with crop-mark selection + suggestion chips */
-const AliasDemo = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_20%,#000_100%)]">
-      <div
-        aria-hidden
-        className="pattern-dots absolute inset-x-10 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_30%,black,transparent)]"
-      />
-      <div className="relative mt-7 flex flex-col items-center gap-2.5">
-        <div className="border-border/70 bg-card flex items-center gap-1 rounded-xl border px-4 py-2.5 font-mono text-sm shadow-float transition-transform duration-300 group-hover:-translate-y-0.5">
-          <span className="text-muted-foreground/70">spoo.me/</span>
-          {/* crop-mark selection frame */}
-          <span className="relative px-2 py-0.5">
-            <span aria-hidden className="border-foreground/50 absolute top-0 left-0 size-1.5 border-t border-l" />
-            <span aria-hidden className="border-foreground/50 absolute top-0 right-0 size-1.5 border-t border-r" />
-            <span aria-hidden className="border-foreground/50 absolute bottom-0 left-0 size-1.5 border-b border-l" />
-            <span aria-hidden className="border-foreground/50 absolute right-0 bottom-0 size-1.5 border-r border-b" />
-            <span className="text-foreground font-medium">spring-launch</span>
-          </span>
-          <span className="bg-foreground/70 animate-blink-cursor h-4 w-px" />
-        </div>
-        <div className="flex items-center gap-2 font-mono text-[10px]">
-          <span className="border-live/30 text-live bg-live/10 inline-flex items-center gap-1.5 rounded-md border px-2 py-1">
-            <span className="bg-live size-1 rounded-full" />
-            available
-          </span>
-          <span className="border-border/60 text-muted-foreground/50 rounded-md border px-2 py-1 line-through">
-            launch
-          </span>
-          <span className="border-border/60 text-muted-foreground/50 rounded-md border px-2 py-1 line-through">
-            spring
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* UTM chips on a hatched patch */
-const UtmDemo = () => {
-  const params = ["utm_source=launch", "utm_medium=qr", "utm_campaign=spring"]
-  return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)]">
-      <div
-        aria-hidden
-        className="pattern-hatch absolute inset-x-4 top-2 h-36 opacity-50 [mask-image:radial-gradient(ellipse_80%_90%_at_50%_30%,black,transparent)]"
-      />
-      <div className="relative mt-7 flex flex-col items-center gap-2">
-        {params.map((p, i) => (
-          <code
-            key={p}
-            className={`border-border/70 bg-card text-foreground/90 rounded-md border px-2.5 py-1 font-mono text-[10px] shadow-float-sm transition-transform duration-300 group-hover:-translate-y-0.5 ${
-              i === 1 ? "translate-x-6" : i === 2 ? "-translate-x-4" : ""
-            }`}
-          >
-            {p}
-          </code>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 const NotificationsList = () => {
   return (
     <div className="absolute inset-0 flex flex-col items-center p-4 overflow-hidden scale-90 border-none transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_30%)] group-hover:scale-100">
@@ -338,78 +387,59 @@ const NotificationsList = () => {
 }
 
 export function Features() {
+  /* Six cells, three tiers: the flagship pair on the diagonal (Domains,
+     Dashboard), their flanks (Meta-Tags, Geo), and a quieter half/half base
+     row (API teaser pointing at the developers section, Alerts). Every cell
+     is a shipped-or-imminent feature without a dedicated section of its own;
+     Analytics and the full API story have their own chapters. */
   const features = [
     {
       Icon: Globe,
       name: "Custom Domains",
       description:
-        "Use your own domain for branded short links that build trust and recognition.",
-      className: "col-span-1 lg:col-span-1",
-      background: <DomainBackground />,
+        "Bring your own domain, apex or subdomain. Guided DNS setup, automatic SSL, and every link on your brand.",
+      className: "col-span-1 lg:col-span-4",
+      background: <DomainDemo />,
     },
     {
-      Icon: QrCode,
-      name: "QR Code Generation",
+      Icon: Share2,
+      name: "Custom Meta-Tags",
       description:
-        "Generate custom QR codes for your shortened links with brand colors and logos.",
-      className: "col-span-1 lg:col-span-1",
-      background: <QRCodeDemo />,
-    },
-    {
-      Icon: Tag,
-      name: "Custom Link Aliases",
-      description:
-        "Create memorable, branded short links with custom aliases that reflect your brand or campaign.",
+        "Control how links unfurl: title, description, image, and theme color. Per link.",
       className: "col-span-1 lg:col-span-2",
-      background: <AliasDemo />,
+      background: <MetaTagsDemo />,
     },
     {
-      Icon: BarChart,
-      name: "Advanced Analytics",
+      Icon: MapPin,
+      name: "Geo-Targeting",
       description:
-        "Get detailed insights on clicks, locations, devices, and referrers to optimize your links.",
+        "One link, the right destination. Route visitors by country, with a fallback for everyone else.",
       className: "col-span-1 lg:col-span-2",
-      background: <AnalyticsChart />,
+      background: <GeoDemo />,
     },
     {
-      Icon: Timer,
-      name: "Link Expiration",
+      Icon: LayoutDashboard,
+      name: "Customizable Dashboard",
       description:
-        "Set expiration dates for temporary promotions or time-sensitive content.",
-      className: "col-span-1 lg:col-span-1",
-      background: <ExpiryTimeline />,
+        "Your analytics, your board. Add, drag, and resize widgets, and pick the metrics and chart inks each one shows.",
+      className: "col-span-1 lg:col-span-4",
+      background: <DashboardDemo />,
     },
     {
       Icon: Code,
       name: "Developer API",
       description:
-        "Integrate link management into your applications with our RESTful API.",
-      className: "col-span-1 lg:col-span-1",
-      background: <APIDemo />,
-    },
-    {
-      Icon: Tag,
-      name: "UTM Builder",
-      description:
-        "Create and manage UTM parameters for campaign tracking without the hassle.",
-      className: "col-span-1 lg:col-span-1",
-      background: <UtmDemo />,
+        "Everything here is scriptable: one REST API, official SDKs, live code samples below.",
+      className: "col-span-1 lg:col-span-3",
+      background: <ApiDemo />,
     },
     {
       Icon: Bell,
       name: "Analytics Alerts",
       description:
-        "Get notified when your links reach specific performance thresholds.",
-      className: "col-span-1 lg:col-span-2",
+        "Know the moment a link expires, spikes, or lands its first click from a new country.",
+      className: "col-span-1 lg:col-span-3",
       background: <NotificationsList />,
-    },
-    {
-      Icon: Settings,
-      name: "Customization",
-      description:
-        "Personalize link behavior, redirects, and appearance to match your brand.",
-      className: "col-span-1 lg:col-span-1",
-      background: <CustomizationDemo />,
     },
   ]
 
@@ -435,7 +465,7 @@ export function Features() {
       {/* Bento fused into the lattice — cells share hairlines, edge-to-rail */}
       <Band rule>
         <GutterHatch />
-        <BentoGrid className="grid-cols-1 lg:grid-cols-4 auto-rows-[18rem]">
+        <BentoGrid className="grid-cols-1 lg:grid-cols-6 auto-rows-[18rem]">
           {features.map((feature, index) => (
             <BentoCard key={index} index={index} {...feature} />
           ))}

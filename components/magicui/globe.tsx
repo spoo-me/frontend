@@ -1,39 +1,52 @@
 "use client"
 
 import * as React from "react"
-import { createPortal } from "react-dom"
-import createGlobe, { type COBEOptions } from "cobe"
+import createGlobe from "cobe"
+import {
+  BookOpen,
+  Briefcase,
+  CalendarCheck,
+  Presentation,
+  Rocket,
+  ShoppingBag,
+  Ticket,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { cn } from "@/lib/utils"
 
-type LiveMarker = {
+// The globe carries custom-domain links, not numbers. Each chip is a demo
+// artifact in the features section's fictional-brand grammar (go.acme.dev
+// school): the ccTLD/city TLD carries the locale honestly, the path carries
+// the use case, and the set mixes apex domains with go./l. subdomains —
+// both of which the product supports. The figure reads as adoption breadth:
+// people everywhere run their own branded links on spoo. Deliberately NOT
+// analytics — no counts, no cities, no deltas; spoo's own traffic breakdown
+// is dashboard content, and per-region numbers on marketing were either
+// internal stats nobody cares about or infra claims the product doesn't make.
+// Collision rule: northern/equatorial latitudes only — with theta fixed, a
+// marker's screen height tracks its latitude, so chips never drift into the
+// stat block pinned to the cell's bottom-left.
+type LinkChip = {
   id: string
-  city: string
+  domain: string
+  path: string
+  /** use-case glyph — neutral ink only (accent lock), never colored */
+  icon: LucideIcon
   location: [number, number]
-  size?: number
-  initial: number
-  delta: number
 }
 
-const LIVE_MARKERS: LiveMarker[] = [
-  { id: "nyc",       city: "New York",  location: [40.7128, -74.006],   initial: 981, delta: 4 },
-  { id: "ldn",       city: "London",    location: [51.5074, -0.1278],   initial: 486, delta: -1 },
-  { id: "tokyo",     city: "Tokyo",     location: [35.6762, 139.6503],  initial: 305, delta: 15 },
-  { id: "delhi",     city: "Delhi",     location: [28.6139, 77.209],    initial: 742, delta: 8 },
-  { id: "saopaulo",  city: "São Paulo", location: [-23.5505, -46.6333], initial: 219, delta: 6 },
-  { id: "sydney",    city: "Sydney",    location: [-33.8688, 151.2093], initial: 168, delta: 11 },
-  { id: "singapore", city: "Singapore", location: [1.3521, 103.8198],   initial: 412, delta: -2 },
-]
-
-const FILLER_MARKERS: COBEOptions["markers"] = [
-  { location: [37.7749, -122.4194], size: 0.04 },
-  { location: [52.52, 13.405], size: 0.04 },
-  { location: [-1.2921, 36.8219], size: 0.04 },
-  { location: [55.7558, 37.6173], size: 0.04 },
-  { location: [19.4326, -99.1332], size: 0.04 },
-  { location: [25.2048, 55.2708], size: 0.04 },
-  { location: [22.3193, 114.1694], size: 0.04 },
+const LINK_CHIPS: LinkChip[] = [
+  { id: "sf",     domain: "go.acme.dev",   path: "/launch",    icon: Rocket,          location: [37.7749, -122.4194] },
+  { id: "nyc",    domain: "loft.nyc",      path: "/rsvp",      icon: CalendarCheck,   location: [40.7128, -74.006] },
+  { id: "ldn",    domain: "spoo.me",       path: "/gig",       icon: Ticket,          location: [51.5074, -0.1278] },
+  { id: "berlin", domain: "spoo.me",       path: "/menu",      icon: UtensilsCrossed, location: [52.52, 13.405] },
+  { id: "dubai",  domain: "spoo.me",       path: "/deck",      icon: Presentation,    location: [25.2048, 55.2708] },
+  { id: "delhi",  domain: "dilli.in",      path: "/portfolio", icon: Briefcase,       location: [28.6139, 77.209] },
+  { id: "sgp",    domain: "kopi.sg",       path: "/docs",      icon: BookOpen,        location: [1.3521, 103.8198] },
+  { id: "tokyo",  domain: "mono.tokyo",    path: "/drop",      icon: ShoppingBag,     location: [35.6762, 139.6503] },
 ]
 
 export function Globe({ className }: { className?: string }) {
@@ -46,8 +59,6 @@ export function Globe({ className }: { className?: string }) {
   const pointerInteractingRef = React.useRef<number | null>(null)
   const pointerMovementRef = React.useRef(0)
   const [mounted, setMounted] = React.useState(false)
-  const [tick, setTick] = React.useState(0)
-  const [wrapperEl, setWrapperEl] = React.useState<HTMLElement | null>(null)
 
   // Lazy mount: don't init WebGL until container scrolled into view.
   React.useEffect(() => {
@@ -65,13 +76,6 @@ export function Globe({ className }: { className?: string }) {
     return () => io.disconnect()
   }, [mounted])
 
-  // Tooltip ticker — only runs once mounted (and visible).
-  React.useEffect(() => {
-    if (!mounted) return
-    const id = setInterval(() => setTick((t) => t + 1), 3500)
-    return () => clearInterval(id)
-  }, [mounted])
-
   React.useEffect(() => {
     if (!mounted || !canvasRef.current || !containerRef.current) return
 
@@ -83,11 +87,6 @@ export function Globe({ className }: { className?: string }) {
 
     const isDark = resolvedTheme === "dark"
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
-    const liveAsCobe = LIVE_MARKERS.map((m) => ({
-      location: m.location,
-      size: m.size ?? 0.06,
-      id: m.id,
-    }))
 
     const globe = createGlobe(canvasRef.current, {
       devicePixelRatio: dpr,
@@ -101,15 +100,17 @@ export function Globe({ className }: { className?: string }) {
       mapBrightness: isDark ? 8 : 7,
       mapBaseBrightness: isDark ? 0 : 0.06,
       baseColor: isDark ? [0.18, 0.18, 0.22] : [1, 1, 1],
-      markerColor: [56 / 255, 199 / 255, 122 / 255],
+      // Anchor ticks under the chips — neutral ink, small; the chip is the
+      // content, the dot just grounds it to the earth.
+      markerColor: isDark ? [0.62, 0.62, 0.68] : [0.45, 0.45, 0.5],
       glowColor: isDark ? [0.11, 0.11, 0.14] : [0.92, 0.92, 0.96],
-      markers: [...liveAsCobe, ...(FILLER_MARKERS ?? [])],
+      markers: LINK_CHIPS.map((m) => ({
+        location: m.location,
+        size: 0.04,
+        id: m.id,
+      })),
       markerElevation: 0.01,
     })
-
-    if (canvasRef.current.parentElement) {
-      setWrapperEl(canvasRef.current.parentElement)
-    }
 
     // Visibility / off-screen gating — pauses the rAF loop entirely
     // when globe scrolled out of view OR tab backgrounded.
@@ -163,40 +164,8 @@ export function Globe({ className }: { className?: string }) {
       document.removeEventListener("visibilitychange", onVisibility)
       window.removeEventListener("resize", onResize)
       globe.destroy()
-      setWrapperEl(null)
     }
   }, [mounted, resolvedTheme])
-
-  const tooltips = LIVE_MARKERS.map((m) => {
-    const value = m.initial + ((tick * (m.id.charCodeAt(0) % 7 + 3)) % 53)
-    const up = m.delta >= 0
-    const style = {
-      position: "absolute",
-      positionAnchor: `--cobe-${m.id}`,
-      bottom: "anchor(top)",
-      left: "anchor(center)",
-      translate: "-50% -10px",
-      opacity: `var(--cobe-visible-${m.id}, 0)`,
-    } as React.CSSProperties
-    return (
-      <div
-        key={m.id}
-        aria-hidden
-        style={style}
-        className="pointer-events-none z-10 flex flex-col gap-0.5 rounded-md bg-neutral-900 px-2 py-1.5 whitespace-nowrap text-white shadow-lg ring-1 ring-white/10 transition-opacity duration-300"
-      >
-        <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-white/50">
-          {m.city}
-        </span>
-        <span className="flex items-center gap-1.5 font-mono text-[11px] tabular-nums leading-none">
-          <span className="font-semibold">{value}</span>
-          <span className={up ? "text-emerald-400" : "text-rose-400"}>
-            {up ? "↑" : "↓"} {Math.abs(m.delta)}%
-          </span>
-        </span>
-      </div>
-    )
-  })
 
   return (
     <div
@@ -233,7 +202,46 @@ export function Globe({ className }: { className?: string }) {
           }
         }}
       />
-      {wrapperEl ? createPortal(tooltips, wrapperEl) : null}
+      {/* Link chips — anchored to cobe's marker anchors (`--cobe-{id}`),
+          shown only while their point faces front (`--cobe-visible-{id}`).
+          House chip skin, product-artifact grammar (features' link cards). */}
+      {mounted &&
+        LINK_CHIPS.map((m) => (
+          <div
+            key={m.id}
+            aria-hidden
+            style={
+              {
+                position: "absolute",
+                positionAnchor: `--cobe-${m.id}`,
+                bottom: "anchor(top)",
+                left: "anchor(center)",
+                translate: "-50% -10px",
+                opacity: `var(--cobe-visible-${m.id}, 0)`,
+              } as React.CSSProperties
+            }
+            className="border-border/60 bg-card shadow-card pointer-events-none z-10 flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[10px] whitespace-nowrap transition-opacity duration-300"
+          >
+            <m.icon
+              className="text-muted-foreground/70 size-3 shrink-0"
+              strokeWidth={1.75}
+            />
+            {/* The part the user chose is the star: custom domains carry
+                the brand (foreground host, muted path — features grammar);
+                spoo.me links carry the alias (muted host, foreground path) */}
+            {m.domain === "spoo.me" ? (
+              <span>
+                <span className="text-muted-foreground">{m.domain}</span>
+                <span className="text-foreground font-medium">{m.path}</span>
+              </span>
+            ) : (
+              <span>
+                <span className="text-foreground font-medium">{m.domain}</span>
+                <span className="text-muted-foreground">{m.path}</span>
+              </span>
+            )}
+          </div>
+        ))}
     </div>
   )
 }
