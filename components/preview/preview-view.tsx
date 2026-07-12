@@ -72,9 +72,11 @@ export function PreviewView({ data }: { data: PublicPreview }) {
         </h1>
         <CopyButton value={data.short_url} label="Copy short link" />
       </div>
-      <p className="mt-2 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
-        created {formatDate(data.created_at)}
-      </p>
+      {data.created_at && (
+        <p className="mt-2 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
+          created {formatDate(data.created_at)}
+        </p>
+      )}
 
       {/* Safety framing: status stated plainly, before the destination */}
       {statusMeta && (

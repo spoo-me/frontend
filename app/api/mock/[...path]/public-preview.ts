@@ -17,6 +17,79 @@ import { buildLinks, type MockLink } from "./seed"
  */
 
 const PUBLIC_EXTRAS: Array<{ link: MockLink; generation: "v1" | "v2" }> = [
+  // very long querystring-heavy destination: wrap behavior check
+  {
+    generation: "v2",
+    link: {
+      id: "url_public_v2_longy",
+      alias: "longy",
+      long_url:
+        "https://www.example-analytics-platform.com/campaigns/q3-2026/landing/variant-b/signup-flow/step-1?utm_source=newsletter&utm_medium=email&utm_campaign=summer_launch_2026_wave_3&utm_content=cta_button_primary&utm_term=short+links+analytics&ref=spoo&session_hint=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9&fbclid=IwAR2xkP9qLmNoPqRsTuVwXyZ0123456789abcdefghij&gclid=Cj0KCQjw_example_EAIaIQobChMI",
+      domain: null,
+      status: "ACTIVE",
+      created_at: "2026-06-20T10:00:00.000Z",
+      expire_after: null,
+      max_clicks: null,
+      password_set: false,
+      password: null,
+      private_stats: false,
+      block_bots: false,
+      total_clicks: 96,
+      last_click: "2026-07-11T12:00:00.000Z",
+      geo_rules: null,
+      ab_variants: null,
+      meta_tags: null,
+      weight: 1,
+    },
+  },
+  // password AND expired at once: the status box wins, no password box
+  {
+    generation: "v2",
+    link: {
+      id: "url_public_v2_archive",
+      alias: "archive",
+      long_url: "https://docs.google.com/presentation/d/old-board-deck",
+      domain: null,
+      status: "EXPIRED",
+      created_at: "2026-01-10T09:00:00.000Z",
+      expire_after: 1750000000,
+      max_clicks: null,
+      password_set: true,
+      password: "attic-lantern-08",
+      private_stats: false,
+      block_bots: false,
+      total_clicks: 75,
+      last_click: "2026-06-15T00:00:00.000Z",
+      geo_rules: null,
+      ab_variants: null,
+      meta_tags: null,
+      weight: 1,
+    },
+  },
+  // v1 doc missing creation-date (ancient links): identity line omits it
+  {
+    generation: "v1",
+    link: {
+      id: "url_public_v1_nodate",
+      alias: "nodate",
+      long_url: "https://github.com/spoo-me/url-shortener/issues/1",
+      domain: null,
+      status: "ACTIVE",
+      created_at: null as unknown as string,
+      expire_after: null,
+      max_clicks: null,
+      password_set: false,
+      password: null,
+      private_stats: false,
+      block_bots: false,
+      total_clicks: 58,
+      last_click: "2026-07-05T00:00:00.000Z",
+      geo_rules: null,
+      ab_variants: null,
+      meta_tags: null,
+      weight: 1,
+    },
+  },
   // v2, expired via max-clicks: the backend folds exhaustion into EXPIRED
   // (repositories/url_repository.py expire_if_max_clicks), so this reads
   // exactly like a time-expired link on the wire.
