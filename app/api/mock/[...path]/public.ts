@@ -131,7 +131,10 @@ export function handlePublicStats(
   params: URLSearchParams
 ): NextResponse {
   const all = publicLinks()
-  const found = all.find((e) => e.link.alias === code)
+  // Resolution is domain-scoped like the real backend: the main-domain
+  // stats page never resolves custom-tenant links (tenant surfaces are a
+  // known gap, out of scope here).
+  const found = all.find((e) => e.link.domain === null && e.link.alias === code)
   if (!found || found.link.private_stats) return notFound()
   const { link, generation } = found
 
