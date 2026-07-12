@@ -115,7 +115,9 @@ function linkFacts(link: MockLink) {
   return {
     alias: link.alias,
     short_url: `https://${link.domain ?? "spoo.me"}/${link.alias}`,
-    long_url: link.long_url,
+    // Destination-only-while-active, like the preview page: an expired,
+    // paused or blocked link's stats page must not out the destination.
+    long_url: link.status === "ACTIVE" ? link.long_url : null,
     created_at: link.created_at,
     status: link.status.toLowerCase(),
     max_clicks: link.max_clicks,

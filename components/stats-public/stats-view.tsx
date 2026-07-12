@@ -141,14 +141,18 @@ export function PublicStatsView({
             </h1>
             <CopyButton value={link.short_url} label="Copy short link" />
           </div>
-          <a
-            href={link.long_url}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-1.5 block max-w-xl truncate text-muted-foreground text-sm underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
-          >
-            {displayUrl(link.long_url)}
-          </a>
+          {/* Withheld (null) for non-active links; the status in the mono
+              line below is the whole explanation. */}
+          {link.long_url && (
+            <a
+              href={link.long_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1.5 block max-w-xl truncate text-muted-foreground text-sm underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
+            >
+              {displayUrl(link.long_url)}
+            </a>
+          )}
           <p className="mt-2 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
             created {formatDate(link.created_at)}
             {link.status !== "active" && (

@@ -18,7 +18,10 @@ export type PublicLinkGeneration = "v1" | "v2"
 export type PublicLinkFacts = {
   alias: string
   short_url: string
-  long_url: string
+  /** Withheld (null) unless the link is active — same rule as the
+      preview's destination: the page never reveals more than the
+      redirect would. Owner sessions still get it. */
+  long_url: string | null
   created_at: string | null
   status: "active" | "inactive" | "expired" | "blocked"
   max_clicks: number | null
