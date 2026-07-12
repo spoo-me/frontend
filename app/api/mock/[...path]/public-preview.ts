@@ -6,11 +6,12 @@ import { buildLinks, type MockLink } from "./seed"
  * Mock for the proposed public preview endpoint
  * (GET /api/v1/public/preview/{code} — thoughts/link-preview-page.md §6).
  *
- * Status-agnostic like the legacy Jinja preview: blocked/expired/inactive
- * links still answer (the seed's `legacy`/`webinar`/`survey` cover those
- * states), only missing codes 404. Password-protected links withhold the
- * destination and geo rules. Owner-set meta never rides this wire — the
- * preview shows resolved facts only. The seeded workspace is all v2, so a
+ * Status-agnostic resolution like the legacy Jinja preview — blocked/
+ * expired/inactive links still answer (seed's `legacy`/`webinar`/`survey`
+ * cover those), only missing codes 404. But the DESTINATION (and geo
+ * rules) ride the wire only while the link is active and unlocked:
+ * password, expiry, pause and block all withhold it. Owner-set meta never
+ * rides this wire — the preview shows resolved facts only. The seeded workspace is all v2, so a
  * couple of module-local extras (one v1 link, one emoji alias) keep both
  * generations testable without touching seed.ts.
  */
@@ -160,7 +161,10 @@ export function handlePublicPreview(code: string): NextResponse {
     ...buildLinks().map((link) => ({ link, generation: "v2" as const })),
     ...PUBLIC_EXTRAS,
   ]
-  const found = all.find((e) => e.link.alias === code)
+  // Resolution is domain-scoped like the real backend
+  // (find_by_alias(code, system_default_domain)): the main-domain preview
+  // never resolves custom-tenant links. Tenant previews are a known gap.
+  const found = all.find((e) => e.link.domain === null && e.link.alias === code)
   if (!found)
     return NextResponse.json(
       { error: "short_code not found", code: "not_found" },
@@ -177,9 +181,11 @@ export function handlePublicPreview(code: string): NextResponse {
     password_protected: link.password_set,
   }
 
-  // The destination is the secret a link password protects — and the
-  // owner-controlled geo rules stay hidden with it.
-  if (link.password_set)
+  // The destination is visible ONLY while the link is active: passwords
+  // protect it, and expired/paused/blocked links stop revealing it the
+  // moment the redirect does (time-sensitive links stay dead, blocked
+  // destinations stay unreachable).
+  if (link.password_set || link.status !== "ACTIVE")
     return NextResponse.json({
       ...base,
       destination: null,

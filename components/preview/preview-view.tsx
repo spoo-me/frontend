@@ -26,9 +26,10 @@ import { DimensionIcon } from "@/components/dashboard/dim-icon"
 
 /**
  * The preview body — a safety surface first: where the link actually goes,
- * stated plainly, before anyone opens it. Content order is deliberate:
- * destination, safety framing (status, geo spread, owner-set card), then
- * the opt-in continue. Reading column, not a dashboard.
+ * stated plainly, before anyone opens it. The destination is shown only
+ * while the link is active: password, expiry, pause and block all hide it
+ * (the preview never reveals more than the redirect would). Reading
+ * column, not a dashboard.
  */
 
 const STATUS_META: Record<
@@ -38,17 +39,17 @@ const STATUS_META: Record<
   expired: {
     icon: Clock,
     title: "This link has expired",
-    body: "It no longer redirects. The destination below is where it used to point.",
+    body: "It reached its expiry and no longer redirects.",
   },
   inactive: {
     icon: Pause,
     title: "The owner paused this link",
-    body: "It doesn't redirect right now. The destination below is where it points when active.",
+    body: "It doesn't redirect right now.",
   },
   blocked: {
     icon: ShieldAlert,
     title: "spoo.me blocked this link",
-    body: "It violates our policies and no longer redirects. Don't trust its destination.",
+    body: "It violated our policies and no longer redirects.",
     danger: true,
   },
 }
@@ -96,7 +97,7 @@ export function PreviewView({ data }: { data: PublicPreview }) {
         </div>
       )}
 
-      {data.password_protected ? (
+      {data.status === "active" && data.password_protected ? (
         <div className="mt-6 flex items-start gap-3 rounded-xl border border-border/60 bg-card p-4">
           <Lock
             className="mt-0.5 size-4 shrink-0 text-muted-foreground"
@@ -167,20 +168,14 @@ export function PreviewView({ data }: { data: PublicPreview }) {
         )
       )}
 
-      {/* Actions: continuing is opt-in; the primary slot encodes state */}
+      {/* Actions: continuing exists only while the redirect does */}
       <div className="mt-10 flex flex-wrap items-center gap-3">
-        {data.status === "active" ? (
+        {data.status === "active" && (
           <Button asChild>
             <a href={continueHref} rel="noreferrer">
               {data.password_protected
                 ? "Continue and enter password"
                 : "Continue to destination"}
-            </a>
-          </Button>
-        ) : (
-          <Button asChild variant="outline">
-            <a href={continueHref} rel="noreferrer">
-              Open the link anyway
             </a>
           </Button>
         )}

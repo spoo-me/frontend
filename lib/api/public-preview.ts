@@ -5,10 +5,11 @@ import { parse } from "./client"
  * (GET /api/v1/public/preview/{code}, thoughts/link-preview-page.md §6).
  *
  * Safety semantics the UI relies on:
- *  - status-agnostic: expired/blocked/inactive links still answer, with
- *    their status stated — the preview is never a worse safety tool than
- *    the redirect is a risk. Only truly missing codes 404.
- *  - password-protected links withhold the destination and geo rules
+ *  - status-agnostic resolution: expired/blocked/inactive links still
+ *    answer, with their status stated. Only truly missing codes 404.
+ *  - destination + geo rules ride the wire ONLY while the link is active
+ *    and unlocked: password, expiry, pause and block all withhold them
+ *    (the preview never reveals more than the redirect would)
  *  - never any stats payload; private_stats links preview like any other
  *  - deliberately no owner-set meta: the preview shows OUR resolved facts
  *    only, custom meta is sender-controlled content
