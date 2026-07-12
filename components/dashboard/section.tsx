@@ -33,11 +33,14 @@ export function SectionHeader({
         {lead ??
           (Icon && (
             <Icon
-              className="text-muted-foreground/70 size-3.5 shrink-0"
+              className="size-3.5 shrink-0 text-muted-foreground/70"
               strokeWidth={1.75}
             />
           ))}
-        <span data-section-title className="label-mono text-muted-foreground truncate">
+        <span
+          data-section-title
+          className="label-mono truncate text-muted-foreground"
+        >
           {title}
         </span>
         {badge}
@@ -58,8 +61,8 @@ export function Panel({
   return (
     <div
       className={cn(
-        "border-border/60 bg-card overflow-hidden rounded-xl border",
-        className,
+        "overflow-hidden rounded-xl border border-border/60 bg-card",
+        className
       )}
     >
       {children}

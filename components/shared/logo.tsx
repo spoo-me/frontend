@@ -11,7 +11,11 @@ type LogoProps = {
 }
 
 export function Logo({ className, withText = true, href = "/" }: LogoProps) {
-  const content = withText ? <Wordmark className={className} /> : <LogoMark className={className} />
+  const content = withText ? (
+    <Wordmark className={className} />
+  ) : (
+    <LogoMark className={className} />
+  )
 
   if (!href) return content
   return (
@@ -23,7 +27,10 @@ export function Logo({ className, withText = true, href = "/" }: LogoProps) {
 
 function Wordmark({ className }: { className?: string }) {
   return (
-    <span aria-hidden className={cn("relative inline-flex h-7 items-center", className)}>
+    <span
+      aria-hidden
+      className={cn("relative inline-flex h-7 items-center", className)}
+    >
       <Image
         src="/brand/logo-text-light.png"
         alt=""
@@ -46,7 +53,13 @@ function Wordmark({ className }: { className?: string }) {
 
 function LogoMark({ className }: { className?: string }) {
   return (
-    <span aria-hidden className={cn("relative inline-flex size-7 items-center justify-center", className)}>
+    <span
+      aria-hidden
+      className={cn(
+        "relative inline-flex size-7 items-center justify-center",
+        className
+      )}
+    >
       <Image
         src="/brand/logo-black.png"
         alt=""

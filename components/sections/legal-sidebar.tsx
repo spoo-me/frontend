@@ -20,7 +20,7 @@ export function LegalSidebar({
   toc: TocItem[]
 }) {
   const [activeSection, setActiveSection] = React.useState<string | null>(
-    toc[0]?.id ?? null,
+    toc[0]?.id ?? null
   )
   const navRef = React.useRef<HTMLElement>(null)
 
@@ -73,8 +73,8 @@ export function LegalSidebar({
                 className={cn(
                   "block text-sm leading-snug transition-colors",
                   isActiveDoc
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {d.title}
@@ -82,17 +82,19 @@ export function LegalSidebar({
 
               {/* Section tree — only the open document unfolds */}
               {isActiveDoc && toc.length > 0 && (
-                <ul className="border-border/40 mt-2.5 mb-1 flex flex-col gap-0.5 border-l">
+                <ul className="mt-2.5 mb-1 flex flex-col gap-0.5 border-border/40 border-l">
                   {toc.map((item) => (
                     <li key={item.id}>
                       <a
                         href={`#${item.id}`}
-                        aria-current={activeSection === item.id ? "true" : undefined}
+                        aria-current={
+                          activeSection === item.id ? "true" : undefined
+                        }
                         className={cn(
                           "-ml-px block border-l py-1 pl-3 text-[13px] leading-snug transition-colors",
                           activeSection === item.id
-                            ? "border-foreground/60 text-foreground font-medium"
-                            : "text-muted-foreground/80 hover:text-foreground border-transparent",
+                            ? "border-foreground/60 font-medium text-foreground"
+                            : "border-transparent text-muted-foreground/80 hover:text-foreground"
                         )}
                       >
                         {item.title}
@@ -106,7 +108,7 @@ export function LegalSidebar({
         })}
         {upcoming.map((title) => (
           <li key={title}>
-            <span className="text-muted-foreground/40 block cursor-default text-sm leading-snug">
+            <span className="block cursor-default text-muted-foreground/40 text-sm leading-snug">
               {title}
             </span>
           </li>

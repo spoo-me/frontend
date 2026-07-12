@@ -3,7 +3,12 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 
-import { getMyFeatures, type FeatureMap, type FeatureName, type FeatureState } from "@/lib/api"
+import {
+  getMyFeatures,
+  type FeatureMap,
+  type FeatureName,
+  type FeatureState,
+} from "@/lib/api"
 import { useAuth } from "@/components/auth/auth-context"
 
 /**
@@ -36,7 +41,10 @@ function readMirror(userId: string): FeatureMap | undefined {
 
 function writeMirror(userId: string, features: FeatureMap) {
   try {
-    window.localStorage.setItem(MIRROR_KEY, JSON.stringify({ u: userId, f: features }))
+    window.localStorage.setItem(
+      MIRROR_KEY,
+      JSON.stringify({ u: userId, f: features })
+    )
   } catch {
     // Storage unavailable — the mirror is an optimization, not state.
   }
@@ -77,7 +85,7 @@ export function useFeature(name: FeatureName): FeatureState {
     or mid-flight data), and tells the page whether to render. */
 export function useFeatureGuard(
   name: FeatureName,
-  onDenied: () => void,
+  onDenied: () => void
 ): boolean {
   const { features, settled } = useFeatures()
   const enabled = features?.[name] === "enabled"

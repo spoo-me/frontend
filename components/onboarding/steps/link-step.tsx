@@ -2,7 +2,14 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { ArrowRight, ArrowUpRight, Check, Copy, Download, QrCode } from "lucide-react"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  Copy,
+  Download,
+  QrCode,
+} from "lucide-react"
 import { BaseQr, encodeData } from "simple-qrbtf"
 
 import { cn } from "@/lib/utils"
@@ -40,7 +47,9 @@ export function LinkStep({
 }) {
   const [url, setUrl] = React.useState("")
   const [alias, setAlias] = React.useState("")
-  const [aliasState, setAliasState] = React.useState<AliasState>({ kind: "idle" })
+  const [aliasState, setAliasState] = React.useState<AliasState>({
+    kind: "idle",
+  })
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [created, setCreated] = React.useState<ShortUrl | null>(null)
@@ -70,9 +79,10 @@ export function LinkStep({
               ? { kind: "available" }
               : {
                   kind: "unavailable",
-                  reason: r.reason === "taken" ? "already taken" : "invalid format",
-                },
-          ),
+                  reason:
+                    r.reason === "taken" ? "already taken" : "invalid format",
+                }
+          )
         )
         .catch(() => setAliasState({ kind: "idle" }))
     }, 350)
@@ -138,10 +148,10 @@ export function LinkStep({
 
   return (
     <div className="flex w-full flex-col items-center text-center">
-      <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+      <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         {created ? "Your first link is live" : "Create your first link"}
       </h1>
-      <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
+      <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         {created
           ? "Share it anywhere. Every click lands in your analytics."
           : "Paste any long URL you actually use. We'll make it short."}
@@ -162,7 +172,7 @@ export function LinkStep({
               <Button onClick={() => void copy()} size="sm" variant="outline">
                 {copied ? (
                   <>
-                    <Check className="text-live size-3.5" />
+                    <Check className="size-3.5 text-live" />
                     Copied
                   </>
                 ) : (
@@ -178,13 +188,20 @@ export function LinkStep({
                   <ArrowUpRight className="size-3.5" />
                 </a>
               </Button>
-              <Button onClick={() => setQrOpen(true)} size="sm" variant="outline">
+              <Button
+                onClick={() => setQrOpen(true)}
+                size="sm"
+                variant="outline"
+              >
                 <QrCode className="size-3.5" />
                 QR code
               </Button>
             </div>
 
-            <Button onClick={() => onDone(created)} className="mt-12 h-10 min-w-44">
+            <Button
+              onClick={() => onDone(created)}
+              className="mt-12 h-10 min-w-44"
+            >
               Continue
               <ArrowRight className="size-4" data-icon="inline-end" />
             </Button>
@@ -198,7 +215,10 @@ export function LinkStep({
             className="mt-10 w-full max-w-md space-y-3 text-left"
           >
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="ob-url" className="text-foreground text-sm font-medium">
+              <label
+                htmlFor="ob-url"
+                className="font-medium text-foreground text-sm"
+              >
                 Destination URL
               </label>
               <Input
@@ -215,23 +235,30 @@ export function LinkStep({
 
             <div className="flex flex-col gap-1.5">
               <div className="flex items-baseline justify-between">
-                <label htmlFor="ob-alias" className="text-foreground text-sm font-medium">
+                <label
+                  htmlFor="ob-alias"
+                  className="font-medium text-foreground text-sm"
+                >
                   Custom alias
                 </label>
-                <span className="text-muted-foreground/70 text-xs">optional</span>
+                <span className="text-muted-foreground/70 text-xs">
+                  optional
+                </span>
               </div>
-              <div className="border-input focus-within:border-ring focus-within:ring-ring/30 shadow-soft flex items-center rounded-lg border transition-[box-shadow,border-color] focus-within:ring-2">
-                <span className="text-muted-foreground border-border/60 border-r px-3 font-mono text-sm">
+              <div className="flex items-center rounded-lg border border-input shadow-soft transition-[box-shadow,border-color] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+                <span className="border-border/60 border-r px-3 font-mono text-muted-foreground text-sm">
                   spoo.me/
                 </span>
                 <input
                   id="ob-alias"
                   value={alias}
                   onChange={(e) =>
-                    setAlias(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 16))
+                    setAlias(
+                      e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 16)
+                    )
                   }
                   placeholder="launch"
-                  className="placeholder:text-muted-foreground/50 h-10 min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none"
+                  className="h-10 min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none placeholder:text-muted-foreground/50"
                 />
                 <span className="pr-3">
                   <AliasBadge state={aliasState} />
@@ -255,14 +282,16 @@ export function LinkStep({
               }
             >
               {pending ? "Shortening…" : "Shorten it"}
-              {!pending && <ArrowRight className="size-4" data-icon="inline-end" />}
+              {!pending && (
+                <ArrowRight className="size-4" data-icon="inline-end" />
+              )}
             </Button>
 
             <div className="pt-1 text-center">
               <button
                 type="button"
                 onClick={onSkip}
-                className="text-muted-foreground/70 hover:text-foreground text-xs underline-offset-4 transition-colors hover:underline"
+                className="text-muted-foreground/70 text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
               >
                 I&apos;ll do this later
               </button>
@@ -300,11 +329,11 @@ function LinkResult({
 
   return (
     <div ref={linkRef} className="flex flex-col items-center gap-3">
-      <div className="font-mono text-3xl font-semibold tracking-tight sm:text-4xl">
+      <div className="font-mono font-semibold text-3xl tracking-tight sm:text-4xl">
         <span className="text-muted-foreground/45">{host}</span>
         <span className="text-foreground">{slug}</span>
       </div>
-      <div className="text-muted-foreground/70 flex items-center gap-1.5 text-xs">
+      <div className="flex items-center gap-1.5 text-muted-foreground/70 text-xs">
         <span aria-hidden>↳</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -324,10 +353,10 @@ function AliasBadge({ state }: { state: AliasState }) {
   return (
     <span
       className={cn(
-        "label-mono text-[9px] whitespace-nowrap",
+        "label-mono whitespace-nowrap text-[9px]",
         state.kind === "available" && "text-live",
         state.kind === "checking" && "text-muted-foreground/60",
-        state.kind === "unavailable" && "text-destructive",
+        state.kind === "unavailable" && "text-destructive"
       )}
       aria-live="polite"
     >
@@ -362,7 +391,7 @@ function QrDialog({
           dismiss); generous padding; no separate footer band. */}
       <DialogContent
         showCloseButton={false}
-        className="bg-background gap-5 p-7 text-center sm:max-w-xs"
+        className="gap-5 bg-background p-7 text-center sm:max-w-xs"
       >
         <DialogHeader className="gap-1.5">
           <DialogTitle className="text-lg">QR code</DialogTitle>

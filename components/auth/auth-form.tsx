@@ -90,7 +90,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         // Read ?next= at submit time — avoids the useSearchParams Suspense
         // requirement on an otherwise static page.
         const next = safeNext(
-          new URLSearchParams(window.location.search).get("next"),
+          new URLSearchParams(window.location.search).get("next")
         )
         router.push(next ?? "/dashboard")
       } else {
@@ -147,7 +147,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       className="space-y-7"
     >
       <div className="space-y-2 text-center">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="font-semibold text-2xl text-foreground tracking-tight">
           {c.title}
         </h1>
         <p className="text-muted-foreground text-sm">{c.sub}</p>
@@ -168,24 +168,31 @@ export function AuthForm({ mode }: { mode: Mode }) {
         ))}
       </div>
 
-      <div className="flex items-center gap-3" role="separator" aria-label="or continue with email">
-        <span className="bg-border/60 h-px flex-1" />
-        <span className="label-mono text-muted-foreground/70 text-[10px]">
+      <div
+        className="flex items-center gap-3"
+        role="separator"
+        aria-label="or continue with email"
+      >
+        <span className="h-px flex-1 bg-border/60" />
+        <span className="label-mono text-[10px] text-muted-foreground/70">
           or continue with
         </span>
-        <span className="bg-border/60 h-px flex-1" />
+        <span className="h-px flex-1 bg-border/60" />
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between">
-            <label htmlFor="auth-email" className="text-foreground text-sm font-medium">
+            <label
+              htmlFor="auth-email"
+              className="font-medium text-foreground text-sm"
+            >
               Email
             </label>
             {mode === "login" && (
               <Link
                 href="/forgot-password"
-                className="text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
+                className="font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
               >
                 Forgot password?
               </Link>
@@ -217,7 +224,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               <div className="flex flex-col gap-1.5 pb-px">
                 <label
                   htmlFor="auth-password"
-                  className="text-foreground text-sm font-medium"
+                  className="font-medium text-foreground text-sm"
                 >
                   Password
                 </label>
@@ -226,14 +233,23 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === "signup" ? "Create a strong password" : "Your password"}
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  placeholder={
+                    mode === "signup"
+                      ? "Create a strong password"
+                      : "Your password"
+                  }
+                  autoComplete={
+                    mode === "signup" ? "new-password" : "current-password"
+                  }
                   required
                   aria-invalid={!!error || undefined}
                   className="h-10"
                 />
                 {mode === "signup" && password.length > 0 && (
-                  <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1" aria-label="Password requirements">
+                  <ul
+                    className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1"
+                    aria-label="Password requirements"
+                  >
                     {PASSWORD_RULES.map((rule) => {
                       const ok = rule.test(password)
                       return (
@@ -241,11 +257,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
                           key={rule.id}
                           className={cn(
                             "flex items-center gap-1.5 text-xs transition-colors",
-                            ok ? "text-live" : "text-muted-foreground/60",
+                            ok ? "text-live" : "text-muted-foreground/60"
                           )}
                         >
                           <Check
-                            className={cn("size-3 shrink-0", !ok && "opacity-30")}
+                            className={cn(
+                              "size-3 shrink-0",
+                              !ok && "opacity-30"
+                            )}
                             aria-hidden
                           />
                           {rule.label}
@@ -267,7 +286,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 {" "}
                 <Link
                   href="/login"
-                  className="text-foreground font-medium underline-offset-4 hover:underline"
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
                 >
                   Sign in instead
                 </Link>
@@ -276,17 +295,21 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </p>
         )}
 
-        <Button type="submit" className="h-10 w-full" disabled={pending || !canSubmit}>
+        <Button
+          type="submit"
+          className="h-10 w-full"
+          disabled={pending || !canSubmit}
+        >
           {pending ? c.pending : c.cta}
           {!pending && <ArrowRight className="size-4" data-icon="inline-end" />}
         </Button>
       </form>
 
-      <p className="text-muted-foreground text-center text-sm">
+      <p className="text-center text-muted-foreground text-sm">
         {c.alt}{" "}
         <Link
           href={c.altHref}
-          className="text-foreground font-medium underline-offset-4 hover:underline"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
         >
           {c.altLink}
         </Link>

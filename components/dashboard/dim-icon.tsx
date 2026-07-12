@@ -32,10 +32,21 @@ export function countryName(code: string) {
   }
 }
 
-function Favicon({ domain, className }: { domain: string; className?: string }) {
+function Favicon({
+  domain,
+  className,
+}: {
+  domain: string
+  className?: string
+}) {
   const [failed, setFailed] = React.useState(false)
   if (failed)
-    return <Globe className={cn("text-muted-foreground", className)} strokeWidth={1.75} />
+    return (
+      <Globe
+        className={cn("text-muted-foreground", className)}
+        strokeWidth={1.75}
+      />
+    )
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -51,7 +62,12 @@ function Favicon({ domain, className }: { domain: string; className?: string }) 
 function Flag({ code, className }: { code: string; className?: string }) {
   const [failed, setFailed] = React.useState(false)
   if (failed || code.length !== 2)
-    return <MapPin className={cn("text-muted-foreground", className)} strokeWidth={1.75} />
+    return (
+      <MapPin
+        className={cn("text-muted-foreground", className)}
+        strokeWidth={1.75}
+      />
+    )
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -87,7 +103,10 @@ export function DimensionIcon({
       return <Flag code={value} className={className} />
     case "city":
       return (
-        <MapPin className={cn("text-muted-foreground", className)} strokeWidth={1.75} />
+        <MapPin
+          className={cn("text-muted-foreground", className)}
+          strokeWidth={1.75}
+        />
       )
     case "browser":
       return <BrowserLogo name={value} className={className} />
@@ -95,7 +114,10 @@ export function DimensionIcon({
       return <OsGlyph name={value} className={className} />
     default:
       return (
-        <AppWindow className={cn("text-muted-foreground", className)} strokeWidth={1.75} />
+        <AppWindow
+          className={cn("text-muted-foreground", className)}
+          strokeWidth={1.75}
+        />
       )
   }
 }
@@ -121,7 +143,13 @@ const BROWSER_SLUGS: Record<string, string> = {
 /** Marks missing from browser-logos, served brand-colored by simpleicons. */
 const SIMPLEICON_BROWSERS: Record<string, string> = { arc: "arc" }
 
-function BrowserLogo({ name, className }: { name: string; className?: string }) {
+function BrowserLogo({
+  name,
+  className,
+}: {
+  name: string
+  className?: string
+}) {
   const [failed, setFailed] = React.useState(false)
   const key = name.toLowerCase()
   const slug = BROWSER_SLUGS[key]
@@ -132,7 +160,12 @@ function BrowserLogo({ name, className }: { name: string; className?: string }) 
       ? `https://cdn.jsdelivr.net/gh/alrra/browser-logos/src/${slug}/${slug}_64x64.png`
       : null
   if (!src || failed)
-    return <Compass className={cn("text-muted-foreground", className)} strokeWidth={1.75} />
+    return (
+      <Compass
+        className={cn("text-muted-foreground", className)}
+        strokeWidth={1.75}
+      />
+    )
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img

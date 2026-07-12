@@ -19,14 +19,20 @@ import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { StatusPill } from "@/components/dashboard/status-pill"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { KpiCard } from "@/components/dashboard/kpi"
-import { ClicksChart, type ChartMetric } from "@/components/dashboard/clicks-chart"
+import {
+  ClicksChart,
+  type ChartMetric,
+} from "@/components/dashboard/clicks-chart"
 import {
   AdaptiveSegmented,
   HeaderControls,
   MetricControl,
 } from "@/components/dashboard/analytics/metric-control"
 import { BreakdownList } from "@/components/dashboard/breakdown-list"
-import { LinkActions, shortUrlOf } from "@/components/dashboard/links/link-actions"
+import {
+  LinkActions,
+  shortUrlOf,
+} from "@/components/dashboard/links/link-actions"
 import { LinkSettingsForm } from "@/components/dashboard/links/link-settings-form"
 
 const RANGES = [
@@ -74,15 +80,16 @@ export default function LinkDetailPage() {
   })
   const domainOptions = [
     "spoo.me",
-    ...(domains.data?.items.filter((d) => d.status === "ACTIVE").map((d) => d.fqdn) ??
-      []),
+    ...(domains.data?.items
+      .filter((d) => d.status === "ACTIVE")
+      .map((d) => d.fqdn) ?? []),
   ]
 
   if (!urls.isPending && !link) {
     return (
       <div className="mx-auto w-full max-w-5xl">
         <div className="pattern-dots flex h-64 flex-col items-center justify-center gap-3 rounded-xl">
-          <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+          <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
             no link at spoo.me/{alias}
           </span>
           <Link
@@ -106,7 +113,7 @@ export default function LinkDetailPage() {
           type="button"
           onClick={() => router.push("/dashboard/links")}
           aria-label="Back to links"
-          className="text-muted-foreground hover:text-foreground hover:bg-accent/60 mt-0.5 flex size-7 items-center justify-center rounded-lg transition-colors duration-150"
+          className="mt-0.5 flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
         </button>
@@ -114,17 +121,20 @@ export default function LinkDetailPage() {
           {link ? (
             <>
               <div className="flex items-center gap-2">
-                <h1 className="text-foreground truncate font-mono text-lg font-semibold tracking-tight">
+                <h1 className="truncate font-mono font-semibold text-foreground text-lg tracking-tight">
                   {(link.domain ?? "spoo.me") + "/" + link.alias}
                 </h1>
-                <CopyButton value={shortUrlOf(link)} trackAs="copy_short_link" />
+                <CopyButton
+                  value={shortUrlOf(link)}
+                  trackAs="copy_short_link"
+                />
                 <StatusPill status={link.status} />
               </div>
               <a
                 href={link.long_url ?? "#"}
                 target="_blank"
                 rel="noreferrer"
-                className="text-muted-foreground hover:text-foreground truncate text-xs underline-offset-4 transition-colors duration-150 hover:underline"
+                className="truncate text-muted-foreground text-xs underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
               >
                 {displayUrl(link.long_url)}
               </a>
@@ -136,7 +146,12 @@ export default function LinkDetailPage() {
             </div>
           )}
         </div>
-        {link && <LinkActions link={link} onDeleted={() => router.push("/dashboard/links")} />}
+        {link && (
+          <LinkActions
+            link={link}
+            onDeleted={() => router.push("/dashboard/links")}
+          />
+        )}
       </div>
 
       {/* KPI strip */}
@@ -207,7 +222,10 @@ export default function LinkDetailPage() {
             {stats.isPending ? (
               <Skeleton className="h-56 w-full" />
             ) : (
-              <BreakdownList dimension="referrer" rows={s ? dimensionRowsOf(s, "referrer") : []} />
+              <BreakdownList
+                dimension="referrer"
+                rows={s ? dimensionRowsOf(s, "referrer") : []}
+              />
             )}
           </Panel>
         </div>
@@ -217,7 +235,10 @@ export default function LinkDetailPage() {
             {stats.isPending ? (
               <Skeleton className="h-56 w-full" />
             ) : (
-              <BreakdownList dimension="country" rows={s ? dimensionRowsOf(s, "country") : []} />
+              <BreakdownList
+                dimension="country"
+                rows={s ? dimensionRowsOf(s, "country") : []}
+              />
             )}
           </Panel>
         </div>

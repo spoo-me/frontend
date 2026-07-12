@@ -72,7 +72,7 @@ function refreshSession(): Promise<boolean> {
 /** Fetch that transparently refreshes the access token once on 401. */
 export async function authedFetch(
   path: string,
-  init: RequestInit,
+  init: RequestInit
 ): Promise<Response> {
   const res = await fetch(path, init)
   if (res.status !== 401) return res

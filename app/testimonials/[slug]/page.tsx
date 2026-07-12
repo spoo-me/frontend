@@ -50,34 +50,38 @@ export default async function TestimonialDetailPage({
         <section className="relative pt-28 pb-24 sm:pt-36 sm:pb-32">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 [background-image:radial-gradient(circle_at_1px_1px,var(--color-border)_1px,transparent_0)] [background-size:28px_28px] opacity-30 [mask-image:radial-gradient(ellipse_70%_50%_at_50%_30%,black,transparent)]"
+            className="pointer-events-none absolute inset-0 -z-10 opacity-30 [background-image:radial-gradient(circle_at_1px_1px,var(--color-border)_1px,transparent_0)] [background-size:28px_28px] [mask-image:radial-gradient(ellipse_70%_50%_at_50%_30%,black,transparent)]"
           />
           {/* Brand-color glow anchor */}
           <span
             aria-hidden
-            className="pointer-events-none absolute right-[-10%] top-[20%] -z-10 size-[36rem] rounded-full opacity-20 blur-[140px]"
+            className="pointer-events-none absolute top-[20%] right-[-10%] -z-10 size-[36rem] rounded-full opacity-20 blur-[140px]"
             style={{ backgroundColor: t.accent }}
           />
 
           <div className="mx-auto max-w-4xl px-4 sm:px-6">
             <Link
               href="/testimonials"
-              className="text-muted-foreground hover:text-foreground group inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
+              className="group inline-flex items-center gap-1.5 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
             >
               <ArrowLeft className="size-3.5 transition group-hover:-translate-x-0.5" />
               All stories
             </Link>
 
             <div className="mt-10">
-              <span className="text-foreground/80 font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+              <span className="font-mono font-semibold text-[11px] text-foreground/80 uppercase tracking-[0.18em]">
                 {t.company.name}
               </span>
             </div>
 
-            <blockquote className="text-foreground/80 mt-8 text-balance text-3xl font-normal leading-[1.3] tracking-tight sm:text-4xl md:text-[2.75rem]">
-              <span aria-hidden className="text-muted-foreground/50">“</span>
+            <blockquote className="mt-8 text-balance font-normal text-3xl text-foreground/80 leading-[1.3] tracking-tight sm:text-4xl md:text-[2.75rem]">
+              <span aria-hidden className="text-muted-foreground/50">
+                “
+              </span>
               <QuoteText segments={t.fullQuote} />
-              <span aria-hidden className="text-muted-foreground/50">”</span>
+              <span aria-hidden className="text-muted-foreground/50">
+                ”
+              </span>
             </blockquote>
 
             <div className="mt-12 flex items-center gap-4">
@@ -87,10 +91,10 @@ export default async function TestimonialDetailPage({
                 size="lg"
               />
               <div>
-                <div className="text-foreground text-base font-semibold leading-tight">
+                <div className="font-semibold text-base text-foreground leading-tight">
                   {t.person.name}
                 </div>
-                <div className="text-muted-foreground mt-1 text-sm">
+                <div className="mt-1 text-muted-foreground text-sm">
                   {t.person.role} · {t.company.name}
                 </div>
               </div>
@@ -104,7 +108,7 @@ export default async function TestimonialDetailPage({
             <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
               <div className="flex items-baseline gap-3">
                 <span
-                  className="text-5xl font-semibold tracking-tight sm:text-6xl"
+                  className="font-semibold text-5xl tracking-tight sm:text-6xl"
                   style={{ color: t.accent }}
                 >
                   {t.metric.value}
@@ -121,8 +125,8 @@ export default async function TestimonialDetailPage({
         <section className="py-24 sm:py-32">
           <div className="mx-auto grid max-w-5xl gap-6 px-4 sm:px-6 md:grid-cols-2">
             {/* Person panel */}
-            <div className="border-border/60 bg-card/30 flex flex-col rounded-2xl border p-7 sm:p-9">
-              <div className="text-muted-foreground font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+            <div className="flex flex-col rounded-2xl border border-border/60 bg-card/30 p-7 sm:p-9">
+              <div className="font-mono font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.18em]">
                 About the person
               </div>
               <div className="mt-6 flex items-center gap-4">
@@ -132,16 +136,16 @@ export default async function TestimonialDetailPage({
                   size="lg"
                 />
                 <div>
-                  <div className="text-foreground text-lg font-semibold leading-tight">
+                  <div className="font-semibold text-foreground text-lg leading-tight">
                     {t.person.name}
                   </div>
-                  <div className="text-muted-foreground mt-1 text-sm">
+                  <div className="mt-1 text-muted-foreground text-sm">
                     {t.person.role}, {t.company.name}
                   </div>
                 </div>
               </div>
               {t.person.bio && (
-                <p className="text-muted-foreground mt-6 text-pretty text-sm leading-relaxed sm:text-base">
+                <p className="mt-6 text-pretty text-muted-foreground text-sm leading-relaxed sm:text-base">
                   {t.person.bio}
                 </p>
               )}
@@ -153,7 +157,7 @@ export default async function TestimonialDetailPage({
                         href={l.href}
                         target="_blank"
                         rel="noreferrer"
-                        className="border-border/60 hover:border-border bg-background hover:bg-muted/40 text-foreground/80 hover:text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background px-3 py-1 font-medium text-foreground/80 text-xs transition-colors hover:border-border hover:bg-muted/40 hover:text-foreground"
                       >
                         {l.label}
                         <ArrowUpRight className="size-3" />
@@ -165,13 +169,13 @@ export default async function TestimonialDetailPage({
             </div>
 
             {/* Company panel */}
-            <div className="border-border/60 bg-card/30 relative flex flex-col overflow-hidden rounded-2xl border p-7 sm:p-9">
+            <div className="relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/30 p-7 sm:p-9">
               <span
                 aria-hidden
-                className="pointer-events-none absolute -bottom-20 -right-20 size-56 rounded-full opacity-20 blur-3xl"
+                className="pointer-events-none absolute -right-20 -bottom-20 size-56 rounded-full opacity-20 blur-3xl"
                 style={{ backgroundColor: t.accent }}
               />
-              <div className="text-muted-foreground relative font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+              <div className="relative font-mono font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.18em]">
                 About the company
               </div>
               <div className="relative mt-6 flex items-center gap-4">
@@ -180,33 +184,33 @@ export default async function TestimonialDetailPage({
                   <img
                     src={t.company.logoSrc}
                     alt=""
-                    className="border-border/60 bg-background size-14 shrink-0 rounded-xl border object-contain p-2"
+                    className="size-14 shrink-0 rounded-xl border border-border/60 bg-background object-contain p-2"
                   />
                 ) : (
                   <div
                     aria-hidden
-                    className="border-border/60 bg-background flex size-14 shrink-0 items-center justify-center rounded-xl border"
+                    className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background"
                   >
-                    <Building2 className="text-muted-foreground size-6" />
+                    <Building2 className="size-6 text-muted-foreground" />
                   </div>
                 )}
                 <div>
-                  <div className="text-foreground text-lg font-semibold leading-tight">
+                  <div className="font-semibold text-foreground text-lg leading-tight">
                     {t.company.name}
                   </div>
                   {t.company.tagline && (
-                    <div className="text-muted-foreground mt-1 text-sm">
+                    <div className="mt-1 text-muted-foreground text-sm">
                       {t.company.tagline}
                     </div>
                   )}
                 </div>
               </div>
               {t.company.description && (
-                <p className="text-muted-foreground relative mt-6 text-pretty text-sm leading-relaxed sm:text-base">
+                <p className="relative mt-6 text-pretty text-muted-foreground text-sm leading-relaxed sm:text-base">
                   {t.company.description}
                 </p>
               )}
-              <dl className="text-muted-foreground relative mt-6 flex flex-wrap gap-x-8 gap-y-3 text-xs">
+              <dl className="relative mt-6 flex flex-wrap gap-x-8 gap-y-3 text-muted-foreground text-xs">
                 {t.company.industry && (
                   <div className="flex items-center gap-1.5">
                     <Building2 className="size-3.5" />
@@ -227,10 +231,10 @@ export default async function TestimonialDetailPage({
                   href={t.company.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-foreground/80 hover:text-foreground group relative mt-6 inline-flex items-center gap-1.5 text-xs font-semibold"
+                  className="group relative mt-6 inline-flex items-center gap-1.5 font-semibold text-foreground/80 text-xs hover:text-foreground"
                 >
                   Visit {new URL(t.company.url).hostname.replace("www.", "")}
-                  <ArrowUpRight className="size-3.5 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  <ArrowUpRight className="size-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </a>
               )}
             </div>
@@ -250,7 +254,7 @@ export default async function TestimonialDetailPage({
                       alt={p.alt}
                       loading="lazy"
                       decoding="async"
-                      className="border-border/60 aspect-[4/3] w-full rounded-xl border object-cover"
+                      className="aspect-[4/3] w-full rounded-xl border border-border/60 object-cover"
                     />
                     {p.caption && (
                       <figcaption className="text-muted-foreground text-xs">
@@ -268,7 +272,7 @@ export default async function TestimonialDetailPage({
         {others.length > 0 && (
           <section className="border-border/60 border-t py-24 sm:py-32">
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
-              <div className="text-muted-foreground font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+              <div className="font-mono font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.18em]">
                 More stories
               </div>
               <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -276,11 +280,11 @@ export default async function TestimonialDetailPage({
                   <Link
                     key={o.slug}
                     href={`/testimonials/${o.slug}`}
-                    className="border-border/60 bg-card/30 hover:border-border/90 group relative flex flex-col gap-5 overflow-hidden rounded-2xl border p-7 transition-colors"
+                    className="group relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border/60 bg-card/30 p-7 transition-colors hover:border-border/90"
                   >
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute -bottom-20 -right-20 size-56 rounded-full opacity-20 blur-3xl"
+                      className="pointer-events-none absolute -right-20 -bottom-20 size-56 rounded-full opacity-20 blur-3xl"
                       style={{ backgroundColor: o.accent }}
                     />
                     <div className="relative flex items-center gap-3">
@@ -289,15 +293,15 @@ export default async function TestimonialDetailPage({
                         initials={o.person.initials}
                       />
                       <div>
-                        <div className="text-foreground text-sm font-semibold leading-tight">
+                        <div className="font-semibold text-foreground text-sm leading-tight">
                           {o.person.name}
                         </div>
-                        <div className="text-muted-foreground mt-0.5 text-xs">
+                        <div className="mt-0.5 text-muted-foreground text-xs">
                           {o.company.name}
                         </div>
                       </div>
                     </div>
-                    <p className="text-foreground/80 relative line-clamp-3 text-base leading-relaxed">
+                    <p className="relative line-clamp-3 text-base text-foreground/80 leading-relaxed">
                       “<QuoteText segments={o.shortQuote} />”
                     </p>
                   </Link>
@@ -310,13 +314,13 @@ export default async function TestimonialDetailPage({
         {/* CTA */}
         <section className="relative py-24 sm:py-32">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-            <h2 className="text-foreground text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+            <h2 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl md:text-5xl">
               Ship your links the{" "}
-              <span className="text-muted-foreground italic font-serif font-normal">
+              <span className="font-normal font-serif text-muted-foreground italic">
                 spoo way.
               </span>
             </h2>
-            <p className="text-muted-foreground mx-auto mt-5 max-w-xl text-balance text-base sm:text-lg">
+            <p className="mx-auto mt-5 max-w-xl text-balance text-base text-muted-foreground sm:text-lg">
               Free, open source, and built to grow with you.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -327,7 +331,11 @@ export default async function TestimonialDetailPage({
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="h-11 px-5">
-                <a href={siteConfig.links.docs} target="_blank" rel="noreferrer">
+                <a
+                  href={siteConfig.links.docs}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Read the docs
                 </a>
               </Button>

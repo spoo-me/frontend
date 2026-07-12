@@ -64,7 +64,10 @@ const nextConfig = {
     return [
       { source: "/auth/:path*", destination: `${SPOO_API_URL}/auth/:path*` },
       { source: "/oauth/:path*", destination: `${SPOO_API_URL}/oauth/:path*` },
-      { source: "/api/v1/:path*", destination: `${SPOO_API_URL}/api/v1/:path*` },
+      {
+        source: "/api/v1/:path*",
+        destination: `${SPOO_API_URL}/api/v1/:path*`,
+      },
       // Exact path: the rest of /dashboard/* is the app's own routes.
       {
         source: "/dashboard/profile-pictures",

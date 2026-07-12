@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "format": "biome check --write .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -54,6 +54,7 @@
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.3",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/canvas-confetti": "^1.9.0",
@@ -66,8 +67,6 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "16.1.7",
     "postcss": "^8",
-    "prettier": "^3.8.1",
-    "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   }

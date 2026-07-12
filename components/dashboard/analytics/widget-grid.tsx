@@ -9,7 +9,12 @@ import ReactGridLayout, {
 } from "react-grid-layout"
 
 import { cn } from "@/lib/utils"
-import { GRID, heightPx, WIDGET_SPEC, type Widget } from "@/lib/analytics-layout"
+import {
+  GRID,
+  heightPx,
+  WIDGET_SPEC,
+  type Widget,
+} from "@/lib/analytics-layout"
 
 /**
  * The dashboard surface: react-grid-layout positions widgets from the layout
@@ -64,7 +69,13 @@ export function WidgetGrid({
   expandId: string | null
   onSelect: (id: string | null) => void
   onGridChange: (
-    items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>,
+    items: ReadonlyArray<{
+      i: string
+      x: number
+      y: number
+      w: number
+      h: number
+    }>
   ) => void
   renderWidget: (w: Widget) => React.ReactNode
 }) {
@@ -80,7 +91,7 @@ export function WidgetGrid({
         minW: WIDGET_SPEC[w.kind].minW,
         minH: WIDGET_SPEC[w.kind].minH,
       })),
-    [widgets],
+    [widgets]
   )
   const commit = (l: Layout) =>
     onGridChange(l.map(({ i, x, y, w, h }) => ({ i, x, y, w, h })))
@@ -93,7 +104,7 @@ export function WidgetGrid({
       // handler; nothing to wire here.
       className={cn(
         "relative",
-        editing && "pattern-dots select-none rounded-2xl",
+        editing && "pattern-dots select-none rounded-2xl"
       )}
     >
       {mounted && (
@@ -106,7 +117,11 @@ export function WidgetGrid({
             margin: [GRID.marginX, GRID.marginY],
             containerPadding: [0, 0],
           }}
-          dragConfig={{ enabled: editing, cancel: "[data-no-drag]", threshold: 4 }}
+          dragConfig={{
+            enabled: editing,
+            cancel: "[data-no-drag]",
+            threshold: 4,
+          }}
           resizeConfig={{ enabled: editing, handles: ["se"] }}
           compactor={verticalCompactor}
           onDragStart={() => {
@@ -153,7 +168,7 @@ export function WidgetGrid({
                 editing && "cursor-grab active:cursor-grabbing",
                 editing &&
                   selectedId === w.id &&
-                  "ring-foreground/25 ring-offset-background rounded-2xl ring-2 ring-offset-2",
+                  "rounded-2xl ring-2 ring-foreground/25 ring-offset-2 ring-offset-background"
               )}
             >
               {renderWidget(w)}

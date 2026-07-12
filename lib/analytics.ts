@@ -83,7 +83,7 @@ export function trackLoggedIn(method: "password") {
 
 export function trackLinkCreated(
   input: ShortenInput,
-  surface: "composer" | "onboarding",
+  surface: "composer" | "onboarding"
 ) {
   const geoCount = Object.keys(input.geo_rules ?? {}).length
   const variantCount = input.ab_variants?.length ?? 0
@@ -118,7 +118,7 @@ export function trackLinkDeleted() {
 export function trackLinksBulkAction(
   action: string,
   count: number,
-  failed: number,
+  failed: number
 ) {
   capture("links_bulk_action", { action: action.toLowerCase(), count, failed })
 }
@@ -127,7 +127,7 @@ export function trackLinksBulkAction(
 
 export function trackApiKeyCreated(
   input: { scopes: string[]; hasExpiry: boolean },
-  surface: "developer" | "onboarding",
+  surface: "developer" | "onboarding"
 ) {
   capture("api_key_created", {
     surface,
@@ -162,9 +162,14 @@ export function trackWidgetAdded(
   kind: string,
   page: string,
   source: WidgetAddSource,
-  hasScope: boolean,
+  hasScope: boolean
 ) {
-  capture("widget_added", { widget_kind: kind, page, source, has_scope: hasScope })
+  capture("widget_added", {
+    widget_kind: kind,
+    page,
+    source,
+    has_scope: hasScope,
+  })
 }
 
 export function trackWidgetRemoved(kind: string | null, page: string) {
@@ -233,7 +238,7 @@ export function trackUiAction(action: UiAction, detail?: string) {
 
 export function trackOnboardingStepCompleted(
   step: OnboardingStep,
-  path?: OnboardingPath,
+  path?: OnboardingPath
 ) {
   capture("onboarding_step_completed", {
     step,

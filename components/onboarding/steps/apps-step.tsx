@@ -36,18 +36,18 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
   }, [onDone])
 
   const featured = FEATURED.map((slug) =>
-    connectedApps.find((a) => a.slug === slug),
+    connectedApps.find((a) => a.slug === slug)
   ).filter((a): a is NonNullable<typeof a> => !!a)
 
   return (
     <div className="flex w-full flex-col items-center text-center">
-      <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+      <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         spoo.me lives{" "}
-        <span className="text-muted-foreground italic font-serif font-normal">
+        <span className="font-normal font-serif text-muted-foreground italic">
           wherever you do
         </span>
       </h1>
-      <p className="text-muted-foreground mt-3 max-w-md text-sm leading-relaxed">
+      <p className="mt-3 max-w-md text-muted-foreground text-sm leading-relaxed">
         Shorten from Raycast, your browser, Slack, or a bot in your group chat;
         every client talks to the same account you just set up.
       </p>
@@ -79,7 +79,7 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
                 aria-label={`${app.name} (opens in a new tab)`}
                 title={app.name}
                 style={{ "--tilt": `${TILTS[i]}deg` } as React.CSSProperties}
-                className="group group/tile border-border/70 bg-card shadow-card hover:border-ring hover:ring-ring/30 flex size-16 rotate-(--tilt) items-center justify-center rounded-2xl border transition-all duration-300 group-hover/deck:rotate-0 hover:z-20 hover:-translate-y-2 hover:scale-105 hover:ring-2 sm:size-19"
+                className="group group/tile flex size-16 rotate-(--tilt) items-center justify-center rounded-2xl border border-border/70 bg-card shadow-card transition-all duration-300 hover:z-20 hover:-translate-y-2 hover:scale-105 hover:border-ring hover:ring-2 hover:ring-ring/30 group-hover/deck:rotate-0 sm:size-19"
               >
                 {Icon ? (
                   /* Mono deck, identity on hover: the brightness/invert filter
@@ -98,7 +98,7 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
         })}
       </div>
 
-      <p className="label-mono text-muted-foreground/60 mt-6 text-[10px] tabular-nums">
+      <p className="label-mono mt-6 text-[10px] text-muted-foreground/60 tabular-nums">
         {integrations.length} integrations · {sdks.length} SDKs · one API
       </p>
 
@@ -111,7 +111,7 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
           href="/apps"
           target="_blank"
           rel="noopener"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 text-xs font-medium transition-colors"
+          className="inline-flex items-center gap-0.5 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
         >
           Browse all apps <ArrowUpRight className="size-3" />
         </Link>

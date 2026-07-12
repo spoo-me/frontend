@@ -79,45 +79,56 @@ const DomainDemo = () => {
         className="pattern-dots absolute inset-x-8 top-2 h-48 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_40%,black,transparent)]"
       />
       <div className="relative mx-auto mt-8 flex w-full max-w-xl items-center justify-center gap-5 px-6 transition-transform duration-300 group-hover:-translate-y-1">
-        <div className="border-border/70 bg-card w-72 shrink-0 overflow-hidden rounded-xl border shadow-float">
-          <div className="border-border/60 flex items-center justify-between border-b px-3.5 py-2.5">
-            <span className="text-foreground font-mono text-[11px] font-medium">
+        <div className="w-72 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-card shadow-float">
+          <div className="flex items-center justify-between border-border/60 border-b px-3.5 py-2.5">
+            <span className="font-medium font-mono text-[11px] text-foreground">
               links.acme.dev
             </span>
-            <span className="bg-live/10 text-live flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[9px]">
-              <span className="bg-live size-1 rounded-full" />
+            <span className="flex items-center gap-1.5 rounded-full bg-live/10 px-2 py-0.5 font-mono text-[9px] text-live">
+              <span className="size-1 rounded-full bg-live" />
               active
             </span>
           </div>
-          <div className="divide-border/60 divide-y">
+          <div className="divide-y divide-border/60">
             {records.map((r) => (
               <div
                 key={r.type}
                 className="flex items-center gap-3 px-3.5 py-2 font-mono text-[10px]"
               >
-                <span className="text-muted-foreground/70 w-11 shrink-0">{r.type}</span>
-                <span className="text-foreground/90 w-10 shrink-0">{r.name}</span>
-                <span className="text-muted-foreground flex-1 truncate">{r.value}</span>
-                <Copy className="text-muted-foreground/40 size-3 shrink-0" strokeWidth={1.75} />
+                <span className="w-11 shrink-0 text-muted-foreground/70">
+                  {r.type}
+                </span>
+                <span className="w-10 shrink-0 text-foreground/90">
+                  {r.name}
+                </span>
+                <span className="flex-1 truncate text-muted-foreground">
+                  {r.value}
+                </span>
+                <Copy
+                  className="size-3 shrink-0 text-muted-foreground/40"
+                  strokeWidth={1.75}
+                />
               </div>
             ))}
-            <div className="text-muted-foreground/70 flex items-center gap-3 px-3.5 py-2 font-mono text-[10px]">
+            <div className="flex items-center gap-3 px-3.5 py-2 font-mono text-[10px] text-muted-foreground/70">
               <span className="w-11 shrink-0">SSL</span>
               <span>auto · issued mar 12</span>
             </div>
           </div>
         </div>
         <ArrowRight
-          className="text-muted-foreground/50 hidden size-4 shrink-0 sm:block"
+          className="hidden size-4 shrink-0 text-muted-foreground/50 sm:block"
           strokeWidth={1.75}
         />
         <div className="hidden flex-col gap-1.5 sm:flex">
           {links.map((l) => (
             <div
               key={l.path}
-              className={`border-border/70 bg-card w-fit rounded-lg border px-2.5 py-1.5 font-mono text-[10px] shadow-float-sm ${l.nudge}`}
+              className={`w-fit rounded-lg border border-border/70 bg-card px-2.5 py-1.5 font-mono text-[10px] shadow-float-sm ${l.nudge}`}
             >
-              <span className="text-foreground font-medium">links.acme.dev</span>
+              <span className="font-medium text-foreground">
+                links.acme.dev
+              </span>
               <span className="text-muted-foreground">{l.path}</span>
             </div>
           ))}
@@ -138,22 +149,24 @@ const MetaTagsDemo = () => {
       />
       <div className="relative mx-auto mt-7 flex w-fit flex-col items-center gap-2.5 transition-transform duration-300 group-hover:-translate-y-1">
         <div className="flex items-center gap-1.5 font-mono text-[9px]">
-          <span className="border-border/60 bg-card text-muted-foreground rounded-md border px-1.5 py-0.5">
+          <span className="rounded-md border border-border/60 bg-card px-1.5 py-0.5 text-muted-foreground">
             og:title
           </span>
-          <span className="border-border/60 bg-card text-muted-foreground rounded-md border px-1.5 py-0.5">
+          <span className="rounded-md border border-border/60 bg-card px-1.5 py-0.5 text-muted-foreground">
             og:image
           </span>
-          <span className="border-border/60 bg-card text-muted-foreground flex items-center gap-1 rounded-md border px-1.5 py-0.5">
-            <span className="bg-brand size-1.5 rounded-full" />
+          <span className="flex items-center gap-1 rounded-md border border-border/60 bg-card px-1.5 py-0.5 text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-brand" />
             theme
           </span>
         </div>
         <div className="flex w-56 overflow-hidden rounded-[4px] bg-[#f2f3f5] shadow-float dark:bg-[#2b2d31]">
-          <div className="bg-brand w-1 shrink-0" />
+          <div className="w-1 shrink-0 bg-brand" />
           <div className="min-w-0 flex-1 space-y-1 p-2.5 pl-2">
-            <p className="text-[9px] text-neutral-500 dark:text-neutral-400">spoo.me</p>
-            <p className="truncate text-[11px] font-semibold text-[#006ce7] dark:text-[#00a8fc]">
+            <p className="text-[9px] text-neutral-500 dark:text-neutral-400">
+              spoo.me
+            </p>
+            <p className="truncate font-semibold text-[#006ce7] text-[11px] dark:text-[#00a8fc]">
               Spring launch, everything new
             </p>
             <p className="line-clamp-1 text-[10px] text-neutral-700 dark:text-neutral-300">
@@ -194,26 +207,28 @@ const GeoDemo = () => {
   return (
     <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
       <div className="absolute inset-x-2 top-1 opacity-80">
-        <Suspense fallback={<Skeleton className="aspect-[2/1] w-full rounded-lg" />}>
+        <Suspense
+          fallback={<Skeleton className="aspect-[2/1] w-full rounded-lg" />}
+        >
           <WorldMap dots={[]} />
         </Suspense>
         {/* origin dots for the rule countries: US, FR, DE */}
         <span
           aria-hidden
-          className="bg-foreground/50 absolute top-[28%] left-[23%] size-1.5 rounded-full"
+          className="absolute top-[28%] left-[23%] size-1.5 rounded-full bg-foreground/50"
         />
         <span
           aria-hidden
-          className="bg-foreground/50 absolute top-[23%] left-[50.5%] size-1.5 rounded-full"
+          className="absolute top-[23%] left-[50.5%] size-1.5 rounded-full bg-foreground/50"
         />
         <span
           aria-hidden
-          className="bg-foreground/50 absolute top-[20.5%] left-[54%] size-1.5 rounded-full"
+          className="absolute top-[20.5%] left-[54%] size-1.5 rounded-full bg-foreground/50"
         />
       </div>
       <div className="relative mx-auto mt-16 w-60 max-w-[calc(100%-3rem)]">
-        <div className="border-border/70 bg-card overflow-hidden rounded-lg border font-mono text-[10px] shadow-float transition-transform duration-300 group-hover:-translate-y-1">
-          <div className="divide-border/60 divide-y">
+        <div className="overflow-hidden rounded-lg border border-border/70 bg-card font-mono text-[10px] shadow-float transition-transform duration-300 group-hover:-translate-y-1">
+          <div className="divide-y divide-border/60">
             {GEO_RULES.map((r) => (
               <div key={r.code} className="flex items-center gap-2 px-3 py-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -226,16 +241,23 @@ const GeoDemo = () => {
                 <span className="text-foreground/90">{r.code}</span>
                 <span className="ml-auto flex items-center gap-2">
                   <span className="text-muted-foreground/50">→</span>
-                  <span className="text-foreground w-[8ch] font-medium">{r.path}</span>
+                  <span className="w-[8ch] font-medium text-foreground">
+                    {r.path}
+                  </span>
                 </span>
               </div>
             ))}
             <div className="flex items-center gap-2 px-3 py-2">
-              <Globe2 className="text-muted-foreground size-3.5 shrink-0" strokeWidth={1.75} />
+              <Globe2
+                className="size-3.5 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+              />
               <span className="text-muted-foreground">everywhere else</span>
               <span className="ml-auto flex items-center gap-2">
                 <span className="text-muted-foreground/50">→</span>
-                <span className="text-foreground w-[8ch] font-medium">/shop</span>
+                <span className="w-[8ch] font-medium text-foreground">
+                  /shop
+                </span>
               </span>
             </div>
           </div>
@@ -256,13 +278,15 @@ const DashboardDemo = () => {
         className="pattern-dots absolute inset-x-8 top-2 h-44 opacity-60 [mask-image:radial-gradient(ellipse_55%_90%_at_50%_35%,black,transparent)]"
       />
       <div className="relative mx-auto mt-7 grid w-full max-w-xl auto-rows-[4.25rem] grid-cols-3 gap-2 px-8">
-        <div className="border-border/70 bg-card rounded-lg border p-2.5 shadow-float-sm">
-          <div className="label-mono text-muted-foreground text-[9px]">clicks</div>
-          <div className="text-foreground mt-1.5 font-mono text-lg leading-none font-semibold tracking-tight tabular-nums">
+        <div className="rounded-lg border border-border/70 bg-card p-2.5 shadow-float-sm">
+          <div className="label-mono text-[9px] text-muted-foreground">
+            clicks
+          </div>
+          <div className="mt-1.5 font-mono font-semibold text-foreground text-lg tabular-nums leading-none tracking-tight">
             12.4k
           </div>
         </div>
-        <div className="border-border/70 bg-card flex items-end gap-1.5 rounded-lg border p-2.5 shadow-float-sm">
+        <div className="flex items-end gap-1.5 rounded-lg border border-border/70 bg-card p-2.5 shadow-float-sm">
           {bars.map((h, i) => (
             <span
               key={i}
@@ -271,42 +295,54 @@ const DashboardDemo = () => {
             />
           ))}
         </div>
-        <div className="border-border/70 bg-card flex flex-col justify-center gap-1.5 rounded-lg border p-2.5 shadow-float-sm">
+        <div className="flex flex-col justify-center gap-1.5 rounded-lg border border-border/70 bg-card p-2.5 shadow-float-sm">
           {[
             { w: "78%", label: "chrome" },
             { w: "46%", label: "safari" },
           ].map((row) => (
-            <div key={row.label} className="relative h-[18px] overflow-hidden rounded-[3px]">
+            <div
+              key={row.label}
+              className="relative h-[18px] overflow-hidden rounded-[3px]"
+            >
               <span
-                className="bg-muted absolute inset-y-0 left-0 rounded-[3px]"
+                className="absolute inset-y-0 left-0 rounded-[3px] bg-muted"
                 style={{ width: row.w }}
               />
-              <span className="text-muted-foreground relative block truncate pl-1.5 font-mono text-[9px] leading-[18px]">
+              <span className="relative block truncate pl-1.5 font-mono text-[9px] text-muted-foreground leading-[18px]">
                 {row.label}
               </span>
             </div>
           ))}
         </div>
         {/* drop target — the grid engine's placeholder, verbatim grammar */}
-        <div className="rounded-lg border-[1.5px] border-dashed border-foreground/30 bg-foreground/[0.04]" />
+        <div className="rounded-lg border-[1.5px] border-foreground/30 border-dashed bg-foreground/[0.04]" />
         {/* the tile being dragged — settles square on hover */}
-        <div className="border-border/70 bg-card relative translate-x-2 -rotate-2 rounded-lg border p-2.5 shadow-float transition-transform duration-300 group-hover:translate-x-0 group-hover:rotate-0">
+        <div className="relative translate-x-2 -rotate-2 rounded-lg border border-border/70 bg-card p-2.5 shadow-float transition-transform duration-300 group-hover:translate-x-0 group-hover:rotate-0">
           <div className="flex items-center gap-1">
-            <GripVertical className="text-muted-foreground/50 size-3" strokeWidth={1.75} />
-            <span className="label-mono text-muted-foreground text-[9px]">devices</span>
+            <GripVertical
+              className="size-3 text-muted-foreground/50"
+              strokeWidth={1.75}
+            />
+            <span className="label-mono text-[9px] text-muted-foreground">
+              devices
+            </span>
           </div>
           <div className="mt-2 flex items-end gap-1.5">
             {[55, 30, 70, 45].map((h, i) => (
               <span
                 key={i}
-                className="bg-foreground/15 w-full rounded-[2px]"
+                className="w-full rounded-[2px] bg-foreground/15"
                 style={{ height: `${h / 3.5}px` }}
               />
             ))}
           </div>
         </div>
-        <div className="border-border/70 bg-card rounded-lg border p-2.5 shadow-float-sm">
-          <svg viewBox="0 0 64 24" className="h-full w-full" preserveAspectRatio="none">
+        <div className="rounded-lg border border-border/70 bg-card p-2.5 shadow-float-sm">
+          <svg
+            viewBox="0 0 64 24"
+            className="h-full w-full"
+            preserveAspectRatio="none"
+          >
             <polyline
               points="0,20 10,16 20,17 30,10 40,12 52,5 64,8"
               fill="none"
@@ -331,22 +367,26 @@ const ApiDemo = () => {
         className="pattern-dots absolute inset-x-8 top-2 h-40 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_35%,black,transparent)]"
       />
       <div className="relative mx-auto mt-8 w-full max-w-[20rem] px-4">
-        <div className="border-border/70 bg-card overflow-hidden rounded-xl border font-mono text-[10px] leading-relaxed whitespace-nowrap shadow-float transition-transform duration-300 group-hover:-translate-y-1">
+        <div className="overflow-hidden whitespace-nowrap rounded-xl border border-border/70 bg-card font-mono text-[10px] leading-relaxed shadow-float transition-transform duration-300 group-hover:-translate-y-1">
           <div className="px-3.5 py-2.5">
             <div>
-              <span className="text-emerald-600/90 dark:text-emerald-400/90">POST</span>
+              <span className="text-emerald-600/90 dark:text-emerald-400/90">
+                POST
+              </span>
               <span className="text-foreground/90"> /api/shorten</span>
             </div>
-            <div className="text-muted-foreground/60">authorization: spoo_8f3a…</div>
+            <div className="text-muted-foreground/60">
+              authorization: spoo_8f3a…
+            </div>
             <div className="text-muted-foreground">
               {'{ "url": "https://acme.dev/spring" }'}
             </div>
           </div>
-          <div className="border-border/60 bg-muted/30 border-t px-3.5 py-2.5">
+          <div className="border-border/60 border-t bg-muted/30 px-3.5 py-2.5">
             <span className="text-live">200</span>
             <span className="text-muted-foreground"> · </span>
             <span className="text-muted-foreground">{'{ "short_url": "'}</span>
-            <span className="text-foreground font-medium">spoo.me/spring</span>
+            <span className="font-medium text-foreground">spoo.me/spring</span>
             <span className="text-muted-foreground">{'" }'}</span>
           </div>
         </div>
@@ -355,19 +395,30 @@ const ApiDemo = () => {
   )
 }
 
-const Notification = ({ name, description, icon: Icon, time }: NotificationProps) => {
+const Notification = ({
+  name,
+  description,
+  icon: Icon,
+  time,
+}: NotificationProps) => {
   return (
-    <figure className="border-border/60 bg-card/80 relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border p-3 shadow-float-sm backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
+    <figure className="relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card/80 p-3 shadow-float-sm backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
       <div className="flex flex-row items-center gap-3">
-        <div className="border-border/60 bg-muted/40 flex size-9 shrink-0 items-center justify-center rounded-lg border">
-          <Icon className="text-foreground size-4" />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/40">
+          <Icon className="size-4 text-foreground" />
         </div>
         <div className="flex min-w-0 flex-col overflow-hidden">
           <figcaption className="flex items-baseline gap-2 whitespace-pre">
-            <code className="text-foreground font-mono text-xs font-medium">{name}</code>
-            <span className="text-muted-foreground/60 font-mono text-[10px]">{time}</span>
+            <code className="font-medium font-mono text-foreground text-xs">
+              {name}
+            </code>
+            <span className="font-mono text-[10px] text-muted-foreground/60">
+              {time}
+            </span>
           </figcaption>
-          <p className="text-muted-foreground truncate text-xs">{description}</p>
+          <p className="truncate text-muted-foreground text-xs">
+            {description}
+          </p>
         </div>
       </div>
     </figure>
@@ -376,7 +427,7 @@ const Notification = ({ name, description, icon: Icon, time }: NotificationProps
 
 const NotificationsList = () => {
   return (
-    <div className="absolute inset-0 flex flex-col items-center p-4 overflow-hidden scale-90 border-none transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_30%)] group-hover:scale-100">
+    <div className="absolute inset-0 flex scale-90 flex-col items-center overflow-hidden border-none p-4 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_30%)] group-hover:scale-100">
       <AnimatedList delay={2000}>
         {notifications.map((item, idx) => (
           <Notification key={idx} {...item} />
@@ -453,7 +504,7 @@ export function Features() {
           title={
             <>
               Everything you need.{" "}
-              <span className="text-muted-foreground italic font-serif font-normal">
+              <span className="font-normal font-serif text-muted-foreground italic">
                 Nothing you don&apos;t.
               </span>
             </>
@@ -465,7 +516,7 @@ export function Features() {
       {/* Bento fused into the lattice — cells share hairlines, edge-to-rail */}
       <Band rule>
         <GutterHatch />
-        <BentoGrid className="grid-cols-1 lg:grid-cols-6 auto-rows-[18rem]">
+        <BentoGrid className="auto-rows-[18rem] grid-cols-1 lg:grid-cols-6">
           {features.map((feature, index) => (
             <BentoCard key={index} index={index} {...feature} />
           ))}

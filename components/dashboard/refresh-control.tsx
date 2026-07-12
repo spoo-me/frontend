@@ -15,10 +15,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  REFRESH_OPTIONS,
-  type RefreshInterval,
-} from "@/hooks/use-auto-refresh"
+import { REFRESH_OPTIONS, type RefreshInterval } from "@/hooks/use-auto-refresh"
 
 /**
  * Grafana-style split control: the icon refreshes now, the chevron picks
@@ -73,7 +70,7 @@ export function RefreshControl({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuLabel className="flex items-center justify-between gap-1.5 text-xs text-muted-foreground">
+          <DropdownMenuLabel className="flex items-center justify-between gap-1.5 text-muted-foreground text-xs">
             Auto-refresh
             <InfoHint label="How auto-refresh works">
               Silently re-fetches at this interval; pauses while the tab is

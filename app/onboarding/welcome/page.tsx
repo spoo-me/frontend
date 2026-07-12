@@ -34,7 +34,7 @@ export default function WelcomePage() {
         {/* The logo sits in its own aurora — the only loud moment in the flow */}
         <div
           aria-hidden
-          className="bg-brand/25 absolute -inset-10 rounded-full blur-3xl"
+          className="absolute -inset-10 rounded-full bg-brand/25 blur-3xl"
         />
         <Logo
           withText={false}
@@ -43,12 +43,12 @@ export default function WelcomePage() {
         />
       </motion.div>
 
-      <h1 className="text-foreground mt-10 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+      <h1 className="mt-10 text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         Welcome to spoo.me
       </h1>
-      <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
-        Short links, QR codes, and real-time analytics, with an API
-        underneath everything. Let&apos;s get you set up.
+      <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
+        Short links, QR codes, and real-time analytics, with an API underneath
+        everything. Let&apos;s get you set up.
       </p>
 
       <Button onClick={() => advance("path")} className="mt-10 h-10 min-w-48">

@@ -61,7 +61,7 @@ function Row({
   return (
     <div className="flex min-h-12 items-center justify-between gap-4 px-4 py-2.5">
       <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-foreground flex min-w-0 items-center gap-2 text-sm">
+      <span className="flex min-w-0 items-center gap-2 text-foreground text-sm">
         {children}
       </span>
     </div>
@@ -101,7 +101,7 @@ function AvatarRow({ user }: { user: AuthUser }) {
           aria-label="Change avatar"
           className="group flex items-center gap-2.5"
         >
-          <span className="text-muted-foreground group-hover:text-foreground text-xs underline underline-offset-4 transition-colors duration-150">
+          <span className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 group-hover:text-foreground">
             change
           </span>
           <UserAvatar user={user} className="size-8" />
@@ -119,8 +119,8 @@ function AvatarRow({ user }: { user: AuthUser }) {
                   className={cn(
                     "rounded-full transition-shadow duration-150",
                     pic.is_current
-                      ? "ring-brand ring-offset-popover ring-2 ring-offset-2"
-                      : "hover:ring-border hover:ring-offset-popover hover:ring-2 hover:ring-offset-2",
+                      ? "ring-2 ring-brand ring-offset-2 ring-offset-popover"
+                      : "hover:ring-2 hover:ring-border hover:ring-offset-2 hover:ring-offset-popover"
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -146,7 +146,13 @@ function AvatarRow({ user }: { user: AuthUser }) {
  * exist, not a catalogue of what you could add. The guard against removing
  * the last method is a disabled affordance with the reason in a tooltip.
  */
-function ProviderRow({ name, user }: { name: OAuthProviderName; user: AuthUser }) {
+function ProviderRow({
+  name,
+  user,
+}: {
+  name: OAuthProviderName
+  user: AuthUser
+}) {
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const linked = user.auth_providers?.find((p) => p.provider === name)
@@ -166,23 +172,23 @@ function ProviderRow({ name, user }: { name: OAuthProviderName; user: AuthUser }
 
   return (
     <div className="flex min-h-12 items-center justify-between gap-4 px-4 py-2.5">
-      <span className="text-foreground flex items-center gap-2.5 text-sm">
-        <Brand className="text-muted-foreground size-4" />
+      <span className="flex items-center gap-2.5 text-foreground text-sm">
+        <Brand className="size-4 text-muted-foreground" />
         {PROVIDER_LABELS[name]}
       </span>
       <span className="flex min-w-0 items-center gap-3">
-        <span className="ph-no-capture text-muted-foreground hidden truncate font-mono text-xs sm:block">
+        <span className="ph-no-capture hidden truncate font-mono text-muted-foreground text-xs sm:block">
           {linked?.email}
         </span>
         {linked?.linked_at && (
-          <span className="text-muted-foreground/60 hidden font-mono text-[11px] whitespace-nowrap md:block">
+          <span className="hidden whitespace-nowrap font-mono text-[11px] text-muted-foreground/60 md:block">
             linked {formatDate(linked.linked_at)}
           </span>
         )}
         {lastMethod ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-muted-foreground/40 cursor-not-allowed text-xs">
+              <span className="cursor-not-allowed text-muted-foreground/40 text-xs">
                 Disconnect
               </span>
             </TooltipTrigger>
@@ -195,7 +201,7 @@ function ProviderRow({ name, user }: { name: OAuthProviderName; user: AuthUser }
             type="button"
             onClick={() => setConfirmOpen(true)}
             disabled={unlink.isPending}
-            className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4 transition-colors duration-150 disabled:opacity-50"
+            className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground disabled:opacity-50"
           >
             Disconnect
           </button>
@@ -209,8 +215,8 @@ function ProviderRow({ name, user }: { name: OAuthProviderName; user: AuthUser }
               Disconnect {PROVIDER_LABELS[name]}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              You will no longer be able to sign in with{" "}
-              {PROVIDER_LABELS[name]}. You can reconnect it any time.
+              You will no longer be able to sign in with {PROVIDER_LABELS[name]}
+              . You can reconnect it any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -239,7 +245,7 @@ function LinkProviderRow({ unlinked }: { unlinked: OAuthProviderName[] }) {
             <a
               key={name}
               href={oauthLinkHref(name)}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs underline underline-offset-4 transition-colors duration-150"
+              className="flex items-center gap-1.5 text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
             >
               <Brand className="size-3.5" />
               {PROVIDER_LABELS[name]}
@@ -256,35 +262,41 @@ export default function SettingsPage() {
   if (!user) return null
 
   const linked = OAUTH_PROVIDERS.filter((n) =>
-    user.auth_providers?.some((p) => p.provider === n),
+    user.auth_providers?.some((p) => p.provider === n)
   )
   const unlinked = OAUTH_PROVIDERS.filter((n) => !linked.includes(n))
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-8">
       <span className="label-mono text-muted-foreground/60">Settings</span>
-      <h1 className="text-foreground mt-2 text-xl font-semibold tracking-tight">
+      <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
         Account
       </h1>
 
       <div className="mt-6">
         <SectionHeader icon={UserRound} title="Profile" />
-        <Panel className="divide-border/60 mt-2 divide-y">
+        <Panel className="mt-2 divide-y divide-border/60">
           <Row label="Avatar">
             <AvatarRow user={user} />
           </Row>
-          <Row label="Name">{user.user_name ?? <span className="text-muted-foreground">not set</span>}</Row>
+          <Row label="Name">
+            {user.user_name ?? (
+              <span className="text-muted-foreground">not set</span>
+            )}
+          </Row>
           <Row label="Email">
-            <span className="ph-no-capture truncate font-mono text-xs">{user.email}</span>
+            <span className="ph-no-capture truncate font-mono text-xs">
+              {user.email}
+            </span>
             {user.email_verified && (
-              <span className="bg-live/10 text-live flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium">
+              <span className="flex items-center gap-1 rounded-full bg-live/10 px-2 py-0.5 font-medium text-[10px] text-live">
                 <BadgeCheck className="size-3" />
                 verified
               </span>
             )}
           </Row>
           <Row label="Plan">
-            <span className="border-border/60 bg-muted/40 rounded-md border px-2 py-0.5 font-mono text-[11px] uppercase">
+            <span className="rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 font-mono text-[11px] uppercase">
               {user.plan ?? "free"}
             </span>
           </Row>
@@ -296,11 +308,12 @@ export default function SettingsPage() {
 
       <div className="mt-8">
         <SectionHeader icon={ShieldCheck} title="Security" />
-        <Panel className="divide-border/60 mt-2 divide-y">
+        <Panel className="mt-2 divide-y divide-border/60">
           <Row label="Password">
             {user.password_set ? (
               <span className="text-muted-foreground text-xs">
-                set{!user.auth_providers?.length && " · your only sign-in method"}{" "}
+                set
+                {!user.auth_providers?.length && " · your only sign-in method"}{" "}
                 · change via{" "}
                 <Link
                   href="/forgot-password"
@@ -322,7 +335,7 @@ export default function SettingsPage() {
           <Row label="Connected apps">
             <Link
               href="/dashboard/apps"
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs underline underline-offset-4 transition-colors duration-150"
+              className="flex items-center gap-1 text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
             >
               manage in Apps
               <ArrowUpRight className="size-3" />

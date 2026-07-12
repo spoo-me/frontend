@@ -55,7 +55,10 @@ export function InstantShortener() {
     try {
       const res = await fetch("https://spoo.me/", {
         method: "POST",
-        headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
         body: new URLSearchParams({ url: trimmed }).toString(),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -67,8 +70,13 @@ export function InstantShortener() {
       throw new Error(data.error ?? "Unable to shorten")
     } catch {
       // Graceful fallback so the demo works on landing page even if API blocks request.
-      const slug = SAMPLE_OUTPUTS[Math.floor(Math.random() * SAMPLE_OUTPUTS.length)]
-      setState({ kind: "success", short: `https://spoo.me/${slug}`, original: trimmed })
+      const slug =
+        SAMPLE_OUTPUTS[Math.floor(Math.random() * SAMPLE_OUTPUTS.length)]
+      setState({
+        kind: "success",
+        short: `https://spoo.me/${slug}`,
+        original: trimmed,
+      })
     }
   }
 
@@ -85,7 +93,7 @@ export function InstantShortener() {
   }
 
   return (
-    <div className="border-border/60 bg-background/45 shadow-soft relative w-full rounded-xl border p-1 backdrop-blur-md dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <div className="relative w-full rounded-xl border border-border/60 bg-background/45 p-1 shadow-soft backdrop-blur-md dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <AnimatePresence mode="wait">
         {state.kind === "success" ? (
           <motion.div
@@ -97,12 +105,12 @@ export function InstantShortener() {
             className="flex items-center gap-1 px-1"
           >
             <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2">
-              <Link2 className="text-muted-foreground size-4 shrink-0" />
+              <Link2 className="size-4 shrink-0 text-muted-foreground" />
               <a
                 href={state.short}
                 target="_blank"
                 rel="noreferrer"
-                className="text-foreground hover:text-foreground/80 truncate font-mono text-sm font-medium"
+                className="truncate font-medium font-mono text-foreground text-sm hover:text-foreground/80"
               >
                 {state.short.replace(/^https?:\/\//, "")}
               </a>
@@ -134,7 +142,7 @@ export function InstantShortener() {
             className="flex h-10 items-center gap-2 pl-2"
           >
             <span className="flex h-full shrink-0 items-center">
-              <Link2 className="text-muted-foreground size-4" />
+              <Link2 className="size-4 text-muted-foreground" />
             </span>
             <Input
               ref={inputRef}
@@ -143,7 +151,7 @@ export function InstantShortener() {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="Paste a long URL…"
               className={cn(
-                "h-10 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0 focus-visible:border-transparent",
+                "h-10 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
               )}
               autoComplete="off"
               required
@@ -157,7 +165,10 @@ export function InstantShortener() {
             >
               {state.kind === "loading" ? (
                 <>
-                  <Loader2 className="size-3.5 animate-spin" data-icon="inline-start" />
+                  <Loader2
+                    className="size-3.5 animate-spin"
+                    data-icon="inline-start"
+                  />
                   Shortening
                 </>
               ) : (

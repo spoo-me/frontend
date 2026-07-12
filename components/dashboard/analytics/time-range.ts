@@ -92,7 +92,9 @@ export function parseExpression(raw: string): TimeRange | null {
     return { from, to: new Date() }
   }
   if (v === "yesterday") {
-    const from = new Date(new Date(Date.now() - 86_400_000).setHours(0, 0, 0, 0))
+    const from = new Date(
+      new Date(Date.now() - 86_400_000).setHours(0, 0, 0, 0)
+    )
     return { from, to: new Date(new Date().setHours(0, 0, 0, 0)) }
   }
 

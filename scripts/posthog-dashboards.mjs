@@ -33,7 +33,10 @@ function loadEnvLocal() {
 }
 loadEnvLocal()
 
-const HOST = (process.env.POSTHOG_HOST ?? "https://eu.posthog.com").replace(/\/$/, "")
+const HOST = (process.env.POSTHOG_HOST ?? "https://eu.posthog.com").replace(
+  /\/$/,
+  ""
+)
 const KEY = process.env.POSTHOG_PERSONAL_API_KEY
 
 if (!KEY) {
@@ -65,7 +68,7 @@ async function resolveProjectId() {
   if (results.length === 1) return results[0].id
   console.error(
     "Personal key sees multiple projects — set POSTHOG_PROJECT_ID. Options:",
-    results.map((p) => `${p.id}=${p.name}`).join(", "),
+    results.map((p) => `${p.id}=${p.name}`).join(", ")
   )
   process.exit(1)
 }
@@ -98,7 +101,12 @@ const trends = (series, opts = {}) =>
     dateRange: { date_from: opts.dateFrom ?? "-30d" },
     trendsFilter: { display: opts.display ?? "ActionsLineGraph" },
     ...(opts.breakdown
-      ? { breakdownFilter: { breakdown: opts.breakdown, breakdown_type: "event" } }
+      ? {
+          breakdownFilter: {
+            breakdown: opts.breakdown,
+            breakdown_type: "event",
+          },
+        }
       : {}),
   })
 
@@ -109,7 +117,12 @@ const funnel = (series, opts = {}) =>
     dateRange: { date_from: opts.dateFrom ?? "-30d" },
     funnelsFilter: { funnelVizType: "steps" },
     ...(opts.breakdown
-      ? { breakdownFilter: { breakdown: opts.breakdown, breakdown_type: "event" } }
+      ? {
+          breakdownFilter: {
+            breakdown: opts.breakdown,
+            breakdown_type: "event",
+          },
+        }
       : {}),
   })
 
@@ -120,12 +133,21 @@ const retention = () =>
       retentionType: "retention_first_time",
       period: "Week",
       totalIntervals: 8,
-      targetEntity: { id: "link_created", name: "link_created", type: "events" },
-      returningEntity: { id: "link_created", name: "link_created", type: "events" },
+      targetEntity: {
+        id: "link_created",
+        name: "link_created",
+        type: "events",
+      },
+      returningEntity: {
+        id: "link_created",
+        name: "link_created",
+        type: "events",
+      },
     },
   })
 
-const step = (name) => ev("onboarding_step_completed", { name, properties: [p("step", name)] })
+const step = (name) =>
+  ev("onboarding_step_completed", { name, properties: [p("step", name)] })
 
 const uiAction = (action, opts = {}) =>
   ev("ui_action", { ...opts, properties: [p("action", action)] })
@@ -145,7 +167,8 @@ const dashboardPageview = (opts = {}) =>
 
 /* ---------- the dashboards ---------- */
 
-const MANAGED = "Managed by scripts/posthog-dashboards.mjs — edit there, then re-run."
+const MANAGED =
+  "Managed by scripts/posthog-dashboards.mjs — edit there, then re-run."
 
 const DASHBOARDS = [
   {
@@ -168,8 +191,14 @@ const DASHBOARDS = [
         description:
           "Which step bleeds users; split by chosen path (links vs api). Conversion time is built into the funnel viz.",
         query: funnel(
-          [step("welcome"), step("path"), step("domain"), step("apps"), ev("onboarding_completed")],
-          { breakdown: "path" },
+          [
+            step("welcome"),
+            step("path"),
+            step("domain"),
+            step("apps"),
+            ev("onboarding_completed"),
+          ],
+          { breakdown: "path" }
         ),
       },
       {
@@ -179,7 +208,8 @@ const DASHBOARDS = [
       },
       {
         name: "How did you hear about us",
-        description: "heard_from on onboarding_completed (the rescued HDYHAU answer).",
+        description:
+          "heard_from on onboarding_completed (the rescued HDYHAU answer).",
         query: trends([ev("onboarding_completed")], {
           breakdown: "heard_from",
           display: "ActionsBarValue",
@@ -188,7 +218,8 @@ const DASHBOARDS = [
       },
       {
         name: "Onboarding artifact rate",
-        description: "Finished onboarding with a link, a key, or nothing (skipped everything).",
+        description:
+          "Finished onboarding with a link, a key, or nothing (skipped everything).",
         query: trends([ev("onboarding_completed")], {
           breakdown: "artifact_kind",
           display: "ActionsBarValue",
@@ -209,21 +240,52 @@ const DASHBOARDS = [
       },
       {
         name: "Feature usage on new links",
-        description: "One series per optional capability on link_created — adoption.",
+        description:
+          "One series per optional capability on link_created — adoption.",
         query: trends(
           [
-            ev("link_created", { name: "password", properties: [p("has_password", "true")] }),
-            ev("link_created", { name: "expiry", properties: [p("has_expiry", "true")] }),
-            ev("link_created", { name: "max clicks", properties: [p("has_max_clicks", "true")] }),
-            ev("link_created", { name: "geo rules", properties: [p("has_geo_rules", "true")] }),
-            ev("link_created", { name: "meta tags", properties: [p("has_meta_tags", "true")] }),
-            ev("link_created", { name: "a/b variants", properties: [p("has_ab_variants", "true")] }),
-            ev("link_created", { name: "custom alias", properties: [p("is_custom_alias", "true")] }),
-            ev("link_created", { name: "custom domain", properties: [p("has_custom_domain", "true")] }),
-            ev("link_created", { name: "block bots", properties: [p("block_bots", "true")] }),
-            ev("link_created", { name: "private stats", properties: [p("private_stats", "true")] }),
+            ev("link_created", {
+              name: "password",
+              properties: [p("has_password", "true")],
+            }),
+            ev("link_created", {
+              name: "expiry",
+              properties: [p("has_expiry", "true")],
+            }),
+            ev("link_created", {
+              name: "max clicks",
+              properties: [p("has_max_clicks", "true")],
+            }),
+            ev("link_created", {
+              name: "geo rules",
+              properties: [p("has_geo_rules", "true")],
+            }),
+            ev("link_created", {
+              name: "meta tags",
+              properties: [p("has_meta_tags", "true")],
+            }),
+            ev("link_created", {
+              name: "a/b variants",
+              properties: [p("has_ab_variants", "true")],
+            }),
+            ev("link_created", {
+              name: "custom alias",
+              properties: [p("is_custom_alias", "true")],
+            }),
+            ev("link_created", {
+              name: "custom domain",
+              properties: [p("has_custom_domain", "true")],
+            }),
+            ev("link_created", {
+              name: "block bots",
+              properties: [p("block_bots", "true")],
+            }),
+            ev("link_created", {
+              name: "private stats",
+              properties: [p("private_stats", "true")],
+            }),
           ],
-          { dateFrom: "-90d", interval: "week" },
+          { dateFrom: "-90d", interval: "week" }
         ),
       },
       {
@@ -248,14 +310,16 @@ const DASHBOARDS = [
             }),
             ev("api_key_deleted", { name: "deleted" }),
           ],
-          { dateFrom: "-90d" },
+          { dateFrom: "-90d" }
         ),
       },
       {
         name: "Domain setup funnel",
         description:
           "domain_added → domain_verified; the gap is DNS pain. Time-to-convert shows in the funnel viz.",
-        query: funnel([ev("domain_added"), ev("domain_verified")], { dateFrom: "-90d" }),
+        query: funnel([ev("domain_added"), ev("domain_verified")], {
+          dateFrom: "-90d",
+        }),
       },
       {
         name: "Apps explored",
@@ -277,12 +341,13 @@ const DASHBOARDS = [
             ev("widget_config_updated", { name: "config changed" }),
             ev("board_grid_changed", { name: "rearranged" }),
           ],
-          { dateFrom: "-90d", interval: "week" },
+          { dateFrom: "-90d", interval: "week" }
         ),
       },
       {
         name: "Micro-feature usage (30d)",
-        description: "ui_action totals by action — how often each small affordance is used.",
+        description:
+          "ui_action totals by action — how often each small affordance is used.",
         query: trends([ev("ui_action")], {
           breakdown: "action",
           display: "ActionsBarValue",
@@ -311,12 +376,13 @@ const DASHBOARDS = [
             dashboardPageview({ math: "weekly_active", name: "WAU" }),
             dashboardPageview({ math: "monthly_active", name: "MAU" }),
           ],
-          { dateFrom: "-90d" },
+          { dateFrom: "-90d" }
         ),
       },
       {
         name: "Link creators retention",
-        description: "Weekly retention: first link_created → any later link_created.",
+        description:
+          "Weekly retention: first link_created → any later link_created.",
         query: retention(),
       },
       {
@@ -333,7 +399,7 @@ const DASHBOARDS = [
               properties: [p("has_geo_rules", "true")],
             }),
           ],
-          { dateFrom: "-90d", interval: "week" },
+          { dateFrom: "-90d", interval: "week" }
         ),
       },
     ],
@@ -348,7 +414,7 @@ const RETIRED_DASHBOARDS = ["Widget board", "Micro-features"]
 async function findDashboard(projectId, name) {
   const { results } = await api(
     "GET",
-    `/projects/${projectId}/dashboards/?limit=300&search=${encodeURIComponent(name)}`,
+    `/projects/${projectId}/dashboards/?limit=300&search=${encodeURIComponent(name)}`
   )
   return results.find((d) => d.name === name && !d.deleted) ?? null
 }
@@ -371,7 +437,7 @@ async function upsertDashboard(projectId, def) {
 async function upsertInsight(projectId, dashboardId, def) {
   const { results } = await api(
     "GET",
-    `/projects/${projectId}/insights/?limit=100&search=${encodeURIComponent(def.name)}`,
+    `/projects/${projectId}/insights/?limit=100&search=${encodeURIComponent(def.name)}`
   )
   const existing = results.find((i) => i.name === def.name && !i.deleted)
   const payload = {
@@ -381,7 +447,9 @@ async function upsertInsight(projectId, dashboardId, def) {
     saved: true,
   }
   if (existing) {
-    const dashboards = [...new Set([...(existing.dashboards ?? []), dashboardId])]
+    const dashboards = [
+      ...new Set([...(existing.dashboards ?? []), dashboardId]),
+    ]
     await api("PATCH", `/projects/${projectId}/insights/${existing.id}/`, {
       ...payload,
       dashboards,
@@ -397,11 +465,16 @@ async function upsertInsight(projectId, dashboardId, def) {
 
 /** Soft-delete insights on a managed dashboard that this file no longer defines. */
 async function pruneDashboard(projectId, dashboardId, keepNames) {
-  const dash = await api("GET", `/projects/${projectId}/dashboards/${dashboardId}/`)
+  const dash = await api(
+    "GET",
+    `/projects/${projectId}/dashboards/${dashboardId}/`
+  )
   for (const tile of dash.tiles ?? []) {
     const ins = tile.insight
     if (!ins || ins.deleted || keepNames.has(ins.name)) continue
-    await api("PATCH", `/projects/${projectId}/insights/${ins.id}/`, { deleted: true })
+    await api("PATCH", `/projects/${projectId}/insights/${ins.id}/`, {
+      deleted: true,
+    })
     console.log(`   − pruned  ${ins.name}`)
   }
 }
@@ -411,7 +484,9 @@ async function pruneDashboard(projectId, dashboardId, keepNames) {
 const projectId = await resolveProjectId()
 console.log(`Project ${projectId} @ ${HOST}\n`)
 
-const keepNames = new Set(DASHBOARDS.flatMap((d) => d.insights.map((i) => i.name)))
+const keepNames = new Set(
+  DASHBOARDS.flatMap((d) => d.insights.map((i) => i.name))
+)
 const failures = []
 
 for (const dash of DASHBOARDS) {
@@ -428,7 +503,7 @@ for (const dash of DASHBOARDS) {
       }
     }
     await pruneDashboard(projectId, dashId, keepNames).catch((err) =>
-      failures.push(`${dash.name} prune: ${err.message}`),
+      failures.push(`${dash.name} prune: ${err.message}`)
     )
   } catch (err) {
     failures.push(`${dash.name}: ${err.message}`)
@@ -442,7 +517,9 @@ for (const name of RETIRED_DASHBOARDS) {
     if (!dash) continue
     console.log(`▸ retiring ${name} (dashboard ${dash.id})`)
     await pruneDashboard(projectId, dash.id, keepNames)
-    await api("PATCH", `/projects/${projectId}/dashboards/${dash.id}/`, { deleted: true })
+    await api("PATCH", `/projects/${projectId}/dashboards/${dash.id}/`, {
+      deleted: true,
+    })
   } catch (err) {
     failures.push(`retire ${name}: ${err.message}`)
   }

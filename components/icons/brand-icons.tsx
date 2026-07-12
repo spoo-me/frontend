@@ -53,14 +53,15 @@ const SlackColor = deviconImg("slack")
 
 // react-icons returns IconType which renders an <svg>; wrap to accept SVGProps cleanly.
 const wrap =
-  (Cmp: React.ComponentType<{ className?: string }>) =>
-  (props: IconProps) => <Cmp className={props.className} />
+  (Cmp: React.ComponentType<{ className?: string }>) => (props: IconProps) => (
+    <Cmp className={props.className} />
+  )
 
 // Dual-icon: monochrome default, color devicon on group-hover.
 const dual =
   (
     Mono: React.ComponentType<{ className?: string }>,
-    Color: React.ComponentType<{ className?: string }>,
+    Color: React.ComponentType<{ className?: string }>
   ) =>
   ({ className }: IconProps) => (
     <span className={`relative inline-flex shrink-0 ${className ?? ""}`}>
@@ -70,29 +71,29 @@ const dual =
   )
 
 export const BrandIcons = {
-  github:     wrap(SiGithub),
-  google:     wrap(SiGoogle),
-  raycast:    wrap(SiRaycast),
-  chrome:     dual(wrap(SiGooglechrome), ChromeColor),
-  windows:    Windows,
-  apple:      wrap(SiApple),
-  android:    wrap(SiAndroid),
-  slack:      SlackColor,
-  discord:    wrap(SiDiscord),
-  telegram:   wrap(SiTelegram),
-  x:          wrap(SiX),
-  instagram:  wrap(SiInstagram),
-  linkedin:   wrap(FaLinkedinIn),
+  github: wrap(SiGithub),
+  google: wrap(SiGoogle),
+  raycast: wrap(SiRaycast),
+  chrome: dual(wrap(SiGooglechrome), ChromeColor),
+  windows: Windows,
+  apple: wrap(SiApple),
+  android: wrap(SiAndroid),
+  slack: SlackColor,
+  discord: wrap(SiDiscord),
+  telegram: wrap(SiTelegram),
+  x: wrap(SiX),
+  instagram: wrap(SiInstagram),
+  linkedin: wrap(FaLinkedinIn),
   producthunt: wrap(SiProducthunt),
-  mobile:     wrap(Smartphone),
-  python:     dual(wrap(SiPython), PythonColor),
+  mobile: wrap(Smartphone),
+  python: dual(wrap(SiPython), PythonColor),
   typescript: wrap(SiTypescript),
-  rust:       wrap(SiRust),
-  go:         wrap(SiGo),
-  cpp:        wrap(SiCplusplus),
-  terminal:   wrap(TerminalSquare),
-  n8n:        wrap(SiN8N),
-  zapier:     wrap(SiZapier),
+  rust: wrap(SiRust),
+  go: wrap(SiGo),
+  cpp: wrap(SiCplusplus),
+  terminal: wrap(TerminalSquare),
+  n8n: wrap(SiN8N),
+  zapier: wrap(SiZapier),
 } as const
 
 export type BrandIconKey = keyof typeof BrandIcons

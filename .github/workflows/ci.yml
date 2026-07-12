@@ -1,14 +1,14 @@
 name: CI
 
-# PR gate + main sanity, cheap-to-expensive. `next build` is the real
-# smoke test — server/client boundary errors and broken pages pass
-# typecheck but explode here, and image.yml only builds main, so PRs
-# need their own build proof.
+# PR gate + main sanity, cheap-to-expensive. Biome covers formatting +
+# Tailwind class order; `next build` is the real smoke test —
+# server/client boundary errors and broken pages pass typecheck but
+# explode here, and image.yml only builds main, so PRs need their own
+# build proof.
 #
-# Prettier + eslint gates are deliberately absent: the repo currently
-# carries ~175 unformatted files and 44 lint errors (mostly react-hooks
-# strictness in vendored components/ui). Add them back after the
-# dedicated cleanup pass — a gate that starts red just gets ignored.
+# The eslint gate (eslint-config-next rules) is still absent: 44 lint
+# errors, mostly react-hooks strictness in vendored components/ui, need
+# their own cleanup pass — a gate that starts red just gets ignored.
 
 on:
   pull_request:
@@ -46,6 +46,9 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Biome
+        run: npx biome ci .
 
       - name: Typecheck
         run: npm run typecheck

@@ -63,7 +63,12 @@ export type MockDomain = {
   root_redirect: string | null
   not_found_redirect: string | null
   custom_robots_txt: string | null
-  dns_records: Array<{ type: string; name: string; value: string; purpose: string }>
+  dns_records: Array<{
+    type: string
+    name: string
+    value: string
+    purpose: string
+  }>
   setup_notes: string[]
 }
 
@@ -144,7 +149,9 @@ export function buildLinks(): MockLink[] {
   const rand = mulberry32(SEED)
   return DESTINATIONS.map(([alias, url, weight], i) => {
     const ageDays = 3 + Math.floor(rand() * 175)
-    const clicks = Math.round(weight * (140 + rand() * 260) * (0.4 + ageDays / 180))
+    const clicks = Math.round(
+      weight * (140 + rand() * 260) * (0.4 + ageDays / 180)
+    )
     // Sprinkle non-default states deterministically down the tail.
     const status: MockLink["status"] =
       alias === "legacy"
@@ -155,7 +162,10 @@ export function buildLinks(): MockLink[] {
             ? "INACTIVE"
             : "ACTIVE"
     const onDomain =
-      alias === "deck" || alias === "invite" || alias === "book" || alias === "form"
+      alias === "deck" ||
+      alias === "invite" ||
+      alias === "book" ||
+      alias === "form"
         ? "go.acme.dev"
         : null
     return {
@@ -174,12 +184,21 @@ export function buildLinks(): MockLink[] {
       max_clicks: alias === "invite" ? 500 : alias === "swag" ? 1000 : null,
       password_set: alias === "deck" || alias === "kit",
       password:
-        alias === "deck" ? "velvet-quartz-42" : alias === "kit" ? "amber-pixel-77" : null,
+        alias === "deck"
+          ? "velvet-quartz-42"
+          : alias === "kit"
+            ? "amber-pixel-77"
+            : null,
       private_stats: alias === "hiring",
       block_bots: weight >= 6,
-      total_clicks: status === "ACTIVE" || status === "EXPIRED" ? clicks : Math.round(clicks * 0.3),
+      total_clicks:
+        status === "ACTIVE" || status === "EXPIRED"
+          ? clicks
+          : Math.round(clicks * 0.3),
       last_click:
-        status === "ACTIVE" ? isoDaysAgo(rand() * 2, rand) : isoDaysAgo(20 + rand() * 30, rand),
+        status === "ACTIVE"
+          ? isoDaysAgo(rand() * 2, rand)
+          : isoDaysAgo(20 + rand() * 30, rand),
       // "pricing" ships purchasing-power-parity pages — a believable geo
       // demo the settings form can round-trip out of the box.
       geo_rules:
@@ -443,8 +462,8 @@ export type StatsDimension = keyof typeof DIMENSIONS | "short_code" | "time"
 
 /** Diurnal shape (UTC-ish): quiet nights, evening peak. */
 const HOUR_SHAPE = [
-  2, 1.5, 1.2, 1, 1, 1.4, 2.2, 3.4, 4.8, 5.8, 6.2, 6.4, 6.6, 6.8, 7, 7.2, 7.6, 8, 8.4, 8, 7,
-  5.4, 4, 3,
+  2, 1.5, 1.2, 1, 1, 1.4, 2.2, 3.4, 4.8, 5.8, 6.2, 6.4, 6.6, 6.8, 7, 7.2, 7.6,
+  8, 8.4, 8, 7, 5.4, 4, 3,
 ]
 
 function noise(rand: () => number) {
@@ -464,7 +483,9 @@ function hourVolume(msUtc: number): number {
   // Slow growth over time + occasional viral day.
   const growth = 0.8 + (day % 1000) / 2500
   const viral = mulberry32(SEED ^ (day * 7))() > 0.965 ? 2.6 : 1
-  return HOUR_SHAPE[d.getUTCHours()] * weekend * growth * viral * noise(rand) * 3.1
+  return (
+    HOUR_SHAPE[d.getUTCHours()] * weekend * growth * viral * noise(rand) * 3.1
+  )
 }
 
 export type StatsQuery = {
@@ -517,7 +538,11 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
   const start = floorLocal(q.startMs)
   const share = weightShare(links, q.shortCodes) * filterShare(q.filters)
 
-  const series: Array<{ bucket: string; clicks: number; unique_clicks: number }> = []
+  const series: Array<{
+    bucket: string
+    clicks: number
+    unique_clicks: number
+  }> = []
   let total = 0
   for (let t = start; t < q.endMs; t += bucketMs) {
     let v = 0
@@ -525,7 +550,11 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
     else for (let h = 0; h < 24; h++) v += hourVolume(t + h * 3_600_000)
     const clicks = Math.round(v * share)
     const uniq = Math.round(clicks * (0.62 + mulberry32(SEED ^ t)() * 0.16))
-    series.push({ bucket: new Date(t).toISOString(), clicks, unique_clicks: uniq })
+    series.push({
+      bucket: new Date(t).toISOString(),
+      clicks,
+      unique_clicks: uniq,
+    })
     total += clicks
   }
   // Sum the jittered buckets instead of a flat ratio: total and unique
@@ -548,7 +577,7 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
   const metrics: Record<string, unknown[]> = {}
   const emit = (
     dim: string,
-    rows: Array<{ value: string; clicks: number; unique_clicks: number }>,
+    rows: Array<{ value: string; clicks: number; unique_clicks: number }>
   ) => {
     const clickTotal = rows.reduce((a, r) => a + r.clicks, 0) || 1
     const uniqTotal = rows.reduce((a, r) => a + r.unique_clicks, 0) || 1
@@ -574,7 +603,7 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
           value: label(new Date(b.bucket).getTime()),
           clicks: b.clicks,
           unique_clicks: b.unique_clicks,
-        })),
+        }))
     )
 
   for (const dim of q.groupBy) {
@@ -603,7 +632,7 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
         })
         // The real backend derives rows from events: zero clicks = no row.
         .filter((r) => r.clicks > 0)
-        .sort((a, b) => b.clicks - a.clicks),
+        .sort((a, b) => b.clicks - a.clicks)
     )
   }
 
@@ -626,7 +655,7 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
         })
         .filter((r) => r.clicks > 0)
         .sort((a, b) => b.clicks - a.clicks)
-        .slice(0, 25),
+        .slice(0, 25)
     )
   }
 
@@ -639,7 +668,9 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
       last_click: series.findLast((b) => b.clicks > 0)?.bucket ?? null,
       // Real backend averages to 0 over an empty range; the client adapter
       // is what turns that into null.
-      avg_redirection_time: total ? 38 + Math.round(mulberry32(SEED)() * 14) : 0,
+      avg_redirection_time: total
+        ? 38 + Math.round(mulberry32(SEED)() * 14)
+        : 0,
     },
     metrics,
     // Real backend omits computed_metrics entirely when nothing clicked.

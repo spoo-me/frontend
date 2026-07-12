@@ -15,7 +15,7 @@ function InputOTP({
       data-slot="input-otp"
       containerClassName={cn(
         "flex items-center gap-2 has-disabled:opacity-50",
-        containerClassName,
+        containerClassName
       )}
       className={cn("disabled:cursor-not-allowed", className)}
       {...props}
@@ -46,10 +46,10 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={slot?.isActive || undefined}
       className={cn(
-        "border-input bg-background shadow-soft relative flex size-11 items-center justify-center rounded-lg border font-mono text-lg transition-all",
-        "data-active:border-ring data-active:ring-ring/30 data-active:z-10 data-active:ring-2",
+        "relative flex size-11 items-center justify-center rounded-lg border border-input bg-background font-mono text-lg shadow-soft transition-all",
+        "data-active:z-10 data-active:border-ring data-active:ring-2 data-active:ring-ring/30",
         "aria-invalid:border-destructive/60 aria-invalid:ring-destructive/20",
-        className,
+        className
       )}
       {...props}
     >
@@ -57,7 +57,7 @@ function InputOTPSlot({
       {slot?.hasFakeCaret && (
         <span
           aria-hidden
-          className="bg-foreground animate-blink-cursor pointer-events-none absolute h-5 w-px"
+          className="pointer-events-none absolute h-5 w-px animate-blink-cursor bg-foreground"
         />
       )}
     </div>
@@ -69,7 +69,7 @@ function InputOTPSeparator({ ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="input-otp-separator"
       role="separator"
-      className="bg-border h-px w-2.5"
+      className="h-px w-2.5 bg-border"
       {...props}
     />
   )

@@ -53,7 +53,7 @@ export function WidgetCell({
       steer the whole board. */
   onToggleFilter: (
     filterKey: "link" | "referrer" | "country" | "browser" | "os" | "city",
-    value: string,
+    value: string
   ) => void
 }) {
   const { stats, prev, loading, disjoint } = useWidgetStats(w, ctx)

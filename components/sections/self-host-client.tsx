@@ -42,7 +42,7 @@ export function SelfHostClient() {
           title={
             <>
               Run spoo.me on{" "}
-              <span className="text-muted-foreground italic font-serif font-normal">
+              <span className="font-normal font-serif text-muted-foreground italic">
                 your own metal.
               </span>
             </>
@@ -96,12 +96,12 @@ export function SelfHostClient() {
           <div
             ref={terminalRef}
             className={cn(
-              "border-border/60 bg-background dark:bg-zinc-950 ring-offset-background shadow-soft flex items-center gap-3 rounded-xl border px-4 py-3 font-mono text-sm transition-all duration-500 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+              "flex items-center gap-3 rounded-xl border border-border/60 bg-background px-4 py-3 font-mono text-sm shadow-soft ring-offset-background transition-all duration-500 dark:bg-zinc-950 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
               pulse &&
-                "shadow-[0_0_0_4px_rgba(16,185,129,0.18),0_0_30px_rgba(16,185,129,0.25)] border-emerald-500/60",
+                "border-emerald-500/60 shadow-[0_0_0_4px_rgba(16,185,129,0.18),0_0_30px_rgba(16,185,129,0.25)]"
             )}
           >
-            <span className="text-emerald-500 select-none">$</span>
+            <span className="select-none text-emerald-500">$</span>
             <code className="flex-1 truncate">
               <span className="text-orange-400">docker run</span>
               <span className="text-muted-foreground"> -p </span>
@@ -115,18 +115,22 @@ export function SelfHostClient() {
               type="button"
               onClick={copy}
               aria-label="Copy command"
-              className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+              className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
             >
-              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              {copied ? (
+                <Check className="size-4" />
+              ) : (
+                <Copy className="size-4" />
+              )}
             </button>
           </div>
-          <p className="text-muted-foreground mt-4 text-center text-xs">
+          <p className="mt-4 text-center text-muted-foreground text-xs">
             or use{" "}
-            <code className="bg-muted/60 text-foreground/80 rounded px-1.5 py-0.5 font-mono text-[11px]">
+            <code className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
               docker compose up
             </code>{" "}
             with the included{" "}
-            <code className="bg-muted/60 text-foreground/80 rounded px-1.5 py-0.5 font-mono text-[11px]">
+            <code className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
               compose.yml
             </code>
           </p>
@@ -135,4 +139,3 @@ export function SelfHostClient() {
     </>
   )
 }
-

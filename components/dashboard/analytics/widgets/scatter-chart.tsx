@@ -91,15 +91,15 @@ export function BreakdownScatter({
         .slice(0, limit)
         .map((r) => ({
           ...r,
-          rate: r.clicks ? Math.round((r.unique_clicks / r.clicks) * 1000) / 10 : 0,
+          rate: r.clicks
+            ? Math.round((r.unique_clicks / r.clicks) * 1000) / 10
+            : 0,
         })),
-    [rows, key, limit],
+    [rows, key, limit]
   )
 
   if (!rows.length) {
-    return (
-      <EmptyRange />
-    )
+    return <EmptyRange />
   }
 
   const axisTick = { fill: "var(--muted-foreground)", fontSize: 10 }

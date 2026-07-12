@@ -99,7 +99,7 @@ const initial = (): MockState => ({
   ],
   pfp: null,
   onboarding: { step: null, path: null },
-    onboardedAt: null,
+  onboardedAt: null,
   links: buildLinks(),
   domains: buildDomains(),
   keys: buildKeys(),
@@ -146,7 +146,7 @@ function longUrlFail(raw: unknown, required: boolean): NextResponse | null {
           422,
           "validation_error",
           "long_url: Input should be a valid string",
-          "long_url",
+          "long_url"
         )
       : null
   if (typeof raw !== "string")
@@ -154,17 +154,22 @@ function longUrlFail(raw: unknown, required: boolean): NextResponse | null {
       422,
       "validation_error",
       "long_url: Input should be a valid string",
-      "long_url",
+      "long_url"
     )
   if (raw.length > LONG_URL_MAX_LENGTH)
     return fail(
       422,
       "validation_error",
       `long_url: String should have at most ${LONG_URL_MAX_LENGTH} characters`,
-      "long_url",
+      "long_url"
     )
   if (!validDestinationUrl(raw))
-    return fail(400, "validation_error", "URL is not allowed or invalid", "long_url")
+    return fail(
+      400,
+      "validation_error",
+      "URL is not allowed or invalid",
+      "long_url"
+    )
   if (urlIsBlocked(raw))
     return fail(400, "validation_error", "URL is blocked", "long_url")
   return null
@@ -254,7 +259,7 @@ function normalizeGeoRules(v: unknown): GeoRulesResult {
         422,
         "validation_error",
         "geo_rules: Input should be a valid dictionary",
-        "geo_rules",
+        "geo_rules"
       ),
     }
   const normalized: Record<string, string> = {}
@@ -266,7 +271,7 @@ function normalizeGeoRules(v: unknown): GeoRulesResult {
           422,
           "validation_error",
           `geo_rules: Value error, duplicate country code after normalisation: '${code}'`,
-          "geo_rules",
+          "geo_rules"
         ),
       }
     if (typeof url !== "string" || !url.trim())
@@ -275,7 +280,7 @@ function normalizeGeoRules(v: unknown): GeoRulesResult {
           422,
           "validation_error",
           `geo_rules: Value error, geo_rules['${code}'] must be a non-empty URL string`,
-          "geo_rules",
+          "geo_rules"
         ),
       }
     if (url.length > GEO_RULE_URL_MAX_LENGTH)
@@ -284,7 +289,7 @@ function normalizeGeoRules(v: unknown): GeoRulesResult {
           422,
           "validation_error",
           `geo_rules: Value error, geo_rules['${code}'] URL exceeds ${GEO_RULE_URL_MAX_LENGTH} characters`,
-          "geo_rules",
+          "geo_rules"
         ),
       }
     normalized[code] = url.trim()
@@ -297,7 +302,7 @@ function normalizeGeoRules(v: unknown): GeoRulesResult {
         400,
         "validation_error",
         `geo_rules cannot exceed ${GEO_RULES_MAX_COUNTRIES} country entries`,
-        "geo_rules",
+        "geo_rules"
       ),
     }
   for (const [code, url] of Object.entries(normalized)) {
@@ -307,7 +312,7 @@ function normalizeGeoRules(v: unknown): GeoRulesResult {
           400,
           "validation_error",
           `'${code}' is not a valid ISO 3166-1 alpha-2 country code`,
-          `geo_rules.${code}`,
+          `geo_rules.${code}`
         ),
       }
     if (!/^https?:\/\/[^\s]+\.[^\s]+/.test(url))
@@ -316,7 +321,7 @@ function normalizeGeoRules(v: unknown): GeoRulesResult {
           400,
           "validation_error",
           "URL is not allowed or invalid",
-          `geo_rules.${code}`,
+          `geo_rules.${code}`
         ),
       }
   }
@@ -331,7 +336,7 @@ function parseVariants(v: unknown) {
         !!x &&
         typeof x === "object" &&
         /^https?:\/\//.test(String((x as { url?: unknown }).url)) &&
-        Number((x as { weight?: unknown }).weight) > 0,
+        Number((x as { weight?: unknown }).weight) > 0
     )
     .map((x) => ({ url: x.url, weight: Number(x.weight) }))
   return variants.length ? variants : null
@@ -351,7 +356,8 @@ const META_TITLE_MAX = 120
 const META_DESCRIPTION_MAX = 240
 const META_IMAGE_URL_MAX = 2048
 const META_IMAGE_MAX_BYTES = 512_000
-const META_DATA_URI_RE = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/
+const META_DATA_URI_RE =
+  /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/
 
 type WireMetaTags = {
   title: string
@@ -370,7 +376,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
         422,
         "validation_error",
         "meta_tags: Input should be a valid dictionary or object to extract fields from",
-        "meta_tags",
+        "meta_tags"
       ),
     }
   const m = v as Record<string, unknown>
@@ -383,7 +389,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
         422,
         "validation_error",
         "meta_tags.title: Field required",
-        "meta_tags.title",
+        "meta_tags.title"
       ),
     }
   const title = strip(m.title)
@@ -393,7 +399,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
         422,
         "validation_error",
         "meta_tags.title: String should have at least 1 character",
-        "meta_tags.title",
+        "meta_tags.title"
       ),
     }
   if (title.length > META_TITLE_MAX)
@@ -402,7 +408,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
         422,
         "validation_error",
         `meta_tags.title: String should have at most ${META_TITLE_MAX} characters`,
-        "meta_tags.title",
+        "meta_tags.title"
       ),
     }
 
@@ -414,7 +420,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
           422,
           "validation_error",
           "meta_tags.description: Input should be a valid string",
-          "meta_tags.description",
+          "meta_tags.description"
         ),
       }
     description = strip(m.description)
@@ -424,7 +430,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
           422,
           "validation_error",
           `meta_tags.description: String should have at most ${META_DESCRIPTION_MAX} characters`,
-          "meta_tags.description",
+          "meta_tags.description"
         ),
       }
   }
@@ -437,7 +443,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
           422,
           "validation_error",
           "meta_tags.image: Input should be a valid string",
-          "meta_tags.image",
+          "meta_tags.image"
         ),
       }
     image = m.image
@@ -451,7 +457,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
             400,
             "validation_error",
             "image must be an https URL or a base64 data URI (image/png, image/jpeg, image/webp)",
-            "meta_tags.image",
+            "meta_tags.image"
           ),
         }
       if (dm[2].length > (META_IMAGE_MAX_BYTES * 4) / 3 + 4)
@@ -460,7 +466,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
             400,
             "validation_error",
             `image exceeds ${META_IMAGE_MAX_BYTES} bytes`,
-            "meta_tags.image",
+            "meta_tags.image"
           ),
         }
       const ext = dm[1] === "jpeg" ? "jpg" : dm[1]
@@ -472,7 +478,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
             422,
             "validation_error",
             "meta_tags.image: Value error, image must be an https:// URL or an image data URI",
-            "meta_tags.image",
+            "meta_tags.image"
           ),
         }
       if (image.length > META_IMAGE_URL_MAX)
@@ -481,7 +487,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
             422,
             "validation_error",
             "meta_tags.image: Value error, image URL must be at most 2048 characters",
-            "meta_tags.image",
+            "meta_tags.image"
           ),
         }
       let pathname = ""
@@ -497,7 +503,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
             422,
             "validation_error",
             "image: Value error, SVG images are not supported by preview crawlers",
-            "image",
+            "image"
           ),
         }
     }
@@ -511,7 +517,7 @@ function normalizeMetaTags(v: unknown): MetaTagsResult {
           422,
           "validation_error",
           "meta_tags.color: String should match pattern '^#[0-9a-fA-F]{6}$'",
-          "meta_tags.color",
+          "meta_tags.color"
         ),
       }
     color = m.color
@@ -548,7 +554,8 @@ const META_RICH_HOSTS: Record<
     site_name: "GitHub",
   },
   "vercel.com": {
-    title: "Vercel: Build and deploy the best web experiences with the AI Cloud",
+    title:
+      "Vercel: Build and deploy the best web experiences with the AI Cloud",
     description:
       "Vercel gives you the frameworks, workflows, and infrastructure to build a faster, more personalized web.",
     image: "https://assets.vercel.com/image/upload/front/vercel/dps.png",
@@ -559,7 +566,8 @@ const META_RICH_HOSTS: Record<
     title: "Stripe | Financial Infrastructure to Grow Your Revenue",
     description:
       "Stripe powers online and in-person payment processing and financial solutions for businesses of all sizes. Accept payments, send payouts, and automate financial processes with a suite of APIs and no-code tools.",
-    image: "https://images.stripeassets.com/fzn2n1nzq965/01hMKr6nEEGVfOuhsaMIXQ/c424849423b5f036a8892afa09ac38c7/OG_image.png",
+    image:
+      "https://images.stripeassets.com/fzn2n1nzq965/01hMKr6nEEGVfOuhsaMIXQ/c424849423b5f036a8892afa09ac38c7/OG_image.png",
     color: "#635bff",
     site_name: "Stripe",
   },
@@ -573,7 +581,7 @@ function mockMetadata(url: string): NextResponse {
     return fail(
       422,
       "unfetchable",
-      "destination is not a fetchable HTML page (invalid URL)",
+      "destination is not a fetchable HTML page (invalid URL)"
     )
   }
   const host = u.hostname.replace(/^www\./, "").toLowerCase()
@@ -582,7 +590,7 @@ function mockMetadata(url: string): NextResponse {
     return fail(
       422,
       "unfetchable",
-      "destination is not a fetchable HTML page (connection refused)",
+      "destination is not a fetchable HTML page (connection refused)"
     )
   // Bot-walled destination (Cloudflare challenge etc): the real fetcher
   // surfaces the upstream status in the reason (safe_fetch FetchHardError
@@ -591,7 +599,7 @@ function mockMetadata(url: string): NextResponse {
     return fail(
       422,
       "unfetchable",
-      "destination is not a fetchable HTML page (status 403)",
+      "destination is not a fetchable HTML page (status 403)"
     )
   if (pathLower.includes("slow") || pathLower.includes("timeout"))
     return fail(504, "upstream_timeout", "destination did not respond in time")
@@ -651,9 +659,7 @@ function mockMetadata(url: string): NextResponse {
           type: "website",
         }
       : {},
-    twitter: rich
-      ? { card: "summary_large_image", title: title ?? "" }
-      : {},
+    twitter: rich ? { card: "summary_large_image", title: title ?? "" } : {},
     fetched_at: new Date().toISOString(),
   })
 }
@@ -663,7 +669,9 @@ const gm = globalThis as typeof globalThis & { __spooMetaHits?: number[] }
 
 function aliasTaken(alias: string) {
   const a = alias.toLowerCase()
-  return EXTRA_TAKEN.has(a) || state().links.some((l) => l.alias.toLowerCase() === a)
+  return (
+    EXTRA_TAKEN.has(a) || state().links.some((l) => l.alias.toLowerCase() === a)
+  )
 }
 
 async function handle(req: NextRequest, path: string[]) {
@@ -704,7 +712,10 @@ async function handle(req: NextRequest, path: string[]) {
             pfp: null,
           }
         : initial()
-      return json({ success: true, note: fresh ? "mock reset (fresh account)" : "mock state reset" })
+      return json({
+        success: true,
+        note: fresh ? "mock reset (fresh account)" : "mock state reset",
+      })
     }
 
     /* ---------- auth ---------- */
@@ -726,7 +737,7 @@ async function handle(req: NextRequest, path: string[]) {
           user: user(),
           requires_verification: true,
           verification_sent: true,
-        }),
+        })
       )
     }
     case "POST /auth/login": {
@@ -798,7 +809,7 @@ async function handle(req: NextRequest, path: string[]) {
         return fail(400, "validation_error", "url must be https", "url")
       const now = Date.now()
       gm.__spooMetaHits = (gm.__spooMetaHits ?? []).filter(
-        (t) => now - t < 60_000,
+        (t) => now - t < 60_000
       )
       if (gm.__spooMetaHits.length >= 20)
         return fail(429, "rate_limit_exceeded", "Too many requests")
@@ -824,13 +835,21 @@ async function handle(req: NextRequest, path: string[]) {
           422,
           "invalid_alias",
           "3-16 characters: letters, numbers, - and _",
-          "alias",
+          "alias"
         )
       if (aliasTaken(alias))
         return fail(409, "alias_taken", "That alias is already taken", "alias")
       const domain = body.domain ? String(body.domain) : null
-      if (domain && !s.domains.some((d) => d.fqdn === domain && d.status === "active"))
-        return fail(422, "domain_not_active", "That domain isn't active", "domain")
+      if (
+        domain &&
+        !s.domains.some((d) => d.fqdn === domain && d.status === "active")
+      )
+        return fail(
+          422,
+          "domain_not_active",
+          "That domain isn't active",
+          "domain"
+        )
       const geo = normalizeGeoRules(body.geo_rules)
       if ("err" in geo) return geo.err
       const meta = normalizeMetaTags(body.meta_tags)
@@ -848,8 +867,10 @@ async function handle(req: NextRequest, path: string[]) {
         created_at: new Date().toISOString(),
         expire_after:
           typeof body.expire_after === "number" ? body.expire_after : null,
-        max_clicks: typeof body.max_clicks === "number" ? body.max_clicks : null,
-        password_set: typeof body.password === "string" && body.password.length > 0,
+        max_clicks:
+          typeof body.max_clicks === "number" ? body.max_clicks : null,
+        password_set:
+          typeof body.password === "string" && body.password.length > 0,
         password:
           typeof body.password === "string" && body.password.length > 0
             ? String(body.password)
@@ -897,12 +918,14 @@ async function handle(req: NextRequest, path: string[]) {
           }
           if (f.status)
             items = items.filter(
-              (l) => l.status.toLowerCase() === String(f.status).toLowerCase(),
+              (l) => l.status.toLowerCase() === String(f.status).toLowerCase()
             )
           if (typeof f.passwordSet === "boolean")
             items = items.filter((l) => l.password_set === f.passwordSet)
           if (typeof f.maxClicksSet === "boolean")
-            items = items.filter((l) => (l.max_clicks !== null) === f.maxClicksSet)
+            items = items.filter(
+              (l) => (l.max_clicks !== null) === f.maxClicksSet
+            )
           if (f.createdAfter)
             items = items.filter((l) => l.created_at >= String(f.createdAfter))
           if (f.createdBefore)
@@ -912,7 +935,7 @@ async function handle(req: NextRequest, path: string[]) {
             items = items.filter(
               (l) =>
                 l.alias.toLowerCase().includes(q) ||
-                l.long_url.toLowerCase().includes(q),
+                l.long_url.toLowerCase().includes(q)
             )
           }
         } catch {
@@ -923,14 +946,19 @@ async function handle(req: NextRequest, path: string[]) {
         | "created_at"
         | "last_click"
         | "total_clicks"
-      const dir = ["asc", "1"].includes(params.get("sortOrder") ?? "desc") ? 1 : -1
+      const dir = ["asc", "1"].includes(params.get("sortOrder") ?? "desc")
+        ? 1
+        : -1
       items.sort((a, b) => {
         const av = a[sortBy] ?? ""
         const bv = b[sortBy] ?? ""
         return av === bv ? 0 : av > bv ? dir : -dir
       })
       const page = Math.max(1, Number(params.get("page") ?? 1))
-      const pageSize = Math.min(100, Math.max(1, Number(params.get("pageSize") ?? 20)))
+      const pageSize = Math.min(
+        100,
+        Math.max(1, Number(params.get("pageSize") ?? 20))
+      )
       const startIdx = (page - 1) * pageSize
       return json({
         items: items.slice(startIdx, startIdx + pageSize).map(linkItem),
@@ -950,7 +978,12 @@ async function handle(req: NextRequest, path: string[]) {
     if (req.method === "PATCH" && path[3] === "status") {
       const next = String(body.status ?? "").toUpperCase()
       if (!["ACTIVE", "INACTIVE"].includes(next))
-        return fail(422, "invalid_status", "status must be ACTIVE or INACTIVE", "status")
+        return fail(
+          422,
+          "invalid_status",
+          "status must be ACTIVE or INACTIVE",
+          "status"
+        )
       link.status = next as MockLink["status"]
       return json(linkItem(link))
     }
@@ -958,30 +991,50 @@ async function handle(req: NextRequest, path: string[]) {
       // Alias `url` accepted; null = keep; only a CHANGED value revalidates
       // (services/url_service.py _handle_long_url).
       const rawLong = body.long_url !== undefined ? body.long_url : body.url
-      if (rawLong !== undefined && rawLong !== null && rawLong !== link.long_url) {
+      if (
+        rawLong !== undefined &&
+        rawLong !== null &&
+        rawLong !== link.long_url
+      ) {
         const longUrlErr = longUrlFail(rawLong, false)
         if (longUrlErr) return longUrlErr
         link.long_url = String(rawLong)
       }
       if (typeof body.alias === "string" && body.alias !== link.alias) {
         if (!/^[a-zA-Z0-9_-]{3,16}$/.test(body.alias))
-          return fail(422, "invalid_alias", "3-16 characters: letters, numbers, - and _", "alias")
+          return fail(
+            422,
+            "invalid_alias",
+            "3-16 characters: letters, numbers, - and _",
+            "alias"
+          )
         if (aliasTaken(body.alias))
-          return fail(409, "alias_taken", "That alias is already taken", "alias")
+          return fail(
+            409,
+            "alias_taken",
+            "That alias is already taken",
+            "alias"
+          )
         link.alias = body.alias
       }
       if ("password" in body) {
-        link.password_set = typeof body.password === "string" && body.password.length > 0
+        link.password_set =
+          typeof body.password === "string" && body.password.length > 0
         link.password = link.password_set ? String(body.password) : null
       }
       if ("max_clicks" in body)
         link.max_clicks =
-          body.max_clicks === null || body.max_clicks === 0 ? null : Number(body.max_clicks)
+          body.max_clicks === null || body.max_clicks === 0
+            ? null
+            : Number(body.max_clicks)
       if ("expire_after" in body)
-        link.expire_after = body.expire_after === null ? null : Number(body.expire_after)
-      if ("private_stats" in body) link.private_stats = Boolean(body.private_stats)
+        link.expire_after =
+          body.expire_after === null ? null : Number(body.expire_after)
+      if ("private_stats" in body)
+        link.private_stats = Boolean(body.private_stats)
       if ("block_bots" in body) link.block_bots = Boolean(body.block_bots)
-      if ("domain" in body) link.domain = body.domain === null ? null : String(body.domain)
+      if ("domain" in body)
+        link.domain = body.domain === null ? null : String(body.domain)
       if ("geo_rules" in body) {
         // PR #230 PATCH semantics: null/{} clears, a map replaces in full.
         const geo = normalizeGeoRules(body.geo_rules)
@@ -1021,7 +1074,9 @@ async function handle(req: NextRequest, path: string[]) {
     const startMs = params.get("start_date")
       ? Date.parse(params.get("start_date")!)
       : endMs - 30 * 86_400_000
-    const groupBy = (params.get("group_by")?.split(",") ?? ["time"]) as StatsDimension[]
+    const groupBy = (params.get("group_by")?.split(",") ?? [
+      "time",
+    ]) as StatsDimension[]
     let filters: Partial<Record<string, string[]>> | undefined
     const rawFilters = params.get("filters")
     if (rawFilters) {
@@ -1039,11 +1094,19 @@ async function handle(req: NextRequest, path: string[]) {
       params.get("short_code")?.split(",").filter(Boolean) ??
       null
     if (filters?.short_code) delete filters.short_code
-    for (const dim of ["browser", "os", "country", "city", "referrer"] as const) {
+    for (const dim of [
+      "browser",
+      "os",
+      "country",
+      "city",
+      "referrer",
+    ] as const) {
       const v = params.get(dim)
       if (v) filters = { ...filters, [dim]: v.split(",") }
     }
-    return json(generateStats(s.links, { startMs, endMs, shortCodes, filters, groupBy }))
+    return json(
+      generateStats(s.links, { startMs, endMs, shortCodes, filters, groupBy })
+    )
   }
 
   /* ---------- api keys ----------
@@ -1064,8 +1127,7 @@ async function handle(req: NextRequest, path: string[]) {
     revoked: k.revoked,
     token_prefix: k.token_prefix,
   })
-  if (route === "GET /v1/keys")
-    return json({ keys: s.keys.map(keyToWire) })
+  if (route === "GET /v1/keys") return json({ keys: s.keys.map(keyToWire) })
   if (route === "POST /v1/keys") {
     const name = String(body.name ?? "").trim()
     if (!name) return fail(422, "invalid_name", "Give the key a name", "name")
@@ -1084,7 +1146,12 @@ async function handle(req: NextRequest, path: string[]) {
     s.keys.unshift(key)
     return json({ ...keyToWire(key), token }, { status: 201 })
   }
-  if (path[0] === "v1" && path[1] === "keys" && path[2] && req.method === "DELETE") {
+  if (
+    path[0] === "v1" &&
+    path[1] === "keys" &&
+    path[2] &&
+    req.method === "DELETE"
+  ) {
     const key = s.keys.find((k) => k.id === path[2])
     if (!key) return fail(404, "not_found", "No such key")
     const revoke = params.get("revoke") === "true"
@@ -1107,7 +1174,12 @@ async function handle(req: NextRequest, path: string[]) {
     if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(fqdn))
       return fail(422, "invalid_fqdn", "Enter a valid domain name", "fqdn")
     if (s.domains.some((d) => d.fqdn === fqdn))
-      return fail(409, "domain_exists", "That domain is already registered", "fqdn")
+      return fail(
+        409,
+        "domain_exists",
+        "That domain is already registered",
+        "fqdn"
+      )
     // Same two records the real backend stamps at create: the routing CNAME
     // plus Cloudflare's ownership TXT. Purposes are the backend's strings.
     const dom: MockDomain = {
@@ -1157,13 +1229,18 @@ async function handle(req: NextRequest, path: string[]) {
     }
     if (req.method === "PATCH") {
       if ("root_redirect" in body)
-        dom.root_redirect = body.root_redirect === null ? null : String(body.root_redirect)
+        dom.root_redirect =
+          body.root_redirect === null ? null : String(body.root_redirect)
       if ("not_found_redirect" in body)
         dom.not_found_redirect =
-          body.not_found_redirect === null ? null : String(body.not_found_redirect)
+          body.not_found_redirect === null
+            ? null
+            : String(body.not_found_redirect)
       if ("custom_robots_txt" in body)
         dom.custom_robots_txt =
-          body.custom_robots_txt === null ? null : String(body.custom_robots_txt)
+          body.custom_robots_txt === null
+            ? null
+            : String(body.custom_robots_txt)
       return json(dom)
     }
     if (req.method === "DELETE") {
@@ -1206,7 +1283,12 @@ async function handle(req: NextRequest, path: string[]) {
     })
   }
 
-  if (path[0] === "v1" && path[1] === "me" && path[2] === "layouts" && path[3]) {
+  if (
+    path[0] === "v1" &&
+    path[1] === "me" &&
+    path[2] === "layouts" &&
+    path[3]
+  ) {
     const key = path[3]
     if (req.method === "GET") return json({ layout: s.layouts[key] ?? null })
     if (req.method === "PUT") {
@@ -1240,7 +1322,11 @@ async function handle(req: NextRequest, path: string[]) {
     const name = path[2]
     const remaining = s.providers.filter((p) => p.provider !== name)
     if (!s.passwordSet && remaining.length === 0)
-      return fail(400, "validation_error", "cannot unlink last authentication method")
+      return fail(
+        400,
+        "validation_error",
+        "cannot unlink last authentication method"
+      )
     if (remaining.length === s.providers.length)
       return fail(404, "not_found", "provider not found or already unlinked")
     s.providers = remaining
@@ -1250,7 +1336,12 @@ async function handle(req: NextRequest, path: string[]) {
   // GET /oauth/{provider}/link — the real route 302s to the provider's
   // consent screen and its callback lands on the app. The mock collapses
   // the round trip: link instantly, bounce back to settings.
-  if (path[0] === "oauth" && path[1] && path[2] === "link" && req.method === "GET") {
+  if (
+    path[0] === "oauth" &&
+    path[1] &&
+    path[2] === "link" &&
+    req.method === "GET"
+  ) {
     const s = state()
     const name = path[1] as MockState["providers"][number]["provider"]
     if (!["google", "github", "discord"].includes(name))
@@ -1287,7 +1378,7 @@ async function handle(req: NextRequest, path: string[]) {
     if (req.method === "POST") {
       const id = String(body.picture_id ?? "")
       const match = s.providers.find(
-        (p) => p.picture && id.startsWith(`${p.provider}_`),
+        (p) => p.picture && id.startsWith(`${p.provider}_`)
       )
       if (!match) return fail(404, "not_found", "picture not found")
       s.pfp = { url: match.picture!, source: match.provider }
@@ -1313,7 +1404,8 @@ async function handle(req: NextRequest, path: string[]) {
 
   /* ---------- oauth sign-in: one hop, straight back signed-in ---------- */
   if (path[0] === "oauth") {
-    const provider = (path[1] ?? "github") as MockState["providers"][number]["provider"]
+    const provider = (path[1] ??
+      "github") as MockState["providers"][number]["provider"]
     g.__spooMock = {
       ...initial(),
       email: `you@${path[1] ?? "oauth"}.dev`,
@@ -1329,25 +1421,40 @@ async function handle(req: NextRequest, path: string[]) {
       pfp: { url: `/api/mock/avatar/${provider}`, source: provider },
     }
     return withSession(
-      NextResponse.redirect(new URL("/onboarding", req.url), { status: 302 }),
+      NextResponse.redirect(new URL("/onboarding", req.url), { status: 302 })
     )
   }
 
   return fail(404, "mock_unimplemented", `No mock for ${route}`)
 }
 
-export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> }
+) {
   return handle(req, (await ctx.params).path)
 }
-export async function POST(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> }
+) {
   return handle(req, (await ctx.params).path)
 }
-export async function PUT(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+export async function PUT(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> }
+) {
   return handle(req, (await ctx.params).path)
 }
-export async function PATCH(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+export async function PATCH(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> }
+) {
   return handle(req, (await ctx.params).path)
 }
-export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+export async function DELETE(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> }
+) {
   return handle(req, (await ctx.params).path)
 }

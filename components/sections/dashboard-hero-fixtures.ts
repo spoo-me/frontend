@@ -34,7 +34,7 @@ function buildDaily(
   days: number,
   endMs: number,
   seed: number,
-  base: number,
+  base: number
 ): TimeBucket[] {
   const rand = mulberry32(seed)
   const out: TimeBucket[] = []
@@ -76,7 +76,12 @@ export const referrerRows: DimensionRow[] = [
   { value: "x.com", clicks: 772, unique_clicks: 548, percentage: 10.7 },
   { value: "chatgpt.com", clicks: 462, unique_clicks: 331, percentage: 6.4 },
   { value: "reddit.com", clicks: 416, unique_clicks: 296, percentage: 5.8 },
-  { value: "news.ycombinator.com", clicks: 322, unique_clicks: 240, percentage: 4.5 },
+  {
+    value: "news.ycombinator.com",
+    clicks: 322,
+    unique_clicks: 240,
+    percentage: 4.5,
+  },
 ]
 
 /** COUNTRIES choropleth rows (alpha-2 codes, brand-tint ramp). */

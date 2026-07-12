@@ -15,14 +15,14 @@ export function getPageLayout(page: string) {
 export function putPageLayout(page: string, layout: unknown) {
   return authedFetch(
     `/api/v1/me/layouts/${encodeURIComponent(page)}`,
-    jsonInit("PUT", { layout }),
+    jsonInit("PUT", { layout })
   ).then((r) => parse<{ layout: unknown }>(r))
 }
 
 export async function deletePageLayout(page: string) {
   const res = await authedFetch(
     `/api/v1/me/layouts/${encodeURIComponent(page)}`,
-    { method: "DELETE" },
+    { method: "DELETE" }
   )
   if (!res.ok) await parse(res)
 }

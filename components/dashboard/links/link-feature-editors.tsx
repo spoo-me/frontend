@@ -92,7 +92,8 @@ export const metaColorValid = (c: string) => /^#[0-9a-fA-F]{6}$/.test(c)
 /* Data-URI images (backend PR #231 upload path): the server decodes,
    magic-byte-checks and re-hosts them on the CDN, echoing the https URL
    back. The wire accepts exactly these three types, ≤512KB decoded. */
-const META_DATA_URI_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/
+const META_DATA_URI_RE =
+  /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/
 
 export const isMetaImageDataUri = (v: string) => v.startsWith("data:")
 
@@ -120,14 +121,18 @@ export const completeGeoRules = (rules: GeoRuleDraft[]): GeoRules => {
 }
 
 /** Wire map → editor rows (settings form initial state). */
-export const geoDraftsOf = (rules: GeoRules | null | undefined): GeoRuleDraft[] =>
+export const geoDraftsOf = (
+  rules: GeoRules | null | undefined
+): GeoRuleDraft[] =>
   Object.entries(rules ?? {}).map(([country, url]) => ({ country, url }))
 
 /** Key-order-insensitive equality — the server echoes a normalized map. */
 export const sameGeoRules = (a: GeoRules, b: GeoRules | null | undefined) => {
   const bb = b ?? {}
   const keys = Object.keys(a)
-  return keys.length === Object.keys(bb).length && keys.every((k) => a[k] === bb[k])
+  return (
+    keys.length === Object.keys(bb).length && keys.every((k) => a[k] === bb[k])
+  )
 }
 
 /** First blocking problem with the geo drafts, or null. Mirrors the server
@@ -172,7 +177,9 @@ export function metaTagsOf(m: MetaDraft): MetaTagsInput | undefined {
     ...(m.description.trim() ? { description: m.description.trim() } : {}),
     // Data URIs travel verbatim (the upload path); URLs get the forgiving
     // scheme fill like every other URL input.
-    ...(image ? { image: isMetaImageDataUri(image) ? image : normalizeUrl(image) } : {}),
+    ...(image
+      ? { image: isMetaImageDataUri(image) ? image : normalizeUrl(image) }
+      : {}),
     ...(metaColorValid(m.color) ? { color: m.color.toLowerCase() } : {}),
   }
 }
@@ -182,7 +189,7 @@ export function metaTagsOf(m: MetaDraft): MetaTagsInput | undefined {
     four client-settable fields only. */
 export const sameMetaTags = (
   a: MetaTagsInput | null,
-  b: MetaTags | MetaTagsInput | null | undefined,
+  b: MetaTags | MetaTagsInput | null | undefined
 ) =>
   (a?.title ?? null) === (b?.title ?? null) &&
   (a?.description ?? null) === (b?.description ?? null) &&
@@ -196,9 +203,12 @@ export const sameMetaTags = (
     color #RRGGBB — so saves never 422 blind. */
 export function metaTagsProblem(m: MetaDraft): string | null {
   const title = m.title.trim()
-  const hasExtras = Boolean(m.description.trim() || m.image.trim() || m.color.trim())
+  const hasExtras = Boolean(
+    m.description.trim() || m.image.trim() || m.color.trim()
+  )
   if (!title && !hasExtras) return null
-  if (!title) return "Give the preview a title. Cards without one render broken."
+  if (!title)
+    return "Give the preview a title. Cards without one render broken."
   if (title.length > META_TITLE_MAX)
     return `The title is too long (${META_TITLE_MAX} characters max).`
   if (m.description.trim().length > META_DESCRIPTION_MAX)
@@ -314,7 +324,9 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <Label className="text-foreground mb-2.5 text-xs font-medium">{label}</Label>
+      <Label className="mb-2.5 font-medium text-foreground text-xs">
+        {label}
+      </Label>
       {children}
       {hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>}
     </div>
@@ -323,7 +335,7 @@ function Field({
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="label-mono text-muted-foreground/60 text-[10px]">
+    <div className="label-mono text-[10px] text-muted-foreground/60">
       {children}
     </div>
   )
@@ -332,14 +344,20 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 /** In-input restore affordance: copies the destination's fetched value
     back into one field of a still-custom card. The header's "Reset to
     destination" is the different, bigger move (back to live inherit). */
-function RestoreBtn({ label, onClick }: { label: string; onClick: () => void }) {
+function RestoreBtn({
+  label,
+  onClick,
+}: {
+  label: string
+  onClick: () => void
+}) {
   return (
     <button
       type="button"
       aria-label={`Restore the destination's ${label}`}
       title={`Restore the destination's ${label}`}
       onClick={onClick}
-      className="text-muted-foreground/60 hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 transition-colors duration-150"
+      className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground/60 transition-colors duration-150 hover:text-foreground"
     >
       <RotateCcw className="size-3.5" />
     </button>
@@ -384,7 +402,7 @@ function CountrySelect({
         <button
           type="button"
           aria-label="Choose a country"
-          className="shadow-soft border-input hover:bg-accent/40 dark:bg-input/30 flex h-9 w-40 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors duration-150 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+          className="flex h-9 w-40 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 text-xs shadow-soft transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
         >
           {valid ? (
             <>
@@ -393,22 +411,22 @@ function CountrySelect({
                 value={value}
                 className="size-3.5 shrink-0"
               />
-              <span className="text-foreground min-w-0 flex-1 truncate text-left">
+              <span className="min-w-0 flex-1 truncate text-left text-foreground">
                 {dimensionLabel("country", value)}
               </span>
             </>
           ) : (
             <>
               <Globe
-                className="text-muted-foreground/70 size-3.5 shrink-0"
+                className="size-3.5 shrink-0 text-muted-foreground/70"
                 strokeWidth={1.75}
               />
-              <span className="text-muted-foreground min-w-0 flex-1 truncate text-left">
+              <span className="min-w-0 flex-1 truncate text-left text-muted-foreground">
                 Country
               </span>
             </>
           )}
-          <ChevronDown className="text-muted-foreground size-3.5 shrink-0" />
+          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -425,10 +443,10 @@ function CountrySelect({
         <CommandPrimitive className="flex flex-col">
           <CommandPrimitive.Input
             placeholder="Search countries…"
-            className="placeholder:text-muted-foreground/60 border-border/60 h-9 w-full border-b bg-transparent px-3 text-xs outline-none"
+            className="h-9 w-full border-border/60 border-b bg-transparent px-3 text-xs outline-none placeholder:text-muted-foreground/60"
           />
           <CommandPrimitive.List className="max-h-56 overflow-y-auto p-1 [mask-image:linear-gradient(to_bottom,black,black_calc(100%-16px),transparent)]">
-            <CommandPrimitive.Empty className="text-muted-foreground px-2.5 py-6 text-center text-xs">
+            <CommandPrimitive.Empty className="px-2.5 py-6 text-center text-muted-foreground text-xs">
               No countries found.
             </CommandPrimitive.Empty>
             {COUNTRY_OPTIONS.map(({ a2, name }) => (
@@ -439,17 +457,17 @@ function CountrySelect({
                   onChange(a2)
                   setOpen(false)
                 }}
-                className="data-[selected=true]:bg-accent/70 flex h-8 cursor-default items-center gap-2 rounded-md px-2 text-xs select-none"
+                className="flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-xs data-[selected=true]:bg-accent/70"
               >
                 <DimensionIcon
                   dimension="country"
                   value={a2}
                   className="size-3.5 shrink-0"
                 />
-                <span className="text-foreground min-w-0 flex-1 truncate">
+                <span className="min-w-0 flex-1 truncate text-foreground">
                   {name}
                 </span>
-                <span className="text-muted-foreground/60 shrink-0 font-mono text-[10px]">
+                <span className="shrink-0 font-mono text-[10px] text-muted-foreground/60">
                   {a2}
                 </span>
                 {value === a2 && <Check className="size-3.5 shrink-0" />}
@@ -484,7 +502,7 @@ export function GeoRulesEditor({
       <p
         className={cn(
           "text-xs",
-          problem ? "text-destructive" : "text-muted-foreground/70",
+          problem ? "text-destructive" : "text-muted-foreground/70"
         )}
       >
         {problem ??
@@ -495,7 +513,9 @@ export function GeoRulesEditor({
           <CountrySelect
             value={rule.country}
             onChange={(a2) =>
-              onChange(rules.map((r, j) => (j === i ? { ...r, country: a2 } : r)))
+              onChange(
+                rules.map((r, j) => (j === i ? { ...r, country: a2 } : r))
+              )
             }
           />
           <Input
@@ -503,8 +523,8 @@ export function GeoRulesEditor({
             onChange={(e) =>
               onChange(
                 rules.map((r, j) =>
-                  j === i ? { ...r, url: e.target.value } : r,
-                ),
+                  j === i ? { ...r, url: e.target.value } : r
+                )
               )
             }
             placeholder={`destination for ${
@@ -563,7 +583,7 @@ export function VariantsEditor({
       <p
         className={cn(
           "text-xs",
-          total > 100 ? "text-destructive" : "text-muted-foreground/70",
+          total > 100 ? "text-destructive" : "text-muted-foreground/70"
         )}
       >
         {total > 100
@@ -579,8 +599,8 @@ export function VariantsEditor({
             onChange={(e) =>
               onChange(
                 variants.map((v, j) =>
-                  j === i ? { ...v, url: e.target.value } : v,
-                ),
+                  j === i ? { ...v, url: e.target.value } : v
+                )
               )
             }
             placeholder={`https://example.com/variant-${String.fromCharCode(98 + i)}`}
@@ -596,14 +616,14 @@ export function VariantsEditor({
               onChange={(e) =>
                 onChange(
                   variants.map((v, j) =>
-                    j === i ? { ...v, weight: e.target.value } : v,
-                  ),
+                    j === i ? { ...v, weight: e.target.value } : v
+                  )
                 )
               }
               placeholder="50"
               className="h-9 w-16 pr-6 font-mono text-xs"
             />
-            <span className="text-muted-foreground/60 absolute top-1/2 right-2.5 -translate-y-1/2 font-mono text-xs">
+            <span className="absolute top-1/2 right-2.5 -translate-y-1/2 font-mono text-muted-foreground/60 text-xs">
               %
             </span>
           </div>
@@ -679,7 +699,7 @@ function MetaPreview({
       className="aspect-[1.91/1] w-full object-cover"
     />
   ) : (
-    <div className="bg-muted/60 text-muted-foreground/40 flex aspect-[1.91/1] w-full items-center justify-center">
+    <div className="flex aspect-[1.91/1] w-full items-center justify-center bg-muted/60 text-muted-foreground/40">
       <ImageIcon className="size-5" strokeWidth={1.5} />
     </div>
   )
@@ -687,13 +707,13 @@ function MetaPreview({
   if (platform === "x") {
     return (
       <div>
-        <div className="border-border/60 relative overflow-hidden rounded-xl border">
+        <div className="relative overflow-hidden rounded-xl border border-border/60">
           {img}
           <span className="absolute bottom-1.5 left-1.5 max-w-[calc(100%-12px)] truncate rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
             {t}
           </span>
         </div>
-        <p className="text-muted-foreground/70 mt-1 text-[10px]">
+        <p className="mt-1 text-[10px] text-muted-foreground/70">
           From {domain}
         </p>
       </div>
@@ -711,7 +731,7 @@ function MetaPreview({
           <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
             {domain}
           </p>
-          <p className="truncate text-[11px] font-semibold text-[#006ce7] dark:text-[#00a8fc]">
+          <p className="truncate font-semibold text-[#006ce7] text-[11px] dark:text-[#00a8fc]">
             {t}
           </p>
           <p className="line-clamp-2 text-[10px] text-neutral-700 dark:text-neutral-300">
@@ -725,10 +745,10 @@ function MetaPreview({
 
   if (platform === "linkedin") {
     return (
-      <div className="border-border/60 overflow-hidden rounded-sm border">
+      <div className="overflow-hidden rounded-sm border border-border/60">
         {img}
         <div className="bg-[#eef3f8] px-2.5 py-2 dark:bg-neutral-800">
-          <p className="truncate text-[11px] font-semibold text-neutral-900 dark:text-neutral-100">
+          <p className="truncate font-semibold text-[11px] text-neutral-900 dark:text-neutral-100">
             {t}
           </p>
           <p className="mt-0.5 text-[10px] text-neutral-500 dark:text-neutral-400">
@@ -744,10 +764,10 @@ function MetaPreview({
       <div className="flex gap-2">
         <div className="w-1 shrink-0 rounded-full bg-[#dddddd] dark:bg-neutral-600" />
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+          <p className="font-bold text-[11px] text-neutral-800 dark:text-neutral-200">
             {domain}
           </p>
-          <p className="truncate text-[11px] font-semibold text-[#1264a3] dark:text-[#4c9ee8]">
+          <p className="truncate font-semibold text-[#1264a3] text-[11px] dark:text-[#4c9ee8]">
             {t}
           </p>
           <p className="line-clamp-2 text-[10px] text-neutral-600 dark:text-neutral-300">
@@ -764,7 +784,7 @@ function MetaPreview({
       <div className="overflow-hidden rounded-md bg-black/[0.045] dark:bg-white/[0.06]">
         {img}
         <div className="space-y-0.5 px-2 py-1.5">
-          <p className="truncate text-[11px] font-medium text-neutral-900 dark:text-neutral-100">
+          <p className="truncate font-medium text-[11px] text-neutral-900 dark:text-neutral-100">
             {t}
           </p>
           <p className="line-clamp-2 text-[10px] text-neutral-600 dark:text-neutral-300">
@@ -775,7 +795,7 @@ function MetaPreview({
           </p>
         </div>
       </div>
-      <p className="truncate px-1 pt-1 text-[11px] text-[#1976d2] underline dark:text-[#53bdeb]">
+      <p className="truncate px-1 pt-1 text-[#1976d2] text-[11px] underline dark:text-[#53bdeb]">
         https://{domain}/{alias || "…"}
       </p>
     </div>
@@ -876,7 +896,7 @@ export function MetaTagsEditor({
             "text-xs",
             problem || uploadError
               ? "text-destructive"
-              : "text-muted-foreground/70",
+              : "text-muted-foreground/70"
           )}
         >
           {line}
@@ -885,13 +905,13 @@ export function MetaTagsEditor({
       {noticeBox && (
         <div
           aria-live="polite"
-          className="border-border/60 space-y-1 rounded-lg border px-3.5 py-3"
+          className="space-y-1 rounded-lg border border-border/60 px-3.5 py-3"
         >
-          <p className="text-foreground/80 flex items-center gap-2 text-xs">
-            <Info className="text-muted-foreground size-3.5 shrink-0" />
+          <p className="flex items-center gap-2 text-foreground/80 text-xs">
+            <Info className="size-3.5 shrink-0 text-muted-foreground" />
             {noticeBox.title}
           </p>
-          <p className="text-muted-foreground/70 pl-[22px] text-xs">
+          <p className="pl-[22px] text-muted-foreground/70 text-xs">
             {noticeBox.body}
           </p>
         </div>
@@ -944,16 +964,17 @@ export function MetaTagsEditor({
           {imageUploaded ? (
             /* A raw data URI is unreadable garbage in a text input — show
                a quiet chip instead. Same h-9 as the input: zero shift. */
-            <span className="border-input dark:bg-input/30 shadow-soft flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border px-3 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-              <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
-                uploaded image · {Math.max(1, Math.round(dataUriBytes(imageValue) / 1024))}
+            <span className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-input px-3 shadow-soft dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+              <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground text-xs">
+                uploaded image ·{" "}
+                {Math.max(1, Math.round(dataUriBytes(imageValue) / 1024))}
                 KB
               </span>
               <button
                 type="button"
                 aria-label="Remove the uploaded image"
                 onClick={() => patch({ image: "" })}
-                className="text-muted-foreground hover:text-foreground shrink-0 transition-colors duration-150"
+                className="shrink-0 text-muted-foreground transition-colors duration-150 hover:text-foreground"
               >
                 <X className="size-3.5" />
               </button>
@@ -967,7 +988,7 @@ export function MetaTagsEditor({
                 spellCheck={false}
                 className={cn(
                   "h-9 font-mono text-xs",
-                  restorable("image") && "pr-8",
+                  restorable("image") && "pr-8"
                 )}
               />
               {restorable("image") && (
@@ -1017,13 +1038,13 @@ export function MetaTagsEditor({
                 type="button"
                 aria-label="Pick a theme color"
                 onClick={() => setPreviewOn("discord")}
-                className="shadow-soft border-input hover:bg-accent/40 dark:bg-input/30 relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border transition-colors duration-150 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-input shadow-soft transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                 style={
                   colorValid ? { backgroundColor: value.color } : undefined
                 }
               >
                 {!colorValid && (
-                  <span className="text-muted-foreground absolute inset-0 flex items-center justify-center">
+                  <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">
                     <Pipette className="size-3.5" strokeWidth={1.75} />
                   </span>
                 )}
@@ -1040,7 +1061,7 @@ export function MetaTagsEditor({
                   onChange={(c) => patch({ color: c })}
                 />
               </div>
-              <p className="text-muted-foreground mt-2.5 text-center font-mono text-[11px] tabular-nums">
+              <p className="mt-2.5 text-center font-mono text-[11px] text-muted-foreground tabular-nums">
                 {(colorValid ? value.color : "#8b5cf6").toUpperCase()}
               </p>
             </PopoverContent>
@@ -1067,7 +1088,7 @@ export function MetaTagsEditor({
                 }}
                 className={cn(
                   "size-4 rounded-full border border-black/10 transition-transform duration-150 hover:scale-110 dark:border-white/20",
-                  value.color === c && "ring-ring ring-2 ring-offset-1",
+                  value.color === c && "ring-2 ring-ring ring-offset-1"
                 )}
                 style={{ backgroundColor: c }}
               />
@@ -1093,7 +1114,7 @@ export function MetaTagsEditor({
     <div
       className={cn(
         "space-y-2",
-        preview === "side" ? "w-full sm:w-60 sm:shrink-0" : "w-full",
+        preview === "side" ? "w-full sm:w-60 sm:shrink-0" : "w-full"
       )}
     >
       <div className="flex h-7 items-center justify-between">

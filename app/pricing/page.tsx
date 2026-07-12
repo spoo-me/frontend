@@ -27,7 +27,7 @@ export default function PricingPage() {
                 title={
                   <>
                     Pricing that scales{" "}
-                    <span className="text-muted-foreground italic font-serif font-normal">
+                    <span className="font-normal font-serif text-muted-foreground italic">
                       with you.
                     </span>
                   </>
@@ -50,15 +50,15 @@ export default function PricingPage() {
             <div className="px-5 py-20 sm:px-9">
               <PricingFaq />
 
-              <div className="border-border/60 bg-card/40 mt-16 flex flex-col items-center gap-4 rounded-2xl border p-8 text-center sm:flex-row sm:gap-6 sm:text-left">
-                <Server className="text-muted-foreground size-8 shrink-0" />
+              <div className="mt-16 flex flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card/40 p-8 text-center sm:flex-row sm:gap-6 sm:text-left">
+                <Server className="size-8 shrink-0 text-muted-foreground" />
                 <div className="flex-1">
-                  <h3 className="text-foreground text-base font-semibold tracking-tight">
+                  <h3 className="font-semibold text-base text-foreground tracking-tight">
                     Need a fully managed deployment for your enterprise?
                   </h3>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    Custom domains, SSO, audit logs, SLA. Talk to us about a managed
-                    deployment on your VPC.
+                  <p className="mt-1 text-muted-foreground text-sm">
+                    Custom domains, SSO, audit logs, SLA. Talk to us about a
+                    managed deployment on your VPC.
                   </p>
                 </div>
                 <Button asChild variant="outline">

@@ -40,19 +40,31 @@ export function DimTooltip({
   if (raw == null) return null
   const rate = d.clicks ? Math.round((d.unique_clicks / d.clicks) * 100) : 0
   return (
-    <div className="border-border/60 bg-popover min-w-[168px] overflow-hidden rounded-lg border shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)]">
-      <div className="border-border/60 bg-muted/40 flex items-center gap-1.5 border-b px-3 py-1.5">
+    <div className="min-w-[168px] overflow-hidden rounded-lg border border-border/60 bg-popover shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)]">
+      <div className="flex items-center gap-1.5 border-border/60 border-b bg-muted/40 px-3 py-1.5">
         {raw !== OTHER && (
-          <DimensionIcon dimension={dimension} value={raw} className="size-3.5 shrink-0" />
+          <DimensionIcon
+            dimension={dimension}
+            value={raw}
+            className="size-3.5 shrink-0"
+          />
         )}
-        <span className="text-foreground min-w-0 truncate text-xs font-medium">
+        <span className="min-w-0 truncate font-medium text-foreground text-xs">
           {raw === OTHER ? "Other" : dimensionLabel(dimension, raw)}
         </span>
       </div>
       <div className="space-y-1 px-3 py-2">
-        <TooltipRow swatch="fill" label="Clicks" value={formatCount(d.clicks)} />
-        <TooltipRow swatch="ring" label="Unique" value={formatCount(d.unique_clicks)} />
-        <div className="border-border/60 mt-1.5 border-t pt-1.5">
+        <TooltipRow
+          swatch="fill"
+          label="Clicks"
+          value={formatCount(d.clicks)}
+        />
+        <TooltipRow
+          swatch="ring"
+          label="Unique"
+          value={formatCount(d.unique_clicks)}
+        />
+        <div className="mt-1.5 border-border/60 border-t pt-1.5">
           <TooltipRow label="Unique rate" value={`${rate}%`} muted />
         </div>
       </div>
@@ -84,11 +96,11 @@ export function TooltipRow({
           }
         />
       )}
-      <span className="text-muted-foreground flex-1 text-xs">{label}</span>
+      <span className="flex-1 text-muted-foreground text-xs">{label}</span>
       <span
         className={cn(
-          "font-mono text-xs font-medium tabular-nums",
-          muted ? "text-muted-foreground" : "text-foreground",
+          "font-medium font-mono text-xs tabular-nums",
+          muted ? "text-muted-foreground" : "text-foreground"
         )}
       >
         {value}

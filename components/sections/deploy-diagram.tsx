@@ -115,7 +115,7 @@ const IconTile = React.forwardRef<HTMLDivElement, { node: DeployNode }>(
       <div
         ref={ref}
         style={{ ["--accent" as string]: node.accent } as React.CSSProperties}
-        className="border-border/60 bg-background group-hover:border-foreground/40 relative z-10 flex size-12 shrink-0 items-center justify-center rounded-xl border shadow-sm transition-all group-hover:scale-105"
+        className="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background shadow-sm transition-all group-hover:scale-105 group-hover:border-foreground/40"
       >
         {url ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -127,19 +127,19 @@ const IconTile = React.forwardRef<HTMLDivElement, { node: DeployNode }>(
             decoding="async"
           />
         ) : node.CustomIcon ? (
-          <node.CustomIcon className="text-muted-foreground size-6" />
+          <node.CustomIcon className="size-6 text-muted-foreground" />
         ) : null}
         {node.oneClick && (
           <span
             aria-hidden
-            className="bg-emerald-500 text-background absolute -right-1.5 -top-1.5 rounded-full px-1 font-mono text-[8px] font-bold uppercase leading-tight"
+            className="absolute -top-1.5 -right-1.5 rounded-full bg-emerald-500 px-1 font-bold font-mono text-[8px] text-background uppercase leading-tight"
           >
             1·click
           </span>
         )}
       </div>
     )
-  },
+  }
 )
 IconTile.displayName = "IconTile"
 
@@ -148,17 +148,25 @@ const SpooNode = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
   const src =
-    mounted && resolvedTheme === "light" ? "/brand/logo-black.png" : "/favicon.png"
+    mounted && resolvedTheme === "light"
+      ? "/brand/logo-black.png"
+      : "/favicon.png"
   return (
     <div
       ref={ref}
-      className="border-border bg-background relative z-10 flex size-20 shrink-0 items-center justify-center rounded-2xl border shadow-md"
+      className="relative z-10 flex size-20 shrink-0 items-center justify-center rounded-2xl border border-border bg-background shadow-md"
     >
       <span
         aria-hidden
         className="absolute -inset-3 -z-10 rounded-3xl bg-[#8B5CF6]/25 blur-2xl"
       />
-      <Image src={src} alt="spoo.me" width={48} height={48} className="size-10" />
+      <Image
+        src={src}
+        alt="spoo.me"
+        width={48}
+        height={48}
+        className="size-10"
+      />
     </div>
   )
 })
@@ -172,11 +180,11 @@ export function DeployDiagram({
   const containerRef = React.useRef<HTMLDivElement>(null)
   const spooRef = React.useRef<HTMLDivElement>(null)
   const depRefs = React.useRef<Array<React.RefObject<HTMLDivElement | null>>>(
-    deps.map(() => React.createRef<HTMLDivElement | null>()),
+    deps.map(() => React.createRef<HTMLDivElement | null>())
   )
-  const targetRefs = React.useRef<Array<React.RefObject<HTMLDivElement | null>>>(
-    targets.map(() => React.createRef<HTMLDivElement | null>()),
-  )
+  const targetRefs = React.useRef<
+    Array<React.RefObject<HTMLDivElement | null>>
+  >(targets.map(() => React.createRef<HTMLDivElement | null>()))
 
   return (
     <div
@@ -195,7 +203,7 @@ export function DeployDiagram({
             className="group flex items-center gap-4"
           >
             <IconTile ref={depRefs.current[i]} node={d} />
-            <span className="text-muted-foreground group-hover:text-foreground font-mono text-[11px] uppercase tracking-[0.18em] transition-colors">
+            <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.18em] transition-colors group-hover:text-foreground">
               {d.name}
             </span>
           </Link>
@@ -229,7 +237,7 @@ export function DeployDiagram({
               className="group flex flex-row-reverse items-center gap-4"
             >
               <IconTile ref={targetRefs.current[i]} node={t} />
-              <span className="text-muted-foreground group-hover:text-foreground font-mono text-[11px] uppercase tracking-[0.18em] transition-colors">
+              <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.18em] transition-colors group-hover:text-foreground">
                 {t.name}
               </span>
             </Link>

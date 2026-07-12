@@ -69,9 +69,12 @@ export function getCustomDomain(id: string) {
 }
 
 export function verifyCustomDomain(id: string) {
-  return authedFetch(`/api/v1/custom-domains/${encodeURIComponent(id)}/verify`, {
-    method: "POST",
-  })
+  return authedFetch(
+    `/api/v1/custom-domains/${encodeURIComponent(id)}/verify`,
+    {
+      method: "POST",
+    }
+  )
     .then((r) => parse<DomainWire>(r))
     .then(fromWire)
 }
@@ -82,11 +85,11 @@ export function updateCustomDomain(
     root_redirect: string | null
     not_found_redirect: string | null
     custom_robots_txt: string | null
-  }>,
+  }>
 ) {
   return authedFetch(
     `/api/v1/custom-domains/${encodeURIComponent(id)}`,
-    jsonInit("PATCH", input),
+    jsonInit("PATCH", input)
   )
     .then((r) => parse<DomainWire>(r))
     .then(fromWire)
@@ -103,6 +106,6 @@ export type DomainDeleteResult = {
 export function revokeCustomDomain(id: string, cascade = false) {
   return authedFetch(
     `/api/v1/custom-domains/${encodeURIComponent(id)}?cascade=${cascade}`,
-    { method: "DELETE" },
+    { method: "DELETE" }
   ).then((r) => parse<DomainDeleteResult>(r))
 }

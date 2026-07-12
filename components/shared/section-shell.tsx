@@ -15,8 +15,8 @@ export function Rule({ className }: { className?: string }) {
       className={cn(
         // z-10: band rules must paint above opaque cell backgrounds that sit
         // flush against the band top, or cells swallow the 1px line
-        "bg-border/60 pointer-events-none absolute top-0 left-1/2 z-10 h-px w-screen -translate-x-1/2",
-        className,
+        "pointer-events-none absolute top-0 left-1/2 z-10 h-px w-screen -translate-x-1/2 bg-border/60",
+        className
       )}
     />
   )
@@ -33,11 +33,11 @@ export function Tick({ className }: { className?: string }) {
       className={cn(
         // z-30: drafting marks sit above everything, including breakout bands
         "pointer-events-none absolute z-30 hidden size-[9px] sm:block",
-        className,
+        className
       )}
     >
-      <span className="bg-foreground/25 absolute top-1/2 left-0 h-px w-full" />
-      <span className="bg-foreground/25 absolute left-1/2 top-0 h-full w-px" />
+      <span className="absolute top-1/2 left-0 h-px w-full bg-foreground/25" />
+      <span className="absolute top-0 left-1/2 h-full w-px bg-foreground/25" />
     </span>
   )
 }
@@ -63,20 +63,20 @@ export function PageFrame({
           edge must never swallow the rail line (paint order). */}
       <span
         aria-hidden
-        className="border-border/60 pointer-events-none absolute inset-y-0 left-0 z-10 hidden border-l sm:block"
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden border-border/60 border-l sm:block"
       />
       <span
         aria-hidden
-        className="border-border/60 pointer-events-none absolute inset-y-0 right-0 z-10 hidden border-r sm:block"
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden border-border/60 border-r sm:block"
       />
       {/* Outer rails — dashed, the drafting-margin gutter */}
       <span
         aria-hidden
-        className="border-border/40 pointer-events-none absolute inset-y-0 -left-6 z-10 hidden border-l border-dashed min-[1300px]:block"
+        className="pointer-events-none absolute inset-y-0 -left-6 z-10 hidden border-border/40 border-l border-dashed min-[1300px]:block"
       />
       <span
         aria-hidden
-        className="border-border/40 pointer-events-none absolute inset-y-0 -right-6 z-10 hidden border-r border-dashed min-[1300px]:block"
+        className="pointer-events-none absolute inset-y-0 -right-6 z-10 hidden border-border/40 border-r border-dashed min-[1300px]:block"
       />
       {/* Frame opening */}
       <Rule />
@@ -86,7 +86,7 @@ export function PageFrame({
       {/* Frame closing — rails terminate here; the footer breathes outside */}
       <Rule className="top-auto bottom-0" />
       <Tick className="-bottom-[4.5px] -left-[4.5px]" />
-      <Tick className="-bottom-[4.5px] -right-[4.5px]" />
+      <Tick className="-right-[4.5px] -bottom-[4.5px]" />
     </div>
   )
 }
@@ -117,7 +117,7 @@ export function Section({
       <Tick className="-top-[4.5px] -left-[4.5px]" />
       <Tick className="-top-[4.5px] -right-[4.5px]" />
       {caption && (
-        <span className="label-mono text-muted-foreground bg-background absolute top-0 left-5 z-10 -translate-y-1/2 px-2 sm:left-9">
+        <span className="label-mono absolute top-0 left-5 z-10 -translate-y-1/2 bg-background px-2 text-muted-foreground sm:left-9">
           {num && (
             <span className="text-muted-foreground/50">
               [<span className="text-muted-foreground/80">{num}</span>]{" "}
@@ -155,15 +155,15 @@ export function GutterHatch({
         <span
           aria-hidden
           className={cn(
-            "pattern-hatch pointer-events-none absolute inset-y-0 left-[calc(50%-50vw)] w-20 hidden opacity-60 min-[1400px]:block",
-            className,
+            "pattern-hatch pointer-events-none absolute inset-y-0 left-[calc(50%-50vw)] hidden w-20 opacity-60 min-[1400px]:block",
+            className
           )}
         />
         <span
           aria-hidden
           className={cn(
-            "pattern-hatch pointer-events-none absolute inset-y-0 right-[calc(50%-50vw)] w-20 hidden opacity-60 min-[1400px]:block",
-            className,
+            "pattern-hatch pointer-events-none absolute inset-y-0 right-[calc(50%-50vw)] hidden w-20 opacity-60 min-[1400px]:block",
+            className
           )}
         />
       </>
@@ -175,14 +175,14 @@ export function GutterHatch({
         aria-hidden
         className={cn(
           "pattern-hatch pointer-events-none absolute inset-y-0 -left-6 hidden w-6 opacity-60 min-[1300px]:block",
-          className,
+          className
         )}
       />
       <span
         aria-hidden
         className={cn(
           "pattern-hatch pointer-events-none absolute inset-y-0 -right-6 hidden w-6 opacity-60 min-[1300px]:block",
-          className,
+          className
         )}
       />
     </>

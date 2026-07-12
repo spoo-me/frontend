@@ -47,8 +47,8 @@ export default function DashboardLayout({
 
   if ((loading && !wasAuthed) || (!loading && !user)) {
     return (
-      <div className="bg-background flex min-h-dvh items-center justify-center">
-        <span className="label-mono text-muted-foreground/60 gate-appear [.authed_&]:hidden">
+      <div className="flex min-h-dvh items-center justify-center bg-background">
+        <span className="label-mono gate-appear text-muted-foreground/60 [.authed_&]:hidden">
           loading
         </span>
       </div>
@@ -57,42 +57,47 @@ export default function DashboardLayout({
 
   return (
     <TooltipProvider delayDuration={200}>
-    {/* Floating-sheet architecture (ref 10): chrome sits on the canvas,
+      {/* Floating-sheet architecture (ref 10): chrome sits on the canvas,
         content is an elevated rounded sheet with its own scroll. */}
-    <div className="bg-canvas flex h-dvh overflow-hidden">
-      <DashboardSidebar />
-      <div data-dashboard-scroller className="border-border bg-background m-3 flex min-w-0 flex-1 flex-col overflow-y-auto rounded-2xl border lg:ml-0">
-        <DashboardTopbar />
-        {/* flex-col so pages can mt-auto elements (selection bars) to the
+      <div className="flex h-dvh overflow-hidden bg-canvas">
+        <DashboardSidebar />
+        <div
+          data-dashboard-scroller
+          className="m-3 flex min-w-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-border bg-background lg:ml-0"
+        >
+          <DashboardTopbar />
+          {/* flex-col so pages can mt-auto elements (selection bars) to the
             sheet's bottom even when their content is short. */}
-        <main className="flex flex-1 flex-col px-4 py-6 sm:px-6">{children}</main>
-        {/* Scrolling content dissolves into the sheet's bottom edge. Light
+          <main className="flex flex-1 flex-col px-4 py-6 sm:px-6">
+            {children}
+          </main>
+          {/* Scrolling content dissolves into the sheet's bottom edge. Light
             only: dark-on-dark fades just dim the last row without reading
             as a fade. */}
-        <div className="from-background pointer-events-none sticky bottom-0 -mt-8 h-8 shrink-0 bg-linear-to-t to-transparent dark:hidden" />
-      </div>
-      <DashboardCommandMenu />
-      <LinkComposer />
-      <SearchParamsKeeper />
-      <SetupChecklist />
-      <ShortcutsHelp />
-      {/* Theme must be forwarded: sonner defaults to its light palette, so
+          <div className="pointer-events-none sticky bottom-0 -mt-8 h-8 shrink-0 bg-linear-to-t from-background to-transparent dark:hidden" />
+        </div>
+        <DashboardCommandMenu />
+        <LinkComposer />
+        <SearchParamsKeeper />
+        <SetupChecklist />
+        <ShortcutsHelp />
+        {/* Theme must be forwarded: sonner defaults to its light palette, so
           without it the description and action chip keep light-mode colors
           on a dark toast (unreadable). Tokens pin every slot to our theme. */}
-      <Toaster
-        position="bottom-right"
-        theme={resolvedTheme as ToasterProps["theme"]}
-        toastOptions={{
-          classNames: {
-            toast:
-              "!bg-popover !text-popover-foreground !border-border/60 !shadow-lg !rounded-xl",
-            description: "!text-muted-foreground",
-            actionButton: "!bg-primary !text-primary-foreground",
-            cancelButton: "!bg-muted !text-muted-foreground",
-          },
-        }}
-      />
-    </div>
+        <Toaster
+          position="bottom-right"
+          theme={resolvedTheme as ToasterProps["theme"]}
+          toastOptions={{
+            classNames: {
+              toast:
+                "!bg-popover !text-popover-foreground !border-border/60 !shadow-lg !rounded-xl",
+              description: "!text-muted-foreground",
+              actionButton: "!bg-primary !text-primary-foreground",
+              cancelButton: "!bg-muted !text-muted-foreground",
+            },
+          }}
+        />
+      </div>
     </TooltipProvider>
   )
 }

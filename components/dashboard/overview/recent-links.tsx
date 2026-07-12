@@ -25,7 +25,7 @@ export function RecentLinks({
   const recent = links.filter((l) => l.alias).slice(0, 5)
 
   return (
-    <div className="border-border/60 bg-shell flex h-full flex-col rounded-2xl border p-0.5">
+    <div className="flex h-full flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
       <SectionHeader
         className="h-9 px-2.5"
         icon={History}
@@ -33,14 +33,14 @@ export function RecentLinks({
         action={
           <Link
             href="/dashboard/links"
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors duration-150"
+            className="flex items-center gap-1 text-muted-foreground text-xs transition-colors duration-150 hover:text-foreground"
           >
             All links
             <ArrowUpRight className="size-3" />
           </Link>
         }
       />
-      <Panel className="bg-background mt-0 flex-1 rounded-[14px] p-2">
+      <Panel className="mt-0 flex-1 rounded-[14px] bg-background p-2">
         {loading ? (
           <div className="space-y-1">
             {Array.from({ length: 5 }, (_, i) => (
@@ -52,23 +52,23 @@ export function RecentLinks({
             {recent.map((l) => (
               <div
                 key={l.id}
-                className="hover:bg-accent/40 group flex h-9 items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-150"
+                className="group flex h-9 items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-150 hover:bg-accent/40"
               >
                 <Link
                   href={`/dashboard/links/${l.alias}`}
                   className="flex min-w-0 flex-1 items-baseline gap-2.5"
                 >
-                  <span className="text-foreground shrink-0 font-mono text-[13px]">
+                  <span className="shrink-0 font-mono text-[13px] text-foreground">
                     /{l.alias}
                   </span>
-                  <span className="text-muted-foreground/70 min-w-0 truncate text-xs">
+                  <span className="min-w-0 truncate text-muted-foreground/70 text-xs">
                     {l.long_url ? displayUrl(l.long_url) : ""}
                   </span>
                 </Link>
-                <span className="text-muted-foreground/70 shrink-0 font-mono text-[11px]">
+                <span className="shrink-0 font-mono text-[11px] text-muted-foreground/70">
                   {formatWhen(l.created_at)}
                 </span>
-                <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
+                <span className="shrink-0 font-mono text-muted-foreground text-xs tabular-nums">
                   {formatCount(l.total_clicks ?? 0)}
                 </span>
                 <CopyButton value={shortUrlOf(l)} trackAs="copy_short_link" />
@@ -77,7 +77,7 @@ export function RecentLinks({
           </div>
         ) : (
           <div className="pattern-dots m-2 flex h-40 flex-col items-center justify-center gap-3 rounded-lg">
-            <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+            <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No links yet
             </span>
             <Button size="sm" onClick={() => openLinkComposer()}>

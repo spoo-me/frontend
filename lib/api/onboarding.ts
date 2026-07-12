@@ -11,7 +11,7 @@ export type OnboardingServerState = {
 /** Read the stored wizard pointer. */
 export function getOnboardingState() {
   return authedFetch("/auth/onboarding", { method: "GET" }).then((r) =>
-    parse<OnboardingServerState>(r),
+    parse<OnboardingServerState>(r)
   )
 }
 
@@ -21,7 +21,7 @@ export function putOnboardingState(input: {
   path?: "links" | "api" | null
 }) {
   return authedFetch("/auth/onboarding", jsonInit("PUT", input)).then((r) =>
-    parse<OnboardingServerState>(r),
+    parse<OnboardingServerState>(r)
   )
 }
 
@@ -30,6 +30,6 @@ export function putOnboardingState(input: {
 export function completeOnboarding(heardFrom?: string) {
   return authedFetch(
     "/auth/onboarding/complete",
-    jsonInit("POST", heardFrom ? { heard_from: heardFrom } : {}),
+    jsonInit("POST", heardFrom ? { heard_from: heardFrom } : {})
   ).then((r) => parse<{ success: boolean; onboarded_at: string }>(r))
 }

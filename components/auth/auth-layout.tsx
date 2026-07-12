@@ -19,18 +19,18 @@ export function AuthLayout({
 }) {
   const cross = crossLink[mode]
   return (
-    <div className="bg-background relative flex min-h-svh flex-col px-6 pt-6 pb-8 sm:px-10">
+    <div className="relative flex min-h-svh flex-col bg-background px-6 pt-6 pb-8 sm:px-10">
       {/* Faint ambient brand tint — character without chrome */}
       <div
         aria-hidden
-        className="bg-brand/[0.07] pointer-events-none absolute top-[-12rem] left-1/2 -z-10 h-[24rem] w-[44rem] -translate-x-1/2 rounded-full blur-3xl"
+        className="pointer-events-none absolute top-[-12rem] left-1/2 -z-10 h-[24rem] w-[44rem] -translate-x-1/2 rounded-full bg-brand/[0.07] blur-3xl"
       />
 
       <header className="flex items-center justify-between">
         <Logo />
         <Link
           href={cross.href}
-          className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+          className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
         >
           {cross.label}
         </Link>
@@ -40,18 +40,18 @@ export function AuthLayout({
         <div className="w-full max-w-sm">{children}</div>
       </div>
 
-      <p className="text-muted-foreground/70 text-center text-xs">
+      <p className="text-center text-muted-foreground/70 text-xs">
         By continuing, you agree to our{" "}
         <Link
           href="/terms"
-          className="hover:text-foreground underline underline-offset-4 transition-colors"
+          className="underline underline-offset-4 transition-colors hover:text-foreground"
         >
           Terms of Service
         </Link>{" "}
         and{" "}
         <Link
           href="/privacy"
-          className="hover:text-foreground underline underline-offset-4 transition-colors"
+          className="underline underline-offset-4 transition-colors hover:text-foreground"
         >
           Privacy Policy
         </Link>

@@ -105,8 +105,7 @@ function useWorldPaths(w: number, h: number) {
           id: String(f.id ?? ""),
           // Disputed territories ship without an id; key them by name.
           key: f.id != null ? String(f.id) : name,
-          alpha2:
-            f.id != null ? (numericToAlpha2(String(f.id)) ?? null) : null,
+          alpha2: f.id != null ? (numericToAlpha2(String(f.id)) ?? null) : null,
           name,
           d: path(f) ?? "",
         }
@@ -231,9 +230,7 @@ export function CountryMap({
     [rows, valueOf]
   )
 
-  const hoverRow = hover
-    ? rows.find((r) => r.value === hover.value)
-    : undefined
+  const hoverRow = hover ? rows.find((r) => r.value === hover.value) : undefined
 
   return (
     <div ref={wrapRef} className="relative h-full w-full">
@@ -241,7 +238,7 @@ export function CountryMap({
           floats over it — siblings say the same thing in the same words. */}
       {world && !rows.length && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <span className="border-border text-muted-foreground/70 bg-background/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+          <span className="rounded-lg border border-border border-dashed bg-background/70 px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
             No data in this range
           </span>
         </div>
@@ -252,10 +249,7 @@ export function CountryMap({
         <svg
           ref={svgRef}
           viewBox={`0 0 ${w} ${h}`}
-          className={cn(
-            "h-full w-full",
-            (t.k > 1 || canPan) && "cursor-grab"
-          )}
+          className={cn("h-full w-full", (t.k > 1 || canPan) && "cursor-grab")}
           role="img"
           aria-label="Clicks by country"
           onMouseLeave={() => {
@@ -279,8 +273,7 @@ export function CountryMap({
             const b = toView(e.clientX, e.clientY)
             if (!a || !b) return
             if (
-              Math.abs(e.clientX - p.startX) +
-                Math.abs(e.clientY - p.startY) >
+              Math.abs(e.clientX - p.startX) + Math.abs(e.clientY - p.startY) >
               3
             ) {
               p.moved = true
@@ -310,11 +303,19 @@ export function CountryMap({
                     "transition-[fill-opacity,stroke] duration-150",
                     row && onSelect && "cursor-pointer"
                   )}
-                  fill={row ? "var(--chart-accent, var(--brand))" : "var(--map-base)"}
+                  fill={
+                    row
+                      ? "var(--chart-accent, var(--brand))"
+                      : "var(--map-base)"
+                  }
                   fillOpacity={
                     row ? 0.16 + 0.66 * Math.sqrt(max ? v / max : 0) : 1
                   }
-                  stroke={hovered ? "var(--chart-accent, var(--brand))" : "var(--background)"}
+                  stroke={
+                    hovered
+                      ? "var(--chart-accent, var(--brand))"
+                      : "var(--background)"
+                  }
                   strokeWidth={hovered ? 1.25 : 0.75}
                   vectorEffect="non-scaling-stroke"
                   onMouseMove={(e) => {
@@ -361,13 +362,13 @@ export function CountryMap({
                 : "translate(-50%, calc(-100% - 12px))",
           }}
         >
-          <div className="flex items-center gap-2 border-b border-border/60 bg-muted/40 px-3 py-1.5">
+          <div className="flex items-center gap-2 border-border/60 border-b bg-muted/40 px-3 py-1.5">
             <DimensionIcon
               dimension="country"
               value={hover.value}
               className="size-3.5"
             />
-            <span className="text-xs font-medium text-foreground">
+            <span className="font-medium text-foreground text-xs">
               {dimensionLabel("country", hover.value)}
             </span>
           </div>
@@ -379,7 +380,7 @@ export function CountryMap({
                   label="Unique"
                   value={formatCount(hoverRow.unique_clicks)}
                 />
-                <div className="mt-1.5 border-t border-border/60 pt-1.5">
+                <div className="mt-1.5 border-border/60 border-t pt-1.5">
                   <TipRow
                     label="Share"
                     value={formatPercent(hoverRow.percentage)}
@@ -388,7 +389,7 @@ export function CountryMap({
                 </div>
               </>
             ) : (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 no clicks in this range
               </span>
             )}
@@ -410,10 +411,10 @@ function TipRow({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="flex-1 text-xs text-muted-foreground">{label}</span>
+      <span className="flex-1 text-muted-foreground text-xs">{label}</span>
       <span
         className={cn(
-          "font-mono text-xs font-medium tabular-nums",
+          "font-medium font-mono text-xs tabular-nums",
           muted ? "text-muted-foreground" : "text-foreground"
         )}
       >

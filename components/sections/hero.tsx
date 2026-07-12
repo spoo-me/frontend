@@ -24,17 +24,17 @@ export function Hero() {
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [mask-image:radial-gradient(ellipse_70%_60%_at_50%_45%,black,transparent)]"
       >
         <motion.div
-          className="absolute left-1/2 top-[55%] size-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#8B5CF6]/25 blur-3xl"
+          className="absolute top-[55%] left-1/2 size-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#8B5CF6]/25 blur-3xl"
           animate={{ x: [0, 40, -20, 0], y: [0, -25, 15, 0] }}
           transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute right-[10%] top-[15%] size-[28rem] rounded-full bg-indigo-500/15 blur-3xl"
+          className="absolute top-[15%] right-[10%] size-[28rem] rounded-full bg-indigo-500/15 blur-3xl"
           animate={{ x: [0, -30, 20, 0], y: [0, 30, -10, 0] }}
           transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute left-[8%] bottom-[18%] size-[22rem] rounded-full bg-rose-500/10 blur-3xl"
+          className="absolute bottom-[18%] left-[8%] size-[22rem] rounded-full bg-rose-500/10 blur-3xl"
           animate={{ x: [0, 25, -15, 0], y: [0, -20, 10, 0] }}
           transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -45,18 +45,20 @@ export function Hero() {
           initial="hidden"
           animate="visible"
           variants={{
-            visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+            visible: {
+              transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+            },
           }}
           className="mx-auto flex max-w-3xl flex-col items-center text-center"
         >
           <motion.h1
             variants={fadeUp}
             transition={{ duration: 0.6 }}
-            className="text-foreground text-balance text-4xl font-semibold tracking-tight sm:text-6xl md:text-7xl"
+            className="text-balance font-semibold text-4xl text-foreground tracking-tight sm:text-6xl md:text-7xl"
           >
             The link platform
             <br />
-            <span className="text-muted-foreground italic [font-family:var(--font-serif)] font-normal">
+            <span className="font-normal text-muted-foreground italic [font-family:var(--font-serif)]">
               built for developers.
             </span>
           </motion.h1>
@@ -64,10 +66,11 @@ export function Hero() {
           <motion.p
             variants={fadeUp}
             transition={{ duration: 0.6 }}
-            className="text-muted-foreground mt-6 max-w-xl text-balance text-base sm:text-lg"
+            className="mt-6 max-w-xl text-balance text-base text-muted-foreground sm:text-lg"
           >
-            Free, open-source link management platform with advanced analytics, an API-first design,
-            and an entire ecosystem of apps and SDKs. Self-hostable in one command.
+            Free, open-source link management platform with advanced analytics,
+            an API-first design, and an entire ecosystem of apps and SDKs.
+            Self-hostable in one command.
           </motion.p>
 
           <motion.div
@@ -94,13 +97,19 @@ export function Hero() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="h-10 px-4">
-              <a href={siteConfig.links.github} target="_blank" rel="noreferrer">
-                <BrandIcons.github className="size-4" data-icon="inline-start" />
+              <a
+                href={siteConfig.links.github}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <BrandIcons.github
+                  className="size-4"
+                  data-icon="inline-start"
+                />
                 View on GitHub
               </a>
             </Button>
           </motion.div>
-
         </motion.div>
       </div>
     </section>

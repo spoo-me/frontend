@@ -43,8 +43,8 @@ export function UserAvatar({
     <span
       aria-hidden
       className={cn(
-        "bg-brand/15 text-brand flex size-7 items-center justify-center rounded-full text-[11px] font-semibold",
-        className,
+        "flex size-7 items-center justify-center rounded-full bg-brand/15 font-semibold text-[11px] text-brand",
+        className
       )}
     >
       {userInitials(user)}
@@ -72,10 +72,10 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="ph-no-capture flex flex-col gap-0.5">
-          <span className="text-foreground truncate text-sm font-medium">
+          <span className="truncate font-medium text-foreground text-sm">
             {user.user_name ?? user.email.split("@")[0]}
           </span>
-          <span className="text-muted-foreground truncate text-xs font-normal">
+          <span className="truncate font-normal text-muted-foreground text-xs">
             {user.email}
           </span>
         </DropdownMenuLabel>

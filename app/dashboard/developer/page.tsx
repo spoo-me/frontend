@@ -74,29 +74,32 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
       queryClient.invalidateQueries({ queryKey: ["keys"] })
       toast.success(revoke ? "Key revoked" : "Key deleted")
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't update key"),
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Couldn't update key"),
   })
 
   return (
     <div
       className={cn(
         "flex items-center gap-3 px-4 py-3",
-        apiKey.revoked && "opacity-55",
+        apiKey.revoked && "opacity-55"
       )}
     >
-      <span className="border-border/60 bg-muted/30 flex size-9 shrink-0 items-center justify-center rounded-lg border">
-        <KeyRound className="text-foreground size-4" strokeWidth={1.75} />
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
+        <KeyRound className="size-4 text-foreground" strokeWidth={1.75} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-foreground text-sm font-medium">{apiKey.name}</span>
+          <span className="font-medium text-foreground text-sm">
+            {apiKey.name}
+          </span>
           {apiKey.revoked && (
-            <span className="bg-destructive/10 text-destructive rounded-full px-2 py-0.5 text-[10px] font-medium">
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-[10px] text-destructive">
               revoked
             </span>
           )}
         </div>
-        <div className="text-muted-foreground truncate font-mono text-xs">
+        <div className="truncate font-mono text-muted-foreground text-xs">
           <Tooltip>
             <TooltipTrigger asChild>
               <span>{apiKey.token_prefix}…</span>
@@ -126,7 +129,7 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
       <div className="hidden items-center gap-1 md:flex">
         {apiKey.scopes.map((s) => {
           const chip = (
-            <span className="border-border/60 bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px]">
+            <span className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
               {s}
             </span>
           )
@@ -143,7 +146,11 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${apiKey.name}`}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Actions for ${apiKey.name}`}
+          >
             <Ellipsis />
           </Button>
         </DropdownMenuTrigger>
@@ -154,7 +161,10 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
               Revoke (keep listed)
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem variant="destructive" onSelect={() => act.mutate(false)}>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => act.mutate(false)}
+          >
             <Trash2 />
             Delete permanently
           </DropdownMenuItem>
@@ -183,7 +193,9 @@ export default function DeveloperPage() {
     if (expiry === "custom")
       return customExpiry ? new Date(customExpiry).toISOString() : undefined
     const days = KEY_EXPIRY_PRESETS.find((p) => p.token === expiry)?.days
-    return days ? new Date(Date.now() + days * 86_400_000).toISOString() : undefined
+    return days
+      ? new Date(Date.now() + days * 86_400_000).toISOString()
+      : undefined
   }, [expiry, customExpiry])
 
   const resetForm = () => {
@@ -206,7 +218,8 @@ export default function DeveloperPage() {
       setNewToken(created.token)
       resetForm()
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't create key"),
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Couldn't create key"),
   })
 
   const items = keys.data?.items ?? []
@@ -216,10 +229,10 @@ export default function DeveloperPage() {
       <div className="flex items-center justify-between">
         <div>
           <span className="label-mono text-muted-foreground/60">Developer</span>
-          <h1 className="text-foreground mt-2 text-xl font-semibold tracking-tight">
+          <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
             API keys
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="mt-1 text-muted-foreground text-sm">
             Scoped keys for the spoo.me API. Keys are shown once, at creation.
           </p>
         </div>
@@ -237,7 +250,7 @@ export default function DeveloperPage() {
           </div>
         ) : !items.length ? (
           <div className="pattern-dots m-4 flex h-40 flex-col items-center justify-center gap-3 rounded-lg">
-            <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+            <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No API keys yet
             </span>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
@@ -246,7 +259,7 @@ export default function DeveloperPage() {
             </Button>
           </div>
         ) : (
-          <div className="divide-border/60 divide-y">
+          <div className="divide-y divide-border/60">
             {items.map((k) => (
               <KeyRow key={k.id} apiKey={k} />
             ))}
@@ -274,8 +287,10 @@ export default function DeveloperPage() {
           }
         />
         <Panel className="mt-2">
-          <div className="border-border/60 bg-muted/30 flex h-9 items-center justify-between border-b px-3">
-            <span className="text-muted-foreground font-mono text-[11px]">curl</span>
+          <div className="flex h-9 items-center justify-between border-border/60 border-b bg-muted/30 px-3">
+            <span className="font-mono text-[11px] text-muted-foreground">
+              curl
+            </span>
             <CopyButton
               value={`curl -X POST https://spoo.me/api/v1/shorten -H "Authorization: Bearer spoo_YOUR_KEY" -H "Content-Type: application/json" -d '{"long_url": "https://example.com"}'`}
             />
@@ -284,7 +299,7 @@ export default function DeveloperPage() {
             {/* Hand-tokenized: one static snippet doesn't earn a highlighter
                 dependency. Colors stay inside the accent lock (brand + live). */}
             <code>
-              <span className="text-foreground font-medium">curl</span>{" "}
+              <span className="font-medium text-foreground">curl</span>{" "}
               <span className="text-muted-foreground">-X</span>{" "}
               <span className="text-brand">POST</span>{" "}
               <span className="text-foreground">
@@ -295,7 +310,7 @@ export default function DeveloperPage() {
               <span className="text-muted-foreground">-H</span>{" "}
               <span className="text-live">
                 &quot;Authorization: Bearer{" "}
-                <span className="text-foreground font-medium">
+                <span className="font-medium text-foreground">
                   spoo_YOUR_KEY
                 </span>
                 &quot;
@@ -335,20 +350,20 @@ export default function DeveloperPage() {
               <DialogHeader>
                 <DialogTitle>Copy your key now</DialogTitle>
                 <DialogDescription>
-                  This is the only time the full key is shown. Store it somewhere
-                  safe.
+                  This is the only time the full key is shown. Store it
+                  somewhere safe.
                 </DialogDescription>
               </DialogHeader>
-              <div className="border-border/60 bg-muted/30 flex items-center gap-2 rounded-lg border px-3 py-2.5">
-                <code className="ph-no-capture text-foreground min-w-0 flex-1 truncate font-mono text-xs">
+              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">
+                <code className="ph-no-capture min-w-0 flex-1 truncate font-mono text-foreground text-xs">
                   {newToken}
                 </code>
                 <CopyButton value={newToken} trackAs="copy_api_key" />
               </div>
-              <div className="text-muted-foreground flex items-start gap-2 text-xs">
-                <TriangleAlert className="text-amber-600 mt-0.5 size-3.5 shrink-0 dark:text-amber-400" />
-                Anyone with this key can act within its scopes. Revoke it here if
-                it leaks.
+              <div className="flex items-start gap-2 text-muted-foreground text-xs">
+                <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                Anyone with this key can act within its scopes. Revoke it here
+                if it leaks.
               </div>
               <DialogFooter>
                 <Button size="sm" onClick={() => setCreateOpen(false)}>
@@ -361,12 +376,13 @@ export default function DeveloperPage() {
               <DialogHeader>
                 <DialogTitle>New API key</DialogTitle>
                 <DialogDescription>
-                  Name it after where it lives, and grant only the scopes it needs.
+                  Name it after where it lives, and grant only the scopes it
+                  needs.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-5">
                 <div className="space-y-1.5">
-                  <Label className="text-foreground text-xs font-medium">
+                  <Label className="font-medium text-foreground text-xs">
                     Name
                   </Label>
                   <Input
@@ -379,16 +395,16 @@ export default function DeveloperPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-foreground text-xs font-medium">
+                  <Label className="font-medium text-foreground text-xs">
                     Scopes
                   </Label>
-                  <div className="border-border/60 divide-border/60 divide-y overflow-hidden rounded-xl border">
+                  <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
                     {API_KEY_SCOPES.map((scope) => (
                       <label
                         key={scope}
                         className={cn(
                           "flex cursor-pointer items-center gap-2.5 px-3 py-2 transition-opacity duration-150",
-                          adminAll && "pointer-events-none opacity-45",
+                          adminAll && "pointer-events-none opacity-45"
                         )}
                       >
                         <Checkbox
@@ -398,11 +414,11 @@ export default function DeveloperPage() {
                             setScopes(
                               v === true
                                 ? [...scopes, scope]
-                                : scopes.filter((s) => s !== scope),
+                                : scopes.filter((s) => s !== scope)
                             )
                           }
                         />
-                        <span className="text-foreground w-36 shrink-0 font-mono text-xs">
+                        <span className="w-36 shrink-0 font-mono text-foreground text-xs">
                           {scope}
                         </span>
                         <span className="text-muted-foreground text-xs">
@@ -416,7 +432,7 @@ export default function DeveloperPage() {
                       "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors duration-150",
                       adminAll
                         ? "border-amber-500/40 bg-amber-500/5 dark:bg-amber-400/10"
-                        : "border-border/60",
+                        : "border-border/60"
                     )}
                   >
                     <Checkbox
@@ -429,12 +445,12 @@ export default function DeveloperPage() {
                           setScopes(
                             preAdminScopes.current.length
                               ? preAdminScopes.current
-                              : ["shorten:create"],
+                              : ["shorten:create"]
                           )
                         }
                       }}
                     />
-                    <span className="text-foreground w-36 shrink-0 font-mono text-xs">
+                    <span className="w-36 shrink-0 font-mono text-foreground text-xs">
                       {ADMIN_SCOPE}
                     </span>
                     <span className="text-muted-foreground text-xs">
@@ -444,7 +460,7 @@ export default function DeveloperPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-foreground text-xs font-medium">
+                  <Label className="font-medium text-foreground text-xs">
                     Expires
                   </Label>
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -457,7 +473,7 @@ export default function DeveloperPage() {
                           "h-8 rounded-lg border px-2.5 text-xs transition-colors duration-150",
                           expiry === p.token
                             ? "border-border bg-accent/70 text-foreground"
-                            : "border-border/60 text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                            : "border-border/60 text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                         )}
                       >
                         {p.label}

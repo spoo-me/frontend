@@ -95,7 +95,7 @@ function AppIconTile({
     <span
       className={cn(
         "flex size-9 shrink-0 items-center justify-center rounded-lg border",
-        className,
+        className
       )}
       style={{
         color: app.color,
@@ -135,8 +135,8 @@ function CatalogueCard({
       className={cn(
         "group flex items-start gap-3 rounded-xl border p-4 text-left transition-colors duration-150",
         soon
-          ? "border-border/60 hover:bg-accent/20 border-dashed bg-transparent"
-          : "border-border/60 bg-card hover:bg-accent/30",
+          ? "border-border/60 border-dashed bg-transparent hover:bg-accent/20"
+          : "border-border/60 bg-card hover:bg-accent/30"
       )}
     >
       <AppIconTile
@@ -147,22 +147,22 @@ function CatalogueCard({
         <span className="flex items-center gap-1.5">
           <span
             className={cn(
-              "text-sm font-medium",
-              soon ? "text-muted-foreground" : "text-foreground",
+              "font-medium text-sm",
+              soon ? "text-muted-foreground" : "text-foreground"
             )}
           >
             {app.name}
           </span>
-          <span className="border-border/60 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px]">
+          <span className="rounded-md border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
             {app.category}
           </span>
         </span>
-        <span className="text-muted-foreground mt-0.5 line-clamp-2 block text-xs">
+        <span className="mt-0.5 line-clamp-2 block text-muted-foreground text-xs">
           {app.tagline}
         </span>
       </span>
       {soon && (
-        <span className="label-mono text-muted-foreground/50 shrink-0 text-[10px]">
+        <span className="label-mono shrink-0 text-[10px] text-muted-foreground/50">
           soon
         </span>
       )}
@@ -182,7 +182,8 @@ function GrantRow({ grant }: { grant: AppGrant }) {
       queryClient.invalidateQueries({ queryKey: ["apps"] })
       toast.success(`${grant.app_name} disconnected`)
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't revoke"),
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Couldn't revoke"),
   })
 
   return (
@@ -190,20 +191,22 @@ function GrantRow({ grant }: { grant: AppGrant }) {
       {app ? (
         <AppIconTile app={app} />
       ) : (
-        <span className="border-border/60 bg-muted/30 flex size-9 shrink-0 items-center justify-center rounded-lg border">
-          <Icon className="text-foreground size-4" strokeWidth={1.75} />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
+          <Icon className="size-4 text-foreground" strokeWidth={1.75} />
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="text-foreground text-sm font-medium">{grant.app_name}</div>
-        <div className="text-muted-foreground truncate text-xs">
+        <div className="font-medium text-foreground text-sm">
+          {grant.app_name}
+        </div>
+        <div className="truncate text-muted-foreground text-xs">
           {grant.device} · last used {formatWhen(grant.last_used_at)}
         </div>
       </div>
       <div className="hidden items-center gap-1 sm:flex">
         {grant.scopes.slice(0, 3).map((s) => {
           const chip = (
-            <span className="border-border/60 bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px]">
+            <span className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
               {s}
             </span>
           )
@@ -222,7 +225,7 @@ function GrantRow({ grant }: { grant: AppGrant }) {
         variant="outline"
         size="sm"
         onClick={() => setConfirmOpen(true)}
-        className="hover:border-destructive/40 hover:text-destructive hover:bg-destructive/5 dark:hover:bg-destructive/10"
+        className="hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive dark:hover:bg-destructive/10"
       >
         <Unplug data-icon="inline-start" />
         Disconnect
@@ -263,20 +266,20 @@ export default function AppsPage() {
 
   // Connected apps leave the catalogue; what remains sorts available-first.
   const connectedSlugs = new Set(
-    items.map((g) => grantApp(g)?.slug).filter(Boolean),
+    items.map((g) => grantApp(g)?.slug).filter(Boolean)
   )
   const catalogue = availableFirst(
-    integrations.filter((a) => !connectedSlugs.has(a.slug)),
+    integrations.filter((a) => !connectedSlugs.has(a.slug))
   )
   const sdkList = availableFirst(sdks)
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-8">
       <span className="label-mono text-muted-foreground/60">Apps</span>
-      <h1 className="text-foreground mt-2 text-xl font-semibold tracking-tight">
+      <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
         Connected apps
       </h1>
-      <p className="text-muted-foreground mt-1 text-sm">
+      <p className="mt-1 text-muted-foreground text-sm">
         Devices and integrations with access to your account.
       </p>
 
@@ -288,18 +291,22 @@ export default function AppsPage() {
           </div>
         ) : !items.length ? (
           <div className="pattern-dots m-4 flex h-40 items-center justify-center rounded-lg">
-            <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+            <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               Nothing connected yet
             </span>
           </div>
         ) : (
-          <div className="divide-border/60 divide-y">
+          <div className="divide-y divide-border/60">
             {items.map((g, i) => (
               <motion.div
                 key={g.id}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: i * 0.04 }}
+                transition={{
+                  duration: 0.25,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: i * 0.04,
+                }}
               >
                 <GrantRow grant={g} />
               </motion.div>
@@ -339,7 +346,10 @@ export default function AppsPage() {
       </div>
 
       {/* App detail: what it is, gallery, features, setup */}
-      <Dialog open={detail !== null} onOpenChange={(v) => !v && setDetail(null)}>
+      <Dialog
+        open={detail !== null}
+        onOpenChange={(v) => !v && setDetail(null)}
+      >
         <DialogContent className="sm:max-w-xl">
           {detail && (
             <>
@@ -349,7 +359,7 @@ export default function AppsPage() {
                   <div className="min-w-0">
                     <DialogTitle className="flex items-center gap-2">
                       {detail.name}
-                      <span className="border-border/60 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-normal">
+                      <span className="rounded-md border border-border/60 px-1.5 py-0.5 font-mono font-normal text-[10px] text-muted-foreground">
                         {detail.category}
                       </span>
                     </DialogTitle>
@@ -369,25 +379,27 @@ export default function AppsPage() {
                       src={src}
                       alt={`${detail.name} screenshot`}
                       loading="lazy"
-                      className="border-border/60 h-36 shrink-0 snap-start rounded-lg border object-cover"
+                      className="h-36 shrink-0 snap-start rounded-lg border border-border/60 object-cover"
                     />
                   ))}
                 </div>
               )}
 
-              <p className="text-muted-foreground text-sm">{detail.description}</p>
+              <p className="text-muted-foreground text-sm">
+                {detail.description}
+              </p>
 
               <div className="space-y-3">
-                <span className="label-mono text-muted-foreground/60 block">
+                <span className="label-mono block text-muted-foreground/60">
                   Features
                 </span>
                 <ul className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
                   {detail.features.map((f) => (
                     <li
                       key={f}
-                      className="text-foreground flex items-start gap-2 text-xs"
+                      className="flex items-start gap-2 text-foreground text-xs"
                     >
-                      <Check className="text-live mt-0.5 size-3 shrink-0" />
+                      <Check className="mt-0.5 size-3 shrink-0 text-live" />
                       {f}
                     </li>
                   ))}
@@ -396,24 +408,24 @@ export default function AppsPage() {
 
               {detail.install && detail.install.length > 0 && (
                 <div className="space-y-3">
-                  <span className="label-mono text-muted-foreground/60 block">
+                  <span className="label-mono block text-muted-foreground/60">
                     Setup
                   </span>
-                  <div className="border-border/60 divide-border/60 divide-y overflow-hidden rounded-xl border">
+                  <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
                     {detail.install.map((step) => {
                       const copyable =
                         /^(npm|npx|pnpm|yarn|pip|pipx|uv|cargo|go |winget|brew|apt|docker|curl|git )/.test(
-                          step.command,
+                          step.command
                         )
                       return (
                         <div
                           key={step.label}
                           className="flex items-center gap-3 px-3 py-2"
                         >
-                          <span className="text-muted-foreground w-36 shrink-0 text-xs">
+                          <span className="w-36 shrink-0 text-muted-foreground text-xs">
                             {step.label}
                           </span>
-                          <code className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
+                          <code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
                             {step.command}
                           </code>
                           {copyable && <CopyButton value={step.command} />}

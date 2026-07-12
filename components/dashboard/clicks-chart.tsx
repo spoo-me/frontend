@@ -61,16 +61,22 @@ function ChartTooltip({
   const prev = metric === "unique" ? d.prev_unique : d.prev_clicks
   return (
     <div className="min-w-[168px] overflow-hidden rounded-lg border border-border/60 bg-popover shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)]">
-      <div className="border-b border-border/60 bg-muted/40 px-3 py-1.5">
-        <span className="text-xs font-medium text-foreground">
+      <div className="border-border/60 border-b bg-muted/40 px-3 py-1.5">
+        <span className="font-medium text-foreground text-xs">
           {hourly ? fullFmt.format(d.t) : dayFmt.format(d.t)}
         </span>
       </div>
       <div className="space-y-1 px-3 py-2">
         <Row swatch="fill" label="Clicks" value={formatCount(d.clicks)} />
-        <Row swatch="ring" label="Unique" value={formatCount(d.unique_clicks)} />
-        {prev != null && <Row label="Previous" value={formatCount(prev)} muted />}
-        <div className="mt-1.5 border-t border-border/60 pt-1.5">
+        <Row
+          swatch="ring"
+          label="Unique"
+          value={formatCount(d.unique_clicks)}
+        />
+        {prev != null && (
+          <Row label="Previous" value={formatCount(prev)} muted />
+        )}
+        <div className="mt-1.5 border-border/60 border-t pt-1.5">
           <Row label="Unique rate" value={`${rate}%`} muted />
         </div>
       </div>
@@ -102,9 +108,9 @@ function Row({
           }
         />
       )}
-      <span className="flex-1 text-xs text-muted-foreground">{label}</span>
+      <span className="flex-1 text-muted-foreground text-xs">{label}</span>
       <span
-        className={`font-mono text-xs font-medium tabular-nums ${muted ? "text-muted-foreground" : "text-foreground"}`}
+        className={`font-medium font-mono text-xs tabular-nums ${muted ? "text-muted-foreground" : "text-foreground"}`}
       >
         {value}
       </span>
@@ -376,7 +382,11 @@ export function ClicksChart({
           >
             <defs>
               <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--chart-accent, var(--brand))" stopOpacity={0.18} />
+                <stop
+                  offset="0%"
+                  stopColor="var(--chart-accent, var(--brand))"
+                  stopOpacity={0.18}
+                />
                 <stop
                   offset="100%"
                   stopColor="var(--chart-accent, var(--brand))"
@@ -440,7 +450,11 @@ export function ClicksChart({
               strokeWidth={1.75}
               fill={variant === "line" ? "none" : `url(#${fillId})`}
               dot={false}
-              activeDot={{ r: 3.5, fill: "var(--chart-accent, var(--brand))", strokeWidth: 0 }}
+              activeDot={{
+                r: 3.5,
+                fill: "var(--chart-accent, var(--brand))",
+                strokeWidth: 0,
+              }}
               isAnimationActive={morph}
               animationDuration={ANIM_MS}
               animationEasing="ease-out"
@@ -456,7 +470,11 @@ export function ClicksChart({
                 strokeOpacity={0.55}
                 fill="none"
                 dot={false}
-                activeDot={{ r: 3, fill: "var(--chart-accent, var(--brand))", strokeWidth: 0 }}
+                activeDot={{
+                  r: 3,
+                  fill: "var(--chart-accent, var(--brand))",
+                  strokeWidth: 0,
+                }}
                 isAnimationActive={morph}
                 animationDuration={ANIM_MS}
                 animationEasing="ease-out"

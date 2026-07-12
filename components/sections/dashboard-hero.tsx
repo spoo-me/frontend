@@ -47,15 +47,16 @@ import {
  */
 
 const ClicksChart = dynamic(
-  () => import("@/components/dashboard/clicks-chart").then((m) => m.ClicksChart),
-  { ssr: false, loading: () => null },
+  () =>
+    import("@/components/dashboard/clicks-chart").then((m) => m.ClicksChart),
+  { ssr: false, loading: () => null }
 )
 const CountryMap = dynamic(
   () =>
     import("@/components/dashboard/analytics/country-map").then(
-      (m) => m.CountryMap,
+      (m) => m.CountryMap
     ),
-  { ssr: false, loading: () => null },
+  { ssr: false, loading: () => null }
 )
 
 export function DashboardHero() {
@@ -68,7 +69,7 @@ export function DashboardHero() {
           title={
             <>
               Click insights without{" "}
-              <span className="text-muted-foreground italic font-serif font-normal">
+              <span className="font-normal font-serif text-muted-foreground italic">
                 a separate tool.
               </span>
             </>
@@ -89,7 +90,7 @@ export function DashboardHero() {
         </div>
         <div
           aria-hidden
-          className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background to-transparent"
         />
         <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2">
           <Button asChild variant="outline" size="sm">
@@ -115,20 +116,20 @@ function AppFrame() {
     <div className="relative">
       {/* Thin padded glass frame around the whole app — the panels' own
           p-0.5 recipe at frame scale: hairline, small gutter, hairline. */}
-      <div className="border-border/60 bg-shell/40 rounded-[20px] border p-1 backdrop-blur-md">
-        <div className="border-border/60 bg-background overflow-hidden rounded-2xl border [zoom:0.92]">
-        <Topbar />
-        <div className="space-y-5 p-5 sm:p-8">
-          <ChipsRow />
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
-            <ChartPanel />
-            <StatColumn />
+      <div className="rounded-[20px] border border-border/60 bg-shell/40 p-1 backdrop-blur-md">
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-background [zoom:0.92]">
+          <Topbar />
+          <div className="space-y-5 p-5 sm:p-8">
+            <ChipsRow />
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
+              <ChartPanel />
+              <StatColumn />
+            </div>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+              <ReferrersPanel />
+              <CountriesPanel />
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
-            <ReferrersPanel />
-            <CountriesPanel />
-          </div>
-        </div>
         </div>
       </div>
     </div>
@@ -137,11 +138,11 @@ function AppFrame() {
 
 function Topbar() {
   return (
-    <div className="border-border/60 flex h-[52px] items-center justify-between border-b px-4">
+    <div className="flex h-[52px] items-center justify-between border-border/60 border-b px-4">
       <span className="flex items-center gap-1.5 text-sm">
         <span className="text-muted-foreground">Dashboard</span>
-        <ChevronRight className="text-muted-foreground/50 size-3.5" />
-        <span className="text-foreground font-medium">Analytics</span>
+        <ChevronRight className="size-3.5 text-muted-foreground/50" />
+        <span className="font-medium text-foreground">Analytics</span>
       </span>
     </div>
   )
@@ -155,8 +156,8 @@ function Chip({
   children: React.ReactNode
 }) {
   return (
-    <span className="border-border/60 bg-shell text-foreground inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[13px]">
-      <Icon className="text-muted-foreground size-3.5" strokeWidth={1.75} />
+    <span className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-shell px-2.5 text-[13px] text-foreground">
+      <Icon className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
       {children}
     </span>
   )
@@ -182,33 +183,36 @@ function ChipsRow() {
 function HeaderControls({ table = false }: { table?: boolean }) {
   return (
     <span className="flex items-center gap-2">
-      <span className="border-border/60 bg-shell hidden h-7 items-center rounded-lg border sm:inline-flex">
-        <span className="border-border bg-card text-foreground flex h-full items-center rounded-lg border px-2">
+      <span className="hidden h-7 items-center rounded-lg border border-border/60 bg-shell sm:inline-flex">
+        <span className="flex h-full items-center rounded-lg border border-border bg-card px-2 text-foreground">
           {table ? (
             <Filter className="size-3.5" strokeWidth={1.75} />
           ) : (
             <LineChart className="size-3.5" strokeWidth={1.75} />
           )}
         </span>
-        <span className="text-muted-foreground flex h-full items-center px-2">
+        <span className="flex h-full items-center px-2 text-muted-foreground">
           <Table2 className="size-3.5" strokeWidth={1.75} />
         </span>
       </span>
-      <Maximize2 className="text-muted-foreground hidden size-3.5 sm:block" strokeWidth={1.75} />
+      <Maximize2
+        className="hidden size-3.5 text-muted-foreground sm:block"
+        strokeWidth={1.75}
+      />
     </span>
   )
 }
 
 function ChartPanel() {
   return (
-    <div className="border-border/60 bg-shell flex flex-col rounded-2xl border p-0.5 lg:col-span-3">
+    <div className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5 lg:col-span-3">
       <SectionHeader
         className="h-10 px-2.5"
         icon={ChartSpline}
         title="Clicks over time"
         action={<HeaderControls />}
       />
-      <div className="bg-background mt-0 flex-1 rounded-[14px] p-3">
+      <div className="mt-0 flex-1 rounded-[14px] bg-background p-3">
         <div className="h-[280px]">
           <ClicksChart series={clickSeries} height={280} metric="both" />
         </div>
@@ -244,14 +248,14 @@ function StatColumn() {
 
 function ReferrersPanel() {
   return (
-    <div className="border-border/60 bg-shell flex flex-col rounded-2xl border p-0.5 lg:col-span-2">
+    <div className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5 lg:col-span-2">
       <SectionHeader
         className="h-10 px-2.5"
         icon={Globe2}
         title="Top referrers"
         action={<HeaderControls table />}
       />
-      <div className="bg-background mt-0 flex-1 rounded-[14px] p-2">
+      <div className="mt-0 flex-1 rounded-[14px] bg-background p-2">
         <BreakdownList dimension="referrer" rows={referrerRows} limit={7} />
       </div>
     </div>
@@ -261,8 +265,10 @@ function ReferrersPanel() {
 function CountriesPanel() {
   return (
     <div
-      className="border-border/60 bg-shell flex flex-col rounded-2xl border p-0.5 lg:col-span-3"
-      style={{ "--chart-accent": "var(--chart-neutral)" } as React.CSSProperties}
+      className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5 lg:col-span-3"
+      style={
+        { "--chart-accent": "var(--chart-neutral)" } as React.CSSProperties
+      }
     >
       <SectionHeader
         className="h-10 px-2.5"
@@ -270,7 +276,7 @@ function CountriesPanel() {
         title="Countries"
         action={<HeaderControls />}
       />
-      <div className="bg-background mt-0 flex-1 overflow-hidden rounded-[14px]">
+      <div className="mt-0 flex-1 overflow-hidden rounded-[14px] bg-background">
         <div className="h-[300px]">
           <CountryMap rows={countryRows} metric="total" />
         </div>
@@ -312,20 +318,20 @@ function Callouts() {
   ]
   return (
     <Band rule>
-      <div className="bg-border grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
         {callouts.map((c) => (
           <div
             key={c.title}
-            className="bg-background flex flex-col gap-3 p-6 sm:p-7"
+            className="flex flex-col gap-3 bg-background p-6 sm:p-7"
           >
-            <span className="border-border/60 bg-muted/30 text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md border">
+            <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/30 text-foreground">
               <c.icon className="size-3.5" />
             </span>
             <div>
-              <h4 className="text-foreground text-sm font-semibold tracking-tight">
+              <h4 className="font-semibold text-foreground text-sm tracking-tight">
                 {c.title}
               </h4>
-              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+              <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
                 {c.description}
               </p>
             </div>

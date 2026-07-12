@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { createCustomDomain, SpooApiError, type CustomDomain } from "@/lib/api"
 
-const FQDN_RE = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
+const FQDN_RE =
+  /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
 
 type Choice = "custom" | "default"
 
@@ -129,12 +130,12 @@ function DomainPill({
   return (
     <div
       className={cn(
-        "border-border/70 bg-card flex items-center gap-2 rounded-full border px-3.5 py-1.5 font-mono text-[11px] shadow-float transition-transform duration-500",
-        active ? pill.focused : pill.idle,
+        "flex items-center gap-2 rounded-full border border-border/70 bg-card px-3.5 py-1.5 font-mono text-[11px] shadow-float transition-transform duration-500",
+        active ? pill.focused : pill.idle
       )}
     >
       <Mark />
-      <span className="text-foreground/90 whitespace-nowrap">{pill.host}</span>
+      <span className="whitespace-nowrap text-foreground/90">{pill.host}</span>
     </div>
   )
 }
@@ -163,8 +164,8 @@ function DefaultDomainIllustration({ active }: { active: boolean }) {
     <div className="flex flex-col items-center gap-4">
       <div
         className={cn(
-          "border-border/60 bg-card shadow-card flex items-center gap-2.5 rounded-full border py-2.5 pr-5 pl-4 transition-transform duration-500",
-          active && "-translate-y-0.5",
+          "flex items-center gap-2.5 rounded-full border border-border/60 bg-card py-2.5 pr-5 pl-4 shadow-card transition-transform duration-500",
+          active && "-translate-y-0.5"
         )}
       >
         {/* Bland mark — mono in both themes */}
@@ -185,7 +186,7 @@ function DefaultDomainIllustration({ active }: { active: boolean }) {
           <span className="text-muted-foreground">/launch</span>
         </span>
       </div>
-      <span className="label-mono text-muted-foreground/60 text-[9px]">
+      <span className="label-mono text-[9px] text-muted-foreground/60">
         the default · switch any time
       </span>
     </div>
@@ -264,13 +265,13 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="flex w-full flex-col items-center text-center">
-      <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+      <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         Make the link{" "}
-        <span className="text-muted-foreground italic font-serif font-normal">
+        <span className="font-normal font-serif text-muted-foreground italic">
           yours
         </span>
       </h1>
-      <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
+      <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         Branded short links earn more clicks. Connect your domain now, or stay
         on spoo.me and switch any time.
       </p>
@@ -284,40 +285,43 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             className="mt-12 w-full max-w-xl text-left"
           >
-            <div className="border-border/60 bg-card/40 rounded-2xl border p-7">
+            <div className="rounded-2xl border border-border/60 bg-card/40 p-7">
               <div className="flex items-center gap-3">
-                <span className="bg-live/10 border-live/30 text-live flex size-8 items-center justify-center rounded-full border">
+                <span className="flex size-8 items-center justify-center rounded-full border border-live/30 bg-live/10 text-live">
                   <Check className="size-4" />
                 </span>
                 <div>
-                  <p className="text-foreground font-mono text-sm font-medium">
+                  <p className="font-medium font-mono text-foreground text-sm">
                     {created.fqdn}
                   </p>
-                  <p className="label-mono text-muted-foreground/70 mt-0.5 text-[9px]">
+                  <p className="label-mono mt-0.5 text-[9px] text-muted-foreground/70">
                     registered · awaiting DNS
                   </p>
                 </div>
               </div>
 
-              <p className="text-muted-foreground mt-5 text-xs leading-relaxed">
-                Add {created.dns_records.length === 1 ? "this record" : "these records"} at
-                your DNS provider.{" "}
+              <p className="mt-5 text-muted-foreground text-xs leading-relaxed">
+                Add{" "}
+                {created.dns_records.length === 1
+                  ? "this record"
+                  : "these records"}{" "}
+                at your DNS provider.{" "}
                 {created.verification_method === "cf_http_dcv"
                   ? "The CNAME routes traffic and the TXT proves ownership; verification and TLS complete automatically once they resolve. No need to wait here."
                   : "Verification runs automatically once they propagate; no need to wait here."}
               </p>
 
-              <div className="border-border/60 mt-4 divide-y rounded-xl border font-mono text-[11px]">
+              <div className="mt-4 divide-y rounded-xl border border-border/60 font-mono text-[11px]">
                 {created.dns_records.map((r, i) => (
                   <div key={i} className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <span className="label-mono text-muted-foreground w-12 shrink-0 text-[9px]">
+                      <span className="label-mono w-12 shrink-0 text-[9px] text-muted-foreground">
                         {r.type}
                       </span>
-                      <span className="text-foreground/90 w-24 shrink-0 truncate">
+                      <span className="w-24 shrink-0 truncate text-foreground/90">
                         {r.name}
                       </span>
-                      <span className="text-muted-foreground flex-1 truncate">
+                      <span className="flex-1 truncate text-muted-foreground">
                         {r.value}
                       </span>
                       <button
@@ -328,17 +332,17 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                           setTimeout(() => setCopied(null), 1500)
                         }}
                         aria-label={`Copy ${r.type} value`}
-                        className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+                        className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {copied === i ? (
-                          <Check className="text-live size-3.5" />
+                          <Check className="size-3.5 text-live" />
                         ) : (
                           <Copy className="size-3.5" />
                         )}
                       </button>
                     </div>
                     {r.purpose && (
-                      <p className="text-muted-foreground/50 mt-1 text-[10px]">
+                      <p className="mt-1 text-[10px] text-muted-foreground/50">
                         {r.purpose}
                       </p>
                     )}
@@ -347,7 +351,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
               </div>
 
               {created.setup_notes.length > 0 && (
-                <ul className="text-muted-foreground/80 mt-4 space-y-1 text-xs">
+                <ul className="mt-4 space-y-1 text-muted-foreground/80 text-xs">
                   {created.setup_notes.map((n) => (
                     <li key={n}>· {n}</li>
                   ))}
@@ -371,7 +375,10 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             className="mt-12 w-full max-w-md text-left"
           >
-            <label htmlFor="fqdn" className="text-foreground text-sm font-medium">
+            <label
+              htmlFor="fqdn"
+              className="font-medium text-foreground text-sm"
+            >
               Your domain
             </label>
             <div className="mt-1.5 flex gap-2">
@@ -388,29 +395,33 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 spellCheck={false}
                 className="h-10 font-mono text-sm"
               />
-              <Button type="submit" disabled={!valid || pending} className="h-10 shrink-0">
+              <Button
+                type="submit"
+                disabled={!valid || pending}
+                className="h-10 shrink-0"
+              >
                 {pending ? "Registering…" : "Connect"}
               </Button>
             </div>
-            <p className="text-muted-foreground/70 mt-2 text-xs">
+            <p className="mt-2 text-muted-foreground/70 text-xs">
               A subdomain like <span className="font-mono">go.acme.com</span> is
               the usual pick; apex domains work too.
             </p>
             {notice &&
               // Flag-off is informational, not a failure — stay quiet.
               (notice.tone === "info" ? (
-                <p role="status" className="text-muted-foreground mt-3 text-sm">
+                <p role="status" className="mt-3 text-muted-foreground text-sm">
                   {notice.text}
                 </p>
               ) : (
-                <p role="alert" className="text-destructive mt-3 text-sm">
+                <p role="alert" className="mt-3 text-destructive text-sm">
                   {notice.text}
                 </p>
               ))}
             <button
               type="button"
               onClick={() => setConnecting(false)}
-              className="text-muted-foreground hover:text-foreground mt-5 text-xs underline-offset-4 transition-colors hover:underline"
+              className="mt-5 text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               ← Back
             </button>
@@ -426,31 +437,31 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
             <div
               onMouseEnter={() => setFocus("custom")}
               className={cn(
-                "bg-card/40 relative flex flex-col rounded-2xl border p-7 transition-colors duration-300",
-                focus === "custom" ? "border-ring/60" : "border-border/60",
+                "relative flex flex-col rounded-2xl border bg-card/40 p-7 transition-colors duration-300",
+                focus === "custom" ? "border-ring/60" : "border-border/60"
               )}
             >
               <div className="relative flex h-44 items-center justify-center rounded-xl">
                 <div
                   aria-hidden
                   className={cn(
-                    "bg-brand/10 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
-                    focus === "custom" ? "opacity-100" : "opacity-0",
+                    "absolute size-32 rounded-full bg-brand/10 blur-2xl transition-opacity duration-500",
+                    focus === "custom" ? "opacity-100" : "opacity-0"
                   )}
                 />
                 <div
                   className={cn(
                     "relative transition-transform duration-500",
-                    focus === "custom" && "-translate-y-1",
+                    focus === "custom" && "-translate-y-1"
                   )}
                 >
                   <CustomDomainIllustration active={focus === "custom"} />
                 </div>
               </div>
-              <h2 className="text-foreground mt-6 text-base font-semibold">
+              <h2 className="mt-6 font-semibold text-base text-foreground">
                 Connect a custom domain
               </h2>
-              <p className="text-muted-foreground mx-auto mt-2 max-w-60 flex-1 text-[13px] leading-relaxed">
+              <p className="mx-auto mt-2 max-w-60 flex-1 text-[13px] text-muted-foreground leading-relaxed">
                 Already have a domain? Links on it build trust, and earn the
                 clicks to prove it.
               </p>
@@ -467,8 +478,8 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
             <div
               onMouseEnter={() => setFocus("default")}
               className={cn(
-                "bg-card/40 flex flex-col rounded-2xl border p-7 transition-colors duration-300",
-                focus === "default" ? "border-ring/60" : "border-border/60",
+                "flex flex-col rounded-2xl border bg-card/40 p-7 transition-colors duration-300",
+                focus === "default" ? "border-ring/60" : "border-border/60"
               )}
             >
               <div className="relative flex h-44 items-center justify-center rounded-xl">
@@ -476,23 +487,23 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
                 <div
                   aria-hidden
                   className={cn(
-                    "bg-foreground/5 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
-                    focus === "default" ? "opacity-100" : "opacity-0",
+                    "absolute size-32 rounded-full bg-foreground/5 blur-2xl transition-opacity duration-500",
+                    focus === "default" ? "opacity-100" : "opacity-0"
                   )}
                 />
                 <div
                   className={cn(
                     "relative transition-transform duration-500",
-                    focus === "default" && "-translate-y-1",
+                    focus === "default" && "-translate-y-1"
                   )}
                 >
                   <DefaultDomainIllustration active={focus === "default"} />
                 </div>
               </div>
-              <h2 className="text-foreground mt-6 text-base font-semibold">
+              <h2 className="mt-6 font-semibold text-base text-foreground">
                 Stay on spoo.me
               </h2>
-              <p className="text-muted-foreground mx-auto mt-2 max-w-60 flex-1 text-[13px] leading-relaxed">
+              <p className="mx-auto mt-2 max-w-60 flex-1 text-[13px] text-muted-foreground leading-relaxed">
                 Links work on spoo.me from day one. Bring your own domain
                 whenever you&apos;re ready.
               </p>
@@ -513,7 +524,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={onDone}
-          className="text-muted-foreground hover:text-foreground mt-8 text-sm transition-colors"
+          className="mt-8 text-muted-foreground text-sm transition-colors hover:text-foreground"
         >
           I&apos;ll do this later
         </button>

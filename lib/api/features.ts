@@ -24,6 +24,6 @@ export type FeatureMap = Partial<Record<FeatureName, FeatureState>> &
 
 export function getMyFeatures() {
   return authedFetch("/api/v1/me/features", { method: "GET" }).then((r) =>
-    parse<{ features: FeatureMap }>(r),
+    parse<{ features: FeatureMap }>(r)
   )
 }

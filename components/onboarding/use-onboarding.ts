@@ -33,12 +33,13 @@ export function useOnboarding() {
     (step: OnboardingStep, path?: OnboardingPath | null) => {
       const completed = stepFromRoute(pathname)
       if (completed) trackOnboardingStepCompleted(completed, path ?? undefined)
-      putOnboardingState({ step, ...(path !== undefined ? { path } : {}) }).catch(
-        () => {},
-      )
+      putOnboardingState({
+        step,
+        ...(path !== undefined ? { path } : {}),
+      }).catch(() => {})
       router.push(STEP_ROUTES[step])
     },
-    [router, pathname],
+    [router, pathname]
   )
 
   const complete = React.useCallback(() => {

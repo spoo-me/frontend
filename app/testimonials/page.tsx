@@ -22,109 +22,115 @@ export default function TestimonialsIndexPage() {
       <Header />
       <main className="overflow-hidden pt-20">
         <PageFrame>
-        <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28">
-          <div
-            aria-hidden
-            className="pattern-dots pointer-events-none absolute inset-0 -z-10 opacity-30 [mask-image:radial-gradient(ellipse_60%_40%_at_50%_30%,black,transparent)]"
-          />
-
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <SectionHeading
-              title={
-                <>
-                  Built by us, shaped by{" "}
-                  <span className="text-muted-foreground italic font-serif font-normal">
-                    the people using it.
-                  </span>
-                </>
-              }
-              description="Honest, unedited stories from teams running spoo.me in production. No paid placements, no marketing fluff."
+          <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28">
+            <div
+              aria-hidden
+              className="pattern-dots pointer-events-none absolute inset-0 -z-10 opacity-30 [mask-image:radial-gradient(ellipse_60%_40%_at_50%_30%,black,transparent)]"
             />
-          </div>
-        </section>
 
-        <section className="pb-32 sm:pb-40">
-          <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 md:grid-cols-2">
-            {testimonials.map((t) => (
-              <Link
-                key={t.slug}
-                href={`/testimonials/${t.slug}`}
-                className="border-border/60 bg-card/30 hover:border-border/90 group relative flex flex-col gap-7 overflow-hidden rounded-2xl border p-7 transition-colors sm:p-9"
-              >
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute -bottom-24 -right-24 size-72 rounded-full opacity-25 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
-                  style={{ backgroundColor: t.accent }}
-                />
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute bottom-0 right-0 size-40 rounded-full opacity-[0.12] blur-2xl"
-                  style={{ backgroundColor: t.accent }}
-                />
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+              <SectionHeading
+                title={
+                  <>
+                    Built by us, shaped by{" "}
+                    <span className="font-normal font-serif text-muted-foreground italic">
+                      the people using it.
+                    </span>
+                  </>
+                }
+                description="Honest, unedited stories from teams running spoo.me in production. No paid placements, no marketing fluff."
+              />
+            </div>
+          </section>
 
-                <header className="relative flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <TestimonialAvatar
-                      src={t.person.avatarSrc}
-                      initials={t.person.initials}
-                    />
-                    <div>
-                      <div className="text-foreground text-sm font-semibold leading-tight">
-                        {t.person.name}
-                      </div>
-                      <div className="text-muted-foreground mt-0.5 text-xs">
-                        {t.person.role}
+          <section className="pb-32 sm:pb-40">
+            <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 md:grid-cols-2">
+              {testimonials.map((t) => (
+                <Link
+                  key={t.slug}
+                  href={`/testimonials/${t.slug}`}
+                  className="group relative flex flex-col gap-7 overflow-hidden rounded-2xl border border-border/60 bg-card/30 p-7 transition-colors hover:border-border/90 sm:p-9"
+                >
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-24 -bottom-24 size-72 rounded-full opacity-25 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
+                    style={{ backgroundColor: t.accent }}
+                  />
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute right-0 bottom-0 size-40 rounded-full opacity-[0.12] blur-2xl"
+                    style={{ backgroundColor: t.accent }}
+                  />
+
+                  <header className="relative flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <TestimonialAvatar
+                        src={t.person.avatarSrc}
+                        initials={t.person.initials}
+                      />
+                      <div>
+                        <div className="font-semibold text-foreground text-sm leading-tight">
+                          {t.person.name}
+                        </div>
+                        <div className="mt-0.5 text-muted-foreground text-xs">
+                          {t.person.role}
+                        </div>
                       </div>
                     </div>
+                    <div className="max-w-[55%] truncate text-right font-mono font-semibold text-[11px] text-foreground/70 uppercase tracking-[0.16em]">
+                      {t.company.name}
+                    </div>
+                  </header>
+
+                  <blockquote className="relative text-pretty text-foreground/90 text-xl leading-relaxed sm:text-[1.35rem]">
+                    <span aria-hidden className="text-muted-foreground/70">
+                      “
+                    </span>
+                    <QuoteText segments={t.shortQuote} />
+                    <span aria-hidden className="text-muted-foreground/70">
+                      ”
+                    </span>
+                  </blockquote>
+
+                  <div className="relative mt-auto inline-flex items-center gap-1.5 font-medium text-muted-foreground text-xs transition-colors group-hover:text-foreground">
+                    Read the full story
+                    <ArrowUpRight className="size-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </div>
-                  <div className="text-foreground/70 max-w-[55%] truncate text-right font-mono text-[11px] font-semibold uppercase tracking-[0.16em]">
-                    {t.company.name}
+                </Link>
+              ))}
+
+              <a
+                href="mailto:hi@spoo.me?subject=spoo.me%20testimonial"
+                className="group relative flex flex-col gap-7 rounded-2xl border border-border/50 border-dashed bg-card/10 p-7 transition-colors hover:border-border hover:bg-card/30 sm:p-9"
+              >
+                <header className="flex items-center gap-3">
+                  <div
+                    aria-hidden
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border/60 border-dashed font-mono text-muted-foreground/70 text-sm"
+                  >
+                    +
+                  </div>
+                  <div className="font-mono font-semibold text-[11px] text-foreground/70 uppercase tracking-[0.16em]">
+                    Your team here
                   </div>
                 </header>
 
-                <blockquote className="text-foreground/90 relative text-pretty text-xl leading-relaxed sm:text-[1.35rem]">
-                  <span aria-hidden className="text-muted-foreground/70">“</span>
-                  <QuoteText segments={t.shortQuote} />
-                  <span aria-hidden className="text-muted-foreground/70">”</span>
-                </blockquote>
-
-                <div className="text-muted-foreground group-hover:text-foreground relative mt-auto inline-flex items-center gap-1.5 text-xs font-medium transition-colors">
-                  Read the full story
-                  <ArrowUpRight className="size-3.5 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                <div className="flex-1 text-pretty text-muted-foreground text-xl leading-relaxed sm:text-[1.35rem]">
+                  Using spoo in production?{" "}
+                  <span className="text-foreground/70">
+                    Tell us your story.
+                  </span>
                 </div>
-              </Link>
-            ))}
 
-            <a
-              href="mailto:hi@spoo.me?subject=spoo.me%20testimonial"
-              className="group border-border/50 hover:border-border bg-card/10 hover:bg-card/30 relative flex flex-col gap-7 rounded-2xl border border-dashed p-7 transition-colors sm:p-9"
-            >
-              <header className="flex items-center gap-3">
-                <div
-                  aria-hidden
-                  className="border-border/60 text-muted-foreground/70 flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed font-mono text-sm"
-                >
-                  +
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-foreground/80 text-sm transition-colors group-hover:text-foreground">
+                    Submit a testimonial
+                  </span>
+                  <ArrowUpRight className="size-4 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground" />
                 </div>
-                <div className="text-foreground/70 font-mono text-[11px] font-semibold uppercase tracking-[0.16em]">
-                  Your team here
-                </div>
-              </header>
-
-              <div className="text-muted-foreground flex-1 text-pretty text-xl leading-relaxed sm:text-[1.35rem]">
-                Using spoo in production?{" "}
-                <span className="text-foreground/70">Tell us your story.</span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-foreground/80 group-hover:text-foreground text-sm font-semibold transition-colors">
-                  Submit a testimonial
-                </span>
-                <ArrowUpRight className="text-muted-foreground/60 group-hover:text-foreground size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </div>
-            </a>
-          </div>
-        </section>
+              </a>
+            </div>
+          </section>
         </PageFrame>
       </main>
       <Footer />

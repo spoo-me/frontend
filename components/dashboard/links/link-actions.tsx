@@ -72,7 +72,7 @@ export function LinkActions({
     lay.addWidget(
       "timeseries",
       { scope: { short_code: [alias] }, title: `/${alias}` },
-      "pin",
+      "pin"
     )
     toast.success("Pinned to Analytics", {
       description: `Clicks over time for /${link.alias}`,
@@ -211,7 +211,7 @@ export function LinkActions({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Type <span className="font-mono text-foreground">delete</span>{" "}
                 to confirm.
               </p>

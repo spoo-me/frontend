@@ -1,23 +1,23 @@
-"use client";
-import React, { useId, useMemo } from "react";
-import { useEffect, useState } from "react";
-import Particles, { initParticlesEngine } from "@tsparticles/react";
-import type { Container, SingleOrMultiple } from "@tsparticles/engine";
-import { loadSlim } from "@tsparticles/slim";
-import { cn } from "@/lib/utils";
-import { motion, useAnimation } from "motion/react";
+"use client"
+import React, { useId, useMemo } from "react"
+import { useEffect, useState } from "react"
+import Particles, { initParticlesEngine } from "@tsparticles/react"
+import type { Container, SingleOrMultiple } from "@tsparticles/engine"
+import { loadSlim } from "@tsparticles/slim"
+import { cn } from "@/lib/utils"
+import { motion, useAnimation } from "motion/react"
 
 type ParticlesProps = {
-  id?: string;
-  className?: string;
-  background?: string;
-  particleSize?: number;
-  minSize?: number;
-  maxSize?: number;
-  speed?: number;
-  particleColor?: string;
-  particleDensity?: number;
-};
+  id?: string
+  className?: string
+  background?: string
+  particleSize?: number
+  minSize?: number
+  maxSize?: number
+  speed?: number
+  particleColor?: string
+  particleDensity?: number
+}
 export const SparklesCore = (props: ParticlesProps) => {
   const {
     id,
@@ -28,16 +28,16 @@ export const SparklesCore = (props: ParticlesProps) => {
     speed,
     particleColor,
     particleDensity,
-  } = props;
-  const [init, setInit] = useState(false);
+  } = props
+  const [init, setInit] = useState(false)
   useEffect(() => {
     initParticlesEngine(async (engine) => {
-      await loadSlim(engine);
+      await loadSlim(engine)
     }).then(() => {
-      setInit(true);
-    });
-  }, []);
-  const controls = useAnimation();
+      setInit(true)
+    })
+  }, [])
+  const controls = useAnimation()
 
   const particlesLoaded = async (container?: Container) => {
     if (container) {
@@ -46,11 +46,11 @@ export const SparklesCore = (props: ParticlesProps) => {
         transition: {
           duration: 1,
         },
-      });
+      })
     }
-  };
+  }
 
-  const generatedId = useId();
+  const generatedId = useId()
   return (
     <motion.div animate={controls} className={cn("opacity-0", className)}>
       {init && (
@@ -430,5 +430,5 @@ export const SparklesCore = (props: ParticlesProps) => {
         />
       )}
     </motion.div>
-  );
-};
+  )
+}

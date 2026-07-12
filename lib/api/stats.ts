@@ -108,12 +108,17 @@ function bucketToIso(label: string): string {
     preserving the clicks array's order (backend sorts it). */
 function zipDim(
   metrics: Record<string, WireEntry[]>,
-  dim: string,
-): Array<{ value: string; clicks: number; unique_clicks: number; percentage: number }> {
+  dim: string
+): Array<{
+  value: string
+  clicks: number
+  unique_clicks: number
+  percentage: number
+}> {
   const clicks = metrics[`clicks_by_${dim}`] ?? []
   const unique = metrics[`unique_clicks_by_${dim}`] ?? []
   const uniqueByValue = new Map(
-    unique.map((e) => [String(e[dim]), Number(e["unique_clicks"] ?? 0)]),
+    unique.map((e) => [String(e[dim]), Number(e["unique_clicks"] ?? 0)])
   )
   const seen = new Set<string>()
   const out = clicks.map((e) => {
@@ -145,8 +150,7 @@ function adaptStats(wire: StatsWire): StatsResponse {
   const metrics = wire.metrics ?? {}
   const tbi = wire.time_bucket_info
   const intervalMin =
-    tbi?.interval_minutes ??
-    (tbi?.display_format?.includes("%H") ? 60 : 1440)
+    tbi?.interval_minutes ?? (tbi?.display_format?.includes("%H") ? 60 : 1440)
   const hourly = intervalMin < 1440
 
   const dims = new Set<string>()
@@ -181,7 +185,7 @@ function adaptStats(wire: StatsWire): StatsResponse {
               bucket: new Date(t).toISOString(),
               clicks: 0,
               unique_clicks: 0,
-            },
+            }
           )
         }
         buckets = filled
@@ -232,10 +236,10 @@ export function getStats(params: StatsParams) {
   if (Object.keys(filters).length) q.set("filters", JSON.stringify(filters))
   q.set(
     "timezone",
-    params.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    params.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   )
-  return authedFetch(`/api/v1/stats?${q}`, { method: "GET" }).then(
-    async (r) => adaptStats(await parse<StatsWire>(r)),
+  return authedFetch(`/api/v1/stats?${q}`, { method: "GET" }).then(async (r) =>
+    adaptStats(await parse<StatsWire>(r))
   )
 }
 

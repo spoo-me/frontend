@@ -24,22 +24,34 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div className="space-y-5">
             <Logo />
-            <p className="text-muted-foreground max-w-xs text-sm leading-relaxed">
-              Free, open-source link management platform with advanced analytics. Built by
-              developers, for developers.
+            <p className="max-w-xs text-muted-foreground text-sm leading-relaxed">
+              Free, open-source link management platform with advanced
+              analytics. Built by developers, for developers.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               {(
                 [
-                  { key: "github", label: "GitHub", href: siteConfig.links.github },
-                  { key: "discord", label: "Discord", href: siteConfig.links.discord },
+                  {
+                    key: "github",
+                    label: "GitHub",
+                    href: siteConfig.links.github,
+                  },
+                  {
+                    key: "discord",
+                    label: "Discord",
+                    href: siteConfig.links.discord,
+                  },
                   { key: "x", label: "X (Twitter)", href: siteConfig.links.x },
                   {
                     key: "instagram",
                     label: "Instagram",
                     href: siteConfig.links.instagram,
                   },
-                  { key: "linkedin", label: "LinkedIn", href: siteConfig.links.linkedin },
+                  {
+                    key: "linkedin",
+                    label: "LinkedIn",
+                    href: siteConfig.links.linkedin,
+                  },
                   {
                     key: "producthunt",
                     label: "Product Hunt",
@@ -56,7 +68,7 @@ export function Footer() {
                     rel="noreferrer"
                     aria-label={label}
                     title={label}
-                    className="text-muted-foreground hover:text-foreground transition"
+                    className="text-muted-foreground transition hover:text-foreground"
                   >
                     <Icon className="size-4" />
                   </Link>
@@ -75,7 +87,7 @@ export function Footer() {
                       href={link.href}
                       target={link.external ? "_blank" : undefined}
                       rel={link.external ? "noreferrer" : undefined}
-                      className="text-muted-foreground hover:text-foreground text-sm transition"
+                      className="text-muted-foreground text-sm transition hover:text-foreground"
                     >
                       {link.label}
                     </Link>
@@ -86,7 +98,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-border/40 mt-12 flex items-center justify-between border-t border-dashed pt-5">
+        <div className="mt-12 flex items-center justify-between border-border/40 border-t border-dashed pt-5">
           <p className="text-muted-foreground/70 text-xs">
             © {new Date().getFullYear()} spoo.me, open source under Apache 2.0
           </p>
@@ -100,14 +112,14 @@ export function Footer() {
         className="pointer-events-none relative -mt-8 select-none overflow-hidden"
       >
         <div
-          className="text-foreground/[0.06] mx-auto max-w-[1400px] whitespace-nowrap text-center font-semibold leading-[0.85] tracking-[-0.06em]"
+          className="mx-auto max-w-[1400px] whitespace-nowrap text-center font-semibold text-foreground/[0.06] leading-[0.85] tracking-[-0.06em]"
           style={{
             fontSize: "clamp(8rem, 28vw, 22rem)",
           }}
         >
           spoo.me
         </div>
-        <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background to-transparent" />
       </div>
     </footer>
   )

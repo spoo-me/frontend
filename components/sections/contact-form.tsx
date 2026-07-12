@@ -19,17 +19,22 @@ export function ContactForm() {
   return (
     <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
       <div>
-        <h2 className="text-foreground text-lg font-semibold tracking-tight">
+        <h2 className="font-semibold text-foreground text-lg tracking-tight">
           Send us a message
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="mt-1 text-muted-foreground text-sm">
           Fill out the form and we&apos;ll get back to you within 24 hours.
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Name" htmlFor="name">
-          <Input id="name" name="name" placeholder="Ada Lovelace" className="h-10" />
+          <Input
+            id="name"
+            name="name"
+            placeholder="Ada Lovelace"
+            className="h-10"
+          />
         </Field>
         <Field label="Email" htmlFor="email">
           <Input
@@ -43,8 +48,8 @@ export function ContactForm() {
       </div>
 
       <Field label="Company website" htmlFor="website" optional>
-        <div className="border-input shadow-soft focus-within:border-ring focus-within:ring-ring/50 flex h-10 items-center rounded-lg border bg-transparent transition-colors focus-within:ring-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-          <span className="text-muted-foreground/70 border-input border-r px-2.5 font-mono text-[13px] select-none">
+        <div className="flex h-10 items-center rounded-lg border border-input bg-transparent shadow-soft transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+          <span className="select-none border-input border-r px-2.5 font-mono text-[13px] text-muted-foreground/70">
             https://
           </span>
           <input
@@ -54,7 +59,7 @@ export function ContactForm() {
             inputMode="url"
             autoComplete="url"
             placeholder="acme.dev"
-            className="placeholder:text-muted-foreground h-full w-full bg-transparent px-2.5 text-sm outline-none"
+            className="h-full w-full bg-transparent px-2.5 text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
       </Field>
@@ -65,7 +70,7 @@ export function ContactForm() {
             id="topic"
             name="topic"
             defaultValue="General question"
-            className="border-input shadow-soft focus-visible:border-ring focus-visible:ring-ring/50 h-10 w-full appearance-none rounded-lg border bg-transparent px-2.5 text-sm outline-none transition-colors focus-visible:ring-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] [&>option]:bg-background"
+            className="h-10 w-full appearance-none rounded-lg border border-input bg-transparent px-2.5 text-sm shadow-soft outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] [&>option]:bg-background"
           >
             {topics.map((t) => (
               <option key={t} value={t}>
@@ -75,7 +80,7 @@ export function ContactForm() {
           </select>
           <ChevronDown
             aria-hidden
-            className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
+            className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
           />
         </div>
       </Field>
@@ -86,13 +91,14 @@ export function ContactForm() {
           name="message"
           rows={6}
           placeholder="Tell us what's on your mind…"
-          className="border-input shadow-soft placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus-visible:ring-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+          className="w-full resize-none rounded-lg border border-input bg-transparent px-3 py-2.5 text-sm shadow-soft outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
         />
       </Field>
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <p className="text-muted-foreground max-w-[16rem] text-xs leading-relaxed">
-          By sending, you agree to our privacy policy. We never share your message.
+        <p className="max-w-[16rem] text-muted-foreground text-xs leading-relaxed">
+          By sending, you agree to our privacy policy. We never share your
+          message.
         </p>
         <Button type="submit" size="lg" className="h-10 px-4">
           <Send className="size-4" data-icon="inline-start" />
@@ -116,10 +122,10 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-foreground text-sm font-medium">
+      <label htmlFor={htmlFor} className="font-medium text-foreground text-sm">
         {label}
         {optional && (
-          <span className="text-muted-foreground/70 ml-1.5 text-xs font-normal">
+          <span className="ml-1.5 font-normal text-muted-foreground/70 text-xs">
             (optional)
           </span>
         )}

@@ -46,11 +46,24 @@ export function AnimatedBeam({
 }: AnimatedBeamProps) {
   const id = React.useId()
   const [pathD, setPathD] = React.useState("")
-  const [svgDimensions, setSvgDimensions] = React.useState({ width: 0, height: 0 })
+  const [svgDimensions, setSvgDimensions] = React.useState({
+    width: 0,
+    height: 0,
+  })
 
   const gradientCoords = reverse
-    ? { x1: ["90%", "-10%"], x2: ["100%", "0%"], y1: ["0%", "0%"], y2: ["0%", "0%"] }
-    : { x1: ["10%", "110%"], x2: ["0%", "100%"], y1: ["0%", "0%"], y2: ["0%", "0%"] }
+    ? {
+        x1: ["90%", "-10%"],
+        x2: ["100%", "0%"],
+        y1: ["0%", "0%"],
+        y2: ["0%", "0%"],
+      }
+    : {
+        x1: ["10%", "110%"],
+        x2: ["0%", "100%"],
+        y1: ["0%", "0%"],
+        y2: ["0%", "0%"],
+      }
 
   React.useEffect(() => {
     const updatePath = () => {
@@ -63,9 +76,12 @@ export function AnimatedBeam({
       const svgHeight = containerRect.height
       setSvgDimensions({ width: svgWidth, height: svgHeight })
 
-      const startX = rectA.left - containerRect.left + rectA.width / 2 + startXOffset
-      const startY = rectA.top - containerRect.top + rectA.height / 2 + startYOffset
-      const endX = rectB.left - containerRect.left + rectB.width / 2 + endXOffset
+      const startX =
+        rectA.left - containerRect.left + rectA.width / 2 + startXOffset
+      const startY =
+        rectA.top - containerRect.top + rectA.height / 2 + startYOffset
+      const endX =
+        rectB.left - containerRect.left + rectB.width / 2 + endXOffset
       const endY = rectB.top - containerRect.top + rectB.height / 2 + endYOffset
 
       const controlY = startY - curvature
@@ -102,8 +118,8 @@ export function AnimatedBeam({
       height={svgDimensions.height}
       xmlns="http://www.w3.org/2000/svg"
       className={cn(
-        "pointer-events-none absolute left-0 top-0 transform-gpu stroke-2",
-        className,
+        "pointer-events-none absolute top-0 left-0 transform-gpu stroke-2",
+        className
       )}
       viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
     >

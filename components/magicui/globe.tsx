@@ -39,14 +39,62 @@ type LinkChip = {
 }
 
 const LINK_CHIPS: LinkChip[] = [
-  { id: "sf",     domain: "go.acme.dev",   path: "/launch",    icon: Rocket,          location: [37.7749, -122.4194] },
-  { id: "nyc",    domain: "loft.nyc",      path: "/rsvp",      icon: CalendarCheck,   location: [40.7128, -74.006] },
-  { id: "ldn",    domain: "spoo.me",       path: "/gig",       icon: Ticket,          location: [51.5074, -0.1278] },
-  { id: "berlin", domain: "spoo.me",       path: "/menu",      icon: UtensilsCrossed, location: [52.52, 13.405] },
-  { id: "dubai",  domain: "spoo.me",       path: "/deck",      icon: Presentation,    location: [25.2048, 55.2708] },
-  { id: "delhi",  domain: "dilli.in",      path: "/portfolio", icon: Briefcase,       location: [28.6139, 77.209] },
-  { id: "sgp",    domain: "kopi.sg",       path: "/docs",      icon: BookOpen,        location: [1.3521, 103.8198] },
-  { id: "tokyo",  domain: "mono.tokyo",    path: "/drop",      icon: ShoppingBag,     location: [35.6762, 139.6503] },
+  {
+    id: "sf",
+    domain: "go.acme.dev",
+    path: "/launch",
+    icon: Rocket,
+    location: [37.7749, -122.4194],
+  },
+  {
+    id: "nyc",
+    domain: "loft.nyc",
+    path: "/rsvp",
+    icon: CalendarCheck,
+    location: [40.7128, -74.006],
+  },
+  {
+    id: "ldn",
+    domain: "spoo.me",
+    path: "/gig",
+    icon: Ticket,
+    location: [51.5074, -0.1278],
+  },
+  {
+    id: "berlin",
+    domain: "spoo.me",
+    path: "/menu",
+    icon: UtensilsCrossed,
+    location: [52.52, 13.405],
+  },
+  {
+    id: "dubai",
+    domain: "spoo.me",
+    path: "/deck",
+    icon: Presentation,
+    location: [25.2048, 55.2708],
+  },
+  {
+    id: "delhi",
+    domain: "dilli.in",
+    path: "/portfolio",
+    icon: Briefcase,
+    location: [28.6139, 77.209],
+  },
+  {
+    id: "sgp",
+    domain: "kopi.sg",
+    path: "/docs",
+    icon: BookOpen,
+    location: [1.3521, 103.8198],
+  },
+  {
+    id: "tokyo",
+    domain: "mono.tokyo",
+    path: "/drop",
+    icon: ShoppingBag,
+    location: [35.6762, 139.6503],
+  },
 ]
 
 export function Globe({ className }: { className?: string }) {
@@ -70,7 +118,7 @@ export function Globe({ className }: { className?: string }) {
           io.disconnect()
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     )
     io.observe(containerRef.current)
     return () => io.disconnect()
@@ -116,14 +164,16 @@ export function Globe({ className }: { className?: string }) {
     // when globe scrolled out of view OR tab backgrounded.
     let inView = true
     let pageVisible = !document.hidden
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
 
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) inView = e.isIntersecting
-        if ((inView && pageVisible) && raf === 0) startLoop()
+        if (inView && pageVisible && raf === 0) startLoop()
       },
-      { rootMargin: "0px" },
+      { rootMargin: "0px" }
     )
     io.observe(containerRef.current)
 
@@ -170,11 +220,11 @@ export function Globe({ className }: { className?: string }) {
   return (
     <div
       ref={containerRef}
-      className={cn("relative aspect-square w-full mx-auto", className)}
+      className={cn("relative mx-auto aspect-square w-full", className)}
     >
       <canvas
         ref={canvasRef}
-        className="size-full opacity-0 transition-opacity duration-700 cursor-grab"
+        className="size-full cursor-grab opacity-0 transition-opacity duration-700"
         onPointerDown={(e) => {
           pointerInteractingRef.current = e.clientX - pointerMovementRef.current
           if (canvasRef.current) canvasRef.current.style.cursor = "grabbing"
@@ -220,10 +270,10 @@ export function Globe({ className }: { className?: string }) {
                 opacity: `var(--cobe-visible-${m.id}, 0)`,
               } as React.CSSProperties
             }
-            className="border-border/60 bg-card shadow-card pointer-events-none z-10 flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[10px] whitespace-nowrap transition-opacity duration-300"
+            className="pointer-events-none z-10 flex items-center gap-1.5 whitespace-nowrap rounded-md border border-border/60 bg-card px-2 py-1 font-mono text-[10px] shadow-card transition-opacity duration-300"
           >
             <m.icon
-              className="text-muted-foreground/70 size-3 shrink-0"
+              className="size-3 shrink-0 text-muted-foreground/70"
               strokeWidth={1.75}
             />
             {/* The part the user chose is the star: custom domains carry
@@ -232,11 +282,11 @@ export function Globe({ className }: { className?: string }) {
             {m.domain === "spoo.me" ? (
               <span>
                 <span className="text-muted-foreground">{m.domain}</span>
-                <span className="text-foreground font-medium">{m.path}</span>
+                <span className="font-medium text-foreground">{m.path}</span>
               </span>
             ) : (
               <span>
-                <span className="text-foreground font-medium">{m.domain}</span>
+                <span className="font-medium text-foreground">{m.domain}</span>
                 <span className="text-muted-foreground">{m.path}</span>
               </span>
             )}

@@ -91,7 +91,11 @@ function subscribe(cb: () => void) {
 
 export function useAnalyticsLayout() {
   const queryClient = useQueryClient()
-  const layout = React.useSyncExternalStore(subscribe, readSaved, () => DEFAULT_LAYOUT)
+  const layout = React.useSyncExternalStore(
+    subscribe,
+    readSaved,
+    () => DEFAULT_LAYOUT
+  )
 
   /* ---------- server reconcile: once per mount, server wins over mirror ---------- */
   const serverQ = useQuery({
@@ -113,18 +117,22 @@ export function useAnalyticsLayout() {
   /* ---------- debounced write-behind ---------- */
   // If a PUT fails we keep the local mirror; the next mount's server-wins
   // reconcile may revert. Accepted tradeoff, same as before.
-  const putTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const putTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
   const queuePut = React.useCallback(
     (doc: AnalyticsLayout) => {
       clearTimeout(putTimer.current)
       putTimer.current = setTimeout(() => {
         putTimer.current = undefined
         putPageLayout(PAGE, doc)
-          .then(() => queryClient.setQueryData(["layout", PAGE], { layout: doc }))
+          .then(() =>
+            queryClient.setQueryData(["layout", PAGE], { layout: doc })
+          )
           .catch(() => {})
       }, PUT_DEBOUNCE_MS)
     },
-    [queryClient],
+    [queryClient]
   )
   React.useEffect(
     () => () => {
@@ -134,14 +142,17 @@ export function useAnalyticsLayout() {
         putPageLayout(PAGE, readSaved()).catch(() => {})
       }
     },
-    [],
+    []
   )
 
   /* ---------- history ---------- */
   const undoStack = React.useRef<AnalyticsLayout[]>([])
   const redoStack = React.useRef<AnalyticsLayout[]>([])
   // Mirrored into state so render never reads the refs directly.
-  const [history, setHistory] = React.useState({ canUndo: false, canRedo: false })
+  const [history, setHistory] = React.useState({
+    canUndo: false,
+    canRedo: false,
+  })
   const bumpHistory = React.useCallback(() => {
     setHistory({
       canUndo: undoStack.current.length > 0,
@@ -161,7 +172,7 @@ export function useAnalyticsLayout() {
       writeSaved(next)
       queuePut(next)
     },
-    [queuePut, bumpHistory],
+    [queuePut, bumpHistory]
   )
 
   const undo = React.useCallback(() => {
@@ -210,24 +221,36 @@ export function useAnalyticsLayout() {
     undo,
     redo,
     applyGridChange: React.useCallback(
-      (items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>) => {
+      (
+        items: ReadonlyArray<{
+          i: string
+          x: number
+          y: number
+          w: number
+          h: number
+        }>
+      ) => {
         // apply() no-ops on equal layouts; the cache reference only moves
         // when something actually changed — that's the emit condition.
         const before = readSaved()
         apply((l) => applyGridChange(l, items))
         if (readSaved() !== before) trackBoardGridChanged(PAGE)
       },
-      [apply],
+      [apply]
     ),
     addWidget: React.useCallback(
-      (kind: WidgetKind, seed?: WidgetConfigPatch, source: WidgetAddSource = "gallery") => {
+      (
+        kind: WidgetKind,
+        seed?: WidgetConfigPatch,
+        source: WidgetAddSource = "gallery"
+      ) => {
         const id = newWidgetId()
         apply((l) => withWidgetAdded(l, kind, id, seed))
         const hasScope = Object.keys(seed?.scope ?? {}).length > 0
         trackWidgetAdded(kind, PAGE, source, hasScope)
         return id
       },
-      [apply],
+      [apply]
     ),
     removeWidget: React.useCallback(
       (id: string) => {
@@ -235,7 +258,7 @@ export function useAnalyticsLayout() {
         apply((l) => withWidgetRemoved(l, id))
         trackWidgetRemoved(kind, PAGE)
       },
-      [apply],
+      [apply]
     ),
     duplicateWidget: React.useCallback(
       (id: string) => {
@@ -245,11 +268,11 @@ export function useAnalyticsLayout() {
         trackWidgetDuplicated(kind, PAGE)
         return nid
       },
-      [apply],
+      [apply]
     ),
     resetWidget: React.useCallback(
       (id: string) => apply((l) => withWidgetReset(l, id)),
-      [apply],
+      [apply]
     ),
     updateWidgetConfig: React.useCallback(
       (id: string, patch: WidgetConfigPatch) => {
@@ -258,12 +281,12 @@ export function useAnalyticsLayout() {
         if (readSaved() !== before)
           trackWidgetConfigUpdated(PAGE, Object.keys(patch))
       },
-      [apply],
+      [apply]
     ),
     /** Import a whole doc (export/import); runs through normalize. */
     replaceLayout: React.useCallback(
       (doc: unknown) => apply(() => normalizeLayout(doc)),
-      [apply],
+      [apply]
     ),
     resetAll: React.useCallback(() => resetMut.mutate(), [resetMut]),
   }

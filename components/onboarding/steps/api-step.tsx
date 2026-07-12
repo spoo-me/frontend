@@ -48,8 +48,11 @@ export function ApiStep({
         scopes: ["shorten:create", "urls:read", "stats:read"],
       })
       trackApiKeyCreated(
-        { scopes: ["shorten:create", "urls:read", "stats:read"], hasExpiry: false },
-        "onboarding",
+        {
+          scopes: ["shorten:create", "urls:read", "stats:read"],
+          hasExpiry: false,
+        },
+        "onboarding"
       )
       setCreated(key)
     } catch (err) {
@@ -79,7 +82,7 @@ export function ApiStep({
   const curlHighlighted = React.useMemo(
     () =>
       created ? curlHtml.replaceAll(CURL_TOKEN_PLACEHOLDER, created.token) : "",
-    [curlHtml, created],
+    [curlHtml, created]
   )
 
   async function copy(kind: "key" | "curl") {
@@ -111,10 +114,10 @@ export function ApiStep({
 
   return (
     <div className="flex w-full flex-col items-center text-center [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
-      <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+      <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         {created ? "Your key is ready" : "Get your API key"}
       </h1>
-      <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
+      <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         {created
           ? "Copy it now. The full key is shown only this once."
           : "Scoped to creating links and reading stats. You can rotate or revoke it any time."}
@@ -134,10 +137,10 @@ export function ApiStep({
                 Crop-mark frame = the landing's alias-selection motif. */}
             <div ref={keyCardRef} className="text-center">
               <div className="flex items-center justify-center gap-2">
-                <span className="border-border/60 bg-card text-foreground flex size-6 items-center justify-center rounded-md border">
+                <span className="flex size-6 items-center justify-center rounded-md border border-border/60 bg-card text-foreground">
                   <KeyRound className="size-3.5" aria-hidden />
                 </span>
-                <span className="label-mono text-muted-foreground/70 text-[10px]">
+                <span className="label-mono text-[10px] text-muted-foreground/70">
                   Secret key
                 </span>
               </div>
@@ -146,23 +149,23 @@ export function ApiStep({
                 <div className="relative max-w-full overflow-x-auto px-6 py-4 [scrollbar-width:none]">
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute top-0 left-0 size-3 border-t border-l"
+                    className="absolute top-0 left-0 size-3 border-foreground/50 border-t border-l"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute top-0 right-0 size-3 border-t border-r"
+                    className="absolute top-0 right-0 size-3 border-foreground/50 border-t border-r"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute bottom-0 left-0 size-3 border-b border-l"
+                    className="absolute bottom-0 left-0 size-3 border-foreground/50 border-b border-l"
                   />
                   <span
                     aria-hidden
-                    className="border-foreground/50 absolute right-0 bottom-0 size-3 border-r border-b"
+                    className="absolute right-0 bottom-0 size-3 border-foreground/50 border-r border-b"
                   />
                   <AnimatedShinyText
                     shimmerWidth={140}
-                    className="ph-no-capture text-foreground/80 max-w-none font-mono text-lg font-semibold tracking-tight whitespace-nowrap dark:via-white sm:text-2xl"
+                    className="ph-no-capture max-w-none whitespace-nowrap font-mono font-semibold text-foreground/80 text-lg tracking-tight sm:text-2xl dark:via-white"
                   >
                     {created.token}
                   </AnimatedShinyText>
@@ -170,10 +173,14 @@ export function ApiStep({
               </div>
 
               <div className="mt-6 flex items-center justify-center gap-2">
-                <Button onClick={() => void copy("key")} size="sm" variant="outline">
+                <Button
+                  onClick={() => void copy("key")}
+                  size="sm"
+                  variant="outline"
+                >
                   {copied === "key" ? (
                     <>
-                      <Check className="text-live size-3.5" />
+                      <Check className="size-3.5 text-live" />
                       Copied
                     </>
                   ) : (
@@ -209,18 +216,18 @@ export function ApiStep({
             transition={{ duration: 0.2 }}
             className="mt-10 flex w-full max-w-md flex-col items-center"
           >
-            <div className="border-border/60 bg-card/50 w-full rounded-xl border border-dashed p-6">
-              <div className="border-border/60 bg-muted/40 text-muted-foreground mx-auto flex size-10 items-center justify-center rounded-lg border">
+            <div className="w-full rounded-xl border border-border/60 border-dashed bg-card/50 p-6">
+              <div className="mx-auto flex size-10 items-center justify-center rounded-lg border border-border/60 bg-muted/40 text-muted-foreground">
                 <KeyRound className="size-4" aria-hidden />
               </div>
-              <div className="label-mono text-muted-foreground mt-4 text-[10px]">
+              <div className="label-mono mt-4 text-[10px] text-muted-foreground">
                 scopes
               </div>
               <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                 {["shorten:create", "urls:read", "stats:read"].map((s) => (
                   <code
                     key={s}
-                    className="border-border/60 bg-background text-foreground/80 rounded-md border px-2 py-0.5 font-mono text-[11px]"
+                    className="rounded-md border border-border/60 bg-background px-2 py-0.5 font-mono text-[11px] text-foreground/80"
                   >
                     {s}
                   </code>
@@ -229,7 +236,7 @@ export function ApiStep({
             </div>
 
             {error && (
-              <p role="alert" className="text-destructive mt-4 text-sm">
+              <p role="alert" className="mt-4 text-destructive text-sm">
                 {error}
               </p>
             )}
@@ -240,12 +247,14 @@ export function ApiStep({
               disabled={pending}
             >
               {pending ? "Generating…" : "Generate API key"}
-              {!pending && <ArrowRight className="size-4" data-icon="inline-end" />}
+              {!pending && (
+                <ArrowRight className="size-4" data-icon="inline-end" />
+              )}
             </Button>
             <button
               type="button"
               onClick={onSkip}
-              className="text-muted-foreground/70 hover:text-foreground mt-4 text-xs underline-offset-4 transition-colors hover:underline"
+              className="mt-4 text-muted-foreground/70 text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               I&apos;ll do this later
             </button>
@@ -257,7 +266,7 @@ export function ApiStep({
           --code-surface is re-declared because the dialog portals to body. */}
       {created && (
         <Dialog open={tryOpen} onOpenChange={setTryOpen}>
-          <DialogContent className="text-left sm:max-w-xl [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
+          <DialogContent className="text-left [--code-surface:var(--card)] sm:max-w-xl dark:[--code-surface:#09090b]">
             <DialogHeader>
               <DialogTitle>Try it now</DialogTitle>
               <DialogDescription>
@@ -265,7 +274,7 @@ export function ApiStep({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="border-border/60 overflow-hidden rounded-lg border bg-[var(--code-surface)]">
+            <div className="overflow-hidden rounded-lg border border-border/60 bg-[var(--code-surface)]">
               <div
                 className="shiki-host overflow-x-auto px-4 py-4 text-xs leading-relaxed [scrollbar-width:thin]"
                 dangerouslySetInnerHTML={{ __html: curlHighlighted }}
@@ -277,7 +286,7 @@ export function ApiStep({
                 href={siteConfig.links.docs}
                 target="_blank"
                 rel="noreferrer"
-                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 self-center text-xs font-medium transition-colors"
+                className="inline-flex items-center gap-1 self-center font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
               >
                 API reference
                 <ArrowRight className="size-3 -rotate-45" />

@@ -65,13 +65,11 @@ export function DonutChart({
 
   const total = React.useMemo(
     () => rows.reduce((s, r) => s + r[key], 0),
-    [rows, key],
+    [rows, key]
   )
 
   if (!rows.length) {
-    return (
-      <EmptyRange />
-    )
+    return <EmptyRange />
   }
 
   return (
@@ -113,10 +111,10 @@ export function DonutChart({
         </ResponsiveContainer>
         {variant === "donut" && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-foreground font-mono text-lg leading-none font-semibold tracking-tight tabular-nums">
+            <span className="font-mono font-semibold text-foreground text-lg tabular-nums leading-none tracking-tight">
               {formatCount(total)}
             </span>
-            <span className="label-mono text-muted-foreground/60 mt-1 text-[9px]">
+            <span className="label-mono mt-1 text-[9px] text-muted-foreground/60">
               {metric === "unique" ? "unique" : "clicks"}
             </span>
           </div>
@@ -130,7 +128,7 @@ export function DonutChart({
               type="button"
               disabled={!onSelect || s.value === OTHER}
               onClick={() => onSelect?.(s.value)}
-              className="hover:bg-accent/60 flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors duration-150 disabled:pointer-events-none"
+              className="flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors duration-150 hover:bg-accent/60 disabled:pointer-events-none"
             >
               <span
                 aria-hidden
@@ -138,12 +136,18 @@ export function DonutChart({
                 style={{ background: s.fill }}
               />
               {s.value !== OTHER && (
-                <DimensionIcon dimension={dimension} value={s.value} className="size-3.5 shrink-0" />
+                <DimensionIcon
+                  dimension={dimension}
+                  value={s.value}
+                  className="size-3.5 shrink-0"
+                />
               )}
-              <span className="text-foreground min-w-0 flex-1 truncate text-xs">
-                {s.value === OTHER ? "Other" : dimensionLabel(dimension, s.value)}
+              <span className="min-w-0 flex-1 truncate text-foreground text-xs">
+                {s.value === OTHER
+                  ? "Other"
+                  : dimensionLabel(dimension, s.value)}
               </span>
-              <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
+              <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
                 {metric === "both"
                   ? `${formatCount(s.clicks)} · ${formatCount(s.unique_clicks)}`
                   : formatCount(s[key])}

@@ -77,16 +77,19 @@ export function TimeseriesWidget({
   // parent re-keys this component when the configured default changes.
   const chartViz = config.viz === "table" ? "area" : config.viz
   const [mode, setMode] = React.useState<"chart" | "table">(
-    config.viz === "table" ? "table" : "chart",
+    config.viz === "table" ? "table" : "chart"
   )
   const { metric } = config
-  const series = React.useMemo(() => (stats ? timeSeriesOf(stats) : []), [stats])
+  const series = React.useMemo(
+    () => (stats ? timeSeriesOf(stats) : []),
+    [stats]
+  )
   const prevSeries = React.useMemo(
     () =>
       config.compare === "previous" && prevStats
         ? timeSeriesOf(prevStats)
         : undefined,
-    [config.compare, prevStats],
+    [config.compare, prevStats]
   )
   const hourly = stats?.time_bucket_info.strategy === "hourly"
 
@@ -98,7 +101,7 @@ export function TimeseriesWidget({
         day: "numeric",
         ...(hourly ? { hour: "numeric" as const } : {}),
       }),
-    [hourly],
+    [hourly]
   )
 
   React.useEffect(() => {
@@ -152,12 +155,14 @@ export function TimeseriesWidget({
             <button
               type="button"
               aria-label={
-                expanded ? "Collapse Clicks over time" : "Expand Clicks over time"
+                expanded
+                  ? "Collapse Clicks over time"
+                  : "Expand Clicks over time"
               }
               onClick={() => onExpandedChange(!expanded)}
               className={cn(
-                "text-muted-foreground/60 hover:bg-accent/60 hover:text-foreground flex size-6 items-center justify-center rounded-md transition-colors duration-150",
-                expanded && "text-foreground",
+                "flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
+                expanded && "text-foreground"
               )}
             >
               <ExpandIcon className="size-3.5" strokeWidth={1.75} />
@@ -169,7 +174,7 @@ export function TimeseriesWidget({
       {loading ? (
         <Skeleton className="h-full w-full" />
       ) : disjoint ? (
-        <div className="text-muted-foreground/70 flex h-full items-center justify-center px-6 text-center text-xs">
+        <div className="flex h-full items-center justify-center px-6 text-center text-muted-foreground/70 text-xs">
           scope excluded by board filters
         </div>
       ) : (
@@ -180,7 +185,7 @@ export function TimeseriesWidget({
           <div
             className={cn(
               "absolute inset-0 p-4 transition-opacity duration-150 ease-out",
-              mode !== "chart" && "pointer-events-none opacity-0",
+              mode !== "chart" && "pointer-events-none opacity-0"
             )}
           >
             {chartViz === "calendar" ? (
@@ -206,41 +211,41 @@ export function TimeseriesWidget({
           <div
             className={cn(
               "absolute inset-0 transition-opacity duration-150 ease-out",
-              mode !== "table" && "pointer-events-none opacity-0",
+              mode !== "table" && "pointer-events-none opacity-0"
             )}
           >
             <div className="h-full overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">
               <table className="w-full text-sm">
-                <thead className="bg-muted sticky top-0 z-10">
-                  <tr className="border-border/60 text-muted-foreground border-b text-left">
-                    <th className="label-mono h-8 w-full px-3 text-[10px] font-medium">
+                <thead className="sticky top-0 z-10 bg-muted">
+                  <tr className="border-border/60 border-b text-left text-muted-foreground">
+                    <th className="label-mono h-8 w-full px-3 font-medium text-[10px]">
                       When
                     </th>
                     <th
                       className={cn(
-                        "label-mono h-8 px-3 text-right text-[10px] font-medium",
-                        metric !== "unique" && "text-foreground",
+                        "label-mono h-8 px-3 text-right font-medium text-[10px]",
+                        metric !== "unique" && "text-foreground"
                       )}
                     >
                       Clicks
                     </th>
                     <th
                       className={cn(
-                        "label-mono h-8 px-3 text-right text-[10px] font-medium",
-                        metric === "unique" && "text-foreground",
+                        "label-mono h-8 px-3 text-right font-medium text-[10px]",
+                        metric === "unique" && "text-foreground"
                       )}
                     >
                       Unique
                     </th>
-                    <th className="label-mono h-8 px-3 text-right text-[10px] font-medium">
+                    <th className="label-mono h-8 px-3 text-right font-medium text-[10px]">
                       Rate
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-border/60 divide-y">
+                <tbody className="divide-y divide-border/60">
                   {timeRows.map((b) => (
                     <tr key={b.bucket}>
-                      <td className="text-foreground px-3 py-2 font-mono text-xs tabular-nums">
+                      <td className="px-3 py-2 font-mono text-foreground text-xs tabular-nums">
                         {timeRowFmt.format(new Date(b.bucket))}
                       </td>
                       <td
@@ -248,7 +253,7 @@ export function TimeseriesWidget({
                           "px-3 py-2 text-right font-mono text-xs tabular-nums",
                           metric === "unique"
                             ? "text-muted-foreground"
-                            : "text-foreground",
+                            : "text-foreground"
                         )}
                       >
                         {formatCount(b.clicks)}
@@ -258,12 +263,12 @@ export function TimeseriesWidget({
                           "px-3 py-2 text-right font-mono text-xs tabular-nums",
                           metric === "unique"
                             ? "text-foreground"
-                            : "text-muted-foreground",
+                            : "text-muted-foreground"
                         )}
                       >
                         {formatCount(b.unique_clicks)}
                       </td>
-                      <td className="text-muted-foreground px-3 py-2 text-right font-mono text-xs tabular-nums">
+                      <td className="px-3 py-2 text-right font-mono text-muted-foreground text-xs tabular-nums">
                         {b.clicks
                           ? Math.round((b.unique_clicks / b.clicks) * 100) + "%"
                           : "0%"}
@@ -274,7 +279,7 @@ export function TimeseriesWidget({
                     <tr>
                       <td
                         colSpan={4}
-                        className="text-muted-foreground/70 px-3 py-8 text-center text-xs"
+                        className="px-3 py-8 text-center text-muted-foreground/70 text-xs"
                       >
                         No data in this range
                       </td>

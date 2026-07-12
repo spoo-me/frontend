@@ -118,8 +118,18 @@ export type BreakdownConfig = {
 export type WidgetGridRect = { x: number; y: number; w: number; h: number }
 export type Widget =
   | { id: string; kind: "stat"; grid: WidgetGridRect; config: StatConfig }
-  | { id: string; kind: "timeseries"; grid: WidgetGridRect; config: TimeseriesConfig }
-  | { id: string; kind: "breakdown"; grid: WidgetGridRect; config: BreakdownConfig }
+  | {
+      id: string
+      kind: "timeseries"
+      grid: WidgetGridRect
+      config: TimeseriesConfig
+    }
+  | {
+      id: string
+      kind: "breakdown"
+      grid: WidgetGridRect
+      config: BreakdownConfig
+    }
 
 export type AnalyticsLayout = { version: 1; widgets: Widget[] }
 
@@ -156,7 +166,8 @@ export const donutLegend = (w: number) => w >= 5
 export const statSparkline = (h: number) => h >= 3
 export const breakdownTableFullCols = (w: number) => w >= 5
 // Vertical columns: width decides how many categories fit legibly.
-export const breakdownColumnCount = (w: number) => (w >= 8 ? 10 : w >= 5 ? 8 : 5)
+export const breakdownColumnCount = (w: number) =>
+  w >= 8 ? 10 : w >= 5 ? 8 : 5
 // Treemap density scales with AREA — a wider or taller map fits more tiles.
 export const treemapSegments = (w: number, h: number) =>
   Math.min(24, Math.max(5, Math.round((w * h) / 3.5)))
@@ -212,24 +223,79 @@ const seed = (
   id: string,
   kind: WidgetKind,
   grid: WidgetGridRect,
-  config: Widget["config"],
+  config: Widget["config"]
 ) => ({ id, kind, grid, config }) as Widget
 
 export function defaultLayout(): AnalyticsLayout {
   return {
     version: 1,
     widgets: [
-      seed("w_total", "stat", { x: 0, y: 0, w: 3, h: 2 }, { metric: "total_clicks" }),
-      seed("w_unique", "stat", { x: 3, y: 0, w: 3, h: 2 }, { metric: "unique_clicks" }),
-      seed("w_rate", "stat", { x: 6, y: 0, w: 3, h: 2 }, { metric: "unique_rate" }),
-      seed("w_cpv", "stat", { x: 9, y: 0, w: 3, h: 2 }, { metric: "clicks_per_visitor" }),
-      seed("w_time", "timeseries", { x: 0, y: 2, w: 12, h: 5 }, { viz: "area", metric: "total" }),
-      seed("w_country", "breakdown", { x: 0, y: 7, w: 6, h: 6 }, { dimension: "country", viz: "map", metric: "total" }),
-      seed("w_city", "breakdown", { x: 6, y: 7, w: 6, h: 6 }, { dimension: "city", viz: "bars", metric: "total" }),
-      seed("w_links", "breakdown", { x: 0, y: 13, w: 6, h: 6 }, { dimension: "short_code", viz: "table", metric: "total" }),
-      seed("w_ref", "breakdown", { x: 6, y: 13, w: 6, h: 6 }, { dimension: "referrer", viz: "bars", metric: "total" }),
-      seed("w_browser", "breakdown", { x: 0, y: 19, w: 6, h: 6 }, { dimension: "browser", viz: "bars", metric: "total" }),
-      seed("w_os", "breakdown", { x: 6, y: 19, w: 6, h: 6 }, { dimension: "os", viz: "bars", metric: "total" }),
+      seed(
+        "w_total",
+        "stat",
+        { x: 0, y: 0, w: 3, h: 2 },
+        { metric: "total_clicks" }
+      ),
+      seed(
+        "w_unique",
+        "stat",
+        { x: 3, y: 0, w: 3, h: 2 },
+        { metric: "unique_clicks" }
+      ),
+      seed(
+        "w_rate",
+        "stat",
+        { x: 6, y: 0, w: 3, h: 2 },
+        { metric: "unique_rate" }
+      ),
+      seed(
+        "w_cpv",
+        "stat",
+        { x: 9, y: 0, w: 3, h: 2 },
+        { metric: "clicks_per_visitor" }
+      ),
+      seed(
+        "w_time",
+        "timeseries",
+        { x: 0, y: 2, w: 12, h: 5 },
+        { viz: "area", metric: "total" }
+      ),
+      seed(
+        "w_country",
+        "breakdown",
+        { x: 0, y: 7, w: 6, h: 6 },
+        { dimension: "country", viz: "map", metric: "total" }
+      ),
+      seed(
+        "w_city",
+        "breakdown",
+        { x: 6, y: 7, w: 6, h: 6 },
+        { dimension: "city", viz: "bars", metric: "total" }
+      ),
+      seed(
+        "w_links",
+        "breakdown",
+        { x: 0, y: 13, w: 6, h: 6 },
+        { dimension: "short_code", viz: "table", metric: "total" }
+      ),
+      seed(
+        "w_ref",
+        "breakdown",
+        { x: 6, y: 13, w: 6, h: 6 },
+        { dimension: "referrer", viz: "bars", metric: "total" }
+      ),
+      seed(
+        "w_browser",
+        "breakdown",
+        { x: 0, y: 19, w: 6, h: 6 },
+        { dimension: "browser", viz: "bars", metric: "total" }
+      ),
+      seed(
+        "w_os",
+        "breakdown",
+        { x: 6, y: 19, w: 6, h: 6 },
+        { dimension: "os", viz: "bars", metric: "total" }
+      ),
     ],
   }
 }
@@ -237,7 +303,7 @@ export function defaultLayout(): AnalyticsLayout {
 /** Frozen module constant — the stable reference `useSyncExternalStore` needs
     as its server snapshot. Never mutate; use `defaultLayout()` for copies. */
 export const DEFAULT_LAYOUT: AnalyticsLayout = Object.freeze(
-  defaultLayout(),
+  defaultLayout()
 ) as AnalyticsLayout
 
 /* ---------- normalization ---------- */
@@ -277,7 +343,11 @@ const BREAKDOWN_VIZ: readonly BreakdownViz[] = [
 ]
 const STAT_VIZ: readonly StatViz[] = ["number", "gauge", "odometer"]
 
-function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
+function pick<T extends string>(
+  v: unknown,
+  allowed: readonly T[],
+  fallback: T
+): T {
   return allowed.includes(v as T) ? (v as T) : fallback
 }
 
@@ -293,7 +363,7 @@ function normalizeScope(raw: unknown): WidgetScope | undefined {
         values
           .filter((v): v is string => typeof v === "string")
           .map((v) => v.trim().slice(0, 80))
-          .filter(Boolean),
+          .filter(Boolean)
       ),
     ].slice(0, 10)
     if (clean.length) scope[dim] = clean
@@ -341,7 +411,7 @@ function normalizeGrid(widgets: Widget[]): Widget[] {
   const items: LayoutItem[] = widgets.map((w) => ({ i: w.id, ...w.grid }))
   const compacted = verticalCompactor.compact(
     correctBounds(items, { cols: GRID.cols }),
-    GRID.cols,
+    GRID.cols
   )
   const byId = new Map(compacted.map((it) => [it.i, it]))
   return widgets
@@ -374,7 +444,7 @@ export function normalizeLayout(input: unknown): AnalyticsLayout {
     const g = isRecord(raw.grid) ? raw.grid : {}
     const w = Math.min(
       GRID.cols,
-      Math.max(spec.minW, Math.round(Number(g.w) || spec.defaultW)),
+      Math.max(spec.minW, Math.round(Number(g.w) || spec.defaultW))
     )
     const h = Math.max(spec.minH, Math.round(Number(g.h) || spec.defaultH))
     const x = Math.min(GRID.cols - w, Math.max(0, Math.round(Number(g.x) || 0)))
@@ -402,7 +472,13 @@ export function layoutsEqual(a: AnalyticsLayout, b: AnalyticsLayout): boolean {
     clamped to each kind's minimums and the column bounds. */
 export function applyGridChange(
   l: AnalyticsLayout,
-  items: ReadonlyArray<{ i: string; x: number; y: number; w: number; h: number }>,
+  items: ReadonlyArray<{
+    i: string
+    x: number
+    y: number
+    w: number
+    h: number
+  }>
 ): AnalyticsLayout {
   const byId = new Map(items.map((it) => [it.i, it]))
   const widgets = l.widgets.map((widget) => {
@@ -424,7 +500,7 @@ export function withWidgetAdded(
   l: AnalyticsLayout,
   kind: WidgetKind,
   id: string,
-  seed?: WidgetConfigPatch,
+  seed?: WidgetConfigPatch
 ): AnalyticsLayout {
   if (l.widgets.length >= MAX_WIDGETS) return l
   const spec = WIDGET_SPEC[kind]
@@ -441,7 +517,10 @@ export function withWidgetAdded(
 
 /** Back to catalog defaults for this widget's identity: default viz/metric,
     no title/accent overrides, default size. Position stays. */
-export function withWidgetReset(l: AnalyticsLayout, id: string): AnalyticsLayout {
+export function withWidgetReset(
+  l: AnalyticsLayout,
+  id: string
+): AnalyticsLayout {
   const widgets = l.widgets.map((w) => {
     if (w.id !== id) return w
     const spec = WIDGET_SPEC[w.kind]
@@ -463,7 +542,10 @@ export function withWidgetReset(l: AnalyticsLayout, id: string): AnalyticsLayout
   return { version: 1, widgets: normalizeGrid(widgets) }
 }
 
-export function withWidgetRemoved(l: AnalyticsLayout, id: string): AnalyticsLayout {
+export function withWidgetRemoved(
+  l: AnalyticsLayout,
+  id: string
+): AnalyticsLayout {
   const widgets = l.widgets.filter((w) => w.id !== id)
   if (widgets.length === l.widgets.length) return l
   return { version: 1, widgets: normalizeGrid(widgets) }
@@ -473,7 +555,7 @@ export function withWidgetRemoved(l: AnalyticsLayout, id: string): AnalyticsLayo
 export function withWidgetDuplicated(
   l: AnalyticsLayout,
   sourceId: string,
-  newId: string,
+  newId: string
 ): AnalyticsLayout {
   if (l.widgets.length >= MAX_WIDGETS) return l
   const src = l.widgets.find((w) => w.id === sourceId)
@@ -503,7 +585,7 @@ export type WidgetConfigPatch = Partial<{
 export function withWidgetConfig(
   l: AnalyticsLayout,
   id: string,
-  patch: WidgetConfigPatch,
+  patch: WidgetConfigPatch
 ): AnalyticsLayout {
   const widgets = l.widgets.map((w) => {
     if (w.id !== id) return w
@@ -524,8 +606,10 @@ export function withWidgetConfig(
     honest empty state without fetching. */
 export function mergeScope(
   globalLinks: string[],
-  globalFilters: Partial<Record<Exclude<ScopeDimension, "short_code">, string[]>>,
-  scope: WidgetScope | undefined,
+  globalFilters: Partial<
+    Record<Exclude<ScopeDimension, "short_code">, string[]>
+  >,
+  scope: WidgetScope | undefined
 ):
   | { links: string[] | undefined; filters: Record<string, string[]> }
   | "disjoint" {
