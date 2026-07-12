@@ -15,6 +15,7 @@ export const SCOPE_INFO: Record<
   "stats:read": "Read analytics data",
   "domains:read": "List custom domains",
   "domains:manage": "Add and remove domains",
+  "reports:create": "Submit abuse reports",
   "admin:all": "Full access, overrides all scopes",
 }
 

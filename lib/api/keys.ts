@@ -58,6 +58,7 @@ export const API_KEY_SCOPES = [
   "stats:read",
   "domains:read",
   "domains:manage",
+  "reports:create",
 ] as const
 
 export function createApiKey(input: {
