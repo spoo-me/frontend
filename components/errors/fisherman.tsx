@@ -39,19 +39,22 @@ export function FishermanGlyph({
       {/* the counter (the triangle window he shelters in) */}
       <path d="M104 34 L104 130 L30 130 Z" strokeDasharray="7 6" />
       {/* the stem narrows into the line and sinks past the waterline */}
-      <path d="M117 205 V420" strokeWidth="1.5" strokeDasharray="3 7" />
-      <g className="[animation:hook-bob_3.4s_ease-in-out_infinite] motion-reduce:animate-none">
-        <path d="M117 420 q0 12 -9 12 q-8 0 -8 -9" strokeWidth="1.5" />
+      <g className="text-foreground/60">
+        <path d="M117 205 V420" strokeWidth="1.5" strokeDasharray="3 7" />
+        <g className="[animation:hook-bob_3.4s_ease-in-out_infinite] motion-reduce:animate-none">
+          <path d="M117 420 q0 12 -9 12 q-8 0 -8 -9" strokeWidth="1.5" />
+        </g>
       </g>
-      {/* the fisherman, seated in the counter on the deck's top edge,
-          rod overhead, legs over the front of the pier */}
-      <g strokeDasharray="4 4">
-        <circle cx="66" cy="86" r="8" />
-        <path d="M68 95 L74 126" />
-        <path d="M70 102 L78 74" />
-        <path d="M74 126 L94 130" />
-        <path d="M94 130 V158" />
-        <path d="M94 158 l8 2" />
+      {/* the fisherman, seated in the counter on the deck's top edge, rod
+          overhead, legs over the front of the pier. Solid strokes and
+          hotter ink on purpose: the building is blueprint, he's alive. */}
+      <g className="text-foreground" opacity="0.55">
+        <circle cx="62" cy="78" r="9" />
+        <path d="M64 88 L72 124" />
+        <path d="M67 96 L77 82 L85 68" />
+        <path d="M72 124 L92 128" />
+        <path d="M92 128 V156" />
+        <path d="M92 156 l8 2" />
       </g>
     </svg>
   )
