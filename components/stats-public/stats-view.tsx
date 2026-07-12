@@ -10,7 +10,7 @@ import { getPublicStats, type PublicStats } from "@/lib/api/public-stats"
 import {
   dimensionRowsOf,
   timeSeriesOf,
-  type DimensionRow,
+  type StatsDimension,
 } from "@/lib/api/stats"
 import {
   displayUrl,
@@ -45,8 +45,8 @@ const RANGES = [
   { label: "90d", days: 90, phrase: "last 90 days" },
 ] as const
 
-/** The breakdown grid takes the grey ramp; clicks-over-time and the
-    closing countries map carry the brand accent. */
+/** The breakdown grid — countries map included — takes the grey ramp;
+    clicks-over-time is the page's one brand-accent moment. */
 const NEUTRAL_ACCENT = {
   "--chart-accent": "var(--chart-neutral)",
 } as React.CSSProperties
@@ -122,7 +122,7 @@ export function PublicStatsView({
   const rangePhrase =
     RANGES.find((r) => r.days === rangeDays)?.phrase ?? "selected range"
   const extraDimension: {
-    key: string
+    key: StatsDimension
     title: string
     icon: React.ElementType
   } =
@@ -142,16 +142,14 @@ export function PublicStatsView({
             <CopyButton value={link.short_url} label="Copy short link" />
           </div>
           {/* Withheld (null) for non-active links; the status in the mono
-              line below is the whole explanation. */}
+              line below is the whole explanation. Plain text, never an
+              anchor — an unauthenticated page doesn't hyperlink whatever
+              the DB holds (preview-page policy: the destination is there
+              to read; navigation goes through the short link). */}
           {link.long_url && (
-            <a
-              href={link.long_url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1.5 block max-w-xl truncate text-muted-foreground text-sm underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
-            >
+            <p className="mt-1.5 max-w-xl truncate text-muted-foreground text-sm">
               {displayUrl(link.long_url)}
-            </a>
+            </p>
           )}
           <p className="mt-2 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
             created {formatDate(link.created_at)}
@@ -197,15 +195,14 @@ export function PublicStatsView({
           footer={`${formatPercent(s.computed_metrics?.unique_click_rate ?? (s.summary.total_clicks ? 0 : null))} of all clicks`}
         />
         <KpiCard
-          label="Clicks per visitor"
+          label="Per visitor"
           value={
+            // Absent metrics are "no measurement", never a zero.
             s.computed_metrics
               ? s.computed_metrics.average_clicks_per_visitor.toFixed(2)
-              : s.summary.total_clicks
-                ? "0"
-                : "–"
+              : "–"
           }
-          footer={`across the ${rangePhrase}`}
+          footer={`clicks across the ${rangePhrase}`}
         />
         <KpiCard
           label="Avg redirect"
@@ -247,8 +244,8 @@ export function PublicStatsView({
         </WidgetShell>
       </div>
 
-      {/* Breakdowns: grey ramp for the grid; the map keeps the brand
-          accent as the page's closing geographic moment. */}
+      {/* Breakdowns: the whole supporting grid, map included, on the grey
+          ramp — one violet moment per page. */}
       <div
         className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
         style={NEUTRAL_ACCENT}
@@ -275,24 +272,20 @@ export function PublicStatsView({
           dimension={extraDimension.key}
           title={extraDimension.title}
           icon={extraDimension.icon}
-          rows={
-            extraDimension.key === "bots"
-              ? ((s.metrics?.["clicks_by_bots"] ?? []) as DimensionRow[])
-              : dimensionRowsOf(s, "city")
-          }
+          rows={dimensionRowsOf(s, extraDimension.key)}
           hasUnique={extraDimension.key !== "bots"}
         />
-      </div>
-      <div className="mt-6">
-        <BreakdownSection
-          dimension="country"
-          title={DIMENSION_META.country.title}
-          icon={DIMENSION_META.country.icon}
-          rows={dimensionRowsOf(s, "country")}
-          map
-          limit={8}
-          panelClassName="h-80"
-        />
+        <div className="lg:col-span-2">
+          <BreakdownSection
+            dimension="country"
+            title={DIMENSION_META.country.title}
+            icon={DIMENSION_META.country.icon}
+            rows={dimensionRowsOf(s, "country")}
+            map
+            limit={8}
+            panelClassName="h-80"
+          />
+        </div>
       </div>
 
       {/* Exports + the visitor-shaped CTA */}

@@ -40,6 +40,7 @@ type PublicStatsWire = Omit<PublicStats, "stats"> & { stats: StatsWire }
 export type PublicStatsParams = {
   startDate?: Date
   endDate?: Date
+  /** Explicit opt-in only — the public page never sends one (see below). */
   timezone?: string
   /** Sent in a POST body; presence switches the request method. */
   password?: string
@@ -58,10 +59,10 @@ export async function getPublicStats(
   const q = new URLSearchParams()
   if (params.startDate) q.set("start_date", params.startDate.toISOString())
   if (params.endDate) q.set("end_date", params.endDate.toISOString())
-  q.set(
-    "timezone",
-    params.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-  )
+  // No timezone by default: the SSR fetch and every client refetch must
+  // bucket identically (the API's default), or the server-seeded range
+  // re-buckets the moment the browser's timezone gets a say.
+  if (params.timezone) q.set("timezone", params.timezone)
   const url = `${baseUrl}/v1/public/stats/${encodeURIComponent(code)}?${q}`
   const res = await fetch(url, {
     ...(params.password

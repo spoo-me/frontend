@@ -8,6 +8,8 @@ export type StatsDimension =
   | "city"
   | "referrer"
   | "short_code"
+  /** v1 legacy only: known-bot hits on the public stats payload. */
+  | "bots"
 
 export type TimeBucket = {
   bucket: string
