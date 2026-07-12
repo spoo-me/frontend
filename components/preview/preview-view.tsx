@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
+import { DimensionIcon } from "@/components/dashboard/dim-icon"
 
 /**
  * The preview body — a safety surface first: where the link actually goes,
@@ -135,10 +136,22 @@ export function PreviewView({ data }: { data: PublicPreview }) {
                   {data.geo_destinations.map((dest) => (
                     <div
                       key={dest.url}
-                      className="flex items-start gap-3 p-3.5"
+                      className="flex items-center gap-3 p-3.5"
                     >
-                      <span className="mt-0.5 w-14 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
-                        {dest.countries.join(", ")}
+                      <span className="flex min-w-14 shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+                        {dest.countries.map((country) => (
+                          <span
+                            key={country}
+                            className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground tabular-nums"
+                          >
+                            <DimensionIcon
+                              dimension="country"
+                              value={country}
+                              className="size-3.5 shrink-0"
+                            />
+                            {country}
+                          </span>
+                        ))}
                       </span>
                       <DestinationRow destination={dest} compact />
                     </div>
@@ -187,7 +200,7 @@ function DestinationRow({
   compact?: boolean
 }) {
   return (
-    <div className="flex min-w-0 flex-1 items-start gap-3">
+    <div className="flex min-w-0 flex-1 items-center gap-3">
       {!compact && <Favicon domain={destination.domain} />}
       <div className="min-w-0 flex-1">
         <p
@@ -204,11 +217,7 @@ function DestinationRow({
           </p>
         )}
       </div>
-      <CopyButton
-        value={destination.url}
-        label="Copy destination"
-        className={compact ? "-my-1" : undefined}
-      />
+      <CopyButton value={destination.url} label="Copy destination" />
     </div>
   )
 }
@@ -225,24 +234,28 @@ function useImgFailed() {
   return { ref, failed, onError: () => setFailed(true) }
 }
 
+/** Same identity tile as the links page: bordered slab, favicon or a
+    crisp Globe fallback (the /api/favicon proxy 404s so onError fires). */
 function Favicon({ domain }: { domain: string }) {
   const { ref, failed, onError } = useImgFailed()
-  if (failed)
-    return (
-      <Globe
-        className="mt-0.5 size-5 shrink-0 text-muted-foreground"
-        strokeWidth={1.5}
-      />
-    )
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      ref={ref}
-      src={faviconUrl(domain)}
-      alt=""
-      loading="lazy"
-      onError={onError}
-      className="mt-0.5 size-5 shrink-0 rounded-[4px]"
-    />
+    <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-muted/30">
+      {!failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={ref}
+          src={faviconUrl(domain)}
+          alt=""
+          loading="lazy"
+          onError={onError}
+          className="size-4"
+        />
+      ) : (
+        <Globe
+          className="size-3.5 text-muted-foreground/60"
+          strokeWidth={1.75}
+        />
+      )}
+    </span>
   )
 }
