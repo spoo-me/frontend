@@ -6,6 +6,7 @@ import { getAlpha2Codes } from "i18n-iso-countries"
 import { LONG_URL_MAX_LENGTH, validDestinationUrl } from "@/lib/validation"
 import { handlePublicStats } from "./public"
 import { handlePublicPreview } from "./public-preview"
+import { handleContact, handleReports } from "./reports"
 import {
   buildDomains,
   buildGrants,
@@ -901,6 +902,15 @@ async function handle(req: NextRequest, path: string[]) {
         meta_tags: link.meta_tags,
       })
     }
+
+    /* ---------- abuse-report intake + contact (optional auth) ---------- */
+    case "POST /v1/contact":
+      return handleContact(body)
+    case "POST /v1/reports":
+      return handleReports(
+        body,
+        req.cookies.has("access_token") || req.cookies.has("refresh_token")
+      )
 
     /* ---------- urls list + management ---------- */
     case "GET /v1/urls": {
