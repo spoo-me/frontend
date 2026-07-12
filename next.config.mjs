@@ -65,8 +65,17 @@ const nextConfig = {
     ]
   },
   async rewrites() {
+    // Caddy composes backend errors as /_error/{status}?from&code — but a
+    // literal app/_error folder is a PRIVATE folder to the App Router
+    // (underscore prefix never routes), so the public URL rewrites to a
+    // routable internal segment instead.
+    const ERROR_REWRITE = {
+      source: "/_error/:status",
+      destination: "/error-pages/:status",
+    }
     if (MOCK) {
       return [
+        ERROR_REWRITE,
         { source: "/auth/:path*", destination: "/api/mock/auth/:path*" },
         { source: "/oauth/:path*", destination: "/api/mock/oauth/:path*" },
         { source: "/api/v1/:path*", destination: "/api/mock/v1/:path*" },
@@ -82,6 +91,7 @@ const nextConfig = {
     // cookies first-party and sidesteps CORS entirely (the backend's
     // private CORS policy doesn't need to know about this origin).
     return [
+      ERROR_REWRITE,
       { source: "/auth/:path*", destination: `${SPOO_API_URL}/auth/:path*` },
       { source: "/oauth/:path*", destination: `${SPOO_API_URL}/oauth/:path*` },
       {

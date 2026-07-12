@@ -227,6 +227,7 @@ export type UiAction =
   | "composer_tab_opened"
   | "chart_expanded"
   | "app_explored"
+  | "error_alias_claimed"
 
 /** `detail` is a low-cardinality qualifier (a preset token, a filter key,
     a command target) — never free text or user content. */

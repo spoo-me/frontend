@@ -503,3 +503,14 @@
   animation: gate-appear 200ms ease-out 300ms backwards;
 }
 
+
+/* Error pages: the 404 fisherman's hook drifts, nothing bites. */
+@keyframes hook-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
