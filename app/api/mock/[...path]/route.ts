@@ -5,6 +5,7 @@ import { getAlpha2Codes } from "i18n-iso-countries"
 
 import { LONG_URL_MAX_LENGTH, validDestinationUrl } from "@/lib/validation"
 import { handlePublicStats } from "./public"
+import { handlePublicPreview } from "./public-preview"
 import {
   buildDomains,
   buildGrants,
@@ -1068,13 +1069,7 @@ async function handle(req: NextRequest, path: string[]) {
   }
 
   /* ---------- public link surfaces (no session required) ---------- */
-  if (
-    path[0] === "v1" &&
-    path[1] === "public" &&
-    path[2] === "stats" &&
-    path[3] &&
-    (req.method === "GET" || req.method === "POST")
-  ) {
+  if (path[0] === "v1" && path[1] === "public" && path[3]) {
     // Emoji aliases arrive percent-encoded through the rewrite.
     let code = path[3]
     try {
@@ -1082,7 +1077,15 @@ async function handle(req: NextRequest, path: string[]) {
     } catch {
       /* keep the raw segment */
     }
-    return handlePublicStats(code, req.method, body, params)
+    if (
+      path[2] === "stats" &&
+      (req.method === "GET" || req.method === "POST")
+    ) {
+      return handlePublicStats(code, req.method, body, params)
+    }
+    if (path[2] === "preview" && req.method === "GET") {
+      return handlePublicPreview(code)
+    }
   }
 
   /* ---------- stats + export ---------- */
