@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { notFound } from "next/navigation"
 import { Server } from "lucide-react"
 
 import { Header } from "@/components/layout/header"
@@ -7,6 +8,7 @@ import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Button } from "@/components/ui/button"
+import { PRICING_ENABLED } from "@/lib/flags"
 import { PricingTiers, PricingTable, PricingFaq } from "./pricing-client"
 
 export const metadata: Metadata = {
@@ -16,6 +18,8 @@ export const metadata: Metadata = {
 }
 
 export default function PricingPage() {
+  if (!PRICING_ENABLED) notFound()
+
   return (
     <>
       <Header />

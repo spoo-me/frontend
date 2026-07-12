@@ -2,6 +2,7 @@ import posthog from "posthog-js"
 
 import type { AuthUser } from "@/lib/api/auth"
 import type { ShortenInput, UpdateUrlInput } from "@/lib/api/links"
+import { POSTHOG_KEY } from "@/lib/flags"
 import type { OnboardingPath, OnboardingStep } from "@/lib/onboarding"
 
 /**
@@ -18,7 +19,7 @@ import type { OnboardingPath, OnboardingStep } from "@/lib/onboarding"
  * passwords, tokens and emails never leave the app; keep it that way.
  */
 
-const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY
+const KEY = POSTHOG_KEY
 
 let ready = false
 

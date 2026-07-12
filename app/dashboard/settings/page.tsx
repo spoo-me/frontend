@@ -15,6 +15,7 @@ import {
   type AuthUser,
   type OAuthProviderName,
 } from "@/lib/api"
+import { PRICING_ENABLED } from "@/lib/flags"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/format"
 import { SESSION_KEY, useAuth } from "@/components/auth/auth-context"
@@ -295,11 +296,13 @@ export default function SettingsPage() {
               </span>
             )}
           </Row>
-          <Row label="Plan">
-            <span className="rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 font-mono text-[11px] uppercase">
-              {user.plan ?? "free"}
-            </span>
-          </Row>
+          {PRICING_ENABLED && (
+            <Row label="Plan">
+              <span className="rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 font-mono text-[11px] uppercase">
+                {user.plan ?? "free"}
+              </span>
+            </Row>
+          )}
           <Row label="Theme">
             <ThemeToggle />
           </Row>

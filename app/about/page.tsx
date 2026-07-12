@@ -12,7 +12,7 @@ import { siteConfig } from "@/lib/site-config"
 export const metadata: Metadata = {
   title: "About: the link platform built for developers",
   description:
-    "spoo.me is an open-source, developer-first link management platform: free forever, self-hostable, API-first.",
+    "spoo.me is an open-source, developer-first link management platform: API-first, self-hostable, and free of dark patterns.",
 }
 
 type Person = { name: string; role: string; avatar: number }
@@ -53,8 +53,8 @@ const pillars = [
     body: "Every component of the platform is Apache 2.0: the link service, dashboard, SDKs, native apps, and docs. Read the source, fork it, run it.",
   },
   {
-    title: "Free, no asterisks",
-    body: "No premium tier, no upsell, no metered limits. The complete feature set is available to every account. Funded by sponsors, not subscriptions.",
+    title: "Generous by default",
+    body: "No ads, no selling click data, no dark patterns. Personal projects live comfortably on the free tier — the platform is funded by the people it serves, not by your data.",
   },
   {
     title: "API-first",
@@ -126,18 +126,17 @@ export default function AboutPage() {
                   Why it exists.
                 </p>
                 <p>
-                  Link shorteners follow a predictable pattern: a free tier with
-                  caps, a paid plan with the features you actually need, and a
-                  quiet erosion of ownership over your own redirect data. spoo
-                  was built to flip that pattern.
+                  Link shorteners follow a predictable pattern: your redirects
+                  live on someone else&apos;s infrastructure, on someone
+                  else&apos;s terms, with a quiet erosion of ownership over your
+                  own redirect data. spoo was built to flip that pattern.
                 </p>
                 <p>
-                  The complete feature set (analytics, custom domains, API
-                  access, every native client) ships free for every user. The
-                  entire stack is open source and self-hostable, so the option
-                  to leave is always one command away. The project is funded by
-                  sponsors who believe link infrastructure should be a public
-                  utility, not a subscription.
+                  The entire stack (analytics, custom domains, API access, every
+                  native client) is open source and self-hostable, so the option
+                  to leave is always one command away. Link infrastructure
+                  should behave like a public utility: transparent, portable,
+                  and never holding your data hostage.
                 </p>
               </div>
             </div>
