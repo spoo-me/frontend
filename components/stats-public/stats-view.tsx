@@ -21,8 +21,9 @@ import {
 } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Panel, SectionHeader } from "@/components/dashboard/section"
+import { Panel } from "@/components/dashboard/section"
 import { KpiCard } from "@/components/dashboard/kpi"
+import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import {
@@ -44,7 +45,8 @@ const RANGES = [
   { label: "90d", days: 90, phrase: "last 90 days" },
 ] as const
 
-/** Secondary breakdowns take the grey ramp; clicks-over-time keeps violet. */
+/** The breakdown grid takes the grey ramp; clicks-over-time and the
+    closing countries map carry the brand accent. */
 const NEUTRAL_ACCENT = {
   "--chart-accent": "var(--chart-neutral)",
 } as React.CSSProperties
@@ -206,12 +208,13 @@ export function PublicStatsView({
         />
       </div>
 
-      {/* Clicks over time — the one violet-loud chart on the page */}
-      <div className="mt-10">
-        <SectionHeader
+      {/* Clicks over time */}
+      <div className="mt-8">
+        <WidgetShell
           icon={ChartLine}
           title="Clicks over time"
-          action={
+          panelClassName="p-4"
+          quickControls={
             <HeaderControls>
               <MetricControl value={metric} onChange={setMetric} />
               <AdaptiveSegmented
@@ -225,60 +228,61 @@ export function PublicStatsView({
               />
             </HeaderControls>
           }
-        />
-        <Panel className="mt-2 p-4">
+        >
           <ClicksChart
             series={timeSeriesOf(s)}
             hourly={s.time_bucket_info.strategy === "hourly"}
             metric={metric}
           />
-        </Panel>
+        </WidgetShell>
       </div>
 
-      {/* Breakdowns — fixed curated arrangement, grey ramp */}
-      <div style={NEUTRAL_ACCENT}>
-        <div className="mt-10">
-          <BreakdownSection
-            dimension="country"
-            title="Countries"
-            icon={DIMENSION_META.country.icon}
-            rows={dimensionRowsOf(s, "country")}
-            map
-            limit={8}
-            panelClassName="h-80"
-          />
-        </div>
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <BreakdownSection
-            dimension="referrer"
-            title={DIMENSION_META.referrer.title}
-            icon={DIMENSION_META.referrer.icon}
-            rows={dimensionRowsOf(s, "referrer")}
-          />
-          <BreakdownSection
-            dimension={extraDimension.key}
-            title={extraDimension.title}
-            icon={extraDimension.icon}
-            rows={
-              extraDimension.key === "bots"
-                ? ((s.metrics?.["clicks_by_bots"] ?? []) as DimensionRow[])
-                : dimensionRowsOf(s, "city")
-            }
-            hasUnique={extraDimension.key !== "bots"}
-          />
-          <BreakdownSection
-            dimension="browser"
-            title={DIMENSION_META.browser.title}
-            icon={DIMENSION_META.browser.icon}
-            rows={dimensionRowsOf(s, "browser")}
-          />
-          <BreakdownSection
-            dimension="os"
-            title={DIMENSION_META.os.title}
-            icon={DIMENSION_META.os.icon}
-            rows={dimensionRowsOf(s, "os")}
-          />
-        </div>
+      {/* Breakdowns: grey ramp for the grid; the map keeps the brand
+          accent as the page's closing geographic moment. */}
+      <div
+        className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
+        style={NEUTRAL_ACCENT}
+      >
+        <BreakdownSection
+          dimension="browser"
+          title={DIMENSION_META.browser.title}
+          icon={DIMENSION_META.browser.icon}
+          rows={dimensionRowsOf(s, "browser")}
+        />
+        <BreakdownSection
+          dimension="os"
+          title={DIMENSION_META.os.title}
+          icon={DIMENSION_META.os.icon}
+          rows={dimensionRowsOf(s, "os")}
+        />
+        <BreakdownSection
+          dimension="referrer"
+          title={DIMENSION_META.referrer.title}
+          icon={DIMENSION_META.referrer.icon}
+          rows={dimensionRowsOf(s, "referrer")}
+        />
+        <BreakdownSection
+          dimension={extraDimension.key}
+          title={extraDimension.title}
+          icon={extraDimension.icon}
+          rows={
+            extraDimension.key === "bots"
+              ? ((s.metrics?.["clicks_by_bots"] ?? []) as DimensionRow[])
+              : dimensionRowsOf(s, "city")
+          }
+          hasUnique={extraDimension.key !== "bots"}
+        />
+      </div>
+      <div className="mt-6">
+        <BreakdownSection
+          dimension="country"
+          title={DIMENSION_META.country.title}
+          icon={DIMENSION_META.country.icon}
+          rows={dimensionRowsOf(s, "country")}
+          map
+          limit={8}
+          panelClassName="h-80"
+        />
       </div>
 
       {/* Exports + the visitor-shaped CTA */}

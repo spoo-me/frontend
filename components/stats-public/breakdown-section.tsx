@@ -10,19 +10,19 @@ import type { BreakdownMetric } from "@/components/dashboard/breakdown-list"
 import { BreakdownList } from "@/components/dashboard/breakdown-list"
 import { BreakdownTable } from "@/components/dashboard/analytics/widgets/breakdown-table"
 import { CountryMap } from "@/components/dashboard/analytics/country-map"
-import { Panel, SectionHeader } from "@/components/dashboard/section"
 import {
   HeaderControls,
   MetricControl,
 } from "@/components/dashboard/analytics/metric-control"
 import { Segmented } from "@/components/dashboard/segmented"
+import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
 
 /**
  * One public-page breakdown: the analytics widget's read-mode anatomy —
- * metric control, chart<->table flip with the overlapping crossfade, the
- * scroll fade mask — reusing the same primitives, but composed under a
- * SectionHeader + Panel instead of the widget shell. Fixed panel height
- * keeps sibling sections uniform regardless of row counts.
+ * shell, metric control, chart<->table flip with the overlapping
+ * crossfade, the scroll fade mask — reusing the same primitives with a
+ * fixed panel height so sibling sections stay uniform regardless of row
+ * counts. No edit affordances: the arrangement is curated, not a grid.
  */
 export function BreakdownSection({
   dimension,
@@ -49,65 +49,63 @@ export function BreakdownSection({
   const [mode, setMode] = React.useState<"chart" | "table">("chart")
 
   return (
-    <div>
-      <SectionHeader
-        icon={icon}
-        title={title}
-        action={
-          <HeaderControls>
-            {hasUnique && <MetricControl value={metric} onChange={setMetric} />}
-            <Segmented
-              value={mode}
-              onChange={setMode}
-              options={[
-                {
-                  value: "chart",
-                  icon: map ? MapIcon : ChartBar,
-                  ariaLabel: "chart view",
-                },
-                { value: "table", icon: Table2, ariaLabel: "table view" },
-              ]}
+    <WidgetShell
+      icon={icon}
+      title={title}
+      /* flex-none: the shell's panel is flex-1 for grid cells; here the
+         section owns its height (absolute crossfade children have none). */
+      panelClassName={cn("h-72 flex-none", panelClassName)}
+      quickControls={
+        <HeaderControls>
+          {hasUnique && <MetricControl value={metric} onChange={setMetric} />}
+          <Segmented
+            value={mode}
+            onChange={setMode}
+            options={[
+              {
+                value: "chart",
+                icon: map ? MapIcon : ChartBar,
+                ariaLabel: "chart view",
+              },
+              { value: "table", icon: Table2, ariaLabel: "table view" },
+            ]}
+          />
+        </HeaderControls>
+      }
+    >
+      {/* Overlapping crossfade: views stay absolutely positioned so the
+          panel is never empty mid-switch (widget behavior). */}
+      <AnimatePresence>
+        <motion.div
+          key={mode}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className={cn("absolute inset-0", mode === "chart" && "p-2")}
+        >
+          {mode === "table" ? (
+            <BreakdownTable
+              dimension={dimension}
+              title={title}
+              rows={rows}
+              metric={metric}
+              fullCols={hasUnique}
             />
-          </HeaderControls>
-        }
-      />
-      <Panel
-        className={cn("relative mt-2 h-72 overflow-hidden", panelClassName)}
-      >
-        {/* Overlapping crossfade: views stay absolutely positioned so the
-            panel is never empty mid-switch (widget behavior, shell-less). */}
-        <AnimatePresence>
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className={cn("absolute inset-0", mode === "chart" && "p-2")}
-          >
-            {mode === "table" ? (
-              <BreakdownTable
+          ) : map ? (
+            <CountryMap rows={rows} metric={metric} />
+          ) : (
+            <div className="h-full overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">
+              <BreakdownList
                 dimension={dimension}
-                title={title}
                 rows={rows}
                 metric={metric}
-                fullCols={hasUnique}
+                limit={limit}
               />
-            ) : map ? (
-              <CountryMap rows={rows} metric={metric} />
-            ) : (
-              <div className="h-full overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">
-                <BreakdownList
-                  dimension={dimension}
-                  rows={rows}
-                  metric={metric}
-                  limit={limit}
-                />
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </Panel>
-    </div>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </WidgetShell>
   )
 }
