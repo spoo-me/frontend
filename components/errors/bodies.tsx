@@ -1,11 +1,14 @@
-import { AliasClaim } from "@/components/errors/alias-claim"
+import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
 
 /**
- * The quieter error bodies. 410 sells creation hardest (an ended link is
- * a visitor with intent and nowhere to go). 451 is the sober flagship:
- * reputation defense, zero fun, zero fearmongering, and it never echoes
- * user-controlled input. 429/5xx stay dry and small.
+ * The quieter error bodies. 410 is a true dead end — the visitor wanted a
+ * destination that's gone, so no shortener box, no pitch, just the honest
+ * exit (a 404's claim box works because THAT alias is free; here it isn't).
+ * 451 is the sober flagship: reputation defense, zero fun, zero
+ * fearmongering, and it never echoes user-controlled input. 429/5xx stay
+ * dry and small.
  */
 
 export function GoneBody() {
@@ -15,13 +18,13 @@ export function GoneBody() {
         This link has ended.
       </h1>
       <p className="mt-3 text-muted-foreground text-sm">
-        It expired, reached its click limit, or was paused by its owner. Where
-        it pointed stays private.
+        It expired, reached its click limit, or was paused by its owner.
       </p>
-      <p className="label-mono mt-10 mb-3 text-muted-foreground/70">
-        make one that&apos;s yours
-      </p>
-      <AliasClaim />
+      <div className="mt-8">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/">Go home</Link>
+        </Button>
+      </div>
     </div>
   )
 }
