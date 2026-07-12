@@ -2,12 +2,15 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { AliasClaim } from "@/components/errors/alias-claim"
 
 /** Creatable-alias shape (mirrors the backend + mock validator). */
 const ALIAS_RE = /^[a-zA-Z0-9_-]{3,16}$/
+
+const emptySubscribe = () => () => {}
 
 function aliasFrom(from?: string): string | null {
   if (!from) return null
@@ -24,7 +27,20 @@ function aliasFrom(from?: string): string | null {
  * lives in the shell's watermark scene, fishing either way.
  */
 export function NotFoundBody({ from }: { from?: string }) {
-  const alias = aliasFrom(from)
+  // Next-internal 404s (app/not-found.tsx) carry no `from` — recover the
+  // path client-side so a direct hit gets the same claim hook the
+  // Caddy-composed /_error URL gets. The server snapshot is false so the
+  // hydration render matches the pathname-less server HTML; the swap
+  // happens one render later.
+  const pathname = usePathname()
+  const hydrated = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
+  const effectiveFrom =
+    from ?? (hydrated && pathname && pathname !== "/" ? pathname : undefined)
+  const alias = aliasFrom(effectiveFrom)
   const [available, setAvailable] = React.useState<boolean | null>(null)
   const [claimed, setClaimed] = React.useState(false)
 
@@ -86,7 +102,7 @@ export function NotFoundBody({ from }: { from?: string }) {
                   />
                 </>
               )}
-              {available === false && <TypoFallback />}
+              {available === false && <TypoFallback from={effectiveFrom} />}
             </div>
           </>
         ) : (
@@ -95,7 +111,7 @@ export function NotFoundBody({ from }: { from?: string }) {
               This page doesn&apos;t exist.
             </h1>
             <div className="mt-6 min-h-32">
-              <TypoFallback from={from} />
+              <TypoFallback from={effectiveFrom} />
             </div>
           </>
         )}
