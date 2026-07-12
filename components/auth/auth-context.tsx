@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       queryClient.setQueryData(SESSION_KEY, user)
       if (user) broadcast("signed-in")
     },
-    [queryClient, broadcast],
+    [queryClient, broadcast]
   )
 
   const signOut = React.useCallback(async () => {
@@ -150,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser,
       signOut,
     }),
-    [data, isPending, refresh, setUser, signOut],
+    [data, isPending, refresh, setUser, signOut]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

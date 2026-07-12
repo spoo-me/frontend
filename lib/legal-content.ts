@@ -18,90 +18,90 @@ export const legalDocs: LegalDoc[] = [
     description: "What we collect, why, and the rights you have over it.",
     toc: [
       {
-            "id": "information-we-collect",
-            "title": "Information We Collect"
+        id: "information-we-collect",
+        title: "Information We Collect",
       },
       {
-            "id": "log-files",
-            "title": "Log Files"
+        id: "log-files",
+        title: "Log Files",
       },
       {
-            "id": "cookies-and-web-beacons",
-            "title": "Cookies and Web Beacons"
+        id: "cookies-and-web-beacons",
+        title: "Cookies and Web Beacons",
       },
       {
-            "id": "how-we-use-your-information",
-            "title": "How We Use Your Information"
+        id: "how-we-use-your-information",
+        title: "How We Use Your Information",
       },
       {
-            "id": "data-sharing-and-third-parties",
-            "title": "Data Sharing and Third Parties"
+        id: "data-sharing-and-third-parties",
+        title: "Data Sharing and Third Parties",
       },
       {
-            "id": "privacy-policies",
-            "title": "Privacy Policies"
+        id: "privacy-policies",
+        title: "Privacy Policies",
       },
       {
-            "id": "data-security",
-            "title": "Data Security"
+        id: "data-security",
+        title: "Data Security",
       },
       {
-            "id": "data-retention",
-            "title": "Data Retention"
+        id: "data-retention",
+        title: "Data Retention",
       },
       {
-            "id": "your-rights-gdpr-ccpa-compliance",
-            "title": "Your Rights (GDPR & CCPA Compliance)"
+        id: "your-rights-gdpr-ccpa-compliance",
+        title: "Your Rights (GDPR & CCPA Compliance)",
       },
       {
-            "id": "international-data-transfers",
-            "title": "International Data Transfers"
+        id: "international-data-transfers",
+        title: "International Data Transfers",
       },
       {
-            "id": "email-verification-and-communications",
-            "title": "Email Verification and Communications"
+        id: "email-verification-and-communications",
+        title: "Email Verification and Communications",
       },
       {
-            "id": "third-party-privacy-policies",
-            "title": "Third Party Privacy Policies"
+        id: "third-party-privacy-policies",
+        title: "Third Party Privacy Policies",
       },
       {
-            "id": "analytics",
-            "title": "Analytics"
+        id: "analytics",
+        title: "Analytics",
       },
       {
-            "id": "personal-data",
-            "title": "Personal Data"
+        id: "personal-data",
+        title: "Personal Data",
       },
       {
-            "id": "children-s-information",
-            "title": "Children's Information"
+        id: "children-s-information",
+        title: "Children's Information",
       },
       {
-            "id": "changes-to-this-privacy-policy",
-            "title": "Changes to This Privacy Policy"
+        id: "changes-to-this-privacy-policy",
+        title: "Changes to This Privacy Policy",
       },
       {
-            "id": "online-privacy-policy-only",
-            "title": "Online Privacy Policy Only"
+        id: "online-privacy-policy-only",
+        title: "Online Privacy Policy Only",
       },
       {
-            "id": "consent",
-            "title": "Consent"
+        id: "consent",
+        title: "Consent",
       },
       {
-            "id": "data-protection-officer",
-            "title": "Data Protection Officer"
+        id: "data-protection-officer",
+        title: "Data Protection Officer",
       },
       {
-            "id": "update",
-            "title": "Update"
+        id: "update",
+        title: "Update",
       },
       {
-            "id": "contact-us",
-            "title": "Contact Us"
-      }
-],
+        id: "contact-us",
+        title: "Contact Us",
+      },
+    ],
     html: `<p>At Spoo.me, accessible from <a href="https://spoo.me">https://spoo.me</a>, one of our main priorities is the
         privacy of our visitors. This Privacy Policy document contains types of information that is collected and 
         recorded by Spoo.me and how we use it.</p>
@@ -382,85 +382,86 @@ export const legalDocs: LegalDoc[] = [
     slug: "terms",
     title: "Terms of Service",
     lastUpdated: "November 16, 2025",
-    description: "The rules of using spoo.me, in plain language where possible.",
+    description:
+      "The rules of using spoo.me, in plain language where possible.",
     toc: [
       {
-            "id": "account-registration-and-eligibility",
-            "title": "Account Registration and Eligibility"
+        id: "account-registration-and-eligibility",
+        title: "Account Registration and Eligibility",
       },
       {
-            "id": "account-security-and-responsibilities",
-            "title": "Account Security and Responsibilities"
+        id: "account-security-and-responsibilities",
+        title: "Account Security and Responsibilities",
       },
       {
-            "id": "api-usage-terms-and-limitations",
-            "title": "API Usage Terms and Limitations"
+        id: "api-usage-terms-and-limitations",
+        title: "API Usage Terms and Limitations",
       },
       {
-            "id": "user-content-and-intellectual-property",
-            "title": "User Content and Intellectual Property"
+        id: "user-content-and-intellectual-property",
+        title: "User Content and Intellectual Property",
       },
       {
-            "id": "account-termination-and-suspension",
-            "title": "Account Termination and Suspension"
+        id: "account-termination-and-suspension",
+        title: "Account Termination and Suspension",
       },
       {
-            "id": "service-modifications-and-availability",
-            "title": "Service Modifications and Availability"
+        id: "service-modifications-and-availability",
+        title: "Service Modifications and Availability",
       },
       {
-            "id": "cookies",
-            "title": "Cookies"
+        id: "cookies",
+        title: "Cookies",
       },
       {
-            "id": "license",
-            "title": "License"
+        id: "license",
+        title: "License",
       },
       {
-            "id": "hyperlinking-to-our-content",
-            "title": "Hyperlinking to our Content"
+        id: "hyperlinking-to-our-content",
+        title: "Hyperlinking to our Content",
       },
       {
-            "id": "prohibited-uses",
-            "title": "Prohibited Uses"
+        id: "prohibited-uses",
+        title: "Prohibited Uses",
       },
       {
-            "id": "iframes",
-            "title": "iFrames"
+        id: "iframes",
+        title: "iFrames",
       },
       {
-            "id": "content-liability",
-            "title": "Content Liability"
+        id: "content-liability",
+        title: "Content Liability",
       },
       {
-            "id": "reservation-of-rights",
-            "title": "Reservation of Rights"
+        id: "reservation-of-rights",
+        title: "Reservation of Rights",
       },
       {
-            "id": "removal-of-links-from-our-website",
-            "title": "Removal of links from our website"
+        id: "removal-of-links-from-our-website",
+        title: "Removal of links from our website",
       },
       {
-            "id": "disclaimer",
-            "title": "Disclaimer"
+        id: "disclaimer",
+        title: "Disclaimer",
       },
       {
-            "id": "governing-law-and-dispute-resolution",
-            "title": "Governing Law and Dispute Resolution"
+        id: "governing-law-and-dispute-resolution",
+        title: "Governing Law and Dispute Resolution",
       },
       {
-            "id": "severability",
-            "title": "Severability"
+        id: "severability",
+        title: "Severability",
       },
       {
-            "id": "contact-and-legal-notices",
-            "title": "Contact and Legal Notices"
+        id: "contact-and-legal-notices",
+        title: "Contact and Legal Notices",
       },
       {
-            "id": "updates-to-terms",
-            "title": "Updates to Terms"
-      }
-],
+        id: "updates-to-terms",
+        title: "Updates to Terms",
+      },
+    ],
     html: `<p>Welcome to spoo.me!</p>
 
 <p>These terms of service outline the rules and regulations for the use of spoo.me's Website, located at

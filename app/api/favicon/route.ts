@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const upstream = await fetch(
     `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE&url=https://${encodeURIComponent(domain)}&size=${size}`,
-    { headers: { Accept: "image/*" } },
+    { headers: { Accept: "image/*" } }
   )
   if (!upstream.ok || !upstream.body)
     return new NextResponse(null, { status: 404 })

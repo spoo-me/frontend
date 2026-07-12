@@ -29,7 +29,7 @@ export function ThemeToggle() {
       role="radiogroup"
       aria-label="Theme"
       suppressHydrationWarning
-      className="border-border/60 bg-background/40 inline-flex h-8 items-center rounded-full border p-0.5"
+      className="inline-flex h-8 items-center rounded-full border border-border/60 bg-background/40 p-0.5"
     >
       {modes.map(({ value, icon: Icon, label }) => {
         const isActive = mounted && active === value
@@ -47,14 +47,16 @@ export function ThemeToggle() {
             }}
             className={cn(
               "relative inline-flex size-7 items-center justify-center rounded-full transition-colors",
-              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+              isActive
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {isActive && (
               <motion.span
                 layoutId="theme-thumb"
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                className="ring-border/80 bg-muted/60 shadow-soft absolute inset-0 rounded-full ring-1 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                className="absolute inset-0 rounded-full bg-muted/60 shadow-soft ring-1 ring-border/80 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
               />
             )}
             <Icon className="relative z-10 size-3.5" />

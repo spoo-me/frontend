@@ -30,17 +30,22 @@ export default function OnboardingLayout({
     }
     // Email-password stragglers who closed the signup tab before entering
     // the OTP — everything past the welcome screen needs a verified email.
-    if (!user.email_verified && !onVerify && step !== "welcome" && step !== "") {
+    if (
+      !user.email_verified &&
+      !onVerify &&
+      step !== "welcome" &&
+      step !== ""
+    ) {
       router.replace("/onboarding/verify")
     }
   }, [loading, user, router, onVerify, step])
 
   return (
-    <div className="bg-background relative flex min-h-dvh flex-col overflow-hidden">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-background">
       {/* Faint brand presence, same register as the auth pages */}
       <div
         aria-hidden
-        className="bg-brand/[0.07] pointer-events-none absolute -top-40 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full blur-3xl"
+        className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-brand/[0.07] blur-3xl"
       />
 
       {/* Dub-style chrome: just the mark, centered — no progress meter */}
@@ -50,7 +55,7 @@ export default function OnboardingLayout({
 
       <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-14">
         {!user ? (
-          <span className="label-mono text-muted-foreground/60 animate-pulse text-[10px]">
+          <span className="label-mono animate-pulse text-[10px] text-muted-foreground/60">
             loading…
           </span>
         ) : (
@@ -64,7 +69,7 @@ export default function OnboardingLayout({
           {user ? (
             <>
               You&apos;re signed in as{" "}
-              <span className="ph-no-capture text-muted-foreground font-medium">
+              <span className="ph-no-capture font-medium text-muted-foreground">
                 {user.email}
               </span>
             </>
@@ -76,7 +81,7 @@ export default function OnboardingLayout({
             onClick={() => {
               void signOut().then(() => router.push("/login"))
             }}
-            className="border-border/60 text-muted-foreground hover:text-foreground hover:border-border rounded-lg border px-2.5 py-1 text-xs transition-colors"
+            className="rounded-lg border border-border/60 px-2.5 py-1 text-muted-foreground text-xs transition-colors hover:border-border hover:text-foreground"
           >
             Sign in as a different user
           </button>

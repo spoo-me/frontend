@@ -16,11 +16,17 @@ export const metadata: Metadata = {
     "Every official spoo.me client: Raycast, Chrome, Discord, Telegram, Windows, mobile, plus SDKs in Python, TypeScript, Rust, Go and C++.",
 }
 
-const groups: { id: string; title: string; description: string; categories: ConnectedApp["category"][] }[] = [
+const groups: {
+  id: string
+  title: string
+  description: string
+  categories: ConnectedApp["category"][]
+}[] = [
   {
     id: "extensions",
     title: "Extensions",
-    description: "Browser and launcher extensions for shortening from anywhere.",
+    description:
+      "Browser and launcher extensions for shortening from anywhere.",
     categories: ["extension"],
   },
   {
@@ -51,47 +57,47 @@ export default function AppsPage() {
         <PageFrame>
           <Section caption="Ecosystem">
             <div className="px-5 pt-28 pb-20 sm:px-9">
-          <SectionHeading
-            title={
-              <>
-                One link platform.{" "}
-                <span className="text-muted-foreground italic font-serif font-normal">
-                  Every surface.
-                </span>
-              </>
-            }
-            description="Pick the surface where you actually work. Every client talks to the same API."
-          />
+              <SectionHeading
+                title={
+                  <>
+                    One link platform.{" "}
+                    <span className="font-normal font-serif text-muted-foreground italic">
+                      Every surface.
+                    </span>
+                  </>
+                }
+                description="Pick the surface where you actually work. Every client talks to the same API."
+              />
 
-          <div className="mt-16 space-y-16">
-            {groups.map((group) => {
-              const apps = connectedApps.filter((a) =>
-                group.categories.includes(a.category),
-              )
-              return (
-                <section key={group.id} id={group.id} className="space-y-6">
-                  <header className="flex items-end justify-between gap-6">
-                    <div>
-                      <h2 className="text-foreground flex items-center gap-2 text-xl font-semibold tracking-tight sm:text-2xl">
-                        {group.title}
-                        <span className="text-muted-foreground/70 font-mono text-xs font-normal">
-                          {apps.length.toString().padStart(2, "0")}
-                        </span>
-                      </h2>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        {group.description}
-                      </p>
-                    </div>
-                  </header>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {apps.map((app) => (
-                      <AppCard key={app.slug} app={app} />
-                    ))}
-                  </div>
-                </section>
-              )
-            })}
-          </div>
+              <div className="mt-16 space-y-16">
+                {groups.map((group) => {
+                  const apps = connectedApps.filter((a) =>
+                    group.categories.includes(a.category)
+                  )
+                  return (
+                    <section key={group.id} id={group.id} className="space-y-6">
+                      <header className="flex items-end justify-between gap-6">
+                        <div>
+                          <h2 className="flex items-center gap-2 font-semibold text-foreground text-xl tracking-tight sm:text-2xl">
+                            {group.title}
+                            <span className="font-mono font-normal text-muted-foreground/70 text-xs">
+                              {apps.length.toString().padStart(2, "0")}
+                            </span>
+                          </h2>
+                          <p className="mt-1 text-muted-foreground text-sm">
+                            {group.description}
+                          </p>
+                        </div>
+                      </header>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {apps.map((app) => (
+                          <AppCard key={app.slug} app={app} />
+                        ))}
+                      </div>
+                    </section>
+                  )
+                })}
+              </div>
             </div>
           </Section>
         </PageFrame>
@@ -106,37 +112,37 @@ function AppCard({ app }: { app: ConnectedApp }) {
   return (
     <Link
       href={`/apps/${app.slug}`}
-      className="group border-border/60 bg-card/40 hover:bg-card hover:border-border relative flex items-center gap-4 rounded-xl border p-4 transition"
+      className="group relative flex items-center gap-4 rounded-xl border border-border/60 bg-card/40 p-4 transition hover:border-border hover:bg-card"
     >
       <span
-        className="border-border/60 bg-background flex size-11 shrink-0 items-center justify-center rounded-lg border"
+        className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background"
         style={{ color: app.color }}
       >
         {Icon ? <Icon className="size-5" /> : null}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <h3 className="text-foreground truncate text-sm font-semibold tracking-tight">
+          <h3 className="truncate font-semibold text-foreground text-sm tracking-tight">
             {app.name}
           </h3>
           {app.status !== "live" && (
             <span
               className={cn(
-                "rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider",
+                "rounded-full px-1.5 py-0.5 font-medium text-[9px] uppercase tracking-wider",
                 app.status === "beta"
                   ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  : "bg-muted text-muted-foreground",
+                  : "bg-muted text-muted-foreground"
               )}
             >
               {app.status}
             </span>
           )}
         </div>
-        <p className="text-muted-foreground mt-0.5 truncate text-xs">
+        <p className="mt-0.5 truncate text-muted-foreground text-xs">
           {app.tagline}
         </p>
       </div>
-      <ArrowUpRight className="text-muted-foreground/40 group-hover:text-foreground size-4 shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      <ArrowUpRight className="size-4 shrink-0 text-muted-foreground/40 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground" />
     </Link>
   )
 }

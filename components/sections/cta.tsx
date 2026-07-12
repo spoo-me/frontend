@@ -21,7 +21,7 @@ export function CTA() {
         aria-hidden
         className="pointer-events-none absolute -inset-x-40 inset-y-0 overflow-hidden [mask-image:radial-gradient(ellipse_70%_80%_at_50%_100%,black,transparent)]"
       >
-        <div className="bg-brand/20 absolute bottom-[-12rem] left-1/2 size-[28rem] -translate-x-1/2 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-12rem] left-1/2 size-[28rem] -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
       </div>
       <div
         aria-hidden
@@ -35,15 +35,15 @@ export function CTA() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative mx-auto max-w-2xl"
       >
-        <h2 className="text-foreground text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+        <h2 className="text-balance font-semibold text-4xl text-foreground tracking-tight sm:text-5xl">
           Stop paying for{" "}
-          <span className="text-muted-foreground italic font-serif font-normal">
+          <span className="font-normal font-serif text-muted-foreground italic">
             link management.
           </span>
         </h2>
-        <p className="text-muted-foreground mx-auto mt-5 max-w-xl text-balance text-base sm:text-lg">
-          spoo.me is free, open source, and built to grow with you. From a single
-          link to 100M clicks, same product, no upsell.
+        <p className="mx-auto mt-5 max-w-xl text-balance text-base text-muted-foreground sm:text-lg">
+          spoo.me is free, open source, and built to grow with you. From a
+          single link to 100M clicks, same product, no upsell.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="h-10 px-4">

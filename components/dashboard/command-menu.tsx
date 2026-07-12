@@ -51,7 +51,7 @@ const chordLabel = (href: string) => `G ${CHORDS[href]}`
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="text-muted-foreground/80 font-mono text-[11px] tracking-[0.2em]">
+    <kbd className="font-mono text-[11px] text-muted-foreground/80 tracking-[0.2em]">
       {children}
     </kbd>
   )
@@ -71,10 +71,13 @@ function Item({
   return (
     <CommandPrimitive.Item
       onSelect={onSelect}
-      className="data-[selected=true]:bg-accent/70 flex h-10 cursor-default items-center gap-3 rounded-lg px-2.5 text-sm select-none"
+      className="flex h-10 cursor-default select-none items-center gap-3 rounded-lg px-2.5 text-sm data-[selected=true]:bg-accent/70"
     >
-      <Icon className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
-      <span className="text-foreground flex-1">{children}</span>
+      <Icon
+        className="size-4 shrink-0 text-muted-foreground"
+        strokeWidth={1.75}
+      />
+      <span className="flex-1 text-foreground">{children}</span>
       {chord && <Kbd>{chord}</Kbd>}
     </CommandPrimitive.Item>
   )
@@ -92,7 +95,10 @@ function LinkFavicon({ url }: { url: string | null }) {
   const [failed, setFailed] = React.useState(false)
   if (!domain || failed)
     return (
-      <Link2 className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
+      <Link2
+        className="size-4 shrink-0 text-muted-foreground"
+        strokeWidth={1.75}
+      />
     )
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -131,7 +137,7 @@ export function DashboardCommandMenu() {
       setOpen(false)
       router.push(href)
     },
-    [router],
+    [router]
   )
 
   // Dynamic results: real links (server search) and domains join the
@@ -151,11 +157,12 @@ export function DashboardCommandMenu() {
     enabled: open && domainsEnabled,
     staleTime: 60_000,
   })
-  const domainResults = domainsEnabled && q.length >= 2
-    ? (domainsQuery.data?.items ?? [])
-        .filter((d) => d.fqdn.toLowerCase().includes(q.toLowerCase()))
-        .slice(0, 4)
-    : []
+  const domainResults =
+    domainsEnabled && q.length >= 2
+      ? (domainsQuery.data?.items ?? [])
+          .filter((d) => d.fqdn.toLowerCase().includes(q.toLowerCase()))
+          .slice(0, 4)
+      : []
 
   React.useEffect(() => {
     // G-then-letter chords are GLOBAL page shortcuts (GitHub/Linear style).
@@ -174,7 +181,7 @@ export function DashboardCommandMenu() {
       }
       if (e.metaKey || e.ctrlKey || e.altKey || typingTarget(e.target)) return
       const dialogOpen = document.querySelector(
-        "[role=dialog][data-state=open], [role=alertdialog][data-state=open]",
+        "[role=dialog][data-state=open], [role=alertdialog][data-state=open]"
       )
 
       const now = Date.now()
@@ -191,9 +198,8 @@ export function DashboardCommandMenu() {
         }
         if (e.key === "/") {
           e.preventDefault()
-          const search = document.querySelector<HTMLInputElement>(
-            "[data-page-search]",
-          )
+          const search =
+            document.querySelector<HTMLInputElement>("[data-page-search]")
           if (search) search.focus()
           else setOpen(true)
           return
@@ -206,7 +212,7 @@ export function DashboardCommandMenu() {
       }
       if (chordArmed.current && now - chordArmed.current < 800) {
         const hit = Object.entries(CHORDS).find(
-          ([, key]) => key.toLowerCase() === e.key.toLowerCase(),
+          ([, key]) => key.toLowerCase() === e.key.toLowerCase()
         )
         if (hit) {
           e.preventDefault()
@@ -227,10 +233,8 @@ export function DashboardCommandMenu() {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 z-50 bg-black/25 dark:bg-black/50" />
-        <DialogPrimitive.Content
-          className="data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-[16%] left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 outline-none sm:max-w-xl"
-        >
+        <DialogPrimitive.Overlay className="data-open:fade-in-0 data-closed:fade-out-0 fixed inset-0 z-50 bg-black/25 data-closed:animate-out data-open:animate-in dark:bg-black/50" />
+        <DialogPrimitive.Content className="data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-[16%] left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 outline-none data-closed:animate-out data-open:animate-in sm:max-w-xl">
           <DialogPrimitive.Title className="sr-only">
             Command palette
           </DialogPrimitive.Title>
@@ -238,28 +242,28 @@ export function DashboardCommandMenu() {
             Search the dashboard
           </DialogPrimitive.Description>
 
-          <CommandPrimitive className="border-border/60 bg-muted dark:bg-popover flex flex-col overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgba(0,0,0,0.06),0_16px_48px_-12px_rgba(0,0,0,0.18)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.5),0_16px_48px_-12px_rgba(0,0,0,0.6)]">
+          <CommandPrimitive className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-[0_1px_2px_rgba(0,0,0,0.06),0_16px_48px_-12px_rgba(0,0,0,0.18)] dark:bg-popover dark:shadow-[0_1px_2px_rgba(0,0,0,0.5),0_16px_48px_-12px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2.5 px-4">
               <Search
-                className="text-muted-foreground/70 size-4 shrink-0"
+                className="size-4 shrink-0 text-muted-foreground/70"
                 strokeWidth={1.75}
               />
               <CommandPrimitive.Input
                 value={query}
                 onValueChange={setQuery}
                 placeholder="Type a command or search…"
-                className="placeholder:text-muted-foreground/60 h-12 w-full bg-transparent text-sm outline-none"
+                className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
               />
             </div>
 
-            <div className="border-border/60 bg-popover dark:bg-secondary/50 mx-2 mb-1 rounded-xl border">
+            <div className="mx-2 mb-1 rounded-xl border border-border/60 bg-popover dark:bg-secondary/50">
               <CommandPrimitive.List
                 className={cn(
-                  "max-h-[352px] overflow-x-hidden overflow-y-auto p-1.5",
-                  "[mask-image:linear-gradient(to_bottom,black,black_calc(100%-16px),transparent)]",
+                  "max-h-[352px] overflow-y-auto overflow-x-hidden p-1.5",
+                  "[mask-image:linear-gradient(to_bottom,black,black_calc(100%-16px),transparent)]"
                 )}
               >
-                <CommandPrimitive.Empty className="text-muted-foreground px-2.5 py-8 text-center text-sm">
+                <CommandPrimitive.Empty className="px-2.5 py-8 text-center text-muted-foreground text-sm">
                   no results
                 </CommandPrimitive.Empty>
 
@@ -296,20 +300,24 @@ export function DashboardCommandMenu() {
                   const items = group.items.filter(
                     (item) =>
                       (!item.flag || dashboardFlags[item.flag]) &&
-                      (!item.feature || features?.[item.feature] === "enabled"),
+                      (!item.feature || features?.[item.feature] === "enabled")
                   )
                   if (!items.length) return null
                   return (
                     <CommandPrimitive.Group
                       key={group.label}
                       heading={group.label}
-                      className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs"
+                      className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs"
                     >
                       {items.map((item) => (
                         <Item
                           key={item.href}
                           icon={item.icon}
-                          chord={CHORDS[item.href] ? chordLabel(item.href) : undefined}
+                          chord={
+                            CHORDS[item.href]
+                              ? chordLabel(item.href)
+                              : undefined
+                          }
                           onSelect={() => go(item.href)}
                         >
                           {item.title}
@@ -322,22 +330,24 @@ export function DashboardCommandMenu() {
                 {q.length >= 2 && (linkResults.data?.items.length ?? 0) > 0 && (
                   <CommandPrimitive.Group
                     heading="Links"
-                    className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs"
+                    className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs"
                   >
                     {linkResults.data!.items.map((l) => (
                       <CommandPrimitive.Item
                         key={l.id}
                         value={`${l.alias} ${l.long_url ?? ""} ${q}`}
                         onSelect={() =>
-                          go(`/dashboard/links?link=${encodeURIComponent(l.alias ?? "")}`)
+                          go(
+                            `/dashboard/links?link=${encodeURIComponent(l.alias ?? "")}`
+                          )
                         }
-                        className="data-[selected=true]:bg-accent/70 flex h-10 cursor-default items-center gap-3 rounded-lg px-2.5 text-sm select-none"
+                        className="flex h-10 cursor-default select-none items-center gap-3 rounded-lg px-2.5 text-sm data-[selected=true]:bg-accent/70"
                       >
                         <LinkFavicon url={l.long_url} />
-                        <span className="text-foreground shrink-0 font-mono text-xs">
+                        <span className="shrink-0 font-mono text-foreground text-xs">
                           {l.domain ?? "spoo.me"}/{l.alias}
                         </span>
-                        <span className="text-muted-foreground/70 min-w-0 flex-1 truncate text-xs">
+                        <span className="min-w-0 flex-1 truncate text-muted-foreground/70 text-xs">
                           {(l.long_url ?? "").replace(/^https?:\/\//, "")}
                         </span>
                       </CommandPrimitive.Item>
@@ -348,23 +358,23 @@ export function DashboardCommandMenu() {
                 {domainResults.length > 0 && (
                   <CommandPrimitive.Group
                     heading="Domains"
-                    className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs"
+                    className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs"
                   >
                     {domainResults.map((d) => (
                       <CommandPrimitive.Item
                         key={d.id}
                         value={`${d.fqdn} ${q}`}
                         onSelect={() => go(`/dashboard/domains/${d.id}`)}
-                        className="data-[selected=true]:bg-accent/70 flex h-10 cursor-default items-center gap-3 rounded-lg px-2.5 text-sm select-none"
+                        className="flex h-10 cursor-default select-none items-center gap-3 rounded-lg px-2.5 text-sm data-[selected=true]:bg-accent/70"
                       >
                         <Globe
-                          className="text-muted-foreground size-4 shrink-0"
+                          className="size-4 shrink-0 text-muted-foreground"
                           strokeWidth={1.75}
                         />
-                        <span className="text-foreground flex-1 font-mono text-xs">
+                        <span className="flex-1 font-mono text-foreground text-xs">
                           {d.fqdn}
                         </span>
-                        <span className="text-muted-foreground/60 text-[11px] lowercase">
+                        <span className="text-[11px] text-muted-foreground/60 lowercase">
                           {d.status.toLowerCase()}
                         </span>
                       </CommandPrimitive.Item>
@@ -374,7 +384,7 @@ export function DashboardCommandMenu() {
 
                 <CommandPrimitive.Group
                   heading="Help"
-                  className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs"
+                  className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs"
                 >
                   <Item
                     icon={Keyboard}
@@ -393,7 +403,7 @@ export function DashboardCommandMenu() {
                       window.open(
                         "https://docs.spoo.me/introduction",
                         "_blank",
-                        "noreferrer",
+                        "noreferrer"
                       )
                     }}
                   >
@@ -403,7 +413,7 @@ export function DashboardCommandMenu() {
 
                 <CommandPrimitive.Group
                   heading="Theme"
-                  className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs"
+                  className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs"
                 >
                   <Item
                     icon={Sun}
@@ -439,11 +449,11 @@ export function DashboardCommandMenu() {
               </CommandPrimitive.List>
             </div>
 
-            <div className="text-muted-foreground flex h-9 items-center justify-between px-3.5">
+            <div className="flex h-9 items-center justify-between px-3.5 text-muted-foreground">
               <Logo withText={false} className="size-4 opacity-60 grayscale" />
               <span className="flex items-center gap-1.5 text-xs">
                 Go to page
-                <span className="border-border/60 bg-muted/50 flex size-5 items-center justify-center rounded border">
+                <span className="flex size-5 items-center justify-center rounded border border-border/60 bg-muted/50">
                   <CornerDownLeft className="size-3" />
                 </span>
               </span>

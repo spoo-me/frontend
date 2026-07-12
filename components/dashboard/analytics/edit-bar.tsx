@@ -111,7 +111,7 @@ const SCOPE_FIELDS: Array<{
 ]
 
 function BarDivider() {
-  return <span aria-hidden className="bg-border/60 mx-0.5 h-4 w-px shrink-0" />
+  return <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />
 }
 
 function BarIconButton({
@@ -135,10 +135,10 @@ function BarIconButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40",
+        "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40",
         destructive
           ? "hover:bg-destructive/10 hover:text-destructive"
-          : "hover:bg-accent/60 hover:text-foreground",
+          : "hover:bg-accent/60 hover:text-foreground"
       )}
     >
       {children}
@@ -247,11 +247,12 @@ export function EditBar({
       ? TS_VIZ
       : selected?.kind === "breakdown"
         ? BD_VIZ.filter(
-            (v) => v.value !== "map" || selected.config.dimension === "country",
+            (v) => v.value !== "map" || selected.config.dimension === "country"
           )
         : selected?.kind === "stat"
           ? STAT_VIZ_META.filter(
-              (v) => v.value !== "gauge" || selected.config.metric === "unique_rate",
+              (v) =>
+                v.value !== "gauge" || selected.config.metric === "unique_rate"
             )
           : null
   const selectedViz = selected
@@ -288,7 +289,7 @@ export function EditBar({
       >
         <motion.div
           layout
-          className="border-border/60 bg-popover/95 pointer-events-auto flex items-center gap-1 rounded-full border p-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]"
+          className="pointer-events-auto flex items-center gap-1 rounded-full border border-border/60 bg-popover/95 p-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]"
         >
           {selected && scopeOpen ? (
             /* ── scope state: this widget's own lens ──────────────────── */
@@ -297,7 +298,7 @@ export function EditBar({
                 <ArrowLeft className="size-3.5" strokeWidth={1.75} />
               </BarIconButton>
               {selectedIconEl}
-              <span className="label-mono text-muted-foreground/60 px-1 text-[10px]">
+              <span className="label-mono px-1 text-[10px] text-muted-foreground/60">
                 Scope
               </span>
               <BarDivider />
@@ -345,22 +346,32 @@ export function EditBar({
                   <BarDivider />
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1.5 px-2"
+                      >
                         {currentVizOption && (
                           <>
                             <currentVizOption.icon
                               className="size-3.5"
                               strokeWidth={1.75}
                             />
-                            <span className="text-xs">{currentVizOption.label}</span>
+                            <span className="text-xs">
+                              {currentVizOption.label}
+                            </span>
                           </>
                         )}
                       </Button>
                     </DropdownMenuTrigger>
                     {/* Content width defaults to the trigger's; these
                         triggers are tiny, so size to the labels instead. */}
-                    <DropdownMenuContent align="center" side="top" className="w-40">
-                      <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
+                    <DropdownMenuContent
+                      align="center"
+                      side="top"
+                      className="w-40"
+                    >
+                      <DropdownMenuLabel className="label-mono text-[10px] text-muted-foreground/60">
                         Default view
                       </DropdownMenuLabel>
                       {vizOptions.map((v) => (
@@ -383,15 +394,26 @@ export function EditBar({
               {seriesMetric && currentMetric && (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2">
-                      <currentMetric.icon className="size-3.5" strokeWidth={1.75} />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1.5 px-2"
+                    >
+                      <currentMetric.icon
+                        className="size-3.5"
+                        strokeWidth={1.75}
+                      />
                       <span className="text-xs">
                         {METRIC_SHORT[currentMetric.value]}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" side="top" className="w-44">
-                    <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
+                  <DropdownMenuContent
+                    align="center"
+                    side="top"
+                    className="w-44"
+                  >
+                    <DropdownMenuLabel className="label-mono text-[10px] text-muted-foreground/60">
                       Metric
                     </DropdownMenuLabel>
                     {METRICS.map((m) => (
@@ -435,7 +457,7 @@ export function EditBar({
                     type="button"
                     aria-label="Chart ink"
                     title="Chart ink"
-                    className="hover:bg-accent/60 aria-expanded:bg-accent/60 flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150 hover:bg-accent/60 aria-expanded:bg-accent/60"
                   >
                     <span
                       aria-hidden
@@ -444,8 +466,12 @@ export function EditBar({
                     />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" side="top" className="w-auto">
-                  <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
+                <DropdownMenuContent
+                  align="center"
+                  side="top"
+                  className="w-auto"
+                >
+                  <DropdownMenuLabel className="label-mono text-[10px] text-muted-foreground/60">
                     Chart ink
                   </DropdownMenuLabel>
                   {/* One row: the spectrum reads as a ramp, never wraps. */}
@@ -456,11 +482,13 @@ export function EditBar({
                         type="button"
                         aria-label={`${a} ink`}
                         title={a}
-                        onClick={() => onConfigChange(selected.id, { accent: a })}
+                        onClick={() =>
+                          onConfigChange(selected.id, { accent: a })
+                        }
                         className={cn(
                           "size-5 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
                           selectedAccent === a &&
-                            "ring-foreground/60 ring-offset-popover ring-1 ring-offset-2",
+                            "ring-1 ring-foreground/60 ring-offset-2 ring-offset-popover"
                         )}
                         style={{ background: ACCENT_VARS[a] }}
                       />
@@ -478,7 +506,7 @@ export function EditBar({
                   {selected.config.scope && (
                     <span
                       aria-hidden
-                      className="bg-brand absolute -top-0.5 -right-0.5 size-1.5 rounded-full"
+                      className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand"
                     />
                   )}
                 </span>
@@ -512,7 +540,11 @@ export function EditBar({
             <>
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1.5 px-2.5"
+                  >
                     <Plus className="size-3.5" strokeWidth={1.75} />
                     <span className="text-xs">Add widget</span>
                   </Button>
@@ -521,27 +553,29 @@ export function EditBar({
                   {(["Summary", "Charts"] as const).map((group, gi) => (
                     <React.Fragment key={group}>
                       {gi > 0 && <DropdownMenuSeparator />}
-                      <DropdownMenuLabel className="label-mono text-muted-foreground/60 text-[10px]">
+                      <DropdownMenuLabel className="label-mono text-[10px] text-muted-foreground/60">
                         {group}
                       </DropdownMenuLabel>
-                      {WIDGET_CATALOG.filter((e) => e.group === group).map((e) => {
-                        const match = catalogMatch(layout.widgets, e)
-                        return (
-                          <DropdownMenuCheckboxItem
-                            key={e.key}
-                            checked={!!match}
-                            // Keep the menu open: composing the board is one errand.
-                            onSelect={(ev) => ev.preventDefault()}
-                            onCheckedChange={(checked) => {
-                              if (checked) onAdd(e.key)
-                              else if (match) onRemove(match.id)
-                            }}
-                          >
-                            <e.icon className="size-3.5" strokeWidth={1.75} />
-                            {e.label}
-                          </DropdownMenuCheckboxItem>
-                        )
-                      })}
+                      {WIDGET_CATALOG.filter((e) => e.group === group).map(
+                        (e) => {
+                          const match = catalogMatch(layout.widgets, e)
+                          return (
+                            <DropdownMenuCheckboxItem
+                              key={e.key}
+                              checked={!!match}
+                              // Keep the menu open: composing the board is one errand.
+                              onSelect={(ev) => ev.preventDefault()}
+                              onCheckedChange={(checked) => {
+                                if (checked) onAdd(e.key)
+                                else if (match) onRemove(match.id)
+                              }}
+                            >
+                              <e.icon className="size-3.5" strokeWidth={1.75} />
+                              {e.label}
+                            </DropdownMenuCheckboxItem>
+                          )
+                        }
+                      )}
                     </React.Fragment>
                   ))}
                   <DropdownMenuSeparator />
@@ -553,7 +587,11 @@ export function EditBar({
                 </DropdownMenuContent>
               </DropdownMenu>
               <BarDivider />
-              <BarIconButton label={`Undo (${modKey}Z)`} onClick={onUndo} disabled={!canUndo}>
+              <BarIconButton
+                label={`Undo (${modKey}Z)`}
+                onClick={onUndo}
+                disabled={!canUndo}
+              >
                 <Undo2 className="size-3.5" strokeWidth={1.75} />
               </BarIconButton>
               <BarIconButton
@@ -570,7 +608,7 @@ export function EditBar({
                     type="button"
                     aria-label="More"
                     title="More"
-                    className="text-muted-foreground hover:bg-accent/60 hover:text-foreground aria-expanded:bg-accent/60 aria-expanded:text-foreground flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground aria-expanded:bg-accent/60 aria-expanded:text-foreground"
                   >
                     <Ellipsis className="size-3.5" strokeWidth={1.75} />
                   </button>
@@ -592,7 +630,11 @@ export function EditBar({
                 </DropdownMenuContent>
               </DropdownMenu>
               <BarDivider />
-              <Button size="sm" className="h-7 rounded-full px-3" onClick={onDone}>
+              <Button
+                size="sm"
+                className="h-7 rounded-full px-3"
+                onClick={onDone}
+              >
                 Done
               </Button>
             </>
@@ -705,7 +747,7 @@ function RenameInput({
       placeholder={placeholder}
       maxLength={40}
       aria-label="Widget name"
-      className="text-foreground placeholder:text-muted-foreground/60 w-36 bg-transparent px-1 font-mono text-xs outline-none"
+      className="w-36 bg-transparent px-1 font-mono text-foreground text-xs outline-none placeholder:text-muted-foreground/60"
     />
   )
 }

@@ -15,8 +15,8 @@ export function Kbd({
   return (
     <kbd
       className={cn(
-        "border-border/60 bg-muted/50 text-muted-foreground flex h-[18px] min-w-[18px] items-center justify-center rounded border px-1 font-mono text-[10px]",
-        className,
+        "flex h-[18px] min-w-[18px] items-center justify-center rounded border border-border/60 bg-muted/50 px-1 font-mono text-[10px] text-muted-foreground",
+        className
       )}
     >
       {children}

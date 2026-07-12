@@ -2,7 +2,12 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import {
   parseAsInteger,
   parseAsIsoDateTime,
@@ -235,7 +240,8 @@ export default function LinksPage() {
     if (filterKeys) trackUiAction("links_filtered", filterKeys)
   }, [filterKeys])
   React.useEffect(() => {
-    if (mountedRef.current) trackUiAction("links_sorted", `${sortBy}:${sortDir}`)
+    if (mountedRef.current)
+      trackUiAction("links_sorted", `${sortBy}:${sortDir}`)
   }, [sortBy, sortDir])
   React.useEffect(() => {
     mountedRef.current = true
@@ -276,7 +282,13 @@ export default function LinksPage() {
       prefetchClient.prefetchQuery({
         queryKey: ["urls", { page: p, sortBy, sortDir, filter }],
         queryFn: () =>
-          listUrls({ page: p, pageSize: PAGE_SIZE, sortBy, sortOrder: sortDir, filter }),
+          listUrls({
+            page: p,
+            pageSize: PAGE_SIZE,
+            sortBy,
+            sortOrder: sortDir,
+            filter,
+          }),
         staleTime: 30_000,
       })
     }
@@ -309,7 +321,10 @@ export default function LinksPage() {
   const [moveTarget, setMoveTarget] = React.useState<string | null>(null)
   const [expiryOpen, setExpiryOpen] = React.useState(false)
   const [bulkExpiry, setBulkExpiry] = React.useState("")
-  const domains = useQuery({ queryKey: ["domains"], queryFn: listCustomDomains })
+  const domains = useQuery({
+    queryKey: ["domains"],
+    queryFn: listCustomDomains,
+  })
   const domainOptions = [
     "spoo.me",
     ...(domains.data?.items ?? [])
@@ -340,7 +355,7 @@ export default function LinksPage() {
     if (!selectedIds.size) return
     const onKey = (e: KeyboardEvent) => {
       const dialogOpen = document.querySelector(
-        "[role=dialog][data-state=open], [role=alertdialog][data-state=open]",
+        "[role=dialog][data-state=open], [role=alertdialog][data-state=open]"
       )
       if (e.key === "Escape" && !dialogOpen) clearSelection()
     }
@@ -357,7 +372,7 @@ export default function LinksPage() {
     const onKey = (e: KeyboardEvent) => {
       if (typing(e.target)) return
       const dialogOpen = document.querySelector(
-        "[role=dialog][data-state=open], [role=alertdialog][data-state=open]",
+        "[role=dialog][data-state=open], [role=alertdialog][data-state=open]"
       )
       if (dialogOpen) return
       if ((e.metaKey || e.ctrlKey) && (e.key === "a" || e.key === "A")) {
@@ -402,8 +417,8 @@ export default function LinksPage() {
               ? updateUrl(id, { domain: domain === "spoo.me" ? null : domain! })
               : action === "EXPIRY"
                 ? updateUrl(id, { expire_after: expireAfter ?? null })
-                : setUrlStatus(id, action),
-        ),
+                : setUrlStatus(id, action)
+        )
       )
       const failed = results.filter((r) => r.status === "rejected").length
       return { count: ids.length, failed, action, domain, expireAfter }
@@ -433,7 +448,7 @@ export default function LinksPage() {
                 : `moved to ${domain}`
       if (failed)
         toast.warning(
-          `${count - failed} of ${count} links ${verb}. ${failed} failed${action === "DOMAIN" ? " (alias already taken there)" : ""}.`,
+          `${count - failed} of ${count} links ${verb}. ${failed} failed${action === "DOMAIN" ? " (alias already taken there)" : ""}.`
         )
       else toast.success(`${count} link${count === 1 ? "" : "s"} ${verb}`)
     },
@@ -477,7 +492,7 @@ export default function LinksPage() {
             r.created_at,
           ]
             .map(esc)
-            .join(","),
+            .join(",")
         ),
       ].join("\n")
       const a = document.createElement("a")
@@ -485,12 +500,13 @@ export default function LinksPage() {
       a.download = `spoo-links-${new Date().toISOString().slice(0, 10)}.csv`
       a.click()
       URL.revokeObjectURL(a.href)
-      toast.success(`Exported ${rows.length} link${rows.length === 1 ? "" : "s"}`)
+      toast.success(
+        `Exported ${rows.length} link${rows.length === 1 ? "" : "s"}`
+      )
     } finally {
       setExporting(false)
     }
   }
-
 
   const sortHeader = (key: (typeof SORTS)[number], label: string) => (
     <button
@@ -549,7 +565,7 @@ export default function LinksPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-52">
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <DropdownMenuLabel className="text-muted-foreground text-xs">
               Status
             </DropdownMenuLabel>
             {STATUSES.map((s) => (
@@ -574,7 +590,7 @@ export default function LinksPage() {
               </DropdownMenuCheckboxItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <DropdownMenuLabel className="text-muted-foreground text-xs">
               Protections
             </DropdownMenuLabel>
             <DropdownMenuCheckboxItem
@@ -635,7 +651,9 @@ export default function LinksPage() {
           className="ml-1"
           intervalMs={refreshEvery}
           onIntervalChange={setRefreshEvery}
-          onRefresh={() => queryClient.invalidateQueries({ queryKey: ["urls"] })}
+          onRefresh={() =>
+            queryClient.invalidateQueries({ queryKey: ["urls"] })
+          }
           refreshing={urls.isFetching}
         />
       </div>
@@ -721,7 +739,7 @@ export default function LinksPage() {
                 setLimitedOnly(null)
                 setPage(null)
               }}
-              className="text-xs text-muted-foreground underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+              className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
             >
               Clear all
             </button>
@@ -731,106 +749,106 @@ export default function LinksPage() {
 
       {/* Table */}
       <Panel className="mt-4">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border/60 bg-muted text-left text-muted-foreground dark:bg-muted/40">
-                <th className="relative h-9 w-full px-4 label-mono text-[10px] font-medium">
-                  {/* Same swap grammar as rows: label at rest, select-all on
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-border/60 border-b bg-muted text-left text-muted-foreground dark:bg-muted/40">
+              <th className="label-mono relative h-9 w-full px-4 font-medium text-[10px]">
+                {/* Same swap grammar as rows: label at rest, select-all on
                       header hover or while a selection exists. */}
-                  <span
-                    className={cn(
-                      "transition-opacity duration-150",
-                      selectedIds.size > 0
-                        ? "opacity-0"
-                        : "[thead:hover_&]:opacity-0"
-                    )}
-                  >
-                    Link
-                  </span>
-                  <span
-                    className={cn(
-                      "absolute inset-y-0 left-4 flex w-7 items-center justify-center transition-opacity duration-150",
-                      selectedIds.size > 0
-                        ? "opacity-100"
-                        : "opacity-0 [thead:hover_&]:opacity-100"
-                    )}
-                  >
-                    <Checkbox
-                      checked={allPageSelected}
-                      onCheckedChange={togglePage}
-                      aria-label="Select all on this page"
-                    />
-                  </span>
-                </th>
-                <th className="hidden h-9 px-3 label-mono text-[10px] font-medium sm:table-cell">
-                  Status
-                </th>
-                <th className="h-9 px-3 label-mono text-[10px] font-medium">
-                  <span className="flex justify-end">
-                    {sortHeader("total_clicks", "Clicks")}
-                  </span>
-                </th>
-                <th className="hidden h-9 px-3 label-mono text-[10px] font-medium whitespace-nowrap md:table-cell">
-                  {sortHeader("last_click", "Last click")}
-                </th>
-                <th className="hidden h-9 px-3 label-mono text-[10px] font-medium whitespace-nowrap lg:table-cell">
-                  {sortHeader("created_at", "Created")}
-                </th>
-                <th className="h-9 w-10 px-2" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {urls.isPending &&
-                Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="px-4 py-3" colSpan={6}>
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="size-7 rounded-md" />
-                        <div className="flex-1 space-y-1.5">
-                          <Skeleton className="h-3 w-40" />
-                          <Skeleton className="h-3 w-64" />
-                        </div>
+                <span
+                  className={cn(
+                    "transition-opacity duration-150",
+                    selectedIds.size > 0
+                      ? "opacity-0"
+                      : "[thead:hover_&]:opacity-0"
+                  )}
+                >
+                  Link
+                </span>
+                <span
+                  className={cn(
+                    "absolute inset-y-0 left-4 flex w-7 items-center justify-center transition-opacity duration-150",
+                    selectedIds.size > 0
+                      ? "opacity-100"
+                      : "opacity-0 [thead:hover_&]:opacity-100"
+                  )}
+                >
+                  <Checkbox
+                    checked={allPageSelected}
+                    onCheckedChange={togglePage}
+                    aria-label="Select all on this page"
+                  />
+                </span>
+              </th>
+              <th className="label-mono hidden h-9 px-3 font-medium text-[10px] sm:table-cell">
+                Status
+              </th>
+              <th className="label-mono h-9 px-3 font-medium text-[10px]">
+                <span className="flex justify-end">
+                  {sortHeader("total_clicks", "Clicks")}
+                </span>
+              </th>
+              <th className="label-mono hidden h-9 whitespace-nowrap px-3 font-medium text-[10px] md:table-cell">
+                {sortHeader("last_click", "Last click")}
+              </th>
+              <th className="label-mono hidden h-9 whitespace-nowrap px-3 font-medium text-[10px] lg:table-cell">
+                {sortHeader("created_at", "Created")}
+              </th>
+              <th className="h-9 w-10 px-2" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            {urls.isPending &&
+              Array.from({ length: 8 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3" colSpan={6}>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="size-7 rounded-md" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-3 w-40" />
+                        <Skeleton className="h-3 w-64" />
                       </div>
-                    </td>
-                  </tr>
-                ))}
-
-              {!urls.isPending && !items.length && (
-                <tr>
-                  <td colSpan={6}>
-                    <div className="m-4 flex h-48 flex-col items-center justify-center gap-3 rounded-lg pattern-dots">
-                      <span className="rounded-lg border border-dashed border-border px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
-                        {q || activeFilterCount
-                          ? "Nothing matches these filters"
-                          : "No links yet"}
-                      </span>
-                      {!q && !activeFilterCount && (
-                        <Button size="sm" onClick={() => openLinkComposer()}>
-                          <Plus data-icon="inline-start" />
-                          Create your first link
-                        </Button>
-                      )}
                     </div>
                   </td>
                 </tr>
-              )}
-
-              {items.map((link) => (
-                <LinkRow
-                  key={link.id}
-                  link={link}
-                  onOpen={() => setSelected(link.alias)}
-                  rowSelected={selectedIds.has(link.id)}
-                  onToggleSelect={() => toggleId(link.id)}
-                />
               ))}
-            </tbody>
-          </table>
+
+            {!urls.isPending && !items.length && (
+              <tr>
+                <td colSpan={6}>
+                  <div className="pattern-dots m-4 flex h-48 flex-col items-center justify-center gap-3 rounded-lg">
+                    <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
+                      {q || activeFilterCount
+                        ? "Nothing matches these filters"
+                        : "No links yet"}
+                    </span>
+                    {!q && !activeFilterCount && (
+                      <Button size="sm" onClick={() => openLinkComposer()}>
+                        <Plus data-icon="inline-start" />
+                        Create your first link
+                      </Button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {items.map((link) => (
+              <LinkRow
+                key={link.id}
+                link={link}
+                onOpen={() => setSelected(link.alias)}
+                rowSelected={selectedIds.has(link.id)}
+                onToggleSelect={() => toggleId(link.id)}
+              />
+            ))}
+          </tbody>
+        </table>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex h-11 items-center justify-between border-t border-border/60 bg-muted/30 px-4">
-            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+          <div className="flex h-11 items-center justify-between border-border/60 border-t bg-muted/30 px-4">
+            <span className="font-mono text-muted-foreground text-xs tabular-nums">
               page {page} of {totalPages}
             </span>
             <span className="flex items-center gap-1">
@@ -869,7 +887,7 @@ export default function LinksPage() {
             className="pointer-events-none sticky bottom-8 z-20 mt-auto flex justify-center pt-4"
           >
             <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border/60 bg-popover/95 p-1.5 pl-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]">
-              <span className="mr-1 font-mono text-xs text-foreground tabular-nums">
+              <span className="mr-1 font-mono text-foreground text-xs tabular-nums">
                 {selectedIds.size} selected
               </span>
               <Button
@@ -906,7 +924,11 @@ export default function LinksPage() {
                     <Ellipsis />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" side="top" className="w-auto">
+                <DropdownMenuContent
+                  align="center"
+                  side="top"
+                  className="w-auto"
+                >
                   <DropdownMenuItem onSelect={() => setMoveOpen(true)}>
                     <Globe />
                     Move to domain…
@@ -916,7 +938,10 @@ export default function LinksPage() {
                     Set expiry…
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled={exporting} onSelect={() => exportCsv()}>
+                  <DropdownMenuItem
+                    disabled={exporting}
+                    onSelect={() => exportCsv()}
+                  >
                     <Download />
                     Export CSV
                   </DropdownMenuItem>
@@ -931,7 +956,10 @@ export default function LinksPage() {
                 <Trash2 data-icon="inline-start" />
                 Delete
               </Button>
-              <span aria-hidden className="ml-1 -mr-0.5 h-4 w-px bg-border/60" />
+              <span
+                aria-hidden
+                className="-mr-0.5 ml-1 h-4 w-px bg-border/60"
+              />
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -964,7 +992,7 @@ export default function LinksPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1.5">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Type <span className="font-mono text-foreground">delete</span> to
               confirm.
             </p>
@@ -1015,19 +1043,19 @@ export default function LinksPage() {
               moving.
             </DialogDescription>
           </DialogHeader>
-          <div className="border-border/60 divide-border/60 divide-y overflow-hidden rounded-xl border">
+          <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
             {domainOptions.map((d) => (
               <button
                 key={d}
                 type="button"
                 onClick={() => setMoveTarget(d)}
-                className="hover:bg-accent/40 flex h-9 w-full items-center px-3 text-left transition-colors duration-150"
+                className="flex h-9 w-full items-center px-3 text-left transition-colors duration-150 hover:bg-accent/40"
               >
-                <span className="text-foreground flex-1 font-mono text-xs">
+                <span className="flex-1 font-mono text-foreground text-xs">
                   {d}
                 </span>
                 {moveTarget === d && (
-                  <Check className="text-foreground size-3.5" />
+                  <Check className="size-3.5 text-foreground" />
                 )}
               </button>
             ))}
@@ -1099,7 +1127,9 @@ export default function LinksPage() {
                 bulk.mutate({
                   ids: [...selectedIds],
                   action: "EXPIRY",
-                  expireAfter: Math.floor(new Date(bulkExpiry).getTime() / 1000),
+                  expireAfter: Math.floor(
+                    new Date(bulkExpiry).getTime() / 1000
+                  ),
                 })
               }
             >
@@ -1136,7 +1166,7 @@ function LinkRow({
         "group cursor-pointer transition-colors duration-150",
         rowSelected
           ? "bg-brand/8 hover:bg-brand/10"
-          : "even:bg-muted/40 hover:bg-accent/40 dark:even:bg-transparent",
+          : "even:bg-muted/40 hover:bg-accent/40 dark:even:bg-transparent"
       )}
     >
       <td className="w-full max-w-0 px-4 py-2.5">
@@ -1158,7 +1188,9 @@ function LinkRow({
             <span
               className={cn(
                 "absolute inset-0 flex items-center justify-center transition-opacity duration-150",
-                rowSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                rowSelected
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100"
               )}
             >
               <Checkbox
@@ -1170,7 +1202,7 @@ function LinkRow({
           </span>
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <span className="truncate font-mono text-[13px] font-medium text-foreground">
+              <span className="truncate font-medium font-mono text-[13px] text-foreground">
                 {(link.domain ?? "spoo.me") + "/" + link.alias}
               </span>
               <CopyButton
@@ -1179,7 +1211,7 @@ function LinkRow({
                 className="opacity-0 transition-opacity duration-150 [tr:hover_&]:opacity-100"
               />
             </div>
-            <div className="ph-no-capture truncate text-xs text-muted-foreground">
+            <div className="ph-no-capture truncate text-muted-foreground text-xs">
               {displayUrl(link.long_url)}
             </div>
           </div>
@@ -1217,18 +1249,18 @@ function LinkRow({
           </span>
         </div>
       </td>
-      <td className="hidden px-3 py-2.5 whitespace-nowrap sm:table-cell">
+      <td className="hidden whitespace-nowrap px-3 py-2.5 sm:table-cell">
         <StatusPill status={link.status} />
       </td>
-      <td className="px-3 py-2.5 text-right whitespace-nowrap">
-        <span className="font-mono text-[13px] font-medium text-foreground tabular-nums">
+      <td className="whitespace-nowrap px-3 py-2.5 text-right">
+        <span className="font-medium font-mono text-[13px] text-foreground tabular-nums">
           {formatCount(link.total_clicks)}
         </span>
       </td>
-      <td className="hidden px-3 py-2.5 text-xs whitespace-nowrap text-muted-foreground md:table-cell">
+      <td className="hidden whitespace-nowrap px-3 py-2.5 text-muted-foreground text-xs md:table-cell">
         {formatWhen(link.last_click)}
       </td>
-      <td className="hidden px-3 py-2.5 text-xs whitespace-nowrap text-muted-foreground lg:table-cell">
+      <td className="hidden whitespace-nowrap px-3 py-2.5 text-muted-foreground text-xs lg:table-cell">
         {formatWhen(link.created_at)}
       </td>
       <td className="px-2 py-2.5 text-right">

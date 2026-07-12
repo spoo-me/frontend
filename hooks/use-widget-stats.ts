@@ -2,11 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
-import {
-  getStats,
-  type StatsDimension,
-  type StatsResponse,
-} from "@/lib/api"
+import { getStats, type StatsDimension, type StatsResponse } from "@/lib/api"
 import { mergeScope, type Widget } from "@/lib/analytics-layout"
 import type { TimeRange } from "@/components/dashboard/analytics/time-range"
 
@@ -22,7 +18,9 @@ export type WidgetStatsCtx = {
   range: TimeRange
   /** The toolbar's global link filter + dimension filters. */
   links: string[]
-  filters: Partial<Record<"referrer" | "country" | "browser" | "os" | "city", string[]>>
+  filters: Partial<
+    Record<"referrer" | "country" | "browser" | "os" | "city", string[]>
+  >
   refreshEvery: number | false
   shared: {
     stats?: StatsResponse
@@ -39,7 +37,10 @@ export type WidgetStats = {
   disjoint: boolean
 }
 
-export function useWidgetStats(widget: Widget, ctx: WidgetStatsCtx): WidgetStats {
+export function useWidgetStats(
+  widget: Widget,
+  ctx: WidgetStatsCtx
+): WidgetStats {
   const scope = widget.config.scope
   const merged = scope ? mergeScope(ctx.links, ctx.filters, scope) : null
   const disjoint = merged === "disjoint"
@@ -58,7 +59,15 @@ export function useWidgetStats(widget: Widget, ctx: WidgetStatsCtx): WidgetStats
   const span = toMs - fromMs
 
   const scopedQ = useQuery({
-    queryKey: ["stats", "widget", groupBy, fromMs, toMs, lens?.links ?? null, lens?.filters ?? null],
+    queryKey: [
+      "stats",
+      "widget",
+      groupBy,
+      fromMs,
+      toMs,
+      lens?.links ?? null,
+      lens?.filters ?? null,
+    ],
     queryFn: () =>
       getStats({
         startDate: ctx.range.from,
@@ -75,7 +84,14 @@ export function useWidgetStats(widget: Widget, ctx: WidgetStatsCtx): WidgetStats
   // Equal-length window immediately before the range, same lens — mirrors
   // the page-level prevStats construction so deltas compare like with like.
   const scopedPrevQ = useQuery({
-    queryKey: ["stats", "widget-prev", fromMs, toMs, lens?.links ?? null, lens?.filters ?? null],
+    queryKey: [
+      "stats",
+      "widget-prev",
+      fromMs,
+      toMs,
+      lens?.links ?? null,
+      lens?.filters ?? null,
+    ],
     queryFn: () =>
       getStats({
         startDate: new Date(fromMs - span),
@@ -95,7 +111,8 @@ export function useWidgetStats(widget: Widget, ctx: WidgetStatsCtx): WidgetStats
       loading: ctx.shared.loading,
       disjoint: false,
     }
-  if (disjoint) return { stats: undefined, prev: undefined, loading: false, disjoint: true }
+  if (disjoint)
+    return { stats: undefined, prev: undefined, loading: false, disjoint: true }
   return {
     stats: scopedQ.data,
     prev: wantsPrev ? scopedPrevQ.data : undefined,

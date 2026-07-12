@@ -92,13 +92,13 @@ export function DateTimeField({
           className={cn(
             // Mirrors the Input recipe so "Never" reads as an editable field,
             // not a disabled button.
-            "shadow-soft border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 flex h-9 items-center gap-2 rounded-lg border bg-transparent px-2.5 font-mono text-xs transition-colors outline-none focus-visible:ring-3 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
+            "flex h-9 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 font-mono text-xs shadow-soft outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
             date ? "text-foreground" : "text-muted-foreground",
-            className,
+            className
           )}
         >
           <CalendarDays
-            className="text-muted-foreground size-3.5 shrink-0"
+            className="size-3.5 shrink-0 text-muted-foreground"
             strokeWidth={1.75}
           />
           {date ? formatDisplay(date) : placeholder}
@@ -118,7 +118,7 @@ export function DateTimeField({
             onChange(toLocal(next))
           }}
         />
-        <div className="border-border/60 flex items-center justify-between gap-3 border-t px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3 border-border/60 border-t px-3 py-2.5">
           <span className="text-muted-foreground text-xs">Time</span>
           <span className="flex items-center gap-1.5">
             <Input

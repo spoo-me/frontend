@@ -27,7 +27,7 @@ const placeholders = upcomingPolicies.map((title) => ({
 
 // Alphabetical, like a real policy index
 const entries = [...live, ...placeholders].sort((a, b) =>
-  a.title.localeCompare(b.title),
+  a.title.localeCompare(b.title)
 )
 
 export default function LegalIndexPage() {
@@ -42,7 +42,7 @@ export default function LegalIndexPage() {
                 title={
                   <>
                     The paperwork,{" "}
-                    <span className="text-muted-foreground italic font-serif font-normal">
+                    <span className="font-normal font-serif text-muted-foreground italic">
                       kept honest.
                     </span>
                   </>
@@ -50,31 +50,35 @@ export default function LegalIndexPage() {
                 description="Everything that governs your use of spoo.me, in one place."
               />
 
-              <div className="border-border/60 bg-border/60 shadow-card mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-px overflow-hidden rounded-2xl border sm:grid-cols-2 lg:grid-cols-3 dark:shadow-none">
+              <div className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border/60 bg-border/60 shadow-card sm:grid-cols-2 lg:grid-cols-3 dark:shadow-none">
                 {entries.map((entry) =>
                   entry.href ? (
                     <Link
                       key={entry.title}
                       href={entry.href}
-                      className="group bg-background hover:bg-muted/20 flex flex-col gap-2 p-7 transition-colors duration-300 sm:p-8"
+                      className="group flex flex-col gap-2 bg-background p-7 transition-colors duration-300 hover:bg-muted/20 sm:p-8"
                     >
-                      <h2 className="text-foreground text-base font-semibold tracking-tight underline-offset-4 group-hover:underline">
+                      <h2 className="font-semibold text-base text-foreground tracking-tight underline-offset-4 group-hover:underline">
                         {entry.title}
                       </h2>
-                      <p className="label-mono text-muted-foreground">{entry.meta}</p>
+                      <p className="label-mono text-muted-foreground">
+                        {entry.meta}
+                      </p>
                     </Link>
                   ) : (
                     <div
                       key={entry.title}
-                      className="bg-background flex flex-col gap-2 p-7 sm:p-8"
+                      className="flex flex-col gap-2 bg-background p-7 sm:p-8"
                       aria-disabled
                     >
-                      <h2 className="text-muted-foreground text-base font-semibold tracking-tight">
+                      <h2 className="font-semibold text-base text-muted-foreground tracking-tight">
                         {entry.title}
                       </h2>
-                      <p className="label-mono text-muted-foreground/50">{entry.meta}</p>
+                      <p className="label-mono text-muted-foreground/50">
+                        {entry.meta}
+                      </p>
                     </div>
-                  ),
+                  )
                 )}
               </div>
             </div>

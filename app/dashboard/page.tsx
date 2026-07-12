@@ -34,7 +34,10 @@ export default function DashboardOverviewPage() {
     queryFn: () =>
       listUrls({ pageSize: 100, sortBy: "created_at", sortOrder: "desc" }),
   })
-  const domains = useQuery({ queryKey: ["domains"], queryFn: listCustomDomains })
+  const domains = useQuery({
+    queryKey: ["domains"],
+    queryFn: listCustomDomains,
+  })
   const keys = useQuery({ queryKey: ["keys"], queryFn: listApiKeys })
   const grants = useQuery({ queryKey: ["apps"], queryFn: listAppGrants })
 
@@ -43,7 +46,7 @@ export default function DashboardOverviewPage() {
   return (
     <div className="mx-auto w-full max-w-6xl">
       <span className="label-mono text-muted-foreground/60">Overview</span>
-      <h1 className="text-foreground mt-2 text-xl font-semibold tracking-tight">
+      <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
         Welcome back, {name}
       </h1>
 

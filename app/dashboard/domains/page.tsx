@@ -29,7 +29,7 @@ import { StatusPill } from "@/components/dashboard/status-pill"
 export default function DomainsPage() {
   const router = useRouter()
   const domainsEnabled = useFeatureGuard("custom_domains", () =>
-    router.replace("/dashboard"),
+    router.replace("/dashboard")
   )
   const queryClient = useQueryClient()
   const [addOpen, setAddOpen] = React.useState(false)
@@ -53,7 +53,11 @@ export default function DomainsPage() {
       router.push(`/dashboard/domains/${dom.id}`)
     },
     onError: (err) => {
-      setError(err instanceof SpooApiError ? err.message : "Couldn't register the domain")
+      setError(
+        err instanceof SpooApiError
+          ? err.message
+          : "Couldn't register the domain"
+      )
     },
   })
 
@@ -64,10 +68,10 @@ export default function DomainsPage() {
       <div className="flex items-center justify-between">
         <div>
           <span className="label-mono text-muted-foreground/60">Domains</span>
-          <h1 className="text-foreground mt-2 text-xl font-semibold tracking-tight">
+          <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
             Custom domains
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="mt-1 text-muted-foreground text-sm">
             Serve short links from your own domain, with per-domain routing.
           </p>
         </div>
@@ -85,7 +89,7 @@ export default function DomainsPage() {
           </div>
         ) : !items.length ? (
           <div className="pattern-dots m-4 flex h-48 flex-col items-center justify-center gap-3 rounded-lg">
-            <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+            <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No custom domains yet
             </span>
             <Button size="sm" onClick={() => setAddOpen(true)}>
@@ -94,23 +98,30 @@ export default function DomainsPage() {
             </Button>
           </div>
         ) : (
-          <ul className="divide-border/60 divide-y">
+          <ul className="divide-y divide-border/60">
             {items.map((dom, i) => (
               <motion.li
                 key={dom.id}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: i * 0.04 }}
+                transition={{
+                  duration: 0.25,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: i * 0.04,
+                }}
               >
                 <Link
                   href={`/dashboard/domains/${dom.id}`}
-                  className="hover:bg-accent/40 flex h-14 items-center gap-3 px-4 transition-colors duration-150"
+                  className="flex h-14 items-center gap-3 px-4 transition-colors duration-150 hover:bg-accent/40"
                 >
-                  <span className="border-border/60 bg-muted/30 flex size-8 shrink-0 items-center justify-center rounded-lg border">
-                    <Globe className="text-muted-foreground size-4" strokeWidth={1.75} />
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
+                    <Globe
+                      className="size-4 text-muted-foreground"
+                      strokeWidth={1.75}
+                    />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="text-foreground block truncate font-mono text-sm font-medium">
+                    <span className="block truncate font-medium font-mono text-foreground text-sm">
                       {dom.fqdn}
                     </span>
                     <span className="text-muted-foreground text-xs">
@@ -120,7 +131,7 @@ export default function DomainsPage() {
                     </span>
                   </span>
                   <StatusPill status={dom.status} kind="domain" explain />
-                  <ChevronRight className="text-muted-foreground/50 size-4" />
+                  <ChevronRight className="size-4 text-muted-foreground/50" />
                 </Link>
               </motion.li>
             ))}
@@ -128,7 +139,13 @@ export default function DomainsPage() {
         )}
       </Panel>
 
-      <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); setError(null) }}>
+      <Dialog
+        open={addOpen}
+        onOpenChange={(v) => {
+          setAddOpen(v)
+          setError(null)
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add a custom domain</DialogTitle>
@@ -141,7 +158,10 @@ export default function DomainsPage() {
             <Input
               autoFocus
               value={fqdn}
-              onChange={(e) => { setFqdn(e.target.value); setError(null) }}
+              onChange={(e) => {
+                setFqdn(e.target.value)
+                setError(null)
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && fqdn.trim()) create.mutate()
               }}

@@ -47,7 +47,7 @@ export function WidgetShell({
   children: React.ReactNode
 }) {
   return (
-    <div className="border-border/60 bg-shell relative flex h-full flex-col rounded-2xl border p-0.5">
+    <div className="relative flex h-full flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
       {/* Quick controls stay live in edit mode (data-no-drag keeps them from
           starting grid drags) — configuration happens in place, not in a
           side panel. */}
@@ -65,8 +65,8 @@ export function WidgetShell({
       />
       <Panel
         className={cn(
-          "bg-background relative mt-0 min-h-0 flex-1 overflow-hidden rounded-[14px]",
-          panelClassName,
+          "relative mt-0 min-h-0 flex-1 overflow-hidden rounded-[14px] bg-background",
+          panelClassName
         )}
       >
         {children}
@@ -96,12 +96,16 @@ export function ScopeChip({ scope }: { scope: WidgetScope }) {
   return (
     <span
       title={full}
-      className="bg-muted/60 text-muted-foreground flex min-w-0 max-w-36 shrink items-center gap-1 rounded-full px-1.5 py-px font-mono text-[10px] tabular-nums"
+      className="flex min-w-0 max-w-36 shrink items-center gap-1 rounded-full bg-muted/60 px-1.5 py-px font-mono text-[10px] text-muted-foreground tabular-nums"
     >
-      <DimensionIcon dimension={dim} value={first} className="size-3 shrink-0" />
+      <DimensionIcon
+        dimension={dim}
+        value={first}
+        className="size-3 shrink-0"
+      />
       <span className="truncate">{scopeLabel(dim, first)}</span>
       {total > 1 && (
-        <span className="text-muted-foreground/60 shrink-0">+{total - 1}</span>
+        <span className="shrink-0 text-muted-foreground/60">+{total - 1}</span>
       )}
     </span>
   )
@@ -125,7 +129,7 @@ export function WidgetRemoveButton({
       data-no-drag
       aria-label={`Remove ${title}`}
       onClick={onRemove}
-      className="border-border/60 bg-popover text-muted-foreground hover:border-destructive/40 hover:text-destructive absolute -top-2 -right-2 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full border shadow-sm transition-colors duration-150"
+      className="absolute -top-2 -right-2 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full border border-border/60 bg-popover text-muted-foreground shadow-sm transition-colors duration-150 hover:border-destructive/40 hover:text-destructive"
     >
       <X className="size-3.5" strokeWidth={1.75} />
     </button>

@@ -77,7 +77,9 @@ function ThemeHotkey() {
         return
       }
 
-      themeTransition(() => setTheme(resolvedTheme === "dark" ? "light" : "dark"))
+      themeTransition(() =>
+        setTheme(resolvedTheme === "dark" ? "light" : "dark")
+      )
     }
 
     window.addEventListener("keydown", onKeyDown)

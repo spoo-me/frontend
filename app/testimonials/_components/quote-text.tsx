@@ -9,13 +9,10 @@ export function QuoteText({ segments }: { segments: QuoteSegment[] }) {
         typeof s === "string" ? (
           <React.Fragment key={i}>{s}</React.Fragment>
         ) : (
-          <em
-            key={i}
-            className="text-foreground font-serif font-normal italic"
-          >
+          <em key={i} className="font-normal font-serif text-foreground italic">
             {s.em}
           </em>
-        ),
+        )
       )}
     </>
   )

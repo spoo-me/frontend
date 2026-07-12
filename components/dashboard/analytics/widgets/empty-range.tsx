@@ -15,8 +15,8 @@ export function EmptyRange({
   return (
     <div
       className={cn(
-        "text-muted-foreground/70 flex h-full min-h-24 w-full items-center justify-center text-xs",
-        className,
+        "flex h-full min-h-24 w-full items-center justify-center text-muted-foreground/70 text-xs",
+        className
       )}
     >
       {label}

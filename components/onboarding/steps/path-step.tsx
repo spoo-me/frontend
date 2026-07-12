@@ -11,7 +11,8 @@ import type { OnboardingPath } from "@/lib/onboarding"
 /* The stage illustrations ARE the product — enlarged, floating panels.
    Fixed (not max-) width: both panels must weigh exactly the same. */
 
-const PANEL = "border-border/60 bg-card shadow-card h-40 w-[19rem] max-w-full overflow-hidden rounded-xl border"
+const PANEL =
+  "border-border/60 bg-card shadow-card h-40 w-[19rem] max-w-full overflow-hidden rounded-xl border"
 
 /** Catmull-Rom → cubic bezier smooth-line idiom. */
 function smoothPath(
@@ -19,11 +20,11 @@ function smoothPath(
   w: number,
   h: number,
   pad = 6,
-  max = Math.max(...points),
+  max = Math.max(...points)
 ): string {
   const stepX = w / (points.length - 1)
   const xy = points.map(
-    (p, i) => [i * stepX, h - (p / max) * (h - pad)] as const,
+    (p, i) => [i * stepX, h - (p / max) * (h - pad)] as const
   )
   let d = `M ${xy[0][0]} ${xy[0][1]}`
   for (let i = 0; i < xy.length - 1; i++) {
@@ -64,7 +65,7 @@ function LinksIllustration({ active }: { active: boolean }) {
       className={cn(
         PANEL,
         "transition-opacity duration-500",
-        active ? "opacity-100" : "opacity-60",
+        active ? "opacity-100" : "opacity-60"
       )}
     >
       {/* Soft edge fades — the chart is a window, not a poster */}
@@ -159,7 +160,7 @@ function ApiIllustration({ active }: { active: boolean }) {
       className={cn(
         PANEL,
         "relative px-5 text-left font-mono text-xs transition-opacity duration-500",
-        active ? "opacity-100" : "opacity-60",
+        active ? "opacity-100" : "opacity-60"
       )}
     >
       <div className="flex h-full flex-col justify-center [mask-image:linear-gradient(to_bottom,transparent,black_28%,black_72%,transparent)]">
@@ -191,35 +192,35 @@ const PATHS: {
   cta: string
   illustration: (props: { active: boolean }) => React.ReactNode
 }[] = [
-    {
-      value: "links",
-      label: "Manage links",
-      description: (
-        <>
-          <U>Short links</U>, <U>QR codes</U>, and <U>real-time analytics</U>,
-          organized from one dashboard.
-        </>
-      ),
-      cta: "Continue with links",
-      illustration: LinksIllustration,
-    },
-    {
-      value: "api",
-      label: "Build with the API",
-      description: (
-        <>
-          <U>REST API</U>, <U>typed SDKs</U>, and <U>webhooks</U> wired straight
-          into your own stack.
-        </>
-      ),
-      cta: "Continue with the API",
-      illustration: ApiIllustration,
-    },
-  ]
+  {
+    value: "links",
+    label: "Manage links",
+    description: (
+      <>
+        <U>Short links</U>, <U>QR codes</U>, and <U>real-time analytics</U>,
+        organized from one dashboard.
+      </>
+    ),
+    cta: "Continue with links",
+    illustration: LinksIllustration,
+  },
+  {
+    value: "api",
+    label: "Build with the API",
+    description: (
+      <>
+        <U>REST API</U>, <U>typed SDKs</U>, and <U>webhooks</U> wired straight
+        into your own stack.
+      </>
+    ),
+    cta: "Continue with the API",
+    illustration: ApiIllustration,
+  },
+]
 
 function U({ children }: { children: React.ReactNode }) {
   return (
-    <span className="decoration-border text-foreground/80 underline underline-offset-4">
+    <span className="text-foreground/80 underline decoration-border underline-offset-4">
       {children}
     </span>
   )
@@ -248,10 +249,10 @@ export function PathStep({
 
   return (
     <div className="flex w-full flex-col items-center text-center">
-      <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+      <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         How will you use spoo.me?
       </h1>
-      <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
+      <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         We&apos;ll tailor the next step. Everything stays available either way.
       </p>
 
@@ -264,8 +265,8 @@ export function PathStep({
               key={p.value}
               onMouseEnter={() => setFocus(p.value)}
               className={cn(
-                "bg-card/40 flex flex-col rounded-2xl border p-7 transition-colors duration-300",
-                isFocused ? "border-ring/60" : "border-border/60",
+                "flex flex-col rounded-2xl border bg-card/40 p-7 transition-colors duration-300",
+                isFocused ? "border-ring/60" : "border-border/60"
               )}
             >
               {/* Stage — the product itself is the illustration */}
@@ -273,24 +274,24 @@ export function PathStep({
                 <div
                   aria-hidden
                   className={cn(
-                    "bg-brand/10 absolute size-32 rounded-full blur-2xl transition-opacity duration-500",
-                    isFocused ? "opacity-100" : "opacity-0",
+                    "absolute size-32 rounded-full bg-brand/10 blur-2xl transition-opacity duration-500",
+                    isFocused ? "opacity-100" : "opacity-0"
                   )}
                 />
                 <div
                   className={cn(
                     "relative transition-transform duration-500",
-                    isFocused && "-translate-y-1",
+                    isFocused && "-translate-y-1"
                   )}
                 >
                   <Illustration active={isFocused} />
                 </div>
               </div>
 
-              <h2 className="text-foreground mt-7 text-base font-semibold">
+              <h2 className="mt-7 font-semibold text-base text-foreground">
                 {p.label}
               </h2>
-              <p className="text-muted-foreground mx-auto mt-2 max-w-60 flex-1 text-[13px] leading-relaxed">
+              <p className="mx-auto mt-2 max-w-60 flex-1 text-[13px] text-muted-foreground leading-relaxed">
                 {p.description}
               </p>
 

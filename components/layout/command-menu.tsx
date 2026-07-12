@@ -76,7 +76,12 @@ const pages: Entry[] = [
   { title: "Home", href: "/", iconKey: "home", icon: Home },
   { title: "Pricing", href: "/pricing", iconKey: "fileText", icon: FileText },
   { title: "All apps", href: "/apps", iconKey: "boxes", icon: Boxes },
-  { title: "Customer stories", href: "/testimonials", iconKey: "star", icon: Star },
+  {
+    title: "Customer stories",
+    href: "/testimonials",
+    iconKey: "star",
+    icon: Star,
+  },
 ]
 
 const productEntries = productLinks.map(resolve)
@@ -93,7 +98,10 @@ type CommandMenuProps = {
   onOpenChange?: (open: boolean) => void
 }
 
-export function CommandMenu({ open: openProp, onOpenChange }: CommandMenuProps = {}) {
+export function CommandMenu({
+  open: openProp,
+  onOpenChange,
+}: CommandMenuProps = {}) {
   const [internalOpen, setInternalOpen] = React.useState(false)
   const isControlled = openProp !== undefined
   const open = isControlled ? openProp : internalOpen
@@ -102,7 +110,7 @@ export function CommandMenu({ open: openProp, onOpenChange }: CommandMenuProps =
       if (!isControlled) setInternalOpen(next)
       onOpenChange?.(next)
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange]
   )
   const router = useRouter()
 
@@ -135,7 +143,11 @@ export function CommandMenu({ open: openProp, onOpenChange }: CommandMenuProps =
 
         <CommandGroup heading="Pages">
           {pages.map((p) => (
-            <CommandItem key={p.href} value={`page ${p.title}`} onSelect={() => go(p)}>
+            <CommandItem
+              key={p.href}
+              value={`page ${p.title}`}
+              onSelect={() => go(p)}
+            >
               <p.icon className="size-4 text-muted-foreground" />
               <span>{p.title}</span>
             </CommandItem>
@@ -152,7 +164,7 @@ export function CommandMenu({ open: openProp, onOpenChange }: CommandMenuProps =
               <e.icon className="size-4 text-muted-foreground" />
               <span>{e.title}</span>
               {e.description && (
-                <span className="text-muted-foreground/70 ml-2 truncate text-xs">
+                <span className="ml-2 truncate text-muted-foreground/70 text-xs">
                   {e.description}
                 </span>
               )}
@@ -173,7 +185,11 @@ export function CommandMenu({ open: openProp, onOpenChange }: CommandMenuProps =
             </CommandItem>
           ))}
           {sdkEntries.map((e) => (
-            <CommandItem key={`sdk-${e.href}`} value={`sdk ${e.title}`} onSelect={() => go(e)}>
+            <CommandItem
+              key={`sdk-${e.href}`}
+              value={`sdk ${e.title}`}
+              onSelect={() => go(e)}
+            >
               <e.icon className="size-4 text-muted-foreground" />
               <span>{e.title} SDK</span>
               <CommandShortcut>sdk</CommandShortcut>
@@ -212,14 +228,30 @@ export function CommandMenu({ open: openProp, onOpenChange }: CommandMenuProps =
         <CommandGroup heading="Account">
           <CommandItem
             value="account sign in"
-            onSelect={() => go({ title: "Sign in", href: siteConfig.app.login, iconKey: "user", icon: Users, external: true })}
+            onSelect={() =>
+              go({
+                title: "Sign in",
+                href: siteConfig.app.login,
+                iconKey: "user",
+                icon: Users,
+                external: true,
+              })
+            }
           >
             <Users className="size-4 text-muted-foreground" />
             <span>Sign in</span>
           </CommandItem>
           <CommandItem
             value="account get started"
-            onSelect={() => go({ title: "Get started", href: siteConfig.app.signup, iconKey: "rocket", icon: Rocket, external: true })}
+            onSelect={() =>
+              go({
+                title: "Get started",
+                href: siteConfig.app.signup,
+                iconKey: "rocket",
+                icon: Rocket,
+                external: true,
+              })
+            }
           >
             <Rocket className="size-4 text-muted-foreground" />
             <span>Get started, free</span>

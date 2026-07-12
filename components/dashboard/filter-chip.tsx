@@ -20,18 +20,18 @@ export function FilterChip({
   onClear: () => void
 }) {
   return (
-    <span className="border-border/60 flex h-7 items-stretch overflow-hidden rounded-full border text-xs">
-      <span className="bg-muted/60 text-muted-foreground flex items-center pr-2 pl-2.5">
+    <span className="flex h-7 items-stretch overflow-hidden rounded-full border border-border/60 text-xs">
+      <span className="flex items-center bg-muted/60 pr-2 pl-2.5 text-muted-foreground">
         {label}
       </span>
-      <span className="border-border/60 bg-card text-foreground flex items-center gap-1.5 border-l pr-1 pl-2">
+      <span className="flex items-center gap-1.5 border-border/60 border-l bg-card pr-1 pl-2 text-foreground">
         {icon}
         {value}
         <button
           type="button"
           onClick={onClear}
           aria-label={`Clear filter ${label}: ${value}`}
-          className="text-muted-foreground hover:text-foreground hover:bg-accent/60 flex size-5 items-center justify-center rounded-full transition-colors duration-150"
+          className="flex size-5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
         >
           <X className="size-3" />
         </button>

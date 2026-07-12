@@ -35,14 +35,14 @@ export function KpiCard({
 }) {
   const hasFooterRow = delta != null || footer != null
   return (
-    <Panel className={cn("bg-shell flex flex-col", className)}>
+    <Panel className={cn("flex flex-col bg-shell", className)}>
       <div className="px-4 pt-3.5 pb-3">
-        <div className="label-mono text-muted-foreground flex min-w-0 items-center gap-1.5">
+        <div className="label-mono flex min-w-0 items-center gap-1.5 text-muted-foreground">
           <span className="truncate">{label}</span>
           {badge}
         </div>
         <div className="mt-2 flex items-baseline gap-1.5">
-          <span className="text-foreground font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums">
+          <span className="font-mono font-semibold text-[26px] text-foreground tabular-nums leading-none tracking-tight">
             {value}
           </span>
           {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
@@ -50,12 +50,12 @@ export function KpiCard({
       </div>
       <div className="min-h-0 flex-1">{chart}</div>
       {hasFooterRow && (
-        <div className="border-border/60 bg-muted/30 flex h-8 items-center justify-between border-t px-4">
+        <div className="flex h-8 items-center justify-between border-border/60 border-t bg-muted/30 px-4">
           {delta != null ? (
             <>
               <DeltaText value={delta} />
               <span className="flex items-center gap-1.5">
-                <span className="text-muted-foreground/70 text-[11px]">
+                <span className="text-[11px] text-muted-foreground/70">
                   {deltaLabel}
                 </span>
                 <InfoHint label="How the delta is computed" className="-mr-1">
@@ -64,7 +64,9 @@ export function KpiCard({
               </span>
             </>
           ) : (
-            <span className="text-muted-foreground/70 text-[11px]">{footer}</span>
+            <span className="text-[11px] text-muted-foreground/70">
+              {footer}
+            </span>
           )}
         </div>
       )}
@@ -79,8 +81,8 @@ export function DeltaText({ value }: { value: number }) {
   return (
     <span
       className={cn(
-        "flex items-center gap-0.5 font-mono text-[11px] font-medium tabular-nums",
-        up ? "text-live" : "text-destructive",
+        "flex items-center gap-0.5 font-medium font-mono text-[11px] tabular-nums",
+        up ? "text-live" : "text-destructive"
       )}
     >
       <Icon className="size-3" />

@@ -18,7 +18,12 @@ const dimensions = {
   xl: { box: "size-20", text: "text-base", px: 80 },
 } as const
 
-export function TestimonialAvatar({ src, initials, size = "md", className }: Props) {
+export function TestimonialAvatar({
+  src,
+  initials,
+  size = "md",
+  className,
+}: Props) {
   const [errored, setErrored] = React.useState(false)
   const d = dimensions[size]
 
@@ -34,9 +39,9 @@ export function TestimonialAvatar({ src, initials, size = "md", className }: Pro
         decoding="async"
         onError={() => setErrored(true)}
         className={cn(
-          "border-border/60 shrink-0 rounded-full border object-cover",
+          "shrink-0 rounded-full border border-border/60 object-cover",
           d.box,
-          className,
+          className
         )}
       />
     )
@@ -45,10 +50,10 @@ export function TestimonialAvatar({ src, initials, size = "md", className }: Pro
     <div
       aria-hidden
       className={cn(
-        "border-border/60 bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded-full border font-mono font-semibold",
+        "flex shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted font-mono font-semibold text-muted-foreground",
         d.box,
         d.text,
-        className,
+        className
       )}
     >
       {initials}

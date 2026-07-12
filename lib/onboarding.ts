@@ -35,7 +35,7 @@ export function isOnboardingStep(v: unknown): v is OnboardingStep {
 /** Inverse of STEP_ROUTES — which step a pathname renders, if any. */
 export function stepFromRoute(pathname: string): OnboardingStep | null {
   const hit = (Object.keys(STEP_ROUTES) as OnboardingStep[]).find(
-    (step) => STEP_ROUTES[step] === pathname,
+    (step) => STEP_ROUTES[step] === pathname
   )
   return hit ?? null
 }
@@ -63,7 +63,7 @@ export function saveStash(patch: Partial<OnboardingStash>) {
   try {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ ...loadStash(), ...patch }),
+      JSON.stringify({ ...loadStash(), ...patch })
     )
   } catch {
     // Storage unavailable (private mode etc.) — the recap degrades, the

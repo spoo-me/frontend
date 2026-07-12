@@ -14,11 +14,22 @@ export function Sparkline({ points }: { points: number[] }) {
   return (
     <div className="pointer-events-none h-full w-full **:outline-none">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+        <AreaChart
+          data={data}
+          margin={{ top: 2, right: 0, left: 0, bottom: 0 }}
+        >
           <defs>
             <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--chart-accent, var(--brand))" stopOpacity={0.14} />
-              <stop offset="100%" stopColor="var(--chart-accent, var(--brand))" stopOpacity={0.01} />
+              <stop
+                offset="0%"
+                stopColor="var(--chart-accent, var(--brand))"
+                stopOpacity={0.14}
+              />
+              <stop
+                offset="100%"
+                stopColor="var(--chart-accent, var(--brand))"
+                stopOpacity={0.01}
+              />
             </linearGradient>
           </defs>
           <Area

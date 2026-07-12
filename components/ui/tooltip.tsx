@@ -45,7 +45,7 @@ function TooltipContent({
         data-slot="tooltip-content"
         sideOffset={sideOffset}
         className={cn(
-          "border-border/60 bg-popover text-popover-foreground z-50 inline-flex w-fit max-w-xs items-center gap-1.5 rounded-lg border px-3 py-2 text-[13px] leading-snug shadow-[0_8px_24px_-8px_rgb(0_0_0/0.5)] has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-0.5 data-[side=left]:slide-in-from-right-0.5 data-[side=right]:slide-in-from-left-0.5 data-[side=top]:slide-in-from-bottom-0.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+          "data-[side=bottom]:slide-in-from-top-0.5 data-[side=left]:slide-in-from-right-0.5 data-[side=right]:slide-in-from-left-0.5 data-[side=top]:slide-in-from-bottom-0.5 data-[state=delayed-open]:fade-in-0 data-open:fade-in-0 data-closed:fade-out-0 z-50 inline-flex w-fit max-w-xs items-center gap-1.5 rounded-lg border border-border/60 bg-popover px-3 py-2 text-[13px] text-popover-foreground leading-snug shadow-[0_8px_24px_-8px_rgb(0_0_0/0.5)] has-data-[slot=kbd]:pr-1.5 data-[state=delayed-open]:animate-in data-closed:animate-out data-open:animate-in **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm",
           className
         )}
         {...props}

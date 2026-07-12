@@ -12,10 +12,8 @@ import {
  * themes — only the alpha math differs. Never solid fills.
  */
 const TONES = {
-  emerald:
-    "bg-live/10 text-live dark:bg-live/15 [--dot:var(--live)]",
-  neutral:
-    "bg-muted text-muted-foreground [--dot:currentColor]",
+  emerald: "bg-live/10 text-live dark:bg-live/15 [--dot:var(--live)]",
+  neutral: "bg-muted text-muted-foreground [--dot:currentColor]",
   amber:
     "bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400 [--dot:currentColor]",
   red: "bg-destructive/10 text-destructive dark:bg-destructive/15 [--dot:currentColor]",
@@ -50,7 +48,7 @@ const DOMAIN_MEANING: Record<string, string> = {
 
 export function statusMeaning(
   status: string | null | undefined,
-  kind: "link" | "domain",
+  kind: "link" | "domain"
 ): string | undefined {
   return kind === "domain" ? DOMAIN_MEANING[status ?? ""] : undefined
 }
@@ -68,13 +66,16 @@ export function StatusPill({
   className?: string
 }) {
   const map = kind === "domain" ? DOMAIN_STATUS : LINK_STATUS
-  const s = map[status ?? ""] ?? { tone: "neutral" as Tone, label: status ?? "–" }
+  const s = map[status ?? ""] ?? {
+    tone: "neutral" as Tone,
+    label: status ?? "–",
+  }
   const pill = (
     <span
       className={cn(
-        "inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-full px-2 text-xs font-medium",
+        "inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-full px-2 font-medium text-xs",
         TONES[s.tone],
-        className,
+        className
       )}
     >
       <span

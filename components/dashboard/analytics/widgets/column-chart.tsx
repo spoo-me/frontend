@@ -72,16 +72,14 @@ export function ColumnChart({
   const key = metric === "unique" ? "unique_clicks" : "clicks"
   const data = React.useMemo(
     () => [...rows].sort((a, b) => b[key] - a[key]).slice(0, count),
-    [rows, key, count],
+    [rows, key, count]
   )
   const n = data.length
   const ramp = (i: number) =>
     `color-mix(in oklab, var(--chart-accent, var(--brand)) ${Math.round(88 - i * (48 / Math.max(n - 1, 1)))}%, var(--background))`
 
   if (!rows.length) {
-    return (
-      <EmptyRange />
-    )
+    return <EmptyRange />
   }
 
   const clickBar = onSelect

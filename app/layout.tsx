@@ -57,7 +57,11 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html
       lang="en"
@@ -66,10 +70,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         fontSans.variable,
         fontMono.variable,
         fontSerif.variable,
-        "scroll-smooth antialiased",
+        "scroll-smooth antialiased"
       )}
     >
-      <body className="bg-background text-foreground font-sans">
+      <body className="bg-background font-sans text-foreground">
         {/* Pre-hydration auth hint (same trick as theme scripts): returning
             sessions mark <html> so the SSR'd dashboard gate never paints
             its text; sign-out clears the flag. */}

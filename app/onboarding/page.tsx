@@ -34,7 +34,14 @@ export default function OnboardingIndexPage() {
     } else {
       router.replace(STEP_ROUTES.welcome)
     }
-  }, [loading, user, router, serverState.data, serverState.isPending, serverState.isError])
+  }, [
+    loading,
+    user,
+    router,
+    serverState.data,
+    serverState.isPending,
+    serverState.isError,
+  ])
 
   return null
 }

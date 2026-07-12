@@ -38,11 +38,19 @@ function RadarTick(props: {
   dimension: Exclude<StatsDimension, "time">
   lookup: Map<string, string>
 }) {
-  const { x = 0, y = 0, textAnchor = "middle", payload, dimension, lookup } = props
+  const {
+    x = 0,
+    y = 0,
+    textAnchor = "middle",
+    payload,
+    dimension,
+    lookup,
+  } = props
   const label = String(payload?.value ?? "")
   const raw = lookup.get(label) ?? label
   const w = 110
-  const xPos = textAnchor === "middle" ? x - w / 2 : textAnchor === "end" ? x - w : x
+  const xPos =
+    textAnchor === "middle" ? x - w / 2 : textAnchor === "end" ? x - w : x
   return (
     <foreignObject x={xPos} y={y - 9} width={w} height={18}>
       <div
@@ -52,11 +60,15 @@ function RadarTick(props: {
             ? "justify-center"
             : textAnchor === "end"
               ? "justify-end"
-              : "justify-start",
+              : "justify-start"
         )}
       >
-        <DimensionIcon dimension={dimension} value={raw} className="block size-3 shrink-0" />
-        <span className="text-muted-foreground min-w-0 truncate text-[10px] leading-none">
+        <DimensionIcon
+          dimension={dimension}
+          value={raw}
+          className="block size-3 shrink-0"
+        />
+        <span className="min-w-0 truncate text-[10px] text-muted-foreground leading-none">
           {label}
         </span>
       </div>
@@ -86,18 +98,22 @@ export function BreakdownRadar({
           ...r,
           label: dimensionLabel(dimension, r.value),
         })),
-    [rows, key, spokes, dimension],
+    [rows, key, spokes, dimension]
   )
   // Ticks receive the display label; the icon needs the raw value back.
   const lookup = React.useMemo(
     () => new Map(data.map((d) => [d.label, d.value])),
-    [data],
+    [data]
   )
 
   if (data.length < 3) {
     return (
       <EmptyRange
-        label={rows.length ? "A radar needs at least 3 categories" : "No data in this range"}
+        label={
+          rows.length
+            ? "A radar needs at least 3 categories"
+            : "No data in this range"
+        }
       />
     )
   }
@@ -116,7 +132,9 @@ export function BreakdownRadar({
                 { fill: "var(--muted-foreground)", fontSize: 10 }
               )
             }
-            tickFormatter={(v: string) => (v.length > 10 ? `${v.slice(0, 9)}…` : v)}
+            tickFormatter={(v: string) =>
+              v.length > 10 ? `${v.slice(0, 9)}…` : v
+            }
           />
           <Tooltip
             content={<DimTooltip dimension={dimension} />}

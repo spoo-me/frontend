@@ -46,14 +46,14 @@ function ColumnHeader({
 }) {
   return (
     <div className="flex h-8 items-center justify-between">
-      <span className="text-muted-foreground/60 flex items-center gap-1.5">
+      <span className="flex items-center gap-1.5 text-muted-foreground/60">
         <Icon className="size-3.5" strokeWidth={1.75} />
         <span className="label-mono text-[10px]">{label}</span>
       </span>
       {action && (
         <Link
           href={href}
-          className="text-muted-foreground/70 hover:text-foreground flex items-center gap-0.5 text-[11px] transition-colors duration-150"
+          className="flex items-center gap-0.5 text-[11px] text-muted-foreground/70 transition-colors duration-150 hover:text-foreground"
         >
           {action}
           <ArrowUpRight className="size-3" />
@@ -99,7 +99,7 @@ export function WorkspaceCard({
   const activeKeys = keys.filter((k) => !k.revoked)
 
   return (
-    <div className="border-border/60 bg-shell rounded-2xl border p-0.5">
+    <div className="rounded-2xl border border-border/60 bg-shell p-0.5">
       <SectionHeader
         className="h-9 px-2.5"
         icon={Boxes}
@@ -110,7 +110,7 @@ export function WorkspaceCard({
           </InfoHint>
         }
       />
-      <Panel className="bg-background divide-border/60 mt-0 grid grid-cols-1 divide-y rounded-[14px] lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+      <Panel className="mt-0 grid grid-cols-1 divide-y divide-border/60 rounded-[14px] bg-background lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {/* Domains */}
         <div className="flex min-h-[192px] flex-col px-4 py-3">
           <ColumnHeader
@@ -126,12 +126,12 @@ export function WorkspaceCard({
                 <Link
                   key={d.id}
                   href={`/dashboard/domains/${d.id}`}
-                  className="hover:bg-accent/40 -mx-2 flex h-10 items-center gap-2.5 rounded-lg px-2 transition-colors duration-150"
+                  className="-mx-2 flex h-10 items-center gap-2.5 rounded-lg px-2 transition-colors duration-150 hover:bg-accent/40"
                 >
-                  <span className="text-foreground min-w-0 flex-1 truncate font-mono text-[13px]">
+                  <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-foreground">
                     {d.fqdn}
                   </span>
-                  <span className="text-muted-foreground/70 shrink-0 font-mono text-[11px] tabular-nums">
+                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
                     {formatCount(count)} links
                   </span>
                   <StatusPill status={d.status} kind="domain" explain />
@@ -159,15 +159,18 @@ export function WorkspaceCard({
             grants.map((g) => {
               const Icon = GRANT_ICONS[g.icon] ?? Puzzle
               return (
-                <div key={g.id} className="-mx-2 flex h-10 items-center gap-2.5 px-2">
+                <div
+                  key={g.id}
+                  className="-mx-2 flex h-10 items-center gap-2.5 px-2"
+                >
                   <Icon
-                    className="text-muted-foreground/70 size-4 shrink-0"
+                    className="size-4 shrink-0 text-muted-foreground/70"
                     strokeWidth={1.75}
                   />
-                  <span className="text-foreground min-w-0 flex-1 truncate text-[13px]">
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
                     {g.app_name}
                   </span>
-                  <span className="text-muted-foreground/70 shrink-0 font-mono text-[11px]">
+                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground/70">
                     {formatWhen(g.last_used_at)}
                   </span>
                 </div>
@@ -192,16 +195,21 @@ export function WorkspaceCard({
           />
           {activeKeys.length ? (
             activeKeys.map((k) => (
-              <div key={k.id} className="-mx-2 flex h-10 items-center gap-2.5 px-2">
+              <div
+                key={k.id}
+                className="-mx-2 flex h-10 items-center gap-2.5 px-2"
+              >
                 <KeyRound
-                  className="text-muted-foreground/70 size-4 shrink-0"
+                  className="size-4 shrink-0 text-muted-foreground/70"
                   strokeWidth={1.75}
                 />
-                <span className="text-foreground min-w-0 flex-1 truncate text-[13px]">
+                <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
                   {k.name}
                 </span>
-                <span className="text-muted-foreground/70 shrink-0 font-mono text-[11px]">
-                  {k.last_used_at ? `used ${formatWhen(k.last_used_at)}` : "unused"}
+                <span className="shrink-0 font-mono text-[11px] text-muted-foreground/70">
+                  {k.last_used_at
+                    ? `used ${formatWhen(k.last_used_at)}`
+                    : "unused"}
                 </span>
               </div>
             ))

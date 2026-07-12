@@ -4,10 +4,7 @@ import { motion } from "motion/react"
 
 import { cn } from "@/lib/utils"
 import { formatCount } from "@/lib/format"
-import {
-  DimensionIcon,
-  dimensionLabel,
-} from "@/components/dashboard/dim-icon"
+import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import type { DimensionRow } from "@/lib/api"
 import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
@@ -41,7 +38,7 @@ export function BreakdownList({
     .sort((a, b) =>
       metric === "unique"
         ? b.unique_clicks - a.unique_clicks
-        : b.clicks - a.clicks,
+        : b.clicks - a.clicks
     )
     .slice(0, limit)
   const max =
@@ -62,7 +59,7 @@ export function BreakdownList({
           >
             <motion.span
               aria-hidden
-              className="bg-muted/80 group-hover:bg-accent absolute inset-y-0 left-0 rounded-lg transition-colors duration-150"
+              className="absolute inset-y-0 left-0 rounded-lg bg-muted/80 transition-colors duration-150 group-hover:bg-accent"
               initial={{ width: "0%" }}
               animate={{ width: `${Math.max((primary / max) * 100, 4)}%` }}
               transition={{
@@ -74,7 +71,7 @@ export function BreakdownList({
             {metric === "both" && (
               <motion.span
                 aria-hidden
-                className="bg-foreground/8 absolute inset-y-0 left-0 rounded-lg"
+                className="absolute inset-y-0 left-0 rounded-lg bg-foreground/8"
                 initial={{ width: "0%" }}
                 animate={{
                   width: `${Math.max((row.unique_clicks / max) * 100, 2)}%`,
@@ -87,30 +84,34 @@ export function BreakdownList({
               />
             )}
             <span className="relative flex size-4 shrink-0 items-center justify-center">
-              <DimensionIcon dimension={dimension} value={row.value} className="size-4" />
+              <DimensionIcon
+                dimension={dimension}
+                value={row.value}
+                className="size-4"
+              />
             </span>
-            <span className="text-foreground relative min-w-0 flex-1 truncate text-[13px]">
+            <span className="relative min-w-0 flex-1 truncate text-[13px] text-foreground">
               {dimensionLabel(dimension, row.value)}
             </span>
             {metric === "both" ? (
               <span className="relative font-mono text-xs tabular-nums">
-                <span className="text-foreground">{formatCount(row.clicks)}</span>
+                <span className="text-foreground">
+                  {formatCount(row.clicks)}
+                </span>
                 <span className="text-muted-foreground/70">
                   {" "}
                   · {formatCount(row.unique_clicks)}
                 </span>
               </span>
             ) : (
-              <span className="text-muted-foreground relative font-mono text-xs tabular-nums">
+              <span className="relative font-mono text-muted-foreground text-xs tabular-nums">
                 {formatCount(primary)}
               </span>
             )}
           </button>
         )
       })}
-      {!top.length && (
-        <EmptyRange />
-      )}
+      {!top.length && <EmptyRange />}
     </div>
   )
 }

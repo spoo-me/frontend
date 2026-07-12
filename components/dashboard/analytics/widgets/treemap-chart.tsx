@@ -74,11 +74,11 @@ function TreemapCell(props: {
                   className="size-3.5 shrink-0"
                 />
               )}
-              <span className="text-foreground/90 min-w-0 truncate text-[11px] leading-4 font-medium">
+              <span className="min-w-0 truncate font-medium text-[11px] text-foreground/90 leading-4">
                 {label}
               </span>
             </span>
-            <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
+            <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
               {formatCount(datum.size ?? 0)}
             </span>
           </div>
@@ -137,9 +137,7 @@ export function TreemapChart({
   }, [rows, key, segments, metric])
 
   if (!data.length) {
-    return (
-      <EmptyRange />
-    )
+    return <EmptyRange />
   }
 
   return (
@@ -151,9 +149,7 @@ export function TreemapChart({
           nameKey="name"
           aspectRatio={4 / 3}
           isAnimationActive={false}
-          content={
-            <TreemapCell dimension={dimension} onSelect={onSelect} />
-          }
+          content={<TreemapCell dimension={dimension} onSelect={onSelect} />}
         >
           <Tooltip
             content={<DimTooltip dimension={dimension} />}

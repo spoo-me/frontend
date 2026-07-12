@@ -21,7 +21,13 @@ import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range
 
 const ICON_DIMS = new Set(["referrer", "country", "browser", "os"])
 
-type Bubble = { x: number; y: number; r: number; row: DimensionRow; tint: string }
+type Bubble = {
+  x: number
+  y: number
+  r: number
+  row: DimensionRow
+  tint: string
+}
 
 export function BubbleChart({
   dimension,
@@ -70,7 +76,7 @@ export function BubbleChart({
     if (!top.length) return []
     type PackDatum = { children?: DimensionRow[] } | DimensionRow
     const root = hierarchy<PackDatum>({ children: top }).sum((d) =>
-      "value" in d ? d[key] : 0,
+      "value" in d ? d[key] : 0
     )
     const packed = pack<PackDatum>().size([size.w, size.h]).padding(4)(root)
     const n = top.length
@@ -89,9 +95,7 @@ export function BubbleChart({
   }, [rows, key, limit, size])
 
   if (!rows.length) {
-    return (
-      <EmptyRange />
-    )
+    return <EmptyRange />
   }
 
   return (
@@ -178,11 +182,15 @@ export function BubbleChart({
         <div
           className={cn(
             "pointer-events-none absolute z-10 -translate-x-1/2",
-            hover.below ? "pt-2" : "-translate-y-full pb-2",
+            hover.below ? "pt-2" : "-translate-y-full pb-2"
           )}
           style={{ left: hover.x + 8, top: hover.y + 8 }}
         >
-          <DimTooltip active payload={[{ payload: hover.row }]} dimension={dimension} />
+          <DimTooltip
+            active
+            payload={[{ payload: hover.row }]}
+            dimension={dimension}
+          />
         </div>
       )}
     </div>

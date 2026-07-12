@@ -92,7 +92,7 @@ export function openLinkComposer(opts?: { domain?: string }) {
 /** Suggesters: memorable words, no lookalike characters. */
 const WORDS =
   "amber basil cedar delta ember fable garnet hazel indigo juniper koala lumen maple nectar onyx pixel quartz raven sable tundra umber velvet willow zephyr".split(
-    " ",
+    " "
   )
 /** Unbiased crypto-random integer in [0, bound). */
 const randInt = (bound: number) => {
@@ -106,8 +106,7 @@ const randInt = (bound: number) => {
 const pickWord = () => WORDS[randInt(WORDS.length)]
 // "." separators: backend URL-password rule requires a letter, a digit and
 // an "@" or "." with no two consecutive specials (shared/validators.py).
-const suggestPassword = () =>
-  `${pickWord()}.${pickWord()}.${10 + randInt(89)}`
+const suggestPassword = () => `${pickWord()}.${pickWord()}.${10 + randInt(89)}`
 const suggestAlias = () => `${pickWord()}-${10 + randInt(89)}`
 
 const EXPIRY_PRESETS: Array<[label: string, hours: number]> = [
@@ -142,11 +141,13 @@ function Field({
     <div className="space-y-2">
       {labelHint ? (
         <span className="mb-2.5 flex items-center gap-1.5">
-          <Label className="text-foreground text-xs font-medium">{label}</Label>
+          <Label className="font-medium text-foreground text-xs">{label}</Label>
           {labelHint}
         </span>
       ) : (
-        <Label className="text-foreground mb-2.5 text-xs font-medium">{label}</Label>
+        <Label className="mb-2.5 font-medium text-foreground text-xs">
+          {label}
+        </Label>
       )}
       {children}
       {error ? (
@@ -357,9 +358,7 @@ export function LinkComposer() {
     !metaCustomized && destMeta.isSuccess && prefillHasData(destMeta.data)
   const metaSource = prefillDraftOf(destMeta.data)
   const metaNotice =
-    !metaCustomized && destMeta.isError
-      ? metaFetchNotice(destMeta.error)
-      : null
+    !metaCustomized && destMeta.isError ? metaFetchNotice(destMeta.error) : null
   const weights = variantTotal(variants)
 
   const create = useMutation({
@@ -399,7 +398,7 @@ export function LinkComposer() {
         })
       } else {
         toast.error(
-          err instanceof Error ? err.message : "Couldn't create the link",
+          err instanceof Error ? err.message : "Couldn't create the link"
         )
       }
     },
@@ -460,7 +459,7 @@ export function LinkComposer() {
         <TooltipTrigger asChild>
           {/* Padded hit area; the visible dot stays size-1.5. */}
           <span className="-m-1 flex size-3.5 items-center justify-center p-1">
-            <span className="bg-brand size-1.5 rounded-full" />
+            <span className="size-1.5 rounded-full bg-brand" />
           </span>
         </TooltipTrigger>
         <TooltipContent>This tab has a value set.</TooltipContent>
@@ -473,7 +472,7 @@ export function LinkComposer() {
     value: string,
     Icon: React.ElementType,
     label: string,
-    isSet = false,
+    isSet = false
   ) => (
     <TabsTrigger
       value={value}
@@ -483,7 +482,7 @@ export function LinkComposer() {
         <motion.span
           layoutId="composer-active-tab"
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="bg-background dark:border-input dark:bg-input/30 absolute inset-0 rounded-md border border-transparent shadow-sm dark:shadow-none"
+          className="absolute inset-0 rounded-md border border-transparent bg-background shadow-sm dark:border-input dark:bg-input/30 dark:shadow-none"
         />
       )}
       <span className="relative flex items-center gap-1.5">
@@ -592,10 +591,10 @@ export function LinkComposer() {
                           <button
                             type="button"
                             aria-label="Choose a domain"
-                            className="shadow-soft border-input text-foreground hover:bg-accent/40 dark:bg-input/30 flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 font-mono text-foreground text-xs shadow-soft transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                           >
                             {domain}
-                            <ChevronDown className="text-muted-foreground size-3.5" />
+                            <ChevronDown className="size-3.5 text-muted-foreground" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="min-w-44">
@@ -623,11 +622,11 @@ export function LinkComposer() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (
-                      <span className="border-input text-foreground dark:bg-input/30 flex h-9 shrink-0 items-center rounded-lg border px-2.5 font-mono text-xs">
+                      <span className="flex h-9 shrink-0 items-center rounded-lg border border-input px-2.5 font-mono text-foreground text-xs dark:bg-input/30">
                         {domain}
                       </span>
                     )}
-                    <span className="text-muted-foreground font-mono text-xs">
+                    <span className="font-mono text-muted-foreground text-xs">
                       /
                     </span>
                     <div className="relative flex-1">
@@ -644,14 +643,14 @@ export function LinkComposer() {
                       />
                       <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
                         {aliasState === "checking" && (
-                          <LoaderCircle className="text-muted-foreground size-3.5 animate-spin" />
+                          <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
                         )}
                         {aliasState === "available" && (
-                          <Check className="text-live size-3.5" />
+                          <Check className="size-3.5 text-live" />
                         )}
                         {(aliasState === "taken" ||
                           aliasState === "invalid") && (
-                          <CircleAlert className="text-destructive size-3.5" />
+                          <CircleAlert className="size-3.5 text-destructive" />
                         )}
                       </span>
                     </div>
@@ -690,11 +689,11 @@ export function LinkComposer() {
                           onClick={() =>
                             setExpiry(
                               toLocalInputValue(
-                                new Date(Date.now() + hours * 3_600_000),
-                              ),
+                                new Date(Date.now() + hours * 3_600_000)
+                              )
                             )
                           }
-                          className="border-border/60 text-muted-foreground hover:text-foreground hover:bg-accent/50 h-6 rounded-md border px-2 text-[11px] transition-colors duration-150"
+                          className="h-6 rounded-md border border-border/60 px-2 text-[11px] text-muted-foreground transition-colors duration-150 hover:bg-accent/50 hover:text-foreground"
                         >
                           {label}
                         </button>
@@ -757,10 +756,10 @@ export function LinkComposer() {
 
                 {/* Same switch group as the edit sheet: bot blocking guards
                     the click budget; private stats guards the numbers. */}
-                <div className="border-border/60 divide-border/60 divide-y rounded-xl border">
+                <div className="divide-y divide-border/60 rounded-xl border border-border/60">
                   <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
                     <span>
-                      <span className="text-foreground flex items-center gap-1.5 text-xs font-medium">
+                      <span className="flex items-center gap-1.5 font-medium text-foreground text-xs">
                         Block bots
                         <InfoHint label="What blocking bots does">
                           Crawlers and preview bots get an interstitial page;
@@ -778,7 +777,7 @@ export function LinkComposer() {
                   </label>
                   <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
                     <span>
-                      <span className="text-foreground flex items-center gap-1.5 text-xs font-medium">
+                      <span className="flex items-center gap-1.5 font-medium text-foreground text-xs">
                         Private stats
                         <InfoHint label="What private stats does">
                           Turns off the public stats page for this link;
@@ -820,7 +819,7 @@ export function LinkComposer() {
                       </InfoHint>
                     </span>
                     {metaMirroring && (
-                      <span className="label-mono text-muted-foreground/40 text-[10px]">
+                      <span className="label-mono text-[10px] text-muted-foreground/40">
                         fetched from destination
                       </span>
                     )}
@@ -829,7 +828,7 @@ export function LinkComposer() {
                     <button
                       type="button"
                       onClick={() => setMetaCustomized(false)}
-                      className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4 transition-colors duration-150"
+                      className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
                     >
                       Reset to destination
                     </button>
@@ -870,7 +869,7 @@ export function LinkComposer() {
               <LoaderCircle className="size-3.5 animate-spin" />
             )}
             Create link
-            <Kbd className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80 ml-1">
+            <Kbd className="ml-1 border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80">
               <CornerDownLeft className="size-2.5" />
             </Kbd>
           </Button>

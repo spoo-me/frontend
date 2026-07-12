@@ -33,8 +33,8 @@ export function InfoHint({
           type="button"
           aria-label={label}
           className={cn(
-            "text-muted-foreground/60 hover:text-foreground flex size-5 shrink-0 cursor-help items-center justify-center transition-colors duration-150",
-            className,
+            "flex size-5 shrink-0 cursor-help items-center justify-center text-muted-foreground/60 transition-colors duration-150 hover:text-foreground",
+            className
           )}
         >
           <Info className="size-3.5" strokeWidth={1.75} />

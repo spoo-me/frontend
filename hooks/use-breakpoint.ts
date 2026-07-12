@@ -13,7 +13,7 @@ function useMediaQuery(query: string) {
       return () => mql.removeEventListener("change", cb)
     },
     () => window.matchMedia(query).matches,
-    () => false,
+    () => false
   )
 }
 

@@ -58,7 +58,8 @@ export function HeaderControls({
         parseFloat(style.paddingRight)
       // The title is the header's only shrinkable piece; its scrollWidth is
       // the untruncated need. 12px keeps a visible gutter between sides.
-      const leadNeeded = lead.offsetWidth - title.clientWidth + title.scrollWidth
+      const leadNeeded =
+        lead.offsetWidth - title.clientWidth + title.scrollWidth
       setFits(available >= leadNeeded + 12 + probe.offsetWidth)
     }
     measure()
@@ -113,7 +114,7 @@ export function AdaptiveSegmented<T extends string>({
         <button
           type="button"
           aria-label={ariaLabel}
-          className="border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground aria-expanded:text-foreground flex h-7 items-center gap-1 rounded-lg border px-1.5 font-mono text-[11px] transition-colors duration-150"
+          className="flex h-7 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-1.5 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:text-foreground aria-expanded:text-foreground"
         >
           {options.find((o) => o.value === value)?.label ?? value}
           <ChevronDown className="size-3 opacity-60" strokeWidth={1.75} />

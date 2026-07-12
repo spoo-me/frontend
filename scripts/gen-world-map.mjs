@@ -8,7 +8,7 @@ const map = new DottedMap({ height: 100, grid: "diagonal" })
 
 const variants = [
   { file: "public/brand/world-map-light.svg", color: "#00000040" },
-  { file: "public/brand/world-map-dark.svg",  color: "#FFFFFF40" },
+  { file: "public/brand/world-map-dark.svg", color: "#FFFFFF40" },
 ]
 
 for (const v of variants) {

@@ -52,7 +52,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
           title={
             <>
               An API your team will{" "}
-              <span className="text-muted-foreground italic font-serif font-normal">
+              <span className="font-normal font-serif text-muted-foreground italic">
                 actually enjoy.
               </span>
             </>
@@ -64,9 +64,9 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
       {/* Split band — playground and SDK list as lattice cells; the gap-px
           line spans the full band height down to the next rule */}
       <Band rule>
-        <div className="bg-border grid gap-px lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid gap-px bg-border lg:grid-cols-[1.4fr_1fr]">
           {/* Code playground — editor file-tabs fused into the panel */}
-          <div className="bg-background relative p-5 sm:p-9 [--code-surface:var(--card)] dark:[--code-surface:#09090b]">
+          <div className="relative bg-background p-5 [--code-surface:var(--card)] sm:p-9 dark:[--code-surface:#09090b]">
             {/* File tabs — no overflow container here, it would trap the -mb-px fusion */}
             <div className="flex flex-wrap items-end gap-0.5 px-3">
               {samples.map((s) => {
@@ -80,8 +80,8 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                     className={cn(
                       "relative inline-flex shrink-0 items-center gap-1.5 rounded-t-lg border px-3 py-2 font-mono text-xs transition-colors",
                       isActive
-                        ? "border-border/60 text-foreground z-10 -mb-px border-b-transparent bg-[var(--code-surface)]"
-                        : "text-muted-foreground hover:text-foreground border-transparent",
+                        ? "z-10 -mb-px border-border/60 border-b-transparent bg-[var(--code-surface)] text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {/* Wedge flares — the tab pours into the panel */}
@@ -89,7 +89,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                       <>
                         <span
                           aria-hidden
-                          className="absolute -left-2 bottom-0 size-2"
+                          className="absolute bottom-0 -left-2 size-2"
                           style={{
                             background:
                               "radial-gradient(circle at 0 0, transparent 0.5rem, var(--code-surface) 0.5rem)",
@@ -113,15 +113,19 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
             </div>
 
             {/* Code panel */}
-            <div className="border-border/60 shadow-card relative overflow-hidden rounded-xl border bg-[var(--code-surface)] dark:shadow-2xl dark:shadow-black/40">
+            <div className="relative overflow-hidden rounded-xl border border-border/60 bg-[var(--code-surface)] shadow-card dark:shadow-2xl dark:shadow-black/40">
               <Button
                 onClick={copy}
                 size="icon-xs"
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground absolute top-2.5 right-2.5 z-10"
+                className="absolute top-2.5 right-2.5 z-10 text-muted-foreground hover:text-foreground"
                 aria-label="Copy code"
               >
-                {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+                {copied ? (
+                  <Check className="size-3" />
+                ) : (
+                  <Copy className="size-3" />
+                )}
               </Button>
               {/* Subtle inner glow — gives terminal depth */}
               <span
@@ -150,12 +154,12 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
           </div>
 
           {/* SDKs list */}
-          <div className="bg-background space-y-4 p-5 sm:p-8">
+          <div className="space-y-4 bg-background p-5 sm:p-8">
             <div>
-              <h3 className="text-foreground text-base font-semibold tracking-tight">
+              <h3 className="font-semibold text-base text-foreground tracking-tight">
                 Official SDKs
               </h3>
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="mt-1 text-muted-foreground text-sm">
                 One-line install. Type-safe. Edge-ready where applicable.
               </p>
             </div>
@@ -167,7 +171,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                   <li key={sdk.slug}>
                     <Link
                       href={`/apps/${sdk.slug}`}
-                      className="group border-border/60 bg-card/50 hover:bg-card hover:border-border flex items-center gap-3 rounded-lg border px-3 py-2.5 transition"
+                      className="group flex items-center gap-3 rounded-lg border border-border/60 bg-card/50 px-3 py-2.5 transition hover:border-border hover:bg-card"
                     >
                       <span className="flex size-7 items-center justify-center rounded-md transition-transform group-hover:scale-110">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -179,16 +183,16 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                         />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-foreground text-sm font-medium">
+                        <div className="font-medium text-foreground text-sm">
                           {sdk.name}
                         </div>
                         {cmd && (
-                          <code className="text-muted-foreground block truncate font-mono text-[11px]">
+                          <code className="block truncate font-mono text-[11px] text-muted-foreground">
                             {cmd.command}
                           </code>
                         )}
                       </div>
-                      <ArrowUpRight className="text-muted-foreground/40 group-hover:text-foreground size-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      <ArrowUpRight className="size-3.5 text-muted-foreground/40 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground" />
                     </Link>
                   </li>
                 )

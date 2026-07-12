@@ -87,11 +87,15 @@ export function VerifyPanel({
       setCode("")
       setStatus("error")
       if (err instanceof SpooApiError && err.status === 400) {
-        setError("That code didn't work. It may have expired; try again or resend.")
+        setError(
+          "That code didn't work. It may have expired; try again or resend."
+        )
       } else if (err instanceof SpooApiError && err.isRateLimit) {
         setError("Too many attempts. Wait a minute, then try again.")
       } else {
-        setError("Couldn't verify right now. Check your connection and try again.")
+        setError(
+          "Couldn't verify right now. Check your connection and try again."
+        )
       }
     }
   }
@@ -104,7 +108,9 @@ export function VerifyPanel({
       setCooldown(RESEND_COOLDOWN)
     } catch (err) {
       if (err instanceof SpooApiError && err.isRateLimit) {
-        setError("Resend limit reached. Wait a bit before requesting another code.")
+        setError(
+          "Resend limit reached. Wait a bit before requesting another code."
+        )
         setCooldown(RESEND_COOLDOWN)
       } else {
         setError("Couldn't send the code. Try again in a moment.")
@@ -114,12 +120,12 @@ export function VerifyPanel({
 
   return (
     <div className="flex flex-col items-center text-center">
-      <h1 className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+      <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         Verify your email
       </h1>
-      <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-relaxed">
+      <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         Enter the 6-digit code sent to{" "}
-        <span className="text-foreground font-medium break-all">
+        <span className="break-all font-medium text-foreground">
           {user?.email}
         </span>
       </p>
@@ -129,16 +135,14 @@ export function VerifyPanel({
           if (onRestart) return onRestart()
           void signOut().then(() => router.push("/signup"))
         }}
-        className="text-muted-foreground/70 hover:text-foreground mt-1.5 text-xs underline-offset-4 transition-colors hover:underline"
+        className="mt-1.5 text-muted-foreground/70 text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
       >
         Wrong email? Start over
       </button>
 
       <motion.div
         key={status === "error" ? `err-${error}` : "ok"}
-        animate={
-          status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }
-        }
+        animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }}
         transition={{ duration: 0.3 }}
         className="mt-9"
       >
@@ -167,7 +171,9 @@ export function VerifyPanel({
                 key={i}
                 index={i}
                 aria-invalid={status === "error" || undefined}
-                className={cn(status === "success" && "border-live/60 ring-live/20 ring-2")}
+                className={cn(
+                  status === "success" && "border-live/60 ring-2 ring-live/20"
+                )}
               />
             ))}
           </InputOTPGroup>
@@ -178,7 +184,9 @@ export function VerifyPanel({
                 key={i}
                 index={i}
                 aria-invalid={status === "error" || undefined}
-                className={cn(status === "success" && "border-live/60 ring-live/20 ring-2")}
+                className={cn(
+                  status === "success" && "border-live/60 ring-2 ring-live/20"
+                )}
               />
             ))}
           </InputOTPGroup>
@@ -193,7 +201,7 @@ export function VerifyPanel({
               key="success"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-live inline-flex items-center gap-1.5 text-sm font-medium"
+              className="inline-flex items-center gap-1.5 font-medium text-live text-sm"
             >
               <CircleCheck className="size-4" /> Verified
             </motion.span>
@@ -220,7 +228,7 @@ export function VerifyPanel({
         </AnimatePresence>
       </div>
 
-      <p className="text-muted-foreground mt-4 text-sm">
+      <p className="mt-4 text-muted-foreground text-sm">
         Didn&apos;t receive a code?{" "}
         {cooldown > 0 ? (
           <span className="text-muted-foreground/70 tabular-nums">
@@ -230,7 +238,7 @@ export function VerifyPanel({
           <button
             type="button"
             onClick={() => void resend()}
-            className="text-foreground font-medium underline-offset-4 hover:underline"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Resend
           </button>
@@ -242,7 +250,7 @@ export function VerifyPanel({
           <motion.p
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-muted-foreground/70 mt-8 max-w-xs text-xs leading-relaxed"
+            className="mt-8 max-w-xs text-muted-foreground/70 text-xs leading-relaxed"
           >
             Can&apos;t find it? Check your spam folder. Gmail sometimes files
             codes under Promotions.

@@ -70,7 +70,11 @@ import {
 
 type XAxis = "none" | "time" | BreakdownDimension
 
-const X_OPTIONS: Array<{ value: XAxis; label: string; icon: React.ElementType }> = [
+const X_OPTIONS: Array<{
+  value: XAxis
+  label: string
+  icon: React.ElementType
+}> = [
   { value: "none", label: "None (single stat)", icon: Hash },
   { value: "time", label: "Time", icon: Clock },
   { value: "short_code", label: "Links", icon: Link2 },
@@ -108,14 +112,14 @@ function FieldLabel({
   if (hint)
     return (
       <span className="flex items-center gap-1.5">
-        <span className="label-mono text-muted-foreground/70 block text-[10px]">
+        <span className="label-mono block text-[10px] text-muted-foreground/70">
           {children}
         </span>
         <InfoHint label={hintLabel ?? "More info"}>{hint}</InfoHint>
       </span>
     )
   return (
-    <span className="label-mono text-muted-foreground/70 block text-[10px]">
+    <span className="label-mono block text-[10px] text-muted-foreground/70">
       {children}
     </span>
   )
@@ -191,12 +195,22 @@ export function WidgetComposer({
       grid: { x: 0, y: 0, w: 6, h: 5 },
       config: { dimension: x, viz: bdViz, metric: seriesMetric, ...extras },
     }
-  }, [x, statMetric, seriesMetric, statViz, tsViz, bdViz, title, accent, cleanScope])
+  }, [
+    x,
+    statMetric,
+    seriesMetric,
+    statViz,
+    tsViz,
+    bdViz,
+    title,
+    accent,
+    cleanScope,
+  ])
 
   const chartOptions =
     kind === "stat"
       ? STAT_VIZ_META.filter(
-          (v) => v.value !== "gauge" || statMetric === "unique_rate",
+          (v) => v.value !== "gauge" || statMetric === "unique_rate"
         )
       : kind === "timeseries"
         ? TS_VIZ
@@ -255,14 +269,23 @@ export function WidgetComposer({
               />
             </div>
             <div className="space-y-2">
-              <FieldLabel hintLabel="How the X axis works" hint="What each point or row represents: time buckets for a series, or a dimension's values for a breakdown.">X axis</FieldLabel>
+              <FieldLabel
+                hintLabel="How the X axis works"
+                hint="What each point or row represents: time buckets for a series, or a dimension's values for a breakdown."
+              >
+                X axis
+              </FieldLabel>
               <Select value={x} onValueChange={(v) => handleX(v as XAxis)}>
                 <SelectTrigger size="sm" className="w-full text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {X_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value} className="text-xs">
+                    <SelectItem
+                      key={o.value}
+                      value={o.value}
+                      className="text-xs"
+                    >
                       <o.icon className="size-3.5" strokeWidth={1.75} />
                       {o.label}
                     </SelectItem>
@@ -271,7 +294,12 @@ export function WidgetComposer({
               </Select>
             </div>
             <div className="space-y-2">
-              <FieldLabel hintLabel="How the Y axis works" hint="The measure being counted: total clicks, unique visitors, or both.">Y axis</FieldLabel>
+              <FieldLabel
+                hintLabel="How the Y axis works"
+                hint="The measure being counted: total clicks, unique visitors, or both."
+              >
+                Y axis
+              </FieldLabel>
               {kind === "stat" ? (
                 <Select
                   value={statMetric}
@@ -304,7 +332,11 @@ export function WidgetComposer({
                   </SelectTrigger>
                   <SelectContent>
                     {SERIES_METRIC_META.map((m) => (
-                      <SelectItem key={m.value} value={m.value} className="text-xs">
+                      <SelectItem
+                        key={m.value}
+                        value={m.value}
+                        className="text-xs"
+                      >
                         <m.icon className="size-3.5" strokeWidth={1.75} />
                         {m.label}
                       </SelectItem>
@@ -314,10 +346,19 @@ export function WidgetComposer({
               )}
             </div>
             <div className="space-y-2">
-              <FieldLabel hintLabel="Choosing a chart" hint="How the data draws. Some charts need a minimum number of categories to read well.">Chart</FieldLabel>
+              <FieldLabel
+                hintLabel="Choosing a chart"
+                hint="How the data draws. Some charts need a minimum number of categories to read well."
+              >
+                Chart
+              </FieldLabel>
               <Select
                 value={
-                  kind === "stat" ? statViz : kind === "timeseries" ? tsViz : bdViz
+                  kind === "stat"
+                    ? statViz
+                    : kind === "timeseries"
+                      ? tsViz
+                      : bdViz
                 }
                 onValueChange={(v) =>
                   kind === "stat"
@@ -332,7 +373,11 @@ export function WidgetComposer({
                 </SelectTrigger>
                 <SelectContent>
                   {chartOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value} className="text-xs">
+                    <SelectItem
+                      key={o.value}
+                      value={o.value}
+                      className="text-xs"
+                    >
                       <o.icon className="size-3.5" strokeWidth={1.75} />
                       {o.label}
                     </SelectItem>
@@ -341,8 +386,13 @@ export function WidgetComposer({
               </Select>
             </div>
             <div className="space-y-2">
-              <FieldLabel hintLabel="How scope works" hint="Filters only this widget's data; the board's shared filters still apply on top.">Scope</FieldLabel>
-              <p className="text-muted-foreground/60 text-[11px] leading-snug">
+              <FieldLabel
+                hintLabel="How scope works"
+                hint="Filters only this widget's data; the board's shared filters still apply on top."
+              >
+                Scope
+              </FieldLabel>
+              <p className="text-[11px] text-muted-foreground/60 leading-snug">
                 Only clicks matching these filters are counted.
               </p>
               <div className="grid grid-cols-2 gap-1.5">
@@ -364,7 +414,12 @@ export function WidgetComposer({
               </div>
             </div>
             <div className="space-y-2">
-              <FieldLabel hintLabel="What chart ink does" hint="The accent color this widget draws with; purely visual.">Chart ink</FieldLabel>
+              <FieldLabel
+                hintLabel="What chart ink does"
+                hint="The accent color this widget draws with; purely visual."
+              >
+                Chart ink
+              </FieldLabel>
               <div className="flex flex-wrap items-center gap-1.5">
                 {ACCENTS.map((a) => (
                   <button
@@ -376,7 +431,7 @@ export function WidgetComposer({
                     className={cn(
                       "size-4.5 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
                       accent === a &&
-                        "ring-foreground/60 ring-offset-background ring-1 ring-offset-2",
+                        "ring-1 ring-foreground/60 ring-offset-2 ring-offset-background"
                     )}
                     style={{ background: ACCENT_VARS[a] }}
                   />
@@ -387,7 +442,7 @@ export function WidgetComposer({
         </div>
         <DialogFooter className="items-center">
           {full && (
-            <span className="text-muted-foreground/70 mr-auto text-xs">
+            <span className="mr-auto text-muted-foreground/70 text-xs">
               board is full ({MAX_WIDGETS} widgets)
             </span>
           )}

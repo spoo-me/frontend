@@ -28,8 +28,10 @@ export function SectionHeading({
     <div
       className={cn(
         "flex flex-col gap-3",
-        align === "center" ? "items-center text-center" : "items-start text-left",
-        className,
+        align === "center"
+          ? "items-center text-center"
+          : "items-start text-left",
+        className
       )}
     >
       {caption && (
@@ -38,7 +40,7 @@ export function SectionHeading({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.6 }}
           transition={{ duration: 0.4 }}
-          className="label-mono text-muted-foreground mb-1"
+          className="label-mono mb-1 text-muted-foreground"
         >
           {num && (
             <span className="text-muted-foreground/50">
@@ -54,7 +56,7 @@ export function SectionHeading({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.6 }}
           transition={{ duration: 0.4 }}
-          className="border-border/70 bg-muted/40 text-muted-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 font-medium text-muted-foreground text-xs"
         >
           {eyebrow}
         </motion.span>
@@ -65,8 +67,8 @@ export function SectionHeading({
         viewport={{ once: true, amount: 0.5 }}
         transition={{ duration: 0.5, delay: 0.05 }}
         className={cn(
-          "text-foreground text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl",
-          align === "center" ? "max-w-2xl" : "max-w-3xl",
+          "text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl md:text-5xl",
+          align === "center" ? "max-w-2xl" : "max-w-3xl"
         )}
       >
         {title}
@@ -78,8 +80,8 @@ export function SectionHeading({
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.5, delay: 0.12 }}
           className={cn(
-            "text-muted-foreground max-w-2xl text-balance text-base sm:text-lg",
-            align === "center" ? "mx-auto" : "",
+            "max-w-2xl text-balance text-base text-muted-foreground sm:text-lg",
+            align === "center" ? "mx-auto" : ""
           )}
         >
           {description}

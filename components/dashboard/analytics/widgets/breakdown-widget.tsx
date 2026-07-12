@@ -120,7 +120,7 @@ export function BreakdownWidget({
         ? "bars"
         : config.viz
   const [mode, setMode] = React.useState<"chart" | "table">(
-    config.viz === "table" ? "table" : "chart",
+    config.viz === "table" ? "table" : "chart"
   )
   const viz = mode === "table" ? "table" : configuredChart
 
@@ -138,9 +138,9 @@ export function BreakdownWidget({
       [...rows].sort((a, b) =>
         metric === "unique"
           ? b.unique_clicks - a.unique_clicks
-          : b.clicks - a.clicks,
+          : b.clicks - a.clicks
       ),
-    [rows, metric],
+    [rows, metric]
   )
 
   const fullCols = expanded || breakdownTableFullCols(w)
@@ -178,11 +178,13 @@ export function BreakdownWidget({
           {onExpandedChange && (
             <button
               type="button"
-              aria-label={expanded ? `Collapse ${meta.title}` : `Expand ${meta.title}`}
+              aria-label={
+                expanded ? `Collapse ${meta.title}` : `Expand ${meta.title}`
+              }
               onClick={() => onExpandedChange(!expanded)}
               className={cn(
-                "text-muted-foreground/60 hover:bg-accent/60 hover:text-foreground flex size-6 items-center justify-center rounded-md transition-colors duration-150",
-                expanded && "text-foreground",
+                "flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
+                expanded && "text-foreground"
               )}
             >
               <ExpandIcon className="size-3.5" strokeWidth={1.75} />
@@ -194,7 +196,7 @@ export function BreakdownWidget({
       {loading ? (
         <Skeleton className="m-2 h-[calc(100%-16px)] w-auto" />
       ) : disjoint ? (
-        <div className="text-muted-foreground/70 flex h-full items-center justify-center px-6 text-center text-xs">
+        <div className="flex h-full items-center justify-center px-6 text-center text-muted-foreground/70 text-xs">
           scope excluded by board filters
         </div>
       ) : (
@@ -276,7 +278,7 @@ export function BreakdownWidget({
                 className={cn(
                   "h-full",
                   expanded &&
-                    "overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]",
+                    "overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]"
                 )}
               >
                 <BreakdownList
@@ -290,47 +292,47 @@ export function BreakdownWidget({
             ) : (
               <div className="flex h-full flex-col overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted sticky top-0 z-10">
-                    <tr className="border-border/60 text-muted-foreground border-b text-left">
-                      <th className="label-mono h-8 w-full px-3 text-[10px] font-medium">
+                  <thead className="sticky top-0 z-10 bg-muted">
+                    <tr className="border-border/60 border-b text-left text-muted-foreground">
+                      <th className="label-mono h-8 w-full px-3 font-medium text-[10px]">
                         {meta.title}
                       </th>
                       <th
                         className={cn(
-                          "label-mono h-8 px-3 text-right text-[10px] font-medium",
+                          "label-mono h-8 px-3 text-right font-medium text-[10px]",
                           metric !== "unique" && "text-foreground",
-                          !fullCols && metric === "unique" && "hidden",
+                          !fullCols && metric === "unique" && "hidden"
                         )}
                       >
                         Clicks
                       </th>
                       <th
                         className={cn(
-                          "label-mono h-8 px-3 text-right text-[10px] font-medium",
+                          "label-mono h-8 px-3 text-right font-medium text-[10px]",
                           metric === "unique" && "text-foreground",
-                          !fullCols && metric !== "unique" && "hidden",
+                          !fullCols && metric !== "unique" && "hidden"
                         )}
                       >
                         Unique
                       </th>
                       <th
                         className={cn(
-                          "label-mono h-8 px-3 text-right text-[10px] font-medium",
-                          !fullCols && "hidden",
+                          "label-mono h-8 px-3 text-right font-medium text-[10px]",
+                          !fullCols && "hidden"
                         )}
                       >
                         Share
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-border/60 divide-y">
+                  <tbody className="divide-y divide-border/60">
                     {sortedRows.map((row) => (
                       <tr
                         key={row.value}
                         onClick={() => onSelect?.(row.value)}
                         className={cn(
                           onSelect &&
-                            "hover:bg-accent/40 cursor-pointer transition-colors duration-150",
+                            "cursor-pointer transition-colors duration-150 hover:bg-accent/40"
                         )}
                       >
                         <td className="max-w-0 truncate px-3 py-2">
@@ -340,7 +342,7 @@ export function BreakdownWidget({
                               value={row.value}
                               className="size-3.5"
                             />
-                            <span className="text-foreground truncate text-[13px]">
+                            <span className="truncate text-[13px] text-foreground">
                               {dimensionLabel(dimension, row.value)}
                             </span>
                           </span>
@@ -351,7 +353,7 @@ export function BreakdownWidget({
                             metric === "unique"
                               ? "text-muted-foreground"
                               : "text-foreground",
-                            !fullCols && metric === "unique" && "hidden",
+                            !fullCols && metric === "unique" && "hidden"
                           )}
                         >
                           {formatCount(row.clicks)}
@@ -362,15 +364,15 @@ export function BreakdownWidget({
                             metric === "unique"
                               ? "text-foreground"
                               : "text-muted-foreground",
-                            !fullCols && metric !== "unique" && "hidden",
+                            !fullCols && metric !== "unique" && "hidden"
                           )}
                         >
                           {formatCount(row.unique_clicks)}
                         </td>
                         <td
                           className={cn(
-                            "text-muted-foreground px-3 py-2 text-right font-mono text-xs tabular-nums",
-                            !fullCols && "hidden",
+                            "px-3 py-2 text-right font-mono text-muted-foreground text-xs tabular-nums",
+                            !fullCols && "hidden"
                           )}
                         >
                           {formatPercent(row.percentage)}

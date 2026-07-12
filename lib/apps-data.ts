@@ -26,7 +26,9 @@ export const connectedApps: ConnectedApp[] = [
     color: "#FF6363",
     url: "https://raycast.com/store",
     github: "https://github.com/spoo-me/spoo-raycast",
-    install: [{ label: "Raycast Store", command: "Search 'spoo.me' in Raycast Store" }],
+    install: [
+      { label: "Raycast Store", command: "Search 'spoo.me' in Raycast Store" },
+    ],
     features: [
       "Quick shorten command",
       "My Links browser with rich detail view",
@@ -138,7 +140,12 @@ export const connectedApps: ConnectedApp[] = [
     color: "#3DDC84",
     url: "https://github.com/spoo-me",
     install: [{ label: "Play Store", command: "Coming soon" }],
-    features: ["Share Sheet integration", "Biometric auth", "Full analytics", "Offline queue"],
+    features: [
+      "Share Sheet integration",
+      "Biometric auth",
+      "Full analytics",
+      "Offline queue",
+    ],
     status: "soon",
   },
   {
@@ -152,7 +159,12 @@ export const connectedApps: ConnectedApp[] = [
     color: "#A2AAAD",
     url: "https://github.com/spoo-me",
     install: [{ label: "App Store", command: "Coming soon" }],
-    features: ["Share extension", "iOS Shortcuts", "Lock-screen widgets", "Siri intents"],
+    features: [
+      "Share extension",
+      "iOS Shortcuts",
+      "Lock-screen widgets",
+      "Siri intents",
+    ],
     status: "soon",
   },
   {
@@ -166,7 +178,12 @@ export const connectedApps: ConnectedApp[] = [
     color: "#E01E5A",
     url: "https://slack.com/apps",
     install: [{ label: "Slack App Directory", command: "Add to Slack" }],
-    features: ["Slash commands", "Link unfurls", "Per-channel analytics", "OAuth scoped"],
+    features: [
+      "Slash commands",
+      "Link unfurls",
+      "Per-channel analytics",
+      "OAuth scoped",
+    ],
     status: "soon",
   },
   {
@@ -204,7 +221,12 @@ export const connectedApps: ConnectedApp[] = [
       { label: "npm", command: "npm i spoo-me" },
       { label: "bun", command: "bun add spoo-me" },
     ],
-    features: ["Edge-runtime ready", "Zero deps", "Fully typed", "Tree-shakeable"],
+    features: [
+      "Edge-runtime ready",
+      "Zero deps",
+      "Fully typed",
+      "Tree-shakeable",
+    ],
     status: "soon",
   },
   {
@@ -219,7 +241,12 @@ export const connectedApps: ConnectedApp[] = [
     url: "https://crates.io/crates/spoo",
     github: "https://github.com/spoo-me/spoo-rust",
     install: [{ label: "cargo", command: "cargo add spoo" }],
-    features: ["Tokio async", "Builder pattern", "Result-based errors", "no_std-friendly core"],
+    features: [
+      "Tokio async",
+      "Builder pattern",
+      "Result-based errors",
+      "no_std-friendly core",
+    ],
     status: "live",
   },
   {
@@ -233,8 +260,15 @@ export const connectedApps: ConnectedApp[] = [
     color: "#00ADD8",
     url: "https://pkg.go.dev",
     github: "https://github.com/spoo-me/spoo-go",
-    install: [{ label: "go get", command: "go get github.com/spoo-me/spoo-go" }],
-    features: ["context.Context", "Zero deps", "Idiomatic errors", "Streaming analytics"],
+    install: [
+      { label: "go get", command: "go get github.com/spoo-me/spoo-go" },
+    ],
+    features: [
+      "context.Context",
+      "Zero deps",
+      "Idiomatic errors",
+      "Streaming analytics",
+    ],
     status: "soon",
   },
   {
@@ -267,7 +301,12 @@ export const connectedApps: ConnectedApp[] = [
       { label: "brew", command: "brew install spoo-me/tap/spoo" },
       { label: "cargo", command: "cargo install spoo-cli" },
     ],
-    features: ["Pipe-friendly", "JSON output", "Bulk operations", "Cross-platform"],
+    features: [
+      "Pipe-friendly",
+      "JSON output",
+      "Bulk operations",
+      "Cross-platform",
+    ],
     status: "live",
   },
   {
@@ -280,8 +319,18 @@ export const connectedApps: ConnectedApp[] = [
     iconKey: "n8n",
     color: "#EA4B71",
     url: "https://n8n.io",
-    install: [{ label: "n8n community", command: "Install spoo node from community nodes" }],
-    features: ["Workflow node", "Branching on stats", "Self-host friendly", "Webhook trigger"],
+    install: [
+      {
+        label: "n8n community",
+        command: "Install spoo node from community nodes",
+      },
+    ],
+    features: [
+      "Workflow node",
+      "Branching on stats",
+      "Self-host friendly",
+      "Webhook trigger",
+    ],
     status: "soon",
   },
   {
@@ -295,7 +344,12 @@ export const connectedApps: ConnectedApp[] = [
     color: "#FF4F00",
     url: "https://zapier.com",
     install: [{ label: "Zapier", command: "Search 'spoo.me' in Zapier" }],
-    features: ["6000+ app connectors", "Trigger on click", "Create from any app", "OAuth scoped"],
+    features: [
+      "6000+ app connectors",
+      "Trigger on click",
+      "Create from any app",
+      "OAuth scoped",
+    ],
     status: "soon",
   },
 ]

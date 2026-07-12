@@ -33,8 +33,8 @@ export function Segmented<T extends string>({
     <span
       role="radiogroup"
       className={cn(
-        "border-border/60 bg-muted/40 flex h-7 items-center rounded-lg border p-0.5",
-        className,
+        "flex h-7 items-center rounded-lg border border-border/60 bg-muted/40 p-0.5",
+        className
       )}
     >
       {options.map((opt) => {
@@ -53,14 +53,14 @@ export function Segmented<T extends string>({
               Icon && !opt.label ? "w-7" : "px-2",
               active
                 ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground",
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {active && (
               <motion.span
                 layoutId={`segmented-${id}`}
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-card border-border/60 absolute inset-0 rounded-md border"
+                className="absolute inset-0 rounded-md border border-border/60 bg-card"
               />
             )}
             <span className="relative flex items-center gap-1">

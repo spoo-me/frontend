@@ -44,7 +44,7 @@ export default function WorldMap({
           io.disconnect()
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     )
     io.observe(containerRef.current)
     return () => io.disconnect()
@@ -61,13 +61,13 @@ export default function WorldMap({
         start: projectPoint(d.start.lat, d.start.lng),
         end: projectPoint(d.end.lat, d.end.lng),
       })),
-    [dots],
+    [dots]
   )
 
   return (
     <div
       ref={containerRef}
-      className="w-full aspect-[2/1] rounded-lg relative font-sans"
+      className="relative aspect-[2/1] w-full rounded-lg font-sans"
     >
       {visible && (
         <>
@@ -80,15 +80,21 @@ export default function WorldMap({
             decoding="async"
             width={1056}
             height={495}
-            className="h-full w-full [mask-image:linear-gradient(to_bottom,transparent,white_10%,white_90%,transparent)] pointer-events-none select-none"
+            className="pointer-events-none h-full w-full select-none [mask-image:linear-gradient(to_bottom,transparent,white_10%,white_90%,transparent)]"
             draggable={false}
           />
           <svg
             viewBox="0 0 800 400"
-            className="w-full h-full absolute inset-0 pointer-events-none select-none"
+            className="pointer-events-none absolute inset-0 h-full w-full select-none"
           >
             <defs>
-              <linearGradient id="path-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient
+                id="path-gradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
                 <stop offset="0%" stopColor="white" stopOpacity="0" />
                 <stop offset="5%" stopColor={lineColor} stopOpacity="1" />
                 <stop offset="95%" stopColor={lineColor} stopOpacity="1" />
@@ -110,7 +116,12 @@ export default function WorldMap({
             ))}
 
             {projected.flatMap(({ start, end }, i) => [
-              <Pulse key={`s-${i}`} cx={start.x} cy={start.y} color={lineColor} />,
+              <Pulse
+                key={`s-${i}`}
+                cx={start.x}
+                cy={start.y}
+                color={lineColor}
+              />,
               <Pulse key={`e-${i}`} cx={end.x} cy={end.y} color={lineColor} />,
             ])}
           </svg>
@@ -125,8 +136,20 @@ function Pulse({ cx, cy, color }: { cx: number; cy: number; color: string }) {
     <g>
       <circle cx={cx} cy={cy} r="2" fill={color} />
       <circle cx={cx} cy={cy} r="2" fill={color} opacity="0.5">
-        <animate attributeName="r" from="2" to="8" dur="1.5s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
+        <animate
+          attributeName="r"
+          from="2"
+          to="8"
+          dur="1.5s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="opacity"
+          from="0.5"
+          to="0"
+          dur="1.5s"
+          repeatCount="indefinite"
+        />
       </circle>
     </g>
   )

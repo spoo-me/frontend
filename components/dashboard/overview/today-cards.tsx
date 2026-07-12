@@ -29,7 +29,11 @@ export function TodayCards({ linksTotal }: { linksTotal?: number }) {
     queryKey: ["stats", "today"],
     // endDate is read at fetch time so the 60s tick actually advances.
     queryFn: () =>
-      getStats({ startDate: midnight(), endDate: new Date(), groupBy: ["time"] }),
+      getStats({
+        startDate: midnight(),
+        endDate: new Date(),
+        groupBy: ["time"],
+      }),
     refetchInterval: MINUTE,
   })
   const yesterday = useQuery({
@@ -62,7 +66,9 @@ export function TodayCards({ linksTotal }: { linksTotal?: number }) {
         delta={clicksDelta}
         deltaLabel="vs yesterday"
         chart={
-          hasSignal && points.length >= 2 ? <Sparkline points={points} /> : undefined
+          hasSignal && points.length >= 2 ? (
+            <Sparkline points={points} />
+          ) : undefined
         }
       />
       <KpiCard

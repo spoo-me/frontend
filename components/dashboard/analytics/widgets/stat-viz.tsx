@@ -20,7 +20,7 @@ export function OdometerValue({ value }: { value: string }) {
           <span key={i} aria-hidden>
             {ch}
           </span>
-        ),
+        )
       )}
     </span>
   )
@@ -28,7 +28,10 @@ export function OdometerValue({ value }: { value: string }) {
 
 function OdometerDigit({ digit }: { digit: number }) {
   return (
-    <span aria-hidden className="relative inline-block h-[1em] w-[1ch] overflow-hidden">
+    <span
+      aria-hidden
+      className="relative inline-block h-[1em] w-[1ch] overflow-hidden"
+    >
       <motion.span
         className="absolute top-0 left-0 flex flex-col"
         initial={false}
@@ -59,7 +62,10 @@ export function GaugeArc({
   const c = 2 * Math.PI * r
   return (
     <div className="relative flex h-full w-full items-center justify-center">
-      <svg viewBox="0 0 100 100" className="h-full max-h-36 w-auto rotate-[135deg]">
+      <svg
+        viewBox="0 0 100 100"
+        className="h-full max-h-36 w-auto rotate-[135deg]"
+      >
         <circle
           cx="50"
           cy="50"
@@ -83,7 +89,7 @@ export function GaugeArc({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-foreground font-mono text-[22px] leading-none font-semibold tracking-tight tabular-nums">
+        <span className="font-mono font-semibold text-[22px] text-foreground tabular-nums leading-none tracking-tight">
           {label}
         </span>
       </div>

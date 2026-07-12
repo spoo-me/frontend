@@ -17,13 +17,55 @@ type LiveMarker = {
 }
 
 const LIVE_MARKERS: LiveMarker[] = [
-  { id: "nyc",       city: "New York",  location: [40.7128, -74.006],   initial: 981, delta: 4 },
-  { id: "ldn",       city: "London",    location: [51.5074, -0.1278],   initial: 486, delta: -1 },
-  { id: "tokyo",     city: "Tokyo",     location: [35.6762, 139.6503],  initial: 305, delta: 15 },
-  { id: "delhi",     city: "Delhi",     location: [28.6139, 77.209],    initial: 742, delta: 8 },
-  { id: "saopaulo",  city: "São Paulo", location: [-23.5505, -46.6333], initial: 219, delta: 6 },
-  { id: "sydney",    city: "Sydney",    location: [-33.8688, 151.2093], initial: 168, delta: 11 },
-  { id: "singapore", city: "Singapore", location: [1.3521, 103.8198],   initial: 412, delta: -2 },
+  {
+    id: "nyc",
+    city: "New York",
+    location: [40.7128, -74.006],
+    initial: 981,
+    delta: 4,
+  },
+  {
+    id: "ldn",
+    city: "London",
+    location: [51.5074, -0.1278],
+    initial: 486,
+    delta: -1,
+  },
+  {
+    id: "tokyo",
+    city: "Tokyo",
+    location: [35.6762, 139.6503],
+    initial: 305,
+    delta: 15,
+  },
+  {
+    id: "delhi",
+    city: "Delhi",
+    location: [28.6139, 77.209],
+    initial: 742,
+    delta: 8,
+  },
+  {
+    id: "saopaulo",
+    city: "São Paulo",
+    location: [-23.5505, -46.6333],
+    initial: 219,
+    delta: 6,
+  },
+  {
+    id: "sydney",
+    city: "Sydney",
+    location: [-33.8688, 151.2093],
+    initial: 168,
+    delta: 11,
+  },
+  {
+    id: "singapore",
+    city: "Singapore",
+    location: [1.3521, 103.8198],
+    initial: 412,
+    delta: -2,
+  },
 ]
 
 const FILLER_MARKERS: COBEOptions["markers"] = [
@@ -59,7 +101,7 @@ export function Globe({ className }: { className?: string }) {
           io.disconnect()
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     )
     io.observe(containerRef.current)
     return () => io.disconnect()
@@ -115,14 +157,16 @@ export function Globe({ className }: { className?: string }) {
     // when globe scrolled out of view OR tab backgrounded.
     let inView = true
     let pageVisible = !document.hidden
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
 
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) inView = e.isIntersecting
-        if ((inView && pageVisible) && raf === 0) startLoop()
+        if (inView && pageVisible && raf === 0) startLoop()
       },
-      { rootMargin: "0px" },
+      { rootMargin: "0px" }
     )
     io.observe(containerRef.current)
 
@@ -168,7 +212,7 @@ export function Globe({ className }: { className?: string }) {
   }, [mounted, resolvedTheme])
 
   const tooltips = LIVE_MARKERS.map((m) => {
-    const value = m.initial + ((tick * (m.id.charCodeAt(0) % 7 + 3)) % 53)
+    const value = m.initial + ((tick * ((m.id.charCodeAt(0) % 7) + 3)) % 53)
     const up = m.delta >= 0
     const style = {
       position: "absolute",
@@ -183,9 +227,9 @@ export function Globe({ className }: { className?: string }) {
         key={m.id}
         aria-hidden
         style={style}
-        className="pointer-events-none z-10 flex flex-col gap-0.5 rounded-md bg-neutral-900 px-2 py-1.5 whitespace-nowrap text-white shadow-lg ring-1 ring-white/10 transition-opacity duration-300"
+        className="pointer-events-none z-10 flex flex-col gap-0.5 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1.5 text-white shadow-lg ring-1 ring-white/10 transition-opacity duration-300"
       >
-        <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-white/50">
+        <span className="font-medium text-[9px] text-white/50 uppercase tracking-[0.14em]">
           {m.city}
         </span>
         <span className="flex items-center gap-1.5 font-mono text-[11px] tabular-nums leading-none">
@@ -201,11 +245,11 @@ export function Globe({ className }: { className?: string }) {
   return (
     <div
       ref={containerRef}
-      className={cn("relative aspect-square w-full mx-auto", className)}
+      className={cn("relative mx-auto aspect-square w-full", className)}
     >
       <canvas
         ref={canvasRef}
-        className="size-full opacity-0 transition-opacity duration-700 cursor-grab"
+        className="size-full cursor-grab opacity-0 transition-opacity duration-700"
         onPointerDown={(e) => {
           pointerInteractingRef.current = e.clientX - pointerMovementRef.current
           if (canvasRef.current) canvasRef.current.style.cursor = "grabbing"

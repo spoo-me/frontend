@@ -129,7 +129,7 @@ export function fetchUrlMetadata(url: string) {
 
 export function checkAlias(alias: string) {
   return fetch(
-    `/api/v1/shorten/check-alias?alias=${encodeURIComponent(alias)}`,
+    `/api/v1/shorten/check-alias?alias=${encodeURIComponent(alias)}`
   ).then((r) => parse<{ available: boolean; reason: string | null }>(r))
 }
 
@@ -155,7 +155,7 @@ export type ShortenInput = {
 
 export function shorten(input: ShortenInput) {
   return authedFetch("/api/v1/shorten", jsonInit("POST", input)).then((r) =>
-    parse<ShortUrl>(r),
+    parse<ShortUrl>(r)
   )
 }
 
@@ -189,7 +189,7 @@ export function listUrls(params?: ListUrlsParams) {
     q.set("filter", JSON.stringify(params.filter))
   const qs = q.size ? `?${q}` : ""
   return authedFetch(`/api/v1/urls${qs}`, { method: "GET" }).then((r) =>
-    parse<UrlListResponse>(r),
+    parse<UrlListResponse>(r)
   )
 }
 
@@ -217,14 +217,14 @@ export type UpdateUrlInput = Partial<{
 export function updateUrl(urlId: string, input: UpdateUrlInput) {
   return authedFetch(
     `/api/v1/urls/${encodeURIComponent(urlId)}`,
-    jsonInit("PATCH", input),
+    jsonInit("PATCH", input)
   ).then((r) => parse<UrlListItem>(r))
 }
 
 export function setUrlStatus(urlId: string, status: "ACTIVE" | "INACTIVE") {
   return authedFetch(
     `/api/v1/urls/${encodeURIComponent(urlId)}/status`,
-    jsonInit("PATCH", { status }),
+    jsonInit("PATCH", { status })
   ).then((r) => parse<UrlListItem>(r))
 }
 

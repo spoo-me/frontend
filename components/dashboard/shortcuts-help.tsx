@@ -23,7 +23,7 @@ export function openShortcutsHelp() {
 function Row({ label, keys }: { label: string; keys: string[] }) {
   return (
     <div className="flex h-8 items-center justify-between">
-      <span className="text-foreground text-[13px]">{label}</span>
+      <span className="text-[13px] text-foreground">{label}</span>
       <span className="flex items-center gap-1">
         {keys.map((k, i) => (
           <Kbd key={i}>{k}</Kbd>
@@ -42,7 +42,7 @@ function Group({
 }) {
   return (
     <div className="space-y-1">
-      <div className="label-mono text-muted-foreground/60 mb-2 block">
+      <div className="label-mono mb-2 block text-muted-foreground/60">
         {title}
       </div>
       {children}

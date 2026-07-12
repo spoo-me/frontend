@@ -43,7 +43,7 @@ const DAY = 86_400_000
 
 export function buildAttentionItems(
   links: UrlListItem[],
-  domains: CustomDomain[],
+  domains: CustomDomain[]
 ): Item[] {
   const items: Item[] = []
   const now = Date.now()
@@ -131,7 +131,9 @@ export function buildAttentionItems(
 
   // Already-dead links, quietest tier; two most recent are enough.
   const dead = links
-    .filter((l) => l.alias && (l.status === "EXPIRED" || l.status === "BLOCKED"))
+    .filter(
+      (l) => l.alias && (l.status === "EXPIRED" || l.status === "BLOCKED")
+    )
     .slice(0, 2)
   for (const l of dead) {
     const blocked = l.status === "BLOCKED"
@@ -156,7 +158,8 @@ const MAX_ROWS = 4
 
 const TAG_TONES = {
   red: "bg-destructive/10 text-destructive dark:bg-destructive/15",
-  amber: "bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400",
+  amber:
+    "bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400",
 } as const
 
 export function Attention({
@@ -171,7 +174,7 @@ export function Attention({
 }) {
   const items = React.useMemo(
     () => buildAttentionItems(links, domains),
-    [links, domains],
+    [links, domains]
   )
   // Overflow expands IN PLACE — the hidden items don't share a page.
   const [expanded, setExpanded] = React.useState(false)
@@ -196,7 +199,7 @@ export function Attention({
             <button
               type="button"
               onClick={() => setExpanded((e) => !e)}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors duration-150"
+              className="flex items-center gap-1 text-muted-foreground text-xs transition-colors duration-150 hover:text-foreground"
             >
               {expanded ? "show less" : `${overflow} more`}
               {expanded ? (
@@ -208,41 +211,41 @@ export function Attention({
           ) : undefined
         }
       />
-      <Panel className="divide-border/60 mt-2 divide-y">
+      <Panel className="mt-2 divide-y divide-border/60">
         {shown.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              className="hover:bg-accent/40 group flex h-11 items-center gap-3 px-4 transition-colors duration-150"
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className={cn(
-                      "label-mono w-[4.5rem] shrink-0 rounded px-1.5 py-0.5 text-center text-[10px] whitespace-nowrap",
-                      TAG_TONES[item.tone],
-                    )}
-                  >
-                    {item.category}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {item.tone === "red"
-                    ? "Broken now, needs action."
-                    : "Will break soon."}
-                </TooltipContent>
-              </Tooltip>
-              <span className="text-foreground shrink-0 font-mono text-[13px]">
-                {item.subject}
-              </span>
-              <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-                {item.detail}
-              </span>
-              <span className="text-muted-foreground group-hover:text-foreground flex shrink-0 items-center gap-1 text-xs transition-colors duration-150">
-                {item.action}
-                <ArrowUpRight className="size-3" />
-              </span>
-            </Link>
+          <Link
+            key={item.key}
+            href={item.href}
+            className="group flex h-11 items-center gap-3 px-4 transition-colors duration-150 hover:bg-accent/40"
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className={cn(
+                    "label-mono w-[4.5rem] shrink-0 whitespace-nowrap rounded px-1.5 py-0.5 text-center text-[10px]",
+                    TAG_TONES[item.tone]
+                  )}
+                >
+                  {item.category}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {item.tone === "red"
+                  ? "Broken now, needs action."
+                  : "Will break soon."}
+              </TooltipContent>
+            </Tooltip>
+            <span className="shrink-0 font-mono text-[13px] text-foreground">
+              {item.subject}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-muted-foreground text-xs">
+              {item.detail}
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs transition-colors duration-150 group-hover:text-foreground">
+              {item.action}
+              <ArrowUpRight className="size-3" />
+            </span>
+          </Link>
         ))}
       </Panel>
     </div>

@@ -50,7 +50,7 @@ export function CalendarHeatmap({
   const max = React.useMemo(
     () => Math.max(0, ...series.map(value)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [series, metric],
+    [series, metric]
   )
 
   // Cells grow into whatever the grid cell offers (a bigger widget means
@@ -71,9 +71,7 @@ export function CalendarHeatmap({
   }, [hasData])
 
   if (!series.length) {
-    return (
-      <EmptyRange />
-    )
+    return <EmptyRange />
   }
 
   /* Hourly window (a day or so of hourly buckets): a labelled strip of
@@ -86,12 +84,15 @@ export function CalendarHeatmap({
           10,
           Math.min(
             36,
-            Math.floor(Math.min((box.w - 8) / count, box.h - 18)) - 3,
-          ),
+            Math.floor(Math.min((box.w - 8) / count, box.h - 18)) - 3
+          )
         )
       : 16
     return (
-      <div ref={ref} className="flex h-full w-full items-center justify-center p-4">
+      <div
+        ref={ref}
+        className="flex h-full w-full items-center justify-center p-4"
+      >
         <div className="flex gap-[3px]">
           {series.map((b) => {
             const t = new Date(b.bucket)
@@ -106,7 +107,7 @@ export function CalendarHeatmap({
                   }
                   className={cn(
                     "transition-transform duration-150",
-                    onRangeSelect && "cursor-pointer hover:scale-110",
+                    onRangeSelect && "cursor-pointer hover:scale-110"
                   )}
                   style={{
                     width: cell,
@@ -115,7 +116,7 @@ export function CalendarHeatmap({
                     background: stepFill(value(b), max),
                   }}
                 />
-                <span className="text-muted-foreground/60 h-3 font-mono text-[9px] leading-none whitespace-nowrap">
+                <span className="h-3 whitespace-nowrap font-mono text-[9px] text-muted-foreground/60 leading-none">
                   {hour % 6 === 0 ? hourFmt.format(t) : ""}
                 </span>
               </div>
@@ -128,7 +129,7 @@ export function CalendarHeatmap({
 
   /* Daily grid: pad the first week so weekday rows line up (Monday top). */
   const byDay = new Map(
-    series.map((b) => [new Date(b.bucket).setHours(0, 0, 0, 0), b]),
+    series.map((b) => [new Date(b.bucket).setHours(0, 0, 0, 0), b])
   )
   const first = new Date(series[0].bucket)
   first.setHours(0, 0, 0, 0)
@@ -151,10 +152,9 @@ export function CalendarHeatmap({
         10,
         Math.min(
           36,
-          Math.floor(
-            Math.min((box.w - 34) / weeks.length, (box.h - 15) / 7),
-          ) - GAP,
-        ),
+          Math.floor(Math.min((box.w - 34) / weeks.length, (box.h - 15) / 7)) -
+            GAP
+        )
       )
     : 16
   const radius = Math.max(3, Math.round(cell / 6))
@@ -169,13 +169,16 @@ export function CalendarHeatmap({
   }
 
   return (
-    <div ref={ref} className="flex h-full w-full items-center justify-center p-4">
+    <div
+      ref={ref}
+      className="flex h-full w-full items-center justify-center p-4"
+    >
       <div className="flex max-h-full gap-1.5">
         <div className="flex shrink-0 flex-col gap-[3px] pt-[15px]" aria-hidden>
           {WEEKDAYS.map((d, i) => (
             <span
               key={i}
-              className="text-muted-foreground/60 flex items-center pr-1 font-mono text-[9px] leading-none"
+              className="flex items-center pr-1 font-mono text-[9px] text-muted-foreground/60 leading-none"
               style={{ height: cell }}
             >
               {d}
@@ -185,14 +188,12 @@ export function CalendarHeatmap({
         <div className="flex min-w-0 gap-[3px] overflow-hidden">
           {weeks.map((week, wi) => (
             <div key={wi} className="flex flex-col gap-[3px]">
-              <span className="text-muted-foreground/60 h-3 font-mono text-[9px] leading-none whitespace-nowrap">
+              <span className="h-3 whitespace-nowrap font-mono text-[9px] text-muted-foreground/60 leading-none">
                 {monthLabel(week, wi)}
               </span>
               {week.map(({ t, bucket }) => {
                 if (!bucket)
-                  return (
-                    <span key={t} style={{ width: cell, height: cell }} />
-                  )
+                  return <span key={t} style={{ width: cell, height: cell }} />
                 const v = value(bucket)
                 return (
                   <button
@@ -204,7 +205,7 @@ export function CalendarHeatmap({
                     }
                     className={cn(
                       "transition-transform duration-150",
-                      onRangeSelect && "cursor-pointer hover:scale-110",
+                      onRangeSelect && "cursor-pointer hover:scale-110"
                     )}
                     style={{
                       width: cell,

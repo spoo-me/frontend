@@ -114,7 +114,10 @@ func main() {
   },
 ]
 
-export async function highlightCode(code: string, lang: string): Promise<string> {
+export async function highlightCode(
+  code: string,
+  lang: string
+): Promise<string> {
   return codeToHtml(code, {
     lang,
     themes: { light: "vitesse-light", dark: "vesper" },
@@ -144,6 +147,6 @@ export async function getHighlightedSamples(): Promise<HighlightedSample[]> {
         themes: { light: "vitesse-light", dark: "vesper" },
         defaultColor: false,
       }),
-    })),
+    }))
   )
 }

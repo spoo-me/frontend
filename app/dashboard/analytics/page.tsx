@@ -43,7 +43,10 @@ import { RefreshControl } from "@/components/dashboard/refresh-control"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { onAnalyticsEditMode } from "@/components/dashboard/analytics/edit-mode"
 import { EditBar } from "@/components/dashboard/analytics/edit-bar"
-import { MobileStack, WidgetGrid } from "@/components/dashboard/analytics/widget-grid"
+import {
+  MobileStack,
+  WidgetGrid,
+} from "@/components/dashboard/analytics/widget-grid"
 import { WidgetCell } from "@/components/dashboard/analytics/widget-cell"
 import { WIDGET_CATALOG } from "@/components/dashboard/analytics/widget-meta"
 
@@ -309,10 +312,7 @@ export default function AnalyticsPage() {
   const prevExpand = React.useRef<string | null>(expandId)
   const handleExpand = (id: string | null) => {
     if (id && !expandId) {
-      trackUiAction(
-        "chart_expanded",
-        widgets.find((w) => w.id === id)?.kind,
-      )
+      trackUiAction("chart_expanded", widgets.find((w) => w.id === id)?.kind)
       scrollDepth.current =
         document.querySelector("[data-dashboard-scroller]")?.scrollTop ?? 0
     }
@@ -367,7 +367,6 @@ export default function AnalyticsPage() {
       onToggleFilter={(key, v) => toggleFilter(key)(v)}
     />
   )
-
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -436,7 +435,7 @@ export default function AnalyticsPage() {
             <button
               type="button"
               onClick={() => Object.values(setters).forEach((set) => set(null))}
-              className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4 transition-colors duration-150"
+              className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
             >
               Clear all
             </button>
@@ -446,9 +445,9 @@ export default function AnalyticsPage() {
 
       {/* The dashboard itself */}
       {widgets.length === 0 ? (
-        <div className="border-border/60 bg-card mt-5 rounded-2xl border">
+        <div className="mt-5 rounded-2xl border border-border/60 bg-card">
           <div className="pattern-dots m-4 flex h-56 flex-col items-center justify-center gap-3 rounded-lg">
-            <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+            <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               this dashboard is empty
             </span>
             {isLgUp ? (
@@ -457,7 +456,7 @@ export default function AnalyticsPage() {
                 Add widgets
               </Button>
             ) : (
-              <span className="text-muted-foreground/50 text-[11px]">
+              <span className="text-[11px] text-muted-foreground/50">
                 editing needs a larger screen
               </span>
             )}
@@ -502,7 +501,9 @@ export default function AnalyticsPage() {
               const entry = WIDGET_CATALOG.find((e) => e.key === entryKey)
               if (entry) setSelectedId(lay.addWidget(entry.kind, entry.seed))
             }}
-            onAddCustom={(kind, seed) => setSelectedId(lay.addWidget(kind, seed, "custom"))}
+            onAddCustom={(kind, seed) =>
+              setSelectedId(lay.addWidget(kind, seed, "custom"))
+            }
             onDuplicate={(id) => setSelectedId(lay.duplicateWidget(id))}
             onRemove={lay.removeWidget}
             onResetWidget={lay.resetWidget}

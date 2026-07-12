@@ -87,7 +87,7 @@ function toLocalInputValue(d: Date) {
 
 const WORDS =
   "amber basil cedar delta ember fable garnet hazel indigo juniper koala lumen maple nectar onyx pixel quartz raven sable tundra umber velvet willow zephyr".split(
-    " ",
+    " "
   )
 /** Unbiased crypto-random integer in [0, bound). */
 function randInt(bound: number) {
@@ -116,7 +116,10 @@ function diffTruncate(from: string, to: string, max = 16): [string, string] {
   if (from.length <= max && to.length <= max) return [from, to]
   let p = 0
   while (p < from.length && p < to.length && from[p] === to[p]) p++
-  const start = Math.max(0, Math.min(p - 4, Math.max(from.length, to.length) - max))
+  const start = Math.max(
+    0,
+    Math.min(p - 4, Math.max(from.length, to.length) - max)
+  )
   const cut = (s: string) => {
     let out = s.slice(start)
     if (out.length > max) out = `${out.slice(0, max - 1)}…`
@@ -138,18 +141,25 @@ function formatWhen(unix: number) {
 type ChangeRow = { field: string; from: string; to: string }
 
 /** Audit rows for the confirm dialog — only what changed, values summarized. */
-function describeChanges(link: UrlListItem, patch: UpdateUrlInput): ChangeRow[] {
+function describeChanges(
+  link: UrlListItem,
+  patch: UpdateUrlInput
+): ChangeRow[] {
   const rows: ChangeRow[] = []
   const strip = (u: string) => u.replace(/^https?:\/\//, "")
   if (patch.long_url !== undefined) {
     const [from, to] = diffTruncate(
       strip(link.long_url ?? ""),
-      strip(patch.long_url),
+      strip(patch.long_url)
     )
     rows.push({ field: "Destination", from, to })
   }
   if (patch.alias !== undefined)
-    rows.push({ field: "Short link", from: `/${link.alias}`, to: `/${patch.alias}` })
+    rows.push({
+      field: "Short link",
+      from: `/${link.alias}`,
+      to: `/${patch.alias}`,
+    })
   if (patch.domain !== undefined)
     rows.push({
       field: "Domain",
@@ -207,10 +217,12 @@ function describeChanges(link: UrlListItem, patch: UpdateUrlInput): ChangeRow[] 
     })
   if (patch.meta_tags !== undefined) {
     // The echo carries explicit nulls (and warnings) — count set fields only.
-    const keysOf = (m: UpdateUrlInput["meta_tags"] | UrlListItem["meta_tags"]) => {
+    const keysOf = (
+      m: UpdateUrlInput["meta_tags"] | UrlListItem["meta_tags"]
+    ) => {
       if (!m) return "default"
       const set = (["title", "description", "image", "color"] as const).filter(
-        (k) => m[k] != null,
+        (k) => m[k] != null
       )
       return set.length ? set.join(", ") : "default"
     }
@@ -242,11 +254,11 @@ function Field({
     <div className="space-y-2">
       {labelHint ? (
         <span className="mb-2.5 flex items-center gap-1.5">
-          <Label className="text-foreground text-xs font-medium">{label}</Label>
+          <Label className="font-medium text-foreground text-xs">{label}</Label>
           {labelHint}
         </span>
       ) : (
-        <Label className="text-foreground mb-2.5 text-xs font-medium">
+        <Label className="mb-2.5 font-medium text-foreground text-xs">
           {label}
         </Label>
       )}
@@ -278,26 +290,33 @@ export function LinkSettingsForm({
   const [domain, setDomain] = React.useState(link.domain ?? "spoo.me")
 
   // Password tri-state: keep (untouched) | set new value | remove.
-  const [passwordMode, setPasswordMode] = React.useState<"keep" | "set" | "remove">(
-    "keep",
-  )
+  const [passwordMode, setPasswordMode] = React.useState<
+    "keep" | "set" | "remove"
+  >("keep")
   const [newPassword, setNewPassword] = React.useState("")
   const [passwordVisible, setPasswordVisible] = React.useState(false)
 
   const [expiry, setExpiry] = React.useState(
-    link.expire_after ? toLocalInputValue(new Date(link.expire_after * 1000)) : "",
+    link.expire_after
+      ? toLocalInputValue(new Date(link.expire_after * 1000))
+      : ""
   )
   const [maxClicks, setMaxClicks] = React.useState(
-    link.max_clicks != null ? String(link.max_clicks) : "",
+    link.max_clicks != null ? String(link.max_clicks) : ""
   )
   const [blockBots, setBlockBots] = React.useState(Boolean(link.block_bots))
-  const [privateStats, setPrivateStats] = React.useState(Boolean(link.private_stats))
+  const [privateStats, setPrivateStats] = React.useState(
+    Boolean(link.private_stats)
+  )
 
   const [geoRules, setGeoRules] = React.useState<GeoRuleDraft[]>(
-    geoDraftsOf(link.geo_rules),
+    geoDraftsOf(link.geo_rules)
   )
   const [variants, setVariants] = React.useState<VariantDraft[]>(
-    (link.ab_variants ?? []).map((v) => ({ url: v.url, weight: String(v.weight) })),
+    (link.ab_variants ?? []).map((v) => ({
+      url: v.url,
+      weight: String(v.weight),
+    }))
   )
   const [meta, setMeta] = React.useState<MetaDraft>(metaDraftOf(link.meta_tags))
   // Customized = this link freezes its own tags (meta_tags set on the wire,
@@ -306,7 +325,7 @@ export function LinkSettingsForm({
   // form never PATCHes). A customized link is hard-frozen: no fetch, no
   // overwrite. "Reset to destination" flips back and PATCHes null on save.
   const [metaCustomized, setMetaCustomized] = React.useState(
-    Boolean(link.meta_tags),
+    Boolean(link.meta_tags)
   )
 
   // Destination-tag mirror (GET /api/v1/metadata): only for uncustomized
@@ -373,18 +392,24 @@ export function LinkSettingsForm({
           : "checking"
 
   const patch: UpdateUrlInput = {}
-  if (normalizeUrl(longUrl) !== (link.long_url ?? "")) patch.long_url = normalizeUrl(longUrl)
+  if (normalizeUrl(longUrl) !== (link.long_url ?? ""))
+    patch.long_url = normalizeUrl(longUrl)
   if (aliasChanged && alias) patch.alias = alias
   if ((domain === "spoo.me" ? null : domain) !== link.domain)
     patch.domain = domain === "spoo.me" ? null : domain
   if (passwordMode === "set" && newPassword) patch.password = newPassword
   if (passwordMode === "remove") patch.password = null
-  const expiryUnix = expiry ? Math.floor(new Date(expiry).getTime() / 1000) : null
-  if (expiryUnix !== (link.expire_after ?? null)) patch.expire_after = expiryUnix
+  const expiryUnix = expiry
+    ? Math.floor(new Date(expiry).getTime() / 1000)
+    : null
+  if (expiryUnix !== (link.expire_after ?? null))
+    patch.expire_after = expiryUnix
   const maxClicksVal = maxClicks === "" ? null : Number(maxClicks)
-  if (maxClicksVal !== (link.max_clicks ?? null)) patch.max_clicks = maxClicksVal
+  if (maxClicksVal !== (link.max_clicks ?? null))
+    patch.max_clicks = maxClicksVal
   if (blockBots !== Boolean(link.block_bots)) patch.block_bots = blockBots
-  if (privateStats !== Boolean(link.private_stats)) patch.private_stats = privateStats
+  if (privateStats !== Boolean(link.private_stats))
+    patch.private_stats = privateStats
   // Feature payloads: canonical complete rows vs what the link stores;
   // clearing PATCHes null (explicit removal, same semantics as password).
   const geoPayload = completeGeoRules(geoRules)
@@ -406,9 +431,7 @@ export function LinkSettingsForm({
     !metaCustomized && destMeta.isSuccess && prefillHasData(destMeta.data)
   const metaSource = prefillDraftOf(destMeta.data)
   const metaNotice =
-    !metaCustomized && destMeta.isError
-      ? metaFetchNotice(destMeta.error)
-      : null
+    !metaCustomized && destMeta.isError ? metaFetchNotice(destMeta.error) : null
 
   const dirty = Object.keys(patch).length > 0
 
@@ -508,10 +531,10 @@ export function LinkSettingsForm({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="border-border/60 bg-muted/40 text-foreground hover:bg-accent/60 flex h-9 shrink-0 items-center gap-1 rounded-lg border px-2.5 font-mono text-xs transition-colors duration-150"
+                  className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/60"
                 >
                   {domain}
-                  <ChevronDown className="text-muted-foreground size-3" />
+                  <ChevronDown className="size-3 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
@@ -524,11 +547,11 @@ export function LinkSettingsForm({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <span className="border-border/60 bg-muted/40 text-foreground flex h-9 shrink-0 items-center rounded-lg border px-2.5 font-mono text-xs">
+            <span className="flex h-9 shrink-0 items-center rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs">
               {domain}
             </span>
           )}
-          <span className="text-muted-foreground font-mono text-xs">/</span>
+          <span className="font-mono text-muted-foreground text-xs">/</span>
           <div className="relative flex-1">
             <Input
               value={alias}
@@ -538,11 +561,13 @@ export function LinkSettingsForm({
             />
             <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
               {aliasState === "checking" && (
-                <LoaderCircle className="text-muted-foreground size-3.5 animate-spin" />
+                <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
               )}
-              {aliasState === "available" && <Check className="text-live size-3.5" />}
+              {aliasState === "available" && (
+                <Check className="size-3.5 text-live" />
+              )}
               {(aliasState === "taken" || aliasState === "invalid") && (
-                <CircleAlert className="text-destructive size-3.5" />
+                <CircleAlert className="size-3.5 text-destructive" />
               )}
             </span>
           </div>
@@ -579,7 +604,7 @@ export function LinkSettingsForm({
                 className="[&_input]:h-9 [&_input]:bg-muted/30"
               />
             ) : (
-              <span className="border-border/60 bg-muted/30 text-muted-foreground flex h-9 flex-1 items-center gap-2 rounded-lg border px-3 text-xs">
+              <span className="flex h-9 flex-1 items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-muted-foreground text-xs">
                 <KeyRound className="size-3.5" strokeWidth={1.75} />
                 Password is set.
               </span>
@@ -590,21 +615,21 @@ export function LinkSettingsForm({
                 setPasswordMode("set")
                 setPasswordVisible(false)
               }}
-              className="text-foreground shrink-0 text-xs underline underline-offset-4"
+              className="shrink-0 text-foreground text-xs underline underline-offset-4"
             >
               Replace
             </button>
             <button
               type="button"
               onClick={() => setPasswordMode("remove")}
-              className="text-destructive shrink-0 text-xs underline underline-offset-4"
+              className="shrink-0 text-destructive text-xs underline underline-offset-4"
             >
               Remove
             </button>
           </div>
         ) : passwordMode === "remove" ? (
-          <div className="border-destructive/30 bg-destructive/5 flex h-9 items-center gap-2 rounded-lg border px-3">
-            <span className="text-destructive flex-1 text-xs">
+          <div className="flex h-9 items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3">
+            <span className="flex-1 text-destructive text-xs">
               Password will be removed on save.
             </span>
             <button
@@ -713,10 +738,12 @@ export function LinkSettingsForm({
         </Field>
       </div>
 
-      <div className="border-border/60 divide-border/60 divide-y rounded-xl border">
+      <div className="divide-y divide-border/60 rounded-xl border border-border/60">
         <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
           <span>
-            <span className="text-foreground block text-xs font-medium">Block bots</span>
+            <span className="block font-medium text-foreground text-xs">
+              Block bots
+            </span>
             <span className="text-muted-foreground/70 text-xs">
               Crawlers get a preview page instead of the redirect.
             </span>
@@ -725,7 +752,7 @@ export function LinkSettingsForm({
         </label>
         <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
           <span>
-            <span className="text-foreground block text-xs font-medium">
+            <span className="block font-medium text-foreground text-xs">
               Private stats
             </span>
             <span className="text-muted-foreground/70 text-xs">
@@ -745,71 +772,75 @@ export function LinkSettingsForm({
       </Velvet>
 
       {showMeta && (
-      <div className="space-y-3">
-        {/* Fixed-height header row: the live-dot status and reset action
+        <div className="space-y-3">
+          {/* Fixed-height header row: the live-dot status and reset action
             swap in place, zero layout shift either way. */}
-        <div className="flex h-7 items-center justify-between">
-          <div className="flex items-baseline gap-3">
-            <span className="flex items-center gap-1.5">
-              <div className="label-mono text-muted-foreground/60 text-[10px]">
-                Meta tags
-              </div>
-              <InfoHint label="What meta tags do">
-                The social card crawlers see when this link is shared;
-                overrides the destination&apos;s own card.
-              </InfoHint>
-            </span>
-            {metaMirroring && (
+          <div className="flex h-7 items-center justify-between">
+            <div className="flex items-baseline gap-3">
               <span className="flex items-center gap-1.5">
-                <span className="label-mono text-muted-foreground/40 text-[10px]">
-                  fetched from destination
-                </span>
-                <InfoHint label="About fetched meta tags">
-                  These preview tags are read live from the destination until
-                  you customize them.
+                <div className="label-mono text-[10px] text-muted-foreground/60">
+                  Meta tags
+                </div>
+                <InfoHint label="What meta tags do">
+                  The social card crawlers see when this link is shared;
+                  overrides the destination&apos;s own card.
                 </InfoHint>
               </span>
+              {metaMirroring && (
+                <span className="flex items-center gap-1.5">
+                  <span className="label-mono text-[10px] text-muted-foreground/40">
+                    fetched from destination
+                  </span>
+                  <InfoHint label="About fetched meta tags">
+                    These preview tags are read live from the destination until
+                    you customize them.
+                  </InfoHint>
+                </span>
+              )}
+            </div>
+            {metaCustomized && (
+              <button
+                type="button"
+                onClick={() => setMetaCustomized(false)}
+                className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+              >
+                Reset to destination
+              </button>
             )}
           </div>
-          {metaCustomized && (
-            <button
-              type="button"
-              onClick={() => setMetaCustomized(false)}
-              className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4 transition-colors duration-150"
-            >
-              Reset to destination
-            </button>
-          )}
+          <MetaTagsEditor
+            value={displayedMeta}
+            onChange={(v) => {
+              // Any manual edit — typing, clearing, a color pick — flips
+              // customized; the mirror effect goes through setMeta only.
+              setMeta(v)
+              setMetaCustomized(true)
+            }}
+            domain={domain}
+            alias={alias}
+            preview="below"
+            loading={!metaCustomized && destMeta.isFetching}
+            notice={metaNotice}
+            problem={metaProblem}
+            source={metaCustomized ? metaSource : undefined}
+          />
         </div>
-        <MetaTagsEditor
-          value={displayedMeta}
-          onChange={(v) => {
-            // Any manual edit — typing, clearing, a color pick — flips
-            // customized; the mirror effect goes through setMeta only.
-            setMeta(v)
-            setMetaCustomized(true)
-          }}
-          domain={domain}
-          alias={alias}
-          preview="below"
-          loading={!metaCustomized && destMeta.isFetching}
-          notice={metaNotice}
-          problem={metaProblem}
-          source={metaCustomized ? metaSource : undefined}
-        />
-      </div>
       )}
 
       <div
         className={cn(
           "flex items-center justify-end gap-2 transition-opacity duration-150",
-          dirty ? "opacity-100" : "pointer-events-none opacity-0",
+          dirty ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       >
-        <span className="text-muted-foreground/70 mr-auto text-xs">
+        <span className="mr-auto text-muted-foreground/70 text-xs">
           {save.isPending ? "Saving…" : "Unsaved changes"}
         </span>
-        <Button size="sm" disabled={!canSave} onClick={() => setConfirmOpen(true)}>
+        <Button
+          size="sm"
+          disabled={!canSave}
+          onClick={() => setConfirmOpen(true)}
+        >
           Save changes
         </Button>
       </div>
@@ -825,25 +856,27 @@ export function LinkSettingsForm({
               on {(link.domain ?? "spoo.me") + "/" + link.alias}.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="border-border/60 divide-border/60 min-w-0 divide-y rounded-xl border">
+          <div className="min-w-0 divide-y divide-border/60 rounded-xl border border-border/60">
             {changes.map((c) => (
               <div
                 key={c.field}
                 className="flex items-center justify-between gap-4 px-3.5 py-2.5"
               >
-                <span className="label-mono text-muted-foreground shrink-0">
+                <span className="label-mono shrink-0 text-muted-foreground">
                   {c.field}
                 </span>
                 <span className="flex min-w-0 items-center gap-1.5 font-mono text-xs">
-                  <span className="text-muted-foreground/60 truncate">{c.from}</span>
-                  <span className="text-muted-foreground/40 shrink-0">→</span>
-                  <span className="text-foreground truncate">{c.to}</span>
+                  <span className="truncate text-muted-foreground/60">
+                    {c.from}
+                  </span>
+                  <span className="shrink-0 text-muted-foreground/40">→</span>
+                  <span className="truncate text-foreground">{c.to}</span>
                 </span>
               </div>
             ))}
           </div>
           {patch.alias !== undefined && (
-            <p className="text-destructive/90 flex items-center gap-1.5 text-xs">
+            <p className="flex items-center gap-1.5 text-destructive/90 text-xs">
               <CircleAlert className="size-3.5 shrink-0" strokeWidth={1.75} />
               The old address /{link.alias} stops working.
             </p>

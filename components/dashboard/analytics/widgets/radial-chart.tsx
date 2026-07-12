@@ -59,9 +59,7 @@ export function RadialChart({
   const max = rings.length ? Math.max(...rings.map((r) => r[key])) : 0
 
   if (!rows.length) {
-    return (
-      <EmptyRange />
-    )
+    return <EmptyRange />
   }
 
   const legendRows = [...rings].reverse()
@@ -91,7 +89,10 @@ export function RadialChart({
               animationDuration={600}
               animationEasing="ease-out"
               onClick={(d) => {
-                const raw = d as { value?: unknown; payload?: { value?: unknown } }
+                const raw = d as {
+                  value?: unknown
+                  payload?: { value?: unknown }
+                }
                 const v = raw.payload?.value ?? raw.value
                 if (typeof v === "string") onSelect?.(v)
               }}
@@ -108,7 +109,7 @@ export function RadialChart({
               type="button"
               disabled={!onSelect}
               onClick={() => onSelect?.(r.value)}
-              className="hover:bg-accent/60 flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors duration-150 disabled:pointer-events-none"
+              className="flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors duration-150 hover:bg-accent/60 disabled:pointer-events-none"
             >
               <span
                 aria-hidden
@@ -120,10 +121,10 @@ export function RadialChart({
                 value={r.value}
                 className="size-3.5 shrink-0"
               />
-              <span className="text-foreground min-w-0 flex-1 truncate text-xs">
+              <span className="min-w-0 flex-1 truncate text-foreground text-xs">
                 {dimensionLabel(dimension, r.value)}
               </span>
-              <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
+              <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
                 {metric === "both"
                   ? `${formatCount(r.clicks)} · ${formatCount(r.unique_clicks)}`
                   : formatCount(r[key])}

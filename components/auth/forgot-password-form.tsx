@@ -70,7 +70,7 @@ export function ForgotPasswordForm() {
         setError(
           err.field === "code" || /code/i.test(err.message)
             ? "That code is invalid or has expired. Request a new one below."
-            : err.message,
+            : err.message
         )
       } else if (err instanceof SpooApiError && err.isRateLimit) {
         setError("Too many attempts. Wait a bit and try again.")
@@ -88,11 +88,11 @@ export function ForgotPasswordForm() {
     <AnimatePresence mode="wait" initial={false}>
       {phase === "done" ? (
         <motion.div key="done" {...fade} className="space-y-6 text-center">
-          <div className="border-live/30 bg-live/10 mx-auto flex size-12 items-center justify-center rounded-full border">
-            <CircleCheck className="text-live size-5" aria-hidden />
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full border border-live/30 bg-live/10">
+            <CircleCheck className="size-5 text-live" aria-hidden />
           </div>
           <div className="space-y-2">
-            <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+            <h1 className="font-semibold text-2xl text-foreground tracking-tight">
               Password updated
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -109,19 +109,22 @@ export function ForgotPasswordForm() {
       ) : phase === "reset" ? (
         <motion.div key="reset" {...fade} className="space-y-7">
           <div className="space-y-2 text-center">
-            <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+            <h1 className="font-semibold text-2xl text-foreground tracking-tight">
               Check your inbox
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
               If an account exists for{" "}
-              <span className="text-foreground font-medium">{email}</span>, a
+              <span className="font-medium text-foreground">{email}</span>, a
               6-digit code is on its way.
             </p>
           </div>
 
           <form onSubmit={submitReset} className="space-y-4">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="reset-code" className="text-foreground text-sm font-medium">
+              <label
+                htmlFor="reset-code"
+                className="font-medium text-foreground text-sm"
+              >
                 Reset code
               </label>
               <Input
@@ -139,7 +142,10 @@ export function ForgotPasswordForm() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="reset-password" className="text-foreground text-sm font-medium">
+              <label
+                htmlFor="reset-password"
+                className="font-medium text-foreground text-sm"
+              >
                 New password
               </label>
               <Input
@@ -153,7 +159,10 @@ export function ForgotPasswordForm() {
                 className="h-10"
               />
               {password.length > 0 && (
-                <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1" aria-label="Password requirements">
+                <ul
+                  className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1"
+                  aria-label="Password requirements"
+                >
                   {PASSWORD_RULES.map((rule) => {
                     const ok = rule.test(password)
                     return (
@@ -161,10 +170,13 @@ export function ForgotPasswordForm() {
                         key={rule.id}
                         className={cn(
                           "flex items-center gap-1.5 text-xs transition-colors",
-                          ok ? "text-live" : "text-muted-foreground/60",
+                          ok ? "text-live" : "text-muted-foreground/60"
                         )}
                       >
-                        <Check className={cn("size-3 shrink-0", !ok && "opacity-30")} aria-hidden />
+                        <Check
+                          className={cn("size-3 shrink-0", !ok && "opacity-30")}
+                          aria-hidden
+                        />
                         {rule.label}
                       </li>
                     )
@@ -182,14 +194,18 @@ export function ForgotPasswordForm() {
             <Button
               type="submit"
               className="h-10 w-full"
-              disabled={pending || code.length !== 6 || !passwordSatisfies(password)}
+              disabled={
+                pending || code.length !== 6 || !passwordSatisfies(password)
+              }
             >
               {pending ? "Updating…" : "Set new password"}
-              {!pending && <ArrowRight className="size-4" data-icon="inline-end" />}
+              {!pending && (
+                <ArrowRight className="size-4" data-icon="inline-end" />
+              )}
             </Button>
           </form>
 
-          <p className="text-muted-foreground text-center text-sm">
+          <p className="text-center text-muted-foreground text-sm">
             Didn&apos;t get it?{" "}
             {cooldown > 0 ? (
               <span className="text-muted-foreground/70 tabular-nums">
@@ -199,7 +215,7 @@ export function ForgotPasswordForm() {
               <button
                 type="button"
                 onClick={() => void requestCode()}
-                className="text-foreground font-medium underline-offset-4 hover:underline"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
               >
                 Resend code
               </button>
@@ -209,7 +225,7 @@ export function ForgotPasswordForm() {
       ) : (
         <motion.div key="form" {...fade} className="space-y-7">
           <div className="space-y-2 text-center">
-            <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+            <h1 className="font-semibold text-2xl text-foreground tracking-tight">
               Reset your password
             </h1>
             <p className="text-muted-foreground text-sm">
@@ -225,7 +241,10 @@ export function ForgotPasswordForm() {
             className="space-y-4"
           >
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="reset-email" className="text-foreground text-sm font-medium">
+              <label
+                htmlFor="reset-email"
+                className="font-medium text-foreground text-sm"
+              >
                 Email
               </label>
               <Input
@@ -246,17 +265,23 @@ export function ForgotPasswordForm() {
                 </p>
               )}
             </div>
-            <Button type="submit" className="h-10 w-full" disabled={pending || !email}>
+            <Button
+              type="submit"
+              className="h-10 w-full"
+              disabled={pending || !email}
+            >
               {pending ? "Sending code…" : "Send reset code"}
-              {!pending && <ArrowRight className="size-4" data-icon="inline-end" />}
+              {!pending && (
+                <ArrowRight className="size-4" data-icon="inline-end" />
+              )}
             </Button>
           </form>
 
-          <p className="text-muted-foreground text-center text-sm">
+          <p className="text-center text-muted-foreground text-sm">
             Remembered it?{" "}
             <Link
               href="/login"
-              className="text-foreground font-medium underline-offset-4 hover:underline"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               Sign in
             </Link>

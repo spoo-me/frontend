@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   humanize,
   parseExpression,
@@ -121,10 +125,13 @@ export function TimeRangePicker({
           {value ? humanize(value) : placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto max-w-[calc(100vw-2rem)] p-0">
+      <PopoverContent
+        align="start"
+        className="w-auto max-w-[calc(100vw-2rem)] p-0"
+      >
         {/* Parse box — borderless, directly on the surface (ref 27); the
             resolved-range hint rides inline so the row never changes height */}
-        <div className="border-border/60 flex items-center gap-3 border-b px-4">
+        <div className="flex items-center gap-3 border-border/60 border-b px-4">
           <input
             autoFocus
             value={expr}
@@ -135,13 +142,13 @@ export function TimeRangePicker({
             placeholder="Custom range: 3h, last 7 days, now-3d to now-1d…"
             spellCheck={false}
             autoComplete="off"
-            className="placeholder:text-muted-foreground/60 h-11 min-w-0 flex-1 bg-transparent font-mono text-xs outline-none"
+            className="h-11 min-w-0 flex-1 bg-transparent font-mono text-xs outline-none placeholder:text-muted-foreground/60"
           />
           {expr && (
             <span
               className={cn(
                 "shrink-0 font-mono text-[11px]",
-                parsed ? "text-muted-foreground/70" : "text-destructive",
+                parsed ? "text-muted-foreground/70" : "text-destructive"
               )}
             >
               {parsed ? `→ ${humanize(parsed)}` : "can't parse that yet"}
@@ -154,38 +161,38 @@ export function TimeRangePicker({
             the viewport), so the rail becomes a wrapping chip row under the
             calendar instead of clipping off-screen. */}
         <div className="flex max-sm:flex-col">
-          <div className="border-border/60 flex-1 px-3 py-2 max-sm:border-b sm:border-r">
+          <div className="flex-1 border-border/60 px-3 py-2 max-sm:border-b sm:border-r">
             <div className="relative w-full">
-            <Calendar
-              mode="range"
-              numberOfMonths={1}
-              className="w-full p-2"
-              classNames={{
-                month: "flex w-full flex-col gap-3",
-                month_caption: "flex h-7 items-center pl-1",
-                nav: "absolute top-2 right-2 flex items-center gap-1",
-                weekdays: "flex justify-between",
-                week: "mt-1.5 flex w-full justify-between",
-                range_middle:
-                  "aria-selected:bg-accent/50 aria-selected:text-accent-foreground",
-              }}
-              selected={calendarRange}
-              defaultMonth={effective?.from}
-              onSelect={(r) => {
-                if (!r?.from) return
-                const to = r.to ?? r.from
-                setExpr("")
-                setDraft({
-                  from: new Date(new Date(r.from).setHours(0, 0, 0, 0)),
-                  to: new Date(
-                    Math.min(
-                      new Date(to).setHours(23, 59, 59, 999),
-                      Date.now(),
+              <Calendar
+                mode="range"
+                numberOfMonths={1}
+                className="w-full p-2"
+                classNames={{
+                  month: "flex w-full flex-col gap-3",
+                  month_caption: "flex h-7 items-center pl-1",
+                  nav: "absolute top-2 right-2 flex items-center gap-1",
+                  weekdays: "flex justify-between",
+                  week: "mt-1.5 flex w-full justify-between",
+                  range_middle:
+                    "aria-selected:bg-accent/50 aria-selected:text-accent-foreground",
+                }}
+                selected={calendarRange}
+                defaultMonth={effective?.from}
+                onSelect={(r) => {
+                  if (!r?.from) return
+                  const to = r.to ?? r.from
+                  setExpr("")
+                  setDraft({
+                    from: new Date(new Date(r.from).setHours(0, 0, 0, 0)),
+                    to: new Date(
+                      Math.min(
+                        new Date(to).setHours(23, 59, 59, 999),
+                        Date.now()
+                      )
                     ),
-                  ),
-                })
-              }}
-            />
+                  })
+                }}
+              />
             </div>
           </div>
           <div className="shrink-0 p-1.5 max-sm:flex max-sm:flex-wrap max-sm:gap-1 max-sm:p-2 sm:w-40">
@@ -203,7 +210,7 @@ export function TimeRangePicker({
                     "flex h-8 items-center justify-between rounded-lg px-2.5 text-left text-[13px] transition-colors duration-150 max-sm:gap-1.5 max-sm:border sm:w-full",
                     active
                       ? "bg-accent/70 text-foreground max-sm:border-border"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground max-sm:border-border/60",
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground max-sm:border-border/60"
                   )}
                 >
                   {p.label}
@@ -215,7 +222,7 @@ export function TimeRangePicker({
         </div>
 
         {/* Start / End + footer */}
-        <div className="border-border/60 grid grid-cols-2 gap-3 border-t px-3 py-3">
+        <div className="grid grid-cols-2 gap-3 border-border/60 border-t px-3 py-3">
           <DateTimeText
             label="Start"
             value={effective?.from ?? null}
@@ -237,7 +244,7 @@ export function TimeRangePicker({
             }}
           />
         </div>
-        <div className="border-border/60 flex h-12 items-center justify-between border-t px-3">
+        <div className="flex h-12 items-center justify-between border-border/60 border-t px-3">
           <span className="text-muted-foreground text-xs">{tz}</span>
           <span className="flex items-center gap-1.5">
             {onClear && value && (

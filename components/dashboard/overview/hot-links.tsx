@@ -36,7 +36,7 @@ export function HotLinks() {
   const max = rows[0]?.clicks ?? 1
 
   return (
-    <div className="border-border/60 bg-shell flex h-full flex-col rounded-2xl border p-0.5">
+    <div className="flex h-full flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
       <SectionHeader
         className="h-9 px-2.5"
         icon={Flame}
@@ -49,18 +49,22 @@ export function HotLinks() {
         action={
           <Link
             href="/dashboard/analytics"
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors duration-150"
+            className="flex items-center gap-1 text-muted-foreground text-xs transition-colors duration-150 hover:text-foreground"
           >
             Open analytics
             <ArrowUpRight className="size-3" />
           </Link>
         }
       />
-      <Panel className="bg-background mt-0 flex-1 rounded-[14px] p-2">
+      <Panel className="mt-0 flex-1 rounded-[14px] bg-background p-2">
         {hot.isPending ? (
           <div className="space-y-1">
             {[88, 71, 62, 48, 39].map((w, i) => (
-              <Skeleton key={i} className="h-9 rounded-lg" style={{ width: `${w}%` }} />
+              <Skeleton
+                key={i}
+                className="h-9 rounded-lg"
+                style={{ width: `${w}%` }}
+              />
             ))}
           </div>
         ) : rows.length ? (
@@ -73,19 +77,21 @@ export function HotLinks() {
               >
                 <motion.span
                   aria-hidden
-                  className="bg-muted/80 group-hover:bg-accent absolute inset-y-0 left-0 rounded-lg transition-colors duration-150"
+                  className="absolute inset-y-0 left-0 rounded-lg bg-muted/80 transition-colors duration-150 group-hover:bg-accent"
                   initial={{ width: "0%" }}
-                  animate={{ width: `${Math.max((row.clicks / max) * 100, 4)}%` }}
+                  animate={{
+                    width: `${Math.max((row.clicks / max) * 100, 4)}%`,
+                  }}
                   transition={{
                     duration: 0.5,
                     ease: [0.16, 1, 0.3, 1],
                     delay: i * 0.035,
                   }}
                 />
-                <span className="text-foreground relative min-w-0 flex-1 truncate font-mono text-[13px]">
+                <span className="relative min-w-0 flex-1 truncate font-mono text-[13px] text-foreground">
                   /{row.value}
                 </span>
-                <span className="text-muted-foreground relative font-mono text-xs tabular-nums">
+                <span className="relative font-mono text-muted-foreground text-xs tabular-nums">
                   {formatCount(row.clicks)}
                 </span>
               </Link>
@@ -93,7 +99,7 @@ export function HotLinks() {
           </div>
         ) : (
           <div className="pattern-dots m-2 flex h-40 min-h-[calc(100%-1rem)] items-center justify-center rounded-lg">
-            <span className="border-border text-muted-foreground/70 rounded-lg border border-dashed px-3 py-1.5 font-mono text-[11px]">
+            <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               A quiet hour
             </span>
           </div>

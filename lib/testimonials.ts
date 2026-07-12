@@ -53,7 +53,10 @@ export const testimonials: Testimonial[] = [
       avatarSrc: "/testimonials/deepak-shukla.jpg",
       bio: "Founder & CEO of Pearl Lemon Group, a London-based marketing collective. Endurance athlete, podcaster, and operator running a portfolio of agencies serving clients across SEO, sales, and content.",
       links: [
-        { label: "LinkedIn", href: "https://www.linkedin.com/in/deepakshukla/" },
+        {
+          label: "LinkedIn",
+          href: "https://www.linkedin.com/in/deepakshukla/",
+        },
         { label: "Pearl Lemon", href: "https://pearllemon.com" },
       ],
     },

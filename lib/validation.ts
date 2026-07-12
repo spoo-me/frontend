@@ -72,7 +72,7 @@ const USERNAME_RE =
     separators: every field must be non-empty and carry an "=". */
 const strictQueryOk = (query: string) =>
   ["&", ";"].every((sep) =>
-    query.split(sep).every((f) => f.length > 0 && f.includes("=")),
+    query.split(sep).every((f) => f.length > 0 && f.includes("="))
   )
 
 const validAuthSegment = (auth: string) => {
@@ -131,7 +131,7 @@ const URL_MESSAGES = {
 function urlFormatProblem(url: string): string | null {
   const m =
     /^([a-z][a-z0-9+.-]*):\/\/([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#([\s\S]*))?$/i.exec(
-      url,
+      url
     )
   if (!m) return URL_MESSAGES.generic
   const [, scheme, netloc, path, query, fragment] = m

@@ -49,34 +49,34 @@ function NavRow({
   const pathname = usePathname()
   const active = isNavItemActive(pathname, item)
   return (
-      <Link
-        href={item.href}
-        onClick={onNavigate}
-        aria-current={active ? "page" : undefined}
-        aria-label={collapsed ? item.title : undefined}
-        className={cn(
-          "relative flex h-9 items-center gap-2.5 rounded-lg text-[13px] font-medium transition-colors duration-150",
-          collapsed ? "justify-center px-0" : "px-2.5",
-          active
-            ? "text-foreground"
-            : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-        )}
-      >
-        {active && (
-          <motion.span
-            layoutId="sidebar-active-pill"
-            // Only route changes animate the pill (its actual job). Rail
-            // expand/collapse resizes it natively via inset-0 — letting
-            // the layout projection re-measure then would make it chase
-            // the CSS width transition and rubber-band.
-            layoutDependency={pathname}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="border-border/50 bg-card absolute inset-0 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-          />
-        )}
-        <item.icon className="relative size-[15px] shrink-0" strokeWidth={1.75} />
-        {!collapsed && <span className="relative">{item.title}</span>}
-      </Link>
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      aria-label={collapsed ? item.title : undefined}
+      className={cn(
+        "relative flex h-9 items-center gap-2.5 rounded-lg font-medium text-[13px] transition-colors duration-150",
+        collapsed ? "justify-center px-0" : "px-2.5",
+        active
+          ? "text-foreground"
+          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+      )}
+    >
+      {active && (
+        <motion.span
+          layoutId="sidebar-active-pill"
+          // Only route changes animate the pill (its actual job). Rail
+          // expand/collapse resizes it natively via inset-0 — letting
+          // the layout projection re-measure then would make it chase
+          // the CSS width transition and rubber-band.
+          layoutDependency={pathname}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 rounded-lg border border-border/50 bg-card shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+        />
+      )}
+      <item.icon className="relative size-[15px] shrink-0" strokeWidth={1.75} />
+      {!collapsed && <span className="relative">{item.title}</span>}
+    </Link>
   )
 }
 
@@ -98,8 +98,8 @@ function ResourceRow({
       rel="noreferrer"
       aria-label={collapsed ? label : undefined}
       className={cn(
-        "text-muted-foreground hover:text-foreground hover:bg-accent/60 flex h-8 items-center gap-2.5 rounded-lg text-[13px] transition-colors duration-150",
-        collapsed ? "justify-center px-0" : "px-2.5",
+        "flex h-8 items-center gap-2.5 rounded-lg text-[13px] text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
+        collapsed ? "justify-center px-0" : "px-2.5"
       )}
     >
       <Icon className="size-[15px] shrink-0" />
@@ -119,39 +119,41 @@ function ProfilePill({ collapsed }: { collapsed: boolean }) {
   const name = user.user_name?.trim() || user.email.split("@")[0]
   return (
     <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label={collapsed ? name : undefined}
-            className={cn(
-              // Fixed height in both states: the peek animation stays a
-              // pure horizontal reveal, nothing above the pill moves.
-              "border-border bg-card hover:bg-accent/40 flex h-[52px] w-full items-center gap-2.5 rounded-lg border transition-colors duration-150",
-              collapsed
-                ? "justify-center border-transparent bg-transparent p-0"
-                : "px-2.5",
-            )}
-          >
-            <UserAvatar user={user} />
-            {!collapsed && (
-              <>
-                <span className="min-w-0 flex-1 text-left">
-                  <span className="text-foreground block truncate text-[13px] font-medium">
-                    {name}
-                  </span>
-                  <span className="ph-no-capture text-muted-foreground block truncate text-[11px]">
-                    {user.email}
-                  </span>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={collapsed ? name : undefined}
+          className={cn(
+            // Fixed height in both states: the peek animation stays a
+            // pure horizontal reveal, nothing above the pill moves.
+            "flex h-[52px] w-full items-center gap-2.5 rounded-lg border border-border bg-card transition-colors duration-150 hover:bg-accent/40",
+            collapsed
+              ? "justify-center border-transparent bg-transparent p-0"
+              : "px-2.5"
+          )}
+        >
+          <UserAvatar user={user} />
+          {!collapsed && (
+            <>
+              <span className="min-w-0 flex-1 text-left">
+                <span className="block truncate font-medium text-[13px] text-foreground">
+                  {name}
                 </span>
-                <ChevronsUpDown className="text-muted-foreground/60 size-3.5 shrink-0" />
-              </>
-            )}
-          </button>
-        </DropdownMenuTrigger>
+                <span className="ph-no-capture block truncate text-[11px] text-muted-foreground">
+                  {user.email}
+                </span>
+              </span>
+              <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground/60" />
+            </>
+          )}
+        </button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-56">
         <DropdownMenuLabel>
-          <span className="text-foreground block truncate text-xs font-medium">{name}</span>
-          <span className="ph-no-capture text-muted-foreground block truncate text-[11px] font-normal">
+          <span className="block truncate font-medium text-foreground text-xs">
+            {name}
+          </span>
+          <span className="ph-no-capture block truncate font-normal text-[11px] text-muted-foreground">
             {user.email}
           </span>
         </DropdownMenuLabel>
@@ -196,13 +198,13 @@ export function SidebarContent({
       <div
         className={cn(
           "flex h-18 shrink-0 items-center",
-          collapsed ? "justify-center" : "justify-between",
+          collapsed ? "justify-center" : "justify-between"
         )}
       >
         {!collapsed && (
           <span className="flex items-center gap-2">
             <Logo withText={false} href="/dashboard" className="size-6" />
-            <span className="text-foreground text-[15px] font-semibold tracking-tight">
+            <span className="font-semibold text-[15px] text-foreground tracking-tight">
               spoo.me
             </span>
           </span>
@@ -217,7 +219,7 @@ export function SidebarContent({
               type="button"
               onClick={onToggleCollapse}
               aria-label={peeking ? "Pin sidebar open" : "Collapse sidebar"}
-              className="text-muted-foreground/70 hover:text-foreground hover:bg-accent/60 flex size-7 items-center justify-center rounded-lg transition-colors duration-150"
+              className="flex size-7 items-center justify-center rounded-lg text-muted-foreground/70 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
             >
               <PanelLeft className="size-4" strokeWidth={1.75} />
             </button>
@@ -230,8 +232,8 @@ export function SidebarContent({
         onClick={() => openDashboardCommandMenu()}
         aria-label="Search"
         className={cn(
-          "bg-foreground/6 text-muted-foreground hover:text-foreground hover:bg-foreground/9 border border-transparent flex h-9 items-center gap-2 rounded-lg text-[13px] transition-colors duration-150",
-          collapsed ? "justify-center px-0" : "px-2.5",
+          "flex h-9 items-center gap-2 rounded-lg border border-transparent bg-foreground/6 text-[13px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/9 hover:text-foreground",
+          collapsed ? "justify-center px-0" : "px-2.5"
         )}
       >
         <Search className="size-[15px] shrink-0" strokeWidth={1.75} />
@@ -239,10 +241,10 @@ export function SidebarContent({
           <>
             <span className="flex-1 text-left">Search</span>
             <span className="flex items-center gap-0.5">
-              <kbd className="bg-background/70 text-muted-foreground rounded border border-transparent px-1 font-mono text-[10px]">
+              <kbd className="rounded border border-transparent bg-background/70 px-1 font-mono text-[10px] text-muted-foreground">
                 ⌘
               </kbd>
-              <kbd className="bg-background/70 text-muted-foreground rounded border border-transparent px-1 font-mono text-[10px]">
+              <kbd className="rounded border border-transparent bg-background/70 px-1 font-mono text-[10px] text-muted-foreground">
                 K
               </kbd>
             </span>
@@ -255,7 +257,7 @@ export function SidebarContent({
           const items = group.items.filter(
             (item) =>
               (!item.flag || dashboardFlags[item.flag]) &&
-              (!item.feature || features?.[item.feature] === "enabled"),
+              (!item.feature || features?.[item.feature] === "enabled")
           )
           if (!items.length) return null
           return (
@@ -263,7 +265,9 @@ export function SidebarContent({
               {/* Groups separate by a hairline, not a header — identical
                   in both rail states so rows never shift while the peek
                   animates. */}
-              {i > 0 && <div className="border-border/60 mx-2 my-2.5 border-t" />}
+              {i > 0 && (
+                <div className="mx-2 my-2.5 border-border/60 border-t" />
+              )}
               <div className="space-y-0.5">
                 {items.map((item) => (
                   <NavRow
@@ -285,7 +289,7 @@ export function SidebarContent({
       <div
         className={cn(
           "border-border/60 border-t py-4",
-          collapsed ? "-mx-2.5 px-2.5" : "-mx-4 px-4",
+          collapsed ? "-mx-2.5 px-2.5" : "-mx-4 px-4"
         )}
       >
         <div className="mb-3 space-y-0.5">
@@ -315,7 +319,7 @@ export function DashboardSidebar() {
   const [collapsed, setCollapsed] = React.useState(
     () =>
       typeof window !== "undefined" &&
-      localStorage.getItem(COLLAPSE_KEY) === "1",
+      localStorage.getItem(COLLAPSE_KEY) === "1"
   )
 
   // Hover-to-peek: the collapsed rail expands as an OVERLAY (the layout
@@ -362,7 +366,7 @@ export function DashboardSidebar() {
       if (enterT.current) clearTimeout(enterT.current)
       if (leaveT.current) clearTimeout(leaveT.current)
     },
-    [],
+    []
   )
 
   const toggle = () => {
@@ -386,7 +390,12 @@ export function DashboardSidebar() {
   toggleRef.current = toggle
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "b" && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
+      if (
+        e.key.toLowerCase() === "b" &&
+        (e.metaKey || e.ctrlKey) &&
+        !e.altKey &&
+        !e.shiftKey
+      ) {
         e.preventDefault()
         toggleRef.current()
       }
@@ -399,7 +408,7 @@ export function DashboardSidebar() {
     <aside
       className={cn(
         "relative hidden h-dvh shrink-0 transition-[width] duration-200 ease-out lg:block",
-        collapsed ? "w-[58px]" : "w-60",
+        collapsed ? "w-[58px]" : "w-60"
       )}
     >
       <div
@@ -410,12 +419,12 @@ export function DashboardSidebar() {
         className={cn(
           collapsed
             ? cn(
-                "bg-canvas absolute inset-y-0 left-0 z-40 border-r transition-[width,box-shadow,border-color] duration-200 ease-out",
+                "absolute inset-y-0 left-0 z-40 border-r bg-canvas transition-[width,box-shadow,border-color] duration-200 ease-out",
                 peek
-                  ? "border-border/60 w-60 shadow-[8px_0_32px_-12px_rgba(0,0,0,0.18)] dark:shadow-[8px_0_32px_-12px_rgba(0,0,0,0.55)]"
-                  : "w-[58px] border-transparent shadow-none",
+                  ? "w-60 border-border/60 shadow-[8px_0_32px_-12px_rgba(0,0,0,0.18)] dark:shadow-[8px_0_32px_-12px_rgba(0,0,0,0.55)]"
+                  : "w-[58px] border-transparent shadow-none"
               )
-            : "h-full w-60",
+            : "h-full w-60"
         )}
       >
         <SidebarContent

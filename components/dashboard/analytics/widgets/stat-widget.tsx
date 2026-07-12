@@ -64,9 +64,15 @@ export function StatWidget({
   const delta = React.useMemo(() => {
     if (!stats || !prevStats) return null
     if (config.metric === "total_clicks")
-      return pctChange(stats.summary.total_clicks, prevStats.summary.total_clicks)
+      return pctChange(
+        stats.summary.total_clicks,
+        prevStats.summary.total_clicks
+      )
     if (config.metric === "unique_clicks")
-      return pctChange(stats.summary.unique_clicks, prevStats.summary.unique_clicks)
+      return pctChange(
+        stats.summary.unique_clicks,
+        prevStats.summary.unique_clicks
+      )
     return null
   }, [stats, prevStats, config.metric])
 
@@ -82,7 +88,9 @@ export function StatWidget({
       case "unique_rate":
         return buckets.map((b) => (b.clicks ? b.unique_clicks / b.clicks : 0))
       case "clicks_per_visitor":
-        return buckets.map((b) => (b.unique_clicks ? b.clicks / b.unique_clicks : 0))
+        return buckets.map((b) =>
+          b.unique_clicks ? b.clicks / b.unique_clicks : 0
+        )
     }
   }, [stats, h, config.metric])
 
@@ -109,9 +117,9 @@ export function StatWidget({
     const rate = stats?.computed_metrics?.unique_click_rate
     const fraction = typeof rate === "number" ? rate / 100 : 0
     return (
-      <Panel className="bg-shell flex h-full flex-col rounded-2xl">
+      <Panel className="flex h-full flex-col rounded-2xl bg-shell">
         <div className="px-4 pt-3.5 pb-1">
-          <div className="label-mono text-muted-foreground flex min-w-0 items-center gap-1.5">
+          <div className="label-mono flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <span className="truncate">{config.title ?? meta.label}</span>
             {config.scope && <ScopeChip scope={config.scope} />}
             {hint}
@@ -120,8 +128,8 @@ export function StatWidget({
         <div className="min-h-0 flex-1 px-4 py-1.5">
           <GaugeArc fraction={fraction} label={value} />
         </div>
-        <div className="border-border/60 bg-muted/30 flex h-8 items-center border-t px-4">
-          <span className="text-muted-foreground/70 text-[11px]">
+        <div className="flex h-8 items-center border-border/60 border-t bg-muted/30 px-4">
+          <span className="text-[11px] text-muted-foreground/70">
             {meta.footer ?? rangeLabel}
           </span>
         </div>
@@ -139,7 +147,9 @@ export function StatWidget({
           {hint}
         </>
       }
-      value={config.viz === "odometer" ? <OdometerValue value={value} /> : value}
+      value={
+        config.viz === "odometer" ? <OdometerValue value={value} /> : value
+      }
       delta={delta}
       deltaLabel={deltaLabel}
       footer={meta.footer ?? rangeLabel}

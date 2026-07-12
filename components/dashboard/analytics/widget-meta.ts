@@ -169,7 +169,7 @@ export const WIDGET_CATALOG: CatalogEntry[] = [
 /** The widget on the board matching a catalog identity, if any. */
 export function catalogMatch(
   widgets: Widget[],
-  entry: CatalogEntry,
+  entry: CatalogEntry
 ): Widget | undefined {
   return widgets.find((w) => {
     if (w.kind !== entry.kind) return false

@@ -70,7 +70,7 @@ export function createApiKey(input: {
     async (r): Promise<ApiKeyCreated> => {
       const wire = await parse<ApiKeyWire & { token: string }>(r)
       return { ...normalizeKey(wire), token: wire.token }
-    },
+    }
   )
 }
 
@@ -79,7 +79,7 @@ export function listApiKeys() {
     async (r): Promise<{ items: ApiKey[] }> => {
       const wire = await parse<{ keys: ApiKeyWire[] }>(r)
       return { items: (wire.keys ?? []).map(normalizeKey) }
-    },
+    }
   )
 }
 
@@ -87,7 +87,7 @@ export function listApiKeys() {
 export async function deleteApiKey(id: string, revoke = false) {
   const res = await authedFetch(
     `/api/v1/keys/${encodeURIComponent(id)}?revoke=${revoke}`,
-    { method: "DELETE" },
+    { method: "DELETE" }
   )
   if (!res.ok) await parse(res)
 }

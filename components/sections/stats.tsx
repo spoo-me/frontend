@@ -57,7 +57,7 @@ export function Stats() {
           title={
             <>
               Trusted at scale,{" "}
-              <span className="text-muted-foreground italic font-serif font-normal">
+              <span className="font-normal font-serif text-muted-foreground italic">
                 proven in production.
               </span>
             </>
@@ -87,31 +87,36 @@ export function Stats() {
             {/* bottom gradient for text legibility */}
             <div
               aria-hidden
-              className="from-background via-background/85 pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background via-background/85 to-transparent"
             />
 
             <div className="relative">
               <div className="flex items-baseline gap-2">
-                <span className="text-foreground text-7xl font-semibold tracking-tight tabular-nums sm:text-8xl">
-                  <NumberTicker value={stats.clicks / 1_000_000} className="text-foreground" />
+                <span className="font-semibold text-7xl text-foreground tabular-nums tracking-tight sm:text-8xl">
+                  <NumberTicker
+                    value={stats.clicks / 1_000_000}
+                    className="text-foreground"
+                  />
                 </span>
-                <span className="text-muted-foreground/70 text-3xl font-medium sm:text-4xl">
+                <span className="font-medium text-3xl text-muted-foreground/70 sm:text-4xl">
                   M+
                 </span>
               </div>
-              <div className="label-mono text-foreground mt-3">clicks served</div>
-              <div className="text-muted-foreground mt-1 text-sm">
+              <div className="label-mono mt-3 text-foreground">
+                clicks served
+              </div>
+              <div className="mt-1 text-muted-foreground text-sm">
                 across every region, in real time
               </div>
             </div>
           </div>
 
           {/* Supporting stats: 3-up stacked column */}
-          <ul className="border-border bg-background grid grid-cols-1 grid-rows-3 border-t lg:border-t-0 lg:border-l">
+          <ul className="grid grid-cols-1 grid-rows-3 border-border border-t bg-background lg:border-t-0 lg:border-l">
             {supporting.map((item, i) => {
               const numberBlock = (
                 <div className="flex items-baseline">
-                  <span className="text-foreground text-6xl font-semibold leading-none tracking-tight tabular-nums sm:text-7xl">
+                  <span className="font-semibold text-6xl text-foreground tabular-nums leading-none tracking-tight sm:text-7xl">
                     <NumberTicker
                       value={item.value}
                       decimalPlaces={item.decimals ?? 0}
@@ -119,7 +124,7 @@ export function Stats() {
                     />
                   </span>
                   {item.suffix && (
-                    <span className="text-muted-foreground/70 ml-0.5 text-xl font-medium sm:text-2xl">
+                    <span className="ml-0.5 font-medium text-muted-foreground/70 text-xl sm:text-2xl">
                       {item.suffix}
                     </span>
                   )}
@@ -129,7 +134,9 @@ export function Stats() {
               const labelBlock = (
                 <div>
                   <div className="label-mono text-foreground">{item.label}</div>
-                  <div className="text-muted-foreground mt-1 text-xs">{item.sub}</div>
+                  <div className="mt-1 text-muted-foreground text-xs">
+                    {item.sub}
+                  </div>
                 </div>
               )
 
@@ -150,7 +157,7 @@ export function Stats() {
                       {labelBlock}
                       <div className="flex items-baseline gap-2">
                         {numberBlock}
-                        <ArrowUpRight className="text-muted-foreground/60 group-hover:text-foreground size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        <ArrowUpRight className="size-4 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground" />
                       </div>
                     </a>
                   </li>
