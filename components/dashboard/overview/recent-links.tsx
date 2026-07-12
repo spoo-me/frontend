@@ -48,7 +48,7 @@ export function RecentLinks({
             ))}
           </div>
         ) : recent.length ? (
-          <div className="space-y-1">
+          <div className="min-h-40 space-y-1">
             {recent.map((l) => (
               <div
                 key={l.id}

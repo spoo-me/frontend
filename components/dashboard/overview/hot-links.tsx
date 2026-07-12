@@ -68,7 +68,7 @@ export function HotLinks() {
             ))}
           </div>
         ) : rows.length ? (
-          <div className="space-y-1">
+          <div className="min-h-40 space-y-1">
             {rows.map((row, i) => (
               <Link
                 key={row.value}
