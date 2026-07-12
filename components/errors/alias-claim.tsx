@@ -2,9 +2,17 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { AnimatePresence, motion } from "motion/react"
-import { ArrowUpRight, ChartColumn, Check, Copy, Link2, Loader2 } from "lucide-react"
+import { motion } from "motion/react"
+import {
+  ArrowUpRight,
+  ChartColumn,
+  Check,
+  Copy,
+  Link2,
+  Loader2,
+} from "lucide-react"
 
+import { jsonInit, parse } from "@/lib/api/client"
 import { celebrate } from "@/lib/confetti"
 import { trackUiAction } from "@/lib/analytics"
 import { normalizeUrl, urlProblem, validDestinationUrl } from "@/lib/validation"
@@ -48,17 +56,12 @@ export function AliasClaim({
     }
     setState({ kind: "claiming" })
     try {
-      const res = await fetch("/api/v1/shorten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(alias ? { url: wire, alias } : { url: wire }),
-      })
-      const data = (await res.json().catch(() => null)) as {
-        short_url?: string
-        error?: string
-      } | null
-      if (!res.ok || !data?.short_url)
-        throw new Error(data?.error ?? "That didn't work. Try again.")
+      const res = await fetch(
+        "/api/v1/shorten",
+        jsonInit("POST", alias ? { url: wire, alias } : { url: wire })
+      )
+      const data = await parse<{ short_url?: string }>(res)
+      if (!data.short_url) throw new Error("That didn't work. Try again.")
       setState({ kind: "claimed", short: data.short_url })
       trackUiAction("error_alias_claimed", alias ? "alias" : "freeform")
       celebrate(buttonRef.current)
@@ -128,55 +131,52 @@ export function AliasClaim({
   return (
     <div className="w-full">
       <div className="rounded-xl border border-border/60 bg-background/45 p-1 shadow-soft">
-        <AnimatePresence mode="wait">
-          <motion.form
-            key="form"
-            onSubmit={onSubmit}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex h-10 items-center gap-2 pl-2"
+        <motion.form
+          onSubmit={onSubmit}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex h-10 items-center gap-2 pl-2"
+        >
+          <span className="flex h-full shrink-0 items-center">
+            <Link2 className="size-4 text-muted-foreground" />
+          </span>
+          <Input
+            type="text"
+            inputMode="url"
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value)
+              if (state.kind === "failed") setState({ kind: "idle" })
+            }}
+            placeholder="Paste a long URL…"
+            className="h-10 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
+            autoComplete="off"
+            spellCheck={false}
+            required
+            disabled={state.kind === "claiming"}
+          />
+          <Button
+            ref={buttonRef}
+            type="submit"
+            size="sm"
+            className="h-9 px-3"
+            disabled={state.kind === "claiming" || !url.trim()}
           >
-            <span className="flex h-full shrink-0 items-center">
-              <Link2 className="size-4 text-muted-foreground" />
-            </span>
-            <Input
-              type="text"
-              inputMode="url"
-              value={url}
-              onChange={(e) => {
-                setUrl(e.target.value)
-                if (state.kind === "failed") setState({ kind: "idle" })
-              }}
-              placeholder="Paste a long URL…"
-              className="h-10 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
-              autoComplete="off"
-              spellCheck={false}
-              required
-              disabled={state.kind === "claiming"}
-            />
-            <Button
-              ref={buttonRef}
-              type="submit"
-              size="sm"
-              className="h-9 px-3"
-              disabled={state.kind === "claiming" || !url.trim()}
-            >
-              {state.kind === "claiming" ? (
-                <>
-                  <Loader2
-                    className="size-3.5 animate-spin"
-                    data-icon="inline-start"
-                  />
-                  {alias ? "Claiming" : "Shortening"}
-                </>
-              ) : alias ? (
-                `Claim /${alias}`
-              ) : (
-                "Shorten"
-              )}
-            </Button>
-          </motion.form>
-        </AnimatePresence>
+            {state.kind === "claiming" ? (
+              <>
+                <Loader2
+                  className="size-3.5 animate-spin"
+                  data-icon="inline-start"
+                />
+                {alias ? "Claiming" : "Shortening"}
+              </>
+            ) : alias ? (
+              `Claim /${alias}`
+            ) : (
+              "Shorten"
+            )}
+          </Button>
+        </motion.form>
       </div>
       {/* Fixed-height slot: the error appearing must not move the page. */}
       <p className="mt-1.5 h-4 px-1 text-destructive text-xs">

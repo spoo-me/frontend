@@ -60,8 +60,17 @@ export function ErrorShell({
           aria-hidden
           className="pointer-events-none absolute inset-0 select-none"
         >
+          {/* Below sm the scene has no room: the glyph clips off the
+              viewport and the line runs through the copy — mobile gets
+              the plain numeral instead. */}
           <div
-            className="absolute top-[calc(5rem+42dvh)] left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center font-semibold text-foreground/[0.04] leading-none tracking-[-0.06em] sm:top-[calc(5rem+36dvh)]"
+            className="absolute top-[calc(5rem+42dvh)] left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap font-semibold text-foreground/[0.04] leading-none tracking-[-0.06em] sm:hidden"
+            style={{ fontSize: "clamp(12rem, 32vw, 26rem)" }}
+          >
+            <span>404</span>
+          </div>
+          <div
+            className="absolute top-[calc(5rem+36dvh)] left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center font-semibold text-foreground/[0.04] leading-none tracking-[-0.06em] sm:flex"
             style={{ fontSize: "clamp(12rem, 32vw, 26rem)" }}
           >
             <span>40</span>
@@ -78,10 +87,11 @@ export function ErrorShell({
         </main>
         <div className="relative">
           {/* The water: a glass band under the footer content, blurring the
-              sunken line behind it, fading with depth. */}
+              sunken line behind it, fading with depth. sm+ only — water
+              without a line above it means nothing. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-background/30 backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+            className="pointer-events-none absolute inset-x-0 top-0 hidden h-72 bg-background/30 backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,black,transparent)] sm:block"
           />
           <Footer />
         </div>
