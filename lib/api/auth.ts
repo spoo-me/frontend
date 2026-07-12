@@ -10,6 +10,8 @@ export type AuthUser = {
   id: string
   email: string
   email_verified: boolean
+  /** When onboarding was completed; null = never. */
+  onboarded_at?: string | null
   user_name: string | null
   plan: string
   password_set: boolean

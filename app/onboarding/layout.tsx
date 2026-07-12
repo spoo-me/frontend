@@ -2,11 +2,9 @@
 
 import * as React from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { useQuery } from "@tanstack/react-query"
 
 import { Logo } from "@/components/shared/logo"
 import { useAuth } from "@/components/auth/auth-context"
-import { getOnboardingState } from "@/lib/api"
 
 export default function OnboardingLayout({
   children,
@@ -17,16 +15,6 @@ export default function OnboardingLayout({
   const pathname = usePathname()
   const { user, loading, signOut } = useAuth()
 
-  // Server copy — used here only for the completed gate; the index page
-  // uses it to resume, individual pages never need it.
-  const serverState = useQuery({
-    queryKey: ["onboarding"],
-    queryFn: getOnboardingState,
-    enabled: !loading && !!user,
-    staleTime: Infinity,
-    retry: false,
-  })
-
   const step = pathname.split("/")[2] ?? ""
   const onVerify = step === "verify"
 
@@ -36,7 +24,7 @@ export default function OnboardingLayout({
       router.replace("/login?next=/onboarding")
       return
     }
-    if (serverState.data?.completed) {
+    if (user.onboarded_at) {
       router.replace("/dashboard")
       return
     }
@@ -45,7 +33,7 @@ export default function OnboardingLayout({
     if (!user.email_verified && !onVerify && step !== "welcome" && step !== "") {
       router.replace("/onboarding/verify")
     }
-  }, [loading, user, router, serverState.data?.completed, onVerify, step])
+  }, [loading, user, router, onVerify, step])
 
   return (
     <div className="bg-background relative flex min-h-dvh flex-col overflow-hidden">

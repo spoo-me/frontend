@@ -16,7 +16,7 @@ export type OnboardingStep =
   | "api"
   | "domain"
   | "apps"
-  | "done"
+  | "recap"
 
 export const STEP_ROUTES: Record<OnboardingStep, string> = {
   welcome: "/onboarding/welcome",
@@ -25,7 +25,7 @@ export const STEP_ROUTES: Record<OnboardingStep, string> = {
   api: "/onboarding/api",
   domain: "/onboarding/domain",
   apps: "/onboarding/apps",
-  done: "/onboarding/done",
+  recap: "/onboarding/recap",
 }
 
 export function isOnboardingStep(v: unknown): v is OnboardingStep {

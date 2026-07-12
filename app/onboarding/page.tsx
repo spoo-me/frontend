@@ -28,7 +28,7 @@ export default function OnboardingIndexPage() {
     if (loading || (serverState.isPending && !serverState.isError)) return
     if (!user) return // layout handles the login redirect
     const server = serverState.data
-    if (server?.completed) return // layout handles the dashboard redirect
+    if (user.onboarded_at) return // layout handles the dashboard redirect
     if (server?.step && isOnboardingStep(server.step)) {
       router.replace(STEP_ROUTES[server.step])
     } else {

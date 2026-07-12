@@ -49,8 +49,8 @@ type MockState = {
   onboarding: {
     step: string | null
     path: "links" | "api" | null
-    completed: boolean
   }
+  onboardedAt: string | null
   links: MockLink[]
   domains: MockDomain[]
   keys: MockKey[]
@@ -98,7 +98,8 @@ const initial = (): MockState => ({
     },
   ],
   pfp: null,
-  onboarding: { step: "completed", path: "links", completed: true },
+  onboarding: { step: null, path: null },
+    onboardedAt: null,
   links: buildLinks(),
   domains: buildDomains(),
   keys: buildKeys(),
@@ -177,6 +178,7 @@ function user() {
     email_verified: s.verified,
     user_name: s.userName,
     plan: "free",
+    onboarded_at: s.onboardedAt,
     password_set: s.passwordSet,
     auth_providers: s.providers.map((p) => ({
       provider: p.provider,
@@ -715,7 +717,8 @@ async function handle(req: NextRequest, path: string[]) {
         links: [],
         providers: [], // email signup starts with no linked providers
         pfp: null,
-        onboarding: { step: null, path: null, completed: false },
+        onboarding: { step: null, path: null },
+        onboardedAt: null,
       }
       return withSession(
         json({
@@ -747,6 +750,12 @@ async function handle(req: NextRequest, path: string[]) {
       if (!req.cookies.has("refresh_token"))
         return fail(401, "not_authenticated", "Not signed in")
       return withSession(json({ success: true }))
+    case "POST /auth/onboarding/complete": {
+      // First completion wins, pointer dropped — mirrors the real contract.
+      if (!s.onboardedAt) s.onboardedAt = new Date().toISOString()
+      s.onboarding = { step: null, path: null }
+      return json({ success: true, onboarded_at: s.onboardedAt })
+    }
     case "POST /auth/send-verification":
       return json({ success: true, expires_in: 600 })
     case "POST /auth/verify-email": {
@@ -770,18 +779,12 @@ async function handle(req: NextRequest, path: string[]) {
     case "GET /auth/onboarding":
       return json(s.onboarding)
     case "PUT /auth/onboarding": {
-      const step = String(body.step ?? "")
-      if (step === "completed") {
-        s.onboarding = { ...s.onboarding, step: "completed", completed: true }
-      } else {
-        s.onboarding = {
-          step,
-          path: (body.path === undefined ? s.onboarding.path : body.path) as
-            | "links"
-            | "api"
-            | null,
-          completed: false,
-        }
+      s.onboarding = {
+        step: String(body.step ?? ""),
+        path: (body.path === undefined ? s.onboarding.path : body.path) as
+          | "links"
+          | "api"
+          | null,
       }
       return json(s.onboarding)
     }
