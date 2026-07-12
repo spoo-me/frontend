@@ -5,17 +5,19 @@ import Link from "next/link"
 import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { motion } from "motion/react"
 
-import { connectedApps, integrations, sdks } from "@/lib/apps-data"
+import { connectedApps } from "@/lib/apps-data"
 import { Button } from "@/components/ui/button"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
 
-/** The fan — most iconic clients first, ordered for visual rhythm. */
+/** The fan — most iconic clients first, ordered for visual rhythm.
+    Slugs must exist in lib/apps-data (the find below drops misses
+    silently, and the deck just gets thinner). */
 const FEATURED = [
-  "slack",
-  "chrome",
-  "raycast",
-  "discord",
-  "telegram",
+  "spoo-slack",
+  "spoo-snap",
+  "spoo-raycast",
+  "spoo-discord",
+  "spoo-telegram",
   "apple",
   "android",
 ] as const
@@ -98,8 +100,8 @@ export function AppsStep({ onDone }: { onDone: () => void }) {
         })}
       </div>
 
-      <p className="label-mono mt-6 text-[10px] text-muted-foreground/60 tabular-nums">
-        {integrations.length} integrations · {sdks.length} SDKs · one API
+      <p className="label-mono mt-6 text-[10px] text-muted-foreground/60">
+        one sign-in connects them all — nothing to configure
       </p>
 
       <div className="mt-10 flex flex-col items-center gap-3">
