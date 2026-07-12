@@ -1,0 +1,54 @@
+name: CI
+
+# PR gate + main sanity, cheap-to-expensive. `next build` is the real
+# smoke test — server/client boundary errors and broken pages pass
+# typecheck but explode here, and image.yml only builds main, so PRs
+# need their own build proof.
+#
+# Prettier + eslint gates are deliberately absent: the repo currently
+# carries ~175 unformatted files and 44 lint errors (mostly react-hooks
+# strictness in vendored components/ui). Add them back after the
+# dedicated cleanup pass — a gate that starts red just gets ignored.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
