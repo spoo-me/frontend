@@ -23,3 +23,11 @@ export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY
  * generally available and the page is permanent.
  */
 export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING === "1"
+
+/**
+ * hCaptcha sitekey for the public intake forms (/contact, /report).
+ * Mirrors the backend's configured/unconfigured semantics: unset (mock
+ * mode, self-hosters without hcaptcha_* settings) means the captcha step
+ * is skipped entirely and the forms submit without a token.
+ */
+export const HCAPTCHA_SITEKEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY

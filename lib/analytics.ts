@@ -229,6 +229,10 @@ export type UiAction =
   | "chart_expanded"
   | "app_explored"
   | "error_alias_claimed"
+  // Public intake forms. detail: single|bulk for reports. Counts only —
+  // reported codes, reasons and reporter emails never leave the app.
+  | "report_submitted"
+  | "contact_submitted"
 
 /** `detail` is a low-cardinality qualifier (a preset token, a filter key,
     a command target) — never free text or user content. */
