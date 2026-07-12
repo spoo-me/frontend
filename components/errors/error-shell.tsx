@@ -67,7 +67,7 @@ export function ErrorShell({
             <span>40</span>
             {/* The last numeral's slot; the glyph overflows it downward. */}
             <span className="relative inline-block h-[1em] w-[0.62em]">
-              <FishermanGlyph className="absolute top-[0.07em] left-0 w-full text-foreground/20" />
+              <FishermanGlyph className="absolute top-0 left-0 w-full text-foreground/15" />
             </span>
           </div>
         </div>
