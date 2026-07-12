@@ -73,7 +73,7 @@ export default async function PublicStatsPage({ params }: Params) {
       <main className="overflow-hidden pt-20">
         <PageFrame>
           <Section caption="Link stats">
-            <div className="px-5 py-14 sm:px-9">
+            <div className="px-5 py-16 sm:px-9 sm:py-20">
               {state === "missing" ? (
                 <StatsMissing code={code} />
               ) : state === "unavailable" ? (
