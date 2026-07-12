@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAlpha2Codes } from "i18n-iso-countries"
 
 import { LONG_URL_MAX_LENGTH, validDestinationUrl } from "@/lib/validation"
+import { handlePublicStats } from "./public"
 import {
   buildDomains,
   buildGrants,
@@ -1064,6 +1065,24 @@ async function handle(req: NextRequest, path: string[]) {
       s.links = s.links.filter((l) => l !== link)
       return new NextResponse(null, { status: 204 })
     }
+  }
+
+  /* ---------- public link surfaces (no session required) ---------- */
+  if (
+    path[0] === "v1" &&
+    path[1] === "public" &&
+    path[2] === "stats" &&
+    path[3] &&
+    (req.method === "GET" || req.method === "POST")
+  ) {
+    // Emoji aliases arrive percent-encoded through the rewrite.
+    let code = path[3]
+    try {
+      code = decodeURIComponent(code)
+    } catch {
+      /* keep the raw segment */
+    }
+    return handlePublicStats(code, req.method, body, params)
   }
 
   /* ---------- stats + export ---------- */
