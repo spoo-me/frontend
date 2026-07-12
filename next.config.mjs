@@ -44,6 +44,26 @@ const nextConfig = {
   skipTrailingSlashRedirect: true,
   // Don't advertise the framework (Caddy strips Server the same way).
   poweredByHeader: false,
+  // public/ files ship with Next's default max-age=0, so Cloudflare never
+  // edge-caches them and every asset request rides to the origin. These are
+  // un-hashed filenames — a day of freshness + a week of SWR, not immutable.
+  // (CF only auto-caches known static extensions; /geo/*.json additionally
+  // needs a CF Cache Rule to become eligible at the edge.)
+  async headers() {
+    const STATIC_ASSET_CACHE = [
+      {
+        key: "Cache-Control",
+        value: "public, max-age=86400, stale-while-revalidate=604800",
+      },
+    ]
+    return [
+      {
+        source: "/:all*(svg|png|jpg|jpeg|webp|avif|ico)",
+        headers: STATIC_ASSET_CACHE,
+      },
+      { source: "/geo/:path*", headers: STATIC_ASSET_CACHE },
+    ]
+  },
   async rewrites() {
     if (MOCK) {
       return [
