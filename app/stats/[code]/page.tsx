@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
-import { headers } from "next/headers"
 
 import { SpooApiError } from "@/lib/api/client"
+import { apiBase } from "@/lib/api/server"
 import { getPublicStats, type PublicStats } from "@/lib/api/public-stats"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
@@ -29,24 +29,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     // Millions of thin pages; OG stays for link sharing, the index doesn't.
     robots: { index: false, follow: true },
   }
-}
-
-/**
- * Server-side base for the one SSR fetch. Walkthrough mode targets the
- * in-repo mock (same origin — the /api/v1 rewrite is browser-only);
- * otherwise the FastAPI origin, mirroring next.config.mjs.
- */
-async function apiBase() {
-  if (process.env.SPOO_MOCK === "1") {
-    const host = (await headers()).get("host") ?? "localhost:3000"
-    return `http://${host}/api/mock`
-  }
-  const origin =
-    process.env.SPOO_API_URL ??
-    (process.env.NODE_ENV === "production"
-      ? "https://spoo.me"
-      : "http://localhost:8000")
-  return `${origin}/api`
 }
 
 export default async function PublicStatsPage({ params }: Params) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { PUBLIC_EXTRAS } from "./public-extras"
 import {
   buildLinks,
   generateStats,
@@ -12,64 +13,14 @@ import {
  * (GET|POST /api/v1/public/stats/{code} — thoughts/public-stats-page.md §6).
  *
  * The real endpoint resolves BOTH url generations plus emoji aliases; the
- * seeded workspace is all v2, so this module carries a couple of
- * public-surface-only extras (one v1 link, one emoji alias) that never show
- * up in the dashboard's /v1/urls list. Semantics mirrored exactly:
+ * seeded workspace is all v2, so the shared PUBLIC_EXTRAS carry the v1,
+ * emoji and edge-state records (one list with the preview mock — the two
+ * surfaces can never disagree). Semantics mirrored exactly:
  *  - private_stats → the same 404 a missing code gets (no oracle)
  *  - password-protected → 401 password_required / invalid_password; the
  *    password only ever arrives in a POST body
  *  - v1 payloads carry no city dimension but do carry bots; v2 the reverse
  */
-
-/** v1/emoji sample records — public pages only, invisible to /v1/urls. */
-const PUBLIC_EXTRAS: Array<{ link: MockLink; generation: "v1" }> = [
-  {
-    generation: "v1",
-    link: {
-      id: "url_public_v1_spring",
-      alias: "spring",
-      long_url: "https://github.com/spoo-me/url-shortener/tree/legacy",
-      domain: null,
-      status: "ACTIVE",
-      created_at: "2024-04-18T09:30:00.000Z",
-      expire_after: null,
-      max_clicks: null,
-      password_set: false,
-      password: null,
-      private_stats: false,
-      block_bots: false,
-      total_clicks: 1840,
-      last_click: "2026-07-10T18:22:00.000Z",
-      geo_rules: null,
-      ab_variants: null,
-      meta_tags: null,
-      weight: 2,
-    },
-  },
-  {
-    generation: "v1",
-    link: {
-      id: "url_public_emoji",
-      alias: "🚀✨",
-      long_url: "https://docs.spoo.me/emoji-urls",
-      domain: null,
-      status: "ACTIVE",
-      created_at: "2025-01-05T14:00:00.000Z",
-      expire_after: null,
-      max_clicks: null,
-      password_set: false,
-      password: null,
-      private_stats: false,
-      block_bots: false,
-      total_clicks: 420,
-      last_click: "2026-07-09T07:45:00.000Z",
-      geo_rules: null,
-      ab_variants: null,
-      meta_tags: null,
-      weight: 1,
-    },
-  },
-]
 
 function publicLinks(): Array<{ link: MockLink; generation: "v1" | "v2" }> {
   return [

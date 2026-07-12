@@ -73,9 +73,18 @@ const nextConfig = {
       source: "/_error/:status",
       destination: "/error-pages/:status",
     }
+    // The link preview page lives at the exact public URL /{code}+ — a
+    // trailing + can't be a route segment, so it rewrites to an internal
+    // page. Single decoded segment only; emoji aliases arrive
+    // percent-encoded and match too.
+    const PREVIEW_REWRITE = {
+      source: "/:code\\+",
+      destination: "/preview/:code",
+    }
     if (MOCK) {
       return [
         ERROR_REWRITE,
+        PREVIEW_REWRITE,
         { source: "/auth/:path*", destination: "/api/mock/auth/:path*" },
         { source: "/oauth/:path*", destination: "/api/mock/oauth/:path*" },
         { source: "/api/v1/:path*", destination: "/api/mock/v1/:path*" },
@@ -92,6 +101,7 @@ const nextConfig = {
     // private CORS policy doesn't need to know about this origin).
     return [
       ERROR_REWRITE,
+      PREVIEW_REWRITE,
       { source: "/auth/:path*", destination: `${SPOO_API_URL}/auth/:path*` },
       { source: "/oauth/:path*", destination: `${SPOO_API_URL}/oauth/:path*` },
       {
