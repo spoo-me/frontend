@@ -15,7 +15,81 @@ import { buildLinks, type MockLink } from "./seed"
  * generations testable without touching seed.ts.
  */
 
-const PUBLIC_EXTRAS: Array<{ link: MockLink; generation: "v1" }> = [
+const PUBLIC_EXTRAS: Array<{ link: MockLink; generation: "v1" | "v2" }> = [
+  // v2, expired via max-clicks: the backend folds exhaustion into EXPIRED
+  // (repositories/url_repository.py expire_if_max_clicks), so this reads
+  // exactly like a time-expired link on the wire.
+  {
+    generation: "v2",
+    link: {
+      id: "url_public_v2_maxed",
+      alias: "maxed",
+      long_url: "https://spoo.me/i/beta-invite-wave-3",
+      domain: null,
+      status: "EXPIRED",
+      created_at: "2026-05-02T11:00:00.000Z",
+      expire_after: null,
+      max_clicks: 500,
+      password_set: false,
+      password: null,
+      private_stats: false,
+      block_bots: false,
+      total_clicks: 500,
+      last_click: "2026-06-30T21:14:00.000Z",
+      geo_rules: null,
+      ab_variants: null,
+      meta_tags: null,
+      weight: 1,
+    },
+  },
+  // v1, password-protected (plaintext-password generation)
+  {
+    generation: "v1",
+    link: {
+      id: "url_public_v1_winter",
+      alias: "winter",
+      long_url: "https://docs.google.com/document/d/winter-campaign-brief",
+      domain: null,
+      status: "ACTIVE",
+      created_at: "2023-12-01T08:00:00.000Z",
+      expire_after: null,
+      max_clicks: null,
+      password_set: true,
+      password: "frost-ledger-19",
+      private_stats: false,
+      block_bots: false,
+      total_clicks: 260,
+      last_click: "2026-07-01T10:00:00.000Z",
+      geo_rules: null,
+      ab_variants: null,
+      meta_tags: null,
+      weight: 1,
+    },
+  },
+  // v1, expired (v1 derives expiry from expiration-time/max-clicks)
+  {
+    generation: "v1",
+    link: {
+      id: "url_public_v1_sale24",
+      alias: "sale24",
+      long_url: "https://shop.spoo.me/collections/summer-sale-2024",
+      domain: null,
+      status: "EXPIRED",
+      created_at: "2024-06-01T00:00:00.000Z",
+      expire_after: 1725148800,
+      max_clicks: null,
+      password_set: false,
+      password: null,
+      private_stats: false,
+      block_bots: false,
+      total_clicks: 3120,
+      last_click: "2024-08-31T23:50:00.000Z",
+      geo_rules: null,
+      ab_variants: null,
+      meta_tags: null,
+      weight: 1,
+    },
+  },
   {
     generation: "v1",
     link: {
