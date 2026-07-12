@@ -11,7 +11,6 @@ import {
   dimensionRowsOf,
   timeSeriesOf,
   type DimensionRow,
-  type StatsDimension,
 } from "@/lib/api/stats"
 import {
   displayUrl,
@@ -30,14 +29,13 @@ import {
   ClicksChart,
   type ChartMetric,
 } from "@/components/dashboard/clicks-chart"
-import { BreakdownList } from "@/components/dashboard/breakdown-list"
-import { CountryMap } from "@/components/dashboard/analytics/country-map"
 import {
   AdaptiveSegmented,
   HeaderControls,
   MetricControl,
 } from "@/components/dashboard/analytics/metric-control"
 import { DIMENSION_META } from "@/components/dashboard/analytics/widget-meta"
+import { BreakdownSection } from "@/components/stats-public/breakdown-section"
 
 const RANGES = [
   { label: "24h", days: 1, phrase: "last 24 hours" },
@@ -239,68 +237,47 @@ export function PublicStatsView({
 
       {/* Breakdowns — fixed curated arrangement, grey ramp */}
       <div style={NEUTRAL_ACCENT}>
-        <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <SectionHeader
-              icon={DIMENSION_META.country.icon}
-              title="Countries"
-            />
-            <Panel className="mt-2 h-80 p-2">
-              <CountryMap rows={dimensionRowsOf(s, "country")} metric="total" />
-            </Panel>
-          </div>
-          <div className="lg:col-span-2">
-            <SectionHeader
-              icon={DIMENSION_META.country.icon}
-              title="Top countries"
-            />
-            <Panel className="mt-2 h-80 overflow-hidden p-2">
-              <BreakdownList
-                dimension="country"
-                rows={dimensionRowsOf(s, "country")}
-                limit={7}
-              />
-            </Panel>
-          </div>
+        <div className="mt-10">
+          <BreakdownSection
+            dimension="country"
+            title="Countries"
+            icon={DIMENSION_META.country.icon}
+            rows={dimensionRowsOf(s, "country")}
+            map
+            limit={8}
+            panelClassName="h-80"
+          />
         </div>
-
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {(
-            [
-              {
-                key: "referrer",
-                title: DIMENSION_META.referrer.title,
-                icon: DIMENSION_META.referrer.icon,
-              },
-              extraDimension,
-              {
-                key: "browser",
-                title: DIMENSION_META.browser.title,
-                icon: DIMENSION_META.browser.icon,
-              },
-              {
-                key: "os",
-                title: DIMENSION_META.os.title,
-                icon: DIMENSION_META.os.icon,
-              },
-            ] as Array<{ key: string; title: string; icon: React.ElementType }>
-          ).map((dim) => (
-            <div key={dim.key}>
-              <SectionHeader icon={dim.icon} title={dim.title} />
-              <Panel className="mt-2 p-2">
-                <BreakdownList
-                  dimension={dim.key}
-                  rows={
-                    dim.key === "bots"
-                      ? ((s.metrics?.["clicks_by_bots"] ??
-                          []) as DimensionRow[])
-                      : dimensionRowsOf(s, dim.key as StatsDimension)
-                  }
-                  limit={6}
-                />
-              </Panel>
-            </div>
-          ))}
+          <BreakdownSection
+            dimension="referrer"
+            title={DIMENSION_META.referrer.title}
+            icon={DIMENSION_META.referrer.icon}
+            rows={dimensionRowsOf(s, "referrer")}
+          />
+          <BreakdownSection
+            dimension={extraDimension.key}
+            title={extraDimension.title}
+            icon={extraDimension.icon}
+            rows={
+              extraDimension.key === "bots"
+                ? ((s.metrics?.["clicks_by_bots"] ?? []) as DimensionRow[])
+                : dimensionRowsOf(s, "city")
+            }
+            hasUnique={extraDimension.key !== "bots"}
+          />
+          <BreakdownSection
+            dimension="browser"
+            title={DIMENSION_META.browser.title}
+            icon={DIMENSION_META.browser.icon}
+            rows={dimensionRowsOf(s, "browser")}
+          />
+          <BreakdownSection
+            dimension="os"
+            title={DIMENSION_META.os.title}
+            icon={DIMENSION_META.os.icon}
+            rows={dimensionRowsOf(s, "os")}
+          />
         </div>
       </div>
 

@@ -19,7 +19,6 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { formatCount, formatPercent } from "@/lib/format"
 import type { DimensionRow } from "@/lib/api"
 import {
   breakdownBarLimit,
@@ -35,6 +34,7 @@ import {
 } from "@/lib/analytics-layout"
 import { DIMENSION_META } from "@/components/dashboard/analytics/widget-meta"
 import { BreakdownList } from "@/components/dashboard/breakdown-list"
+import { BreakdownTable } from "@/components/dashboard/analytics/widgets/breakdown-table"
 import { CountryMap } from "@/components/dashboard/analytics/country-map"
 import { DonutChart } from "@/components/dashboard/analytics/widgets/donut-chart"
 import { ColumnChart } from "@/components/dashboard/analytics/widgets/column-chart"
@@ -43,7 +43,6 @@ import { BreakdownScatter } from "@/components/dashboard/analytics/widgets/scatt
 import { RadialChart } from "@/components/dashboard/analytics/widgets/radial-chart"
 import { BreakdownRadar } from "@/components/dashboard/analytics/widgets/radar-chart"
 import { BubbleChart } from "@/components/dashboard/analytics/widgets/bubble-chart"
-import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import {
   HeaderControls,
   MetricControl,
@@ -51,7 +50,6 @@ import {
 import { Segmented } from "@/components/dashboard/segmented"
 import { Skeleton } from "@/components/ui/skeleton"
 import { WidgetShell } from "@/components/dashboard/analytics/widget-shell"
-import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 const BD_CHART_ICONS = {
   bars: ChartBar,
@@ -132,16 +130,6 @@ export function BreakdownWidget({
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [expanded, onExpandedChange])
-
-  const sortedRows = React.useMemo(
-    () =>
-      [...rows].sort((a, b) =>
-        metric === "unique"
-          ? b.unique_clicks - a.unique_clicks
-          : b.clicks - a.clicks
-      ),
-    [rows, metric]
-  )
 
   const fullCols = expanded || breakdownTableFullCols(w)
   const ExpandIcon = expanded ? Minimize2 : Maximize2
@@ -290,99 +278,14 @@ export function BreakdownWidget({
                 />
               </div>
             ) : (
-              <div className="flex h-full flex-col overflow-y-auto [mask-image:linear-gradient(to_bottom,black,black_calc(100%-24px),transparent)]">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 z-10 bg-muted">
-                    <tr className="border-border/60 border-b text-left text-muted-foreground">
-                      <th className="label-mono h-8 w-full px-3 font-medium text-[10px]">
-                        {meta.title}
-                      </th>
-                      <th
-                        className={cn(
-                          "label-mono h-8 px-3 text-right font-medium text-[10px]",
-                          metric !== "unique" && "text-foreground",
-                          !fullCols && metric === "unique" && "hidden"
-                        )}
-                      >
-                        Clicks
-                      </th>
-                      <th
-                        className={cn(
-                          "label-mono h-8 px-3 text-right font-medium text-[10px]",
-                          metric === "unique" && "text-foreground",
-                          !fullCols && metric !== "unique" && "hidden"
-                        )}
-                      >
-                        Unique
-                      </th>
-                      <th
-                        className={cn(
-                          "label-mono h-8 px-3 text-right font-medium text-[10px]",
-                          !fullCols && "hidden"
-                        )}
-                      >
-                        Share
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/60">
-                    {sortedRows.map((row) => (
-                      <tr
-                        key={row.value}
-                        onClick={() => onSelect?.(row.value)}
-                        className={cn(
-                          onSelect &&
-                            "cursor-pointer transition-colors duration-150 hover:bg-accent/40"
-                        )}
-                      >
-                        <td className="max-w-0 truncate px-3 py-2">
-                          <span className="flex items-center gap-2">
-                            <DimensionIcon
-                              dimension={dimension}
-                              value={row.value}
-                              className="size-3.5"
-                            />
-                            <span className="truncate text-[13px] text-foreground">
-                              {dimensionLabel(dimension, row.value)}
-                            </span>
-                          </span>
-                        </td>
-                        <td
-                          className={cn(
-                            "px-3 py-2 text-right font-mono text-xs tabular-nums",
-                            metric === "unique"
-                              ? "text-muted-foreground"
-                              : "text-foreground",
-                            !fullCols && metric === "unique" && "hidden"
-                          )}
-                        >
-                          {formatCount(row.clicks)}
-                        </td>
-                        <td
-                          className={cn(
-                            "px-3 py-2 text-right font-mono text-xs tabular-nums",
-                            metric === "unique"
-                              ? "text-foreground"
-                              : "text-muted-foreground",
-                            !fullCols && metric !== "unique" && "hidden"
-                          )}
-                        >
-                          {formatCount(row.unique_clicks)}
-                        </td>
-                        <td
-                          className={cn(
-                            "px-3 py-2 text-right font-mono text-muted-foreground text-xs tabular-nums",
-                            !fullCols && "hidden"
-                          )}
-                        >
-                          {formatPercent(row.percentage)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {!rows.length && <EmptyRange className="flex-1" />}
-              </div>
+              <BreakdownTable
+                dimension={dimension}
+                title={meta.title}
+                rows={rows}
+                metric={metric}
+                fullCols={fullCols}
+                onSelect={onSelect}
+              />
             )}
           </motion.div>
         </AnimatePresence>

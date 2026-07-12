@@ -37,8 +37,8 @@ export function StatsUnavailable() {
             Stats are unavailable right now
           </p>
           <p className="mt-1 text-muted-foreground text-sm">
-            We couldn&apos;t reach the stats service. The short link itself keeps
-            redirecting; try this page again in a minute.
+            We couldn&apos;t reach the stats service. The short link itself
+            keeps redirecting; try this page again in a minute.
           </p>
         </div>
       </div>
