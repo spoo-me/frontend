@@ -22,7 +22,6 @@ export const metadata: Metadata = {
 const promises = [
   "No account needed, reports can stay anonymous",
   "A human reviews every report, high-harm first",
-  "Repeat reports push a link up the queue",
   "Confirmed malicious links stop redirecting",
 ]
 
@@ -34,18 +33,14 @@ export default function ReportPage() {
         <PageFrame>
           <Section caption="Report abuse">
             <div className="grid lg:grid-cols-[1fr_1.2fr] lg:divide-x lg:divide-border/60">
-              {/* Left — why reporting matters */}
+              {/* Left — kept deliberately light: the form is the page. */}
               <div className="px-5 pt-28 pb-10 sm:px-9 lg:pb-20">
                 <h1 className="text-balance font-semibold text-4xl text-foreground tracking-tight sm:text-5xl">
-                  Report a{" "}
-                  <span className="font-normal font-serif text-muted-foreground italic">
-                    malicious link.
-                  </span>
+                  Report a malicious link.
                 </h1>
                 <p className="mt-5 max-w-md text-base text-muted-foreground leading-relaxed sm:text-lg">
-                  Anyone can shorten anything on spoo.me, and some people
-                  shorten scams. If a link sent you somewhere harmful, phishing,
-                  malware, spam or worse, tell us here.
+                  Anyone can shorten anything on spoo.me — if a link sent you
+                  somewhere harmful, tell us here.
                 </p>
 
                 <ul className="mt-8 flex flex-col gap-3">
@@ -60,19 +55,14 @@ export default function ReportPage() {
                   ))}
                 </ul>
 
-                <p className="mt-10 max-w-md text-muted-foreground text-sm">
-                  Working through a whole campaign? Switch the form to bulk and
-                  paste your list, one link per line.
-                </p>
-                <p className="mt-4 text-muted-foreground text-sm">
-                  Found a vulnerability in spoo.me itself?{" "}
+                <p className="mt-10 text-muted-foreground text-sm">
+                  Vulnerability in spoo.me itself?{" "}
                   <a
                     href="mailto:security@spoo.me"
                     className="font-medium font-mono text-[13px] text-foreground hover:underline"
                   >
                     security@spoo.me
-                  </a>{" "}
-                  for coordinated disclosure.
+                  </a>
                 </p>
               </div>
 
