@@ -2,11 +2,13 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { Check, ChevronDown, Flag } from "lucide-react"
+import { Check, Flag } from "lucide-react"
 
-import { CaptchaError, useCaptcha } from "@/hooks/use-captcha"
+import { useCaptcha } from "@/hooks/use-captcha"
 import { trackUiAction } from "@/lib/analytics"
 import {
+  type IntakeErrorCopy,
+  intakeErrorText,
   normalizeReportTarget,
   REPORT_DETAILS_MAX,
   REPORT_ITEM_CAP_ANON,
@@ -18,7 +20,6 @@ import {
   type ReportVector,
   reportTargetKey,
   reportTargetLabel,
-  SpooApiError,
   submitReports,
 } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -26,6 +27,7 @@ import { useAuth } from "@/components/auth/auth-context"
 import { Panel } from "@/components/dashboard/section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NativeSelect } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
 
 /**
@@ -189,7 +191,7 @@ export function ReportForm({ initialCode }: { initialCode?: string }) {
           setDetails("")
         }
       } catch (err) {
-        setStatus({ kind: "error", text: reportErrorText(err) })
+        setStatus({ kind: "error", text: intakeErrorText(err, ERROR_COPY) })
       } finally {
         setPending(false)
       }
@@ -238,7 +240,7 @@ export function ReportForm({ initialCode }: { initialCode?: string }) {
         rejected: res.rejected.length,
       })
     } catch (err) {
-      setStatus({ kind: "error", text: reportErrorText(err) })
+      setStatus({ kind: "error", text: intakeErrorText(err, ERROR_COPY) })
     } finally {
       setPending(false)
     }
@@ -345,12 +347,17 @@ export function ReportForm({ initialCode }: { initialCode?: string }) {
 
       {/* Shared tail */}
       <Field label="Reason" htmlFor="report-reason">
-        <SelectBox
+        <NativeSelect
           id="report-reason"
           value={reason}
-          onChange={(v) => setReason(v as ReportReason)}
-          options={REASONS}
-        />
+          onChange={(e) => setReason(e.target.value as ReportReason)}
+        >
+          {REASONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </NativeSelect>
       </Field>
 
       <Field label="Details" htmlFor="report-details" optional>
@@ -366,12 +373,18 @@ export function ReportForm({ initialCode }: { initialCode?: string }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="How it reached you" htmlFor="report-vector" optional>
-          <SelectBox
+          <NativeSelect
             id="report-vector"
             value={vector}
-            onChange={(v) => setVector(v as ReportVector | "")}
-            options={[{ value: "", label: "Prefer not to say" }, ...VECTORS]}
-          />
+            onChange={(e) => setVector(e.target.value as ReportVector | "")}
+          >
+            <option value="">Prefer not to say</option>
+            {VECTORS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </NativeSelect>
         </Field>
         <Field label="Email for follow-up" htmlFor="report-email" optional>
           <Input
@@ -509,52 +522,14 @@ function PreviewTable({
 
 /* ── small shared pieces (contact-form recipes, verbatim) ─────────────── */
 
-function reportErrorText(err: unknown): string {
-  if (err instanceof CaptchaError)
-    return "The captcha wasn't completed. Try submitting again."
-  if (err instanceof SpooApiError) {
-    if (err.code === "not_configured")
-      return "Report intake is down on our side. Try again shortly, or email hello@spoo.me."
-    if (err.isRateLimit)
-      return "Too many reports just now. Wait a minute and try again."
-    if (err.status === 403)
-      return "The captcha didn't verify. Try submitting again."
-    return err.message
-  }
-  return "Can't reach the server. Check your connection and try again."
-}
-
-function SelectBox({
-  id,
-  value,
-  onChange,
-  options,
-}: {
-  id: string
-  value: string
-  onChange: (value: string) => void
-  options: ReadonlyArray<{ value: string; label: string }>
-}) {
-  return (
-    <div className="relative">
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-10 w-full appearance-none rounded-lg border border-input bg-transparent px-2.5 text-sm shadow-soft outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] [&>option]:bg-background"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
-      />
-    </div>
-  )
+/** This surface's wording for the shared intake error ladder. */
+const ERROR_COPY: IntakeErrorCopy = {
+  captchaIncomplete: "The captcha wasn't completed. Try submitting again.",
+  captchaRejected: "The captcha didn't verify. Try submitting again.",
+  notConfigured:
+    "Report intake is down on our side. Try again shortly, or email hello@spoo.me.",
+  rateLimited: "Too many reports just now. Wait a minute and try again.",
+  network: "Can't reach the server. Check your connection and try again.",
 }
 
 function Field({

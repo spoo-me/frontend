@@ -4,6 +4,7 @@ import * as React from "react"
 import HCaptcha from "@hcaptcha/react-hcaptcha"
 import { useTheme } from "next-themes"
 
+import { CaptchaError } from "@/lib/api/reports"
 import { HCAPTCHA_SITEKEY } from "@/lib/flags"
 
 /**
@@ -51,11 +52,4 @@ export function useCaptcha() {
   ) : null
 
   return { enabled, challenge, element }
-}
-
-export class CaptchaError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = "CaptchaError"
-  }
 }

@@ -1,4 +1,4 @@
-import { jsonInit, parse } from "./client"
+import { jsonInit, parse, SpooApiError } from "./client"
 
 /**
  * Abuse-report intake + contact — the frozen wire contract from
@@ -169,3 +169,41 @@ export function reportTargetLabel(t: ReportTarget): string {
   return `${t.domain ?? "spoo.me"}/${t.code}`
 }
 
+/* ── submission error ladder ────────────────────────────────────────────
+ *
+ * Both intake forms fail the same ways: an abandoned captcha challenge,
+ * a rejected token, an unconfigured webhook, a rate limit, or no network.
+ * One ladder owns the mapping; the surfaces pass their own copy.
+ */
+
+/** Thrown by the captcha hook when a challenge is dismissed or times
+    out client-side (no token ever existed — distinct from a 403). */
+export class CaptchaError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "CaptchaError"
+  }
+}
+
+export type IntakeErrorCopy = {
+  /** Challenge dismissed or timed out before a token existed. */
+  captchaIncomplete: string
+  /** Backend 403: the token didn't verify. */
+  captchaRejected: string
+  /** 503 not_configured: the receiving webhook is unset server-side. */
+  notConfigured: string
+  rateLimited: string
+  network: string
+}
+
+export function intakeErrorText(err: unknown, copy: IntakeErrorCopy): string {
+  if (err instanceof CaptchaError) return copy.captchaIncomplete
+  if (err instanceof SpooApiError) {
+    if (err.code === "not_configured") return copy.notConfigured
+    if (err.isRateLimit) return copy.rateLimited
+    if (err.status === 403) return copy.captchaRejected
+    // Validation errors carry actionable server copy; show it verbatim.
+    return err.message
+  }
+  return copy.network
+}

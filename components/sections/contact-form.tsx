@@ -2,13 +2,18 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Check, ChevronDown, Send } from "lucide-react"
+import { Check, Send } from "lucide-react"
 
-import { CaptchaError, useCaptcha } from "@/hooks/use-captcha"
+import { useCaptcha } from "@/hooks/use-captcha"
 import { trackUiAction } from "@/lib/analytics"
-import { sendContactMessage, SpooApiError } from "@/lib/api"
+import {
+  type IntakeErrorCopy,
+  intakeErrorText,
+  sendContactMessage,
+} from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NativeSelect } from "@/components/ui/native-select"
 
 const topics = [
   "General question",
@@ -75,7 +80,7 @@ export function ContactForm() {
       setStatus({ kind: "sent" })
       setMessage("") // identity fields stay; a resend shouldn't retype them
     } catch (err) {
-      setStatus({ kind: "error", text: contactErrorText(err) })
+      setStatus({ kind: "error", text: intakeErrorText(err, ERROR_COPY) })
     } finally {
       setPending(false)
     }
@@ -147,25 +152,18 @@ export function ContactForm() {
       </Field>
 
       <Field label="Topic" htmlFor="topic">
-        <div className="relative">
-          <select
-            id="topic"
-            name="topic"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            className="h-10 w-full appearance-none rounded-lg border border-input bg-transparent px-2.5 text-sm shadow-soft outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] [&>option]:bg-background"
-          >
-            {topics.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
-          />
-        </div>
+        <NativeSelect
+          id="topic"
+          name="topic"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+        >
+          {topics.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </NativeSelect>
       </Field>
 
       <Field label="Message" htmlFor="message">
@@ -217,19 +215,14 @@ export function ContactForm() {
   )
 }
 
-function contactErrorText(err: unknown): string {
-  if (err instanceof CaptchaError)
-    return "The captcha wasn't completed. Try sending again."
-  if (err instanceof SpooApiError) {
-    if (err.code === "not_configured")
-      return "The contact form is down on our side. Email hello@spoo.me instead."
-    if (err.isRateLimit)
-      return "Too many messages just now. Wait a minute and try again."
-    if (err.status === 403)
-      return "The captcha didn't verify. Try sending again."
-    return err.message
-  }
-  return "Can't reach the server. Check your connection and try again."
+/** This surface's wording for the shared intake error ladder. */
+const ERROR_COPY: IntakeErrorCopy = {
+  captchaIncomplete: "The captcha wasn't completed. Try sending again.",
+  captchaRejected: "The captcha didn't verify. Try sending again.",
+  notConfigured:
+    "The contact form is down on our side. Email hello@spoo.me instead.",
+  rateLimited: "Too many messages just now. Wait a minute and try again.",
+  network: "Can't reach the server. Check your connection and try again.",
 }
 
 function Field({
