@@ -16,8 +16,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/privacy",
     "/terms",
     "/legal",
-    // Bare /stats is the legacy lookup form, served by the backend on the
-    // same host — still a public page of this site.
     "/stats",
     ...(PRICING_ENABLED ? ["/pricing"] : []),
   ]
