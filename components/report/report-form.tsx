@@ -92,12 +92,12 @@ type Status =
   | { kind: "sent-single"; ref: string }
   | { kind: "sent-bulk"; ref: string; accepted: number; rejected: number }
 
-export function ReportForm() {
+export function ReportForm({ initialCode }: { initialCode?: string }) {
   const { user } = useAuth()
   const captcha = useCaptcha()
 
   const [mode, setMode] = React.useState<Mode>("single")
-  const [single, setSingle] = React.useState("")
+  const [single, setSingle] = React.useState(initialCode ?? "")
   const [lines, setLines] = React.useState("")
   const [reason, setReason] = React.useState<ReportReason>("phishing")
   const [vector, setVector] = React.useState<ReportVector | "">("")

@@ -25,7 +25,13 @@ const promises = [
   "Confirmed malicious links stop redirecting",
 ]
 
-export default function ReportPage() {
+export default async function ReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>
+}) {
+  // Entry points (the preview page) prefill the reported code.
+  const { code } = await searchParams
   return (
     <>
       <Header />
@@ -69,7 +75,7 @@ export default function ReportPage() {
               {/* Right — the intake form */}
               <div className="px-5 pb-20 sm:px-9 lg:pt-28">
                 <div className="mx-auto max-w-xl">
-                  <ReportForm />
+                  <ReportForm initialCode={code} />
                 </div>
               </div>
             </div>
