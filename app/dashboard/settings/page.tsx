@@ -106,14 +106,20 @@ function NameRow({ user }: { user: AuthUser }) {
       toast.error(e instanceof Error ? e.message : "Could not update name"),
   })
 
+  // Escape unmounts the focused input, and some browser/React combinations
+  // deliver that as a native blur into onBlur, which would save the draft
+  // instead of discarding it.
+  const escaped = React.useRef(false)
+
   const open = () => {
     setDraft(user.user_name ?? "")
     setError(null)
+    escaped.current = false
     setEditing(true)
   }
 
   const submit = () => {
-    if (save.isPending) return
+    if (escaped.current || save.isPending) return
     const trimmed = draft.trim()
     if (trimmed.length > NAME_MAX) {
       setError(`keep it under ${NAME_MAX} characters`)
@@ -156,7 +162,10 @@ function NameRow({ user }: { user: AuthUser }) {
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") submit()
-          if (e.key === "Escape") setEditing(false)
+          if (e.key === "Escape") {
+            escaped.current = true
+            setEditing(false)
+          }
         }}
         onBlur={submit}
         disabled={save.isPending}
@@ -230,6 +239,7 @@ function AvatarRow({ user }: { user: AuthUser }) {
     }
     const reader = new FileReader()
     reader.onload = () => upload.mutate(String(reader.result))
+    reader.onerror = () => setUploadError("couldn't read that file")
     reader.readAsDataURL(file)
   }
 
