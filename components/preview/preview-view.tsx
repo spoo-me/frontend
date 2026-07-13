@@ -170,9 +170,10 @@ export function PreviewView({ data }: { data: PublicPreview }) {
         )
       )}
 
-      {/* Actions: continuing exists only while the redirect does. The
-          report path is always there — someone inspecting a link is
-          exactly the person about to report one, blocked links included. */}
+      {/* Actions: continuing exists only while the redirect does, and so
+          does reporting — someone inspecting a LIVE link is exactly the
+          person about to report one. Dead or blocked links get neither:
+          nothing left to act on. */}
       <div className="mt-10 flex flex-wrap items-center gap-3">
         {data.status === "active" && (
           <Button asChild>
@@ -186,15 +187,17 @@ export function PreviewView({ data }: { data: PublicPreview }) {
         <Button asChild variant="outline">
           <Link href="/">Make your own short link</Link>
         </Button>
-        <Button
-          asChild
-          variant="ghost"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <Link href={`/report?code=${encodeURIComponent(data.alias)}`}>
-            Report this link
-          </Link>
-        </Button>
+        {data.status === "active" && (
+          <Button
+            asChild
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Link href={`/report?code=${encodeURIComponent(data.alias)}`}>
+              Report this link
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   )

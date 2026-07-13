@@ -58,13 +58,9 @@ export function BlockedBody() {
           </li>
         ))}
       </ul>
-      {/* The report form captures the delivery vector now — the message
-          that carried the link is the intel the block itself can't see. */}
-      <div className="mt-8">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/report">Report the message that sent you here</Link>
-        </Button>
-      </div>
+      {/* No report CTA — FINAL (settled twice): the block already
+          happened, a report here is process for its own sake. Reporting
+          lives where it's actionable: live links (preview page, footer). */}
     </div>
   )
 }
