@@ -1,0 +1,6 @@
+Contact: mailto:security@spoo.me
+Contact: mailto:support@spoo.me
+Expires: 2027-07-13T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://spoo.me/.well-known/security.txt
+Policy: https://github.com/spoo-me/spoo/blob/main/.github/SECURITY.md
