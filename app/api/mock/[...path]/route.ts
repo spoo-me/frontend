@@ -100,7 +100,9 @@ const initial = (): MockState => ({
       picture: "/api/mock/avatar/google",
     },
   ],
-  pfp: null,
+  // Seeded to a provider picture so remove-to-initials, the current-pick
+  // ring, and re-choosing are all exercisable without setup.
+  pfp: { url: "/api/mock/avatar/github", source: "github" },
   onboarding: { step: null, path: null },
   onboardedAt: null,
   links: buildLinks(),
@@ -359,6 +361,9 @@ const META_TITLE_MAX = 120
 const META_DESCRIPTION_MAX = 240
 const META_IMAGE_URL_MAX = 2048
 const META_IMAGE_MAX_BYTES = 512_000
+
+/** Profile-picture upload cap — same R2_UPLOAD_MAX_BYTES as og:images. */
+const PFP_UPLOAD_MAX_BYTES = 512_000
 const META_DATA_URI_RE =
   /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/
 
@@ -762,6 +767,46 @@ async function handle(req: NextRequest, path: string[]) {
     case "GET /auth/me": {
       if (!req.cookies.has("access_token") && !req.cookies.has("refresh_token"))
         return fail(401, "not_authenticated", "Not signed in")
+      return json({ user: user() })
+    }
+    case "PATCH /auth/me": {
+      // UpdateProfileRequest: user_name is required but nullable — an
+      // explicit null clears, an accidental {} must 422 (pydantic).
+      if (!req.cookies.has("access_token") && !req.cookies.has("refresh_token"))
+        return fail(401, "not_authenticated", "Not signed in")
+      if (!("user_name" in body))
+        return fail(
+          422,
+          "validation_error",
+          "user_name: Field required",
+          "user_name"
+        )
+      const raw = (body as Record<string, unknown>).user_name
+      if (raw !== null) {
+        if (typeof raw !== "string")
+          return fail(
+            422,
+            "validation_error",
+            "user_name: Input should be a valid string",
+            "user_name"
+          )
+        if (raw.length < 1)
+          return fail(
+            422,
+            "validation_error",
+            "user_name: String should have at least 1 character",
+            "user_name"
+          )
+        if (raw.length > 255)
+          return fail(
+            422,
+            "validation_error",
+            "user_name: String should have at most 255 characters",
+            "user_name"
+          )
+      }
+      // Same normalization as register: strip; whitespace-only clears.
+      s.userName = raw === null ? null : String(raw).trim() || null
       return json({ user: user() })
     }
     case "POST /auth/refresh":
@@ -1429,6 +1474,34 @@ async function handle(req: NextRequest, path: string[]) {
           })),
       })
     }
+    // POST /dashboard/profile-pictures/upload — real gates in order
+    // (services/image_ingest.py): missing field 422s (pydantic), then
+    // data-URI shape and the decoded-size cap are 400 validation_error
+    // with a `field: "image"` echo. The real backend re-hosts the bytes
+    // on the CDN; the mock stores the data URI itself as the pfp url.
+    if (req.method === "POST" && path[2] === "upload") {
+      if (typeof body.image !== "string" || !body.image)
+        return fail(422, "validation_error", "image: Field required", "image")
+      const m = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(
+        body.image
+      )
+      if (!m)
+        return fail(
+          400,
+          "validation_error",
+          "image must be a base64 data URI (image/png, image/jpeg, image/webp)",
+          "image"
+        )
+      if (m[2].length > (PFP_UPLOAD_MAX_BYTES * 4) / 3 + 4)
+        return fail(
+          400,
+          "validation_error",
+          `image exceeds ${PFP_UPLOAD_MAX_BYTES} bytes`,
+          "image"
+        )
+      s.pfp = { url: body.image, source: "upload" }
+      return json({ message: "Profile picture updated successfully" })
+    }
     if (req.method === "POST") {
       const id = String(body.picture_id ?? "")
       const match = s.providers.find(
@@ -1437,6 +1510,11 @@ async function handle(req: NextRequest, path: string[]) {
       if (!match) return fail(404, "not_found", "picture not found")
       s.pfp = { url: match.picture!, source: match.provider }
       return json({ message: "Profile picture updated successfully" })
+    }
+    // Idempotent: clearing an already-empty pfp still 200s.
+    if (req.method === "DELETE") {
+      s.pfp = null
+      return json({ message: "Profile picture removed" })
     }
   }
 

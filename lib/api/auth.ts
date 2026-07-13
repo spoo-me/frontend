@@ -52,6 +52,19 @@ export function me() {
   )
 }
 
+/**
+ * PATCH /auth/me — the display name is the only editable field. A string
+ * sets it, an explicit null clears it (the backend strips whitespace and
+ * treats whitespace-only as a clear). Returns the same user shape as
+ * GET /auth/me, so the response writes straight into the session cache.
+ * JWT-only: API-key callers get a 403.
+ */
+export function updateProfile(input: { user_name: string | null }) {
+  return authedFetch("/auth/me", jsonInit("PATCH", input)).then((r) =>
+    parse<{ user: AuthUser }>(r)
+  )
+}
+
 export function sendVerification() {
   return authedFetch("/auth/send-verification", { method: "POST" }).then((r) =>
     parse<{ success: boolean; expires_in: number }>(r)
@@ -101,6 +114,30 @@ export function setProfilePicture(pictureId: string) {
     "/dashboard/profile-pictures",
     jsonInit("POST", { picture_id: pictureId })
   ).then((r) => parse<{ message: string }>(r))
+}
+
+/** Decoded-size cap the backend enforces on uploads (R2_UPLOAD_MAX_BYTES). */
+export const PROFILE_PICTURE_MAX_BYTES = 512_000
+
+/**
+ * POST /dashboard/profile-pictures/upload — `image` is a base64 data URI
+ * (image/png, image/jpeg, image/webp). The backend rejects payloads over
+ * PROFILE_PICTURE_MAX_BYTES decoded and mismatched magic bytes, both as a
+ * 400 with `field: "image"`; self-hosted deploys without object storage
+ * get a clear 400 too.
+ */
+export function uploadProfilePicture(image: string) {
+  return authedFetch(
+    "/dashboard/profile-pictures/upload",
+    jsonInit("POST", { image })
+  ).then((r) => parse<{ message: string }>(r))
+}
+
+/** DELETE /dashboard/profile-pictures — idempotent, back to the initials avatar. */
+export function removeProfilePicture() {
+  return authedFetch("/dashboard/profile-pictures", { method: "DELETE" }).then(
+    (r) => parse<{ message: string }>(r)
+  )
 }
 
 export function requestPasswordReset(email: string) {
