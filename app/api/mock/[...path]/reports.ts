@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server"
 
 import {
-  normalizeReportTarget,
   REPORT_DETAILS_MAX,
   REPORT_ITEM_CAP_ANON,
   REPORT_ITEM_CAP_AUTHED,
   REPORT_REASONS,
   REPORT_VECTORS,
-  reportTargetKey,
 } from "@/lib/api/reports"
+import { normalizeReportTarget, reportTargetKey } from "@/lib/report-target"
 import { PUBLIC_EXTRAS } from "./public-extras"
 import { buildLinks } from "./seed"
 

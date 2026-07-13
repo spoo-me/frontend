@@ -9,19 +9,21 @@ import { trackUiAction } from "@/lib/analytics"
 import {
   type IntakeErrorCopy,
   intakeErrorText,
-  normalizeReportTarget,
   REPORT_DETAILS_MAX,
   REPORT_ITEM_CAP_ANON,
   REPORT_ITEM_CAP_AUTHED,
   type ReportItemInput,
   type ReportReason,
   type ReportRejectionCode,
-  type ReportTarget,
   type ReportVector,
-  reportTargetKey,
-  reportTargetLabel,
   submitReports,
 } from "@/lib/api"
+import {
+  normalizeReportTarget,
+  type ReportTarget,
+  reportTargetKey,
+  reportTargetLabel,
+} from "@/lib/report-target"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth/auth-context"
 import { Panel } from "@/components/dashboard/section"
