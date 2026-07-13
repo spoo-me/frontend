@@ -319,10 +319,11 @@ export function ReportForm() {
                 }}
               />
             </Field>
-            {/* Fixed-height tally: appears as you paste, never reflows. */}
-            <p className="-mt-2 h-4 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
-              {parsed.length > 0 && (
-                <>
+            {/* Tally + table mount together once something parses — the
+                empty bulk head keeps single mode's exact rhythm. */}
+            {parsed.length > 0 && (
+              <>
+                <p className="-mt-2 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
                   {ready.length} to report
                   {duplicates > 0 &&
                     ` · ${duplicates} duplicate${duplicates === 1 ? "" : "s"}`}
@@ -334,11 +335,9 @@ export function ReportForm() {
                       · {overCap} over the {cap} cap
                     </span>
                   )}
-                </>
-              )}
-            </p>
-            {parsed.length > 0 && (
-              <PreviewTable rows={parsed} outcome={outcome} />
+                </p>
+                <PreviewTable rows={parsed} outcome={outcome} />
+              </>
             )}
           </motion.div>
         )}
