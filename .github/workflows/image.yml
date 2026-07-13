@@ -2,8 +2,8 @@ name: Build Image (edge)
 
 # Every merge to main pushes an immutable sha-tagged image plus a moving
 # `edge` tag. Nothing deploys from here — deploys happen on release publish
-# (deploy.yml, later). Mirrors spoo's image.yml so both repos share one
-# rollback story.
+# (deploy.yml). Mirrors spoo's image.yml so both repos share one rollback
+# story.
 #
 # workflow_dispatch builds ANY ref (e.g. a feature branch for the beta
 # slice) as a sha-only image — the `edge` tag is guarded to push events so
@@ -70,9 +70,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # NEXT_PUBLIC_* come from repo *variables*, not secrets — they are
+          # public by definition (inlined into the shipped client bundle).
           build-args: |
             APP_VERSION=${{ steps.sha.outputs.short }}
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+            NEXT_PUBLIC_PRICING=${{ vars.NEXT_PUBLIC_PRICING }}
+            NEXT_PUBLIC_HCAPTCHA_SITEKEY=${{ vars.NEXT_PUBLIC_HCAPTCHA_SITEKEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64

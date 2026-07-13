@@ -16,9 +16,14 @@ WORKDIR /app
 
 # NEXT_PUBLIC_* values are inlined into the client bundle at build time —
 # they must arrive here as build args, runtime env on the container is
-# too late. Empty key = analytics no-ops (lib/analytics guards on it).
+# too late. Empty defaults degrade cleanly (lib/flags.ts): analytics
+# no-ops, pricing stays dark, the captcha step is skipped.
 ARG NEXT_PUBLIC_POSTHOG_KEY=""
+ARG NEXT_PUBLIC_PRICING=""
+ARG NEXT_PUBLIC_HCAPTCHA_SITEKEY=""
 ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY} \
+    NEXT_PUBLIC_PRICING=${NEXT_PUBLIC_PRICING} \
+    NEXT_PUBLIC_HCAPTCHA_SITEKEY=${NEXT_PUBLIC_HCAPTCHA_SITEKEY} \
     NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=deps /app/node_modules ./node_modules

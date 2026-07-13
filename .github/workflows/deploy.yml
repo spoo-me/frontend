@@ -1,0 +1,187 @@
+name: Deploy to Production
+
+# Mirrors spoo's deploy.yml: merges only build images (image.yml),
+# publishing a GitHub release deploys. Targets the `next` service in
+# /opt/spoo/docker-compose.prod.yml — that service lands with the prod
+# cutover, so no releases until the compose side exists.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: >-
+          Existing GHCR image tag to deploy (e.g. 1.2.0 or a short sha) —
+          skips the build entirely, so this is the rollback path.
+          Leave empty to build and deploy the current ref.
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # releases always build; manual dispatch skips the build when an existing
+    # image tag is supplied (rollback path)
+    if: github.event_name == 'release' || inputs.image-tag == ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # The job-scoped GITHUB_TOKEN can push this repo's own package
+      # (permissions.packages: write above) — no PAT to provision/rotate.
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # On release: 1.2.0 + short sha. On manual dispatch without a tag
+      # input: short sha only. The moving `edge` tag belongs to image.yml —
+      # deploy builds are immutable targets only.
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,prefix=,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # NEXT_PUBLIC_* come from repo *variables*, not secrets — they are
+          # public by definition (inlined into the shipped client bundle).
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+            NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+            NEXT_PUBLIC_PRICING=${{ vars.NEXT_PUBLIC_PRICING }}
+            NEXT_PUBLIC_HCAPTCHA_SITEKEY=${{ vars.NEXT_PUBLIC_HCAPTCHA_SITEKEY }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  deploy:
+    needs: build
+    # run when build succeeded OR was skipped (rollback path)
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # lets the box pull with the job-scoped token below — no PAT on disk
+      packages: read
+    env:
+      IMAGE_TAG: ${{ inputs.image-tag != '' && inputs.image-tag || needs.build.outputs.image-tag }}
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          envs: IMAGE_TAG
+          script: |
+            set -e
+            cd /opt/spoo
+            # token is valid only for this run — enough to pull, nothing
+            # long-lived lands in the box's docker credential store
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            PREV_TAG=$(grep '^NEXT_IMAGE_TAG=' .env | cut -d= -f2- || true)
+            echo "deploying ${IMAGE_TAG} (previous: ${PREV_TAG:-<none>})"
+
+            set_tag() {
+              grep -v '^NEXT_IMAGE_TAG=' .env > .env.tmp 2>/dev/null || true
+              echo "NEXT_IMAGE_TAG=$1" >> .env.tmp
+              mv .env.tmp .env
+              chmod 600 .env
+            }
+
+            wait_healthy() {
+              # Caddy retries upstream connections, so users see a brief
+              # latency bump (not 502) during the swap.
+              [ -n "$1" ] || { echo "::error::wait_healthy: missing container name"; return 1; }
+              status=""
+              for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+                status=$(docker inspect "$1" --format '{{.State.Health.Status}}' 2>/dev/null || echo "missing")
+                [ "$status" = "healthy" ] && return 0
+                echo "$1 $status, retry $i"; sleep 3
+              done
+              return 1
+            }
+
+            set_tag "${IMAGE_TAG}"
+            docker compose --env-file .env -f docker-compose.prod.yml pull next
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --no-deps next
+
+            if ! wait_healthy spoo_next; then
+              echo "::error::next failed to reach healthy on ${IMAGE_TAG} (last status: $status)"
+              # diagnostics must never abort the rollback below (set -e)
+              docker compose --env-file .env -f docker-compose.prod.yml logs --tail=100 next || true
+              if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "$IMAGE_TAG" ]; then
+                echo "rolling back to ${PREV_TAG}"
+                set_tag "${PREV_TAG}"
+                docker compose --env-file .env -f docker-compose.prod.yml pull next || true
+                docker compose --env-file .env -f docker-compose.prod.yml up -d --no-deps next
+                if wait_healthy spoo_next; then
+                  echo "::warning::rolled back — prod is healthy on previous image ${PREV_TAG}"
+                else
+                  echo "::error::rollback to ${PREV_TAG} also unhealthy — manual intervention needed"
+                fi
+              fi
+              exit 1
+            fi
+
+            docker image prune -f
+            docker compose --env-file .env -f docker-compose.prod.yml ps
+
+      - name: Verify health
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            sleep 10
+            # wget, not curl — the runtime image is bare node:22-alpine
+            for i in 1 2 3 4 5; do
+              if body=$(docker exec spoo_next wget -qO- http://localhost:3000/api/health); then
+                echo "Healthy after $i attempts: $body"
+                exit 0
+              fi
+              echo "Attempt $i failed, retrying..."
+              sleep 5
+            done
+            echo "Health check failed after 5 attempts"
+            docker compose -f /opt/spoo/docker-compose.prod.yml logs --tail=100 next
+            exit 1
