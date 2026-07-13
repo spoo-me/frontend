@@ -95,15 +95,6 @@ const nextConfig = {
         { source: "/auth/:path*", destination: "/api/mock/auth/:path*" },
         { source: "/oauth/:path*", destination: "/api/mock/oauth/:path*" },
         { source: "/api/v1/:path*", destination: "/api/mock/v1/:path*" },
-        // Exact paths: the rest of /dashboard/* is the app's own routes.
-        {
-          source: "/dashboard/profile-pictures",
-          destination: "/api/mock/dashboard/profile-pictures",
-        },
-        {
-          source: "/dashboard/profile-pictures/upload",
-          destination: "/api/mock/dashboard/profile-pictures/upload",
-        },
         ...POSTHOG_REWRITES,
       ]
     }
@@ -119,15 +110,6 @@ const nextConfig = {
       {
         source: "/api/v1/:path*",
         destination: `${SPOO_API_URL}/api/v1/:path*`,
-      },
-      // Exact paths: the rest of /dashboard/* is the app's own routes.
-      {
-        source: "/dashboard/profile-pictures",
-        destination: `${SPOO_API_URL}/dashboard/profile-pictures`,
-      },
-      {
-        source: "/dashboard/profile-pictures/upload",
-        destination: `${SPOO_API_URL}/dashboard/profile-pictures/upload`,
       },
       ...POSTHOG_REWRITES,
     ]

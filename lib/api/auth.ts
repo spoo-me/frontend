@@ -104,14 +104,14 @@ export type ProfilePicture = {
 }
 
 export function listProfilePictures() {
-  return authedFetch("/dashboard/profile-pictures", { method: "GET" }).then(
+  return authedFetch("/api/v1/me/profile-pictures", { method: "GET" }).then(
     (r) => parse<{ pictures: ProfilePicture[] }>(r)
   )
 }
 
 export function setProfilePicture(pictureId: string) {
   return authedFetch(
-    "/dashboard/profile-pictures",
+    "/api/v1/me/profile-pictures",
     jsonInit("POST", { picture_id: pictureId })
   ).then((r) => parse<{ message: string }>(r))
 }
@@ -120,7 +120,7 @@ export function setProfilePicture(pictureId: string) {
 export const PROFILE_PICTURE_MAX_BYTES = 512_000
 
 /**
- * POST /dashboard/profile-pictures/upload — `image` is a base64 data URI
+ * POST /api/v1/me/profile-pictures/upload — `image` is a base64 data URI
  * (image/png, image/jpeg, image/webp). The backend rejects payloads over
  * PROFILE_PICTURE_MAX_BYTES decoded and mismatched magic bytes, both as a
  * 400 with `field: "image"`; self-hosted deploys without object storage
@@ -128,14 +128,14 @@ export const PROFILE_PICTURE_MAX_BYTES = 512_000
  */
 export function uploadProfilePicture(image: string) {
   return authedFetch(
-    "/dashboard/profile-pictures/upload",
+    "/api/v1/me/profile-pictures/upload",
     jsonInit("POST", { image })
   ).then((r) => parse<{ message: string }>(r))
 }
 
-/** DELETE /dashboard/profile-pictures — idempotent, back to the initials avatar. */
+/** DELETE /api/v1/me/profile-pictures — idempotent, back to the initials avatar. */
 export function removeProfilePicture() {
-  return authedFetch("/dashboard/profile-pictures", { method: "DELETE" }).then(
+  return authedFetch("/api/v1/me/profile-pictures", { method: "DELETE" }).then(
     (r) => parse<{ message: string }>(r)
   )
 }

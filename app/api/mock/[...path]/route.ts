@@ -44,7 +44,7 @@ type MockState = {
     provider: "google" | "github" | "discord"
     email: string
     linked_at: string | null
-    /** Picture URL the provider gave us (feeds /dashboard/profile-pictures). */
+    /** Picture URL the provider gave us (feeds /api/v1/me/profile-pictures). */
     picture: string | null
   }>
   /** Active profile picture — mirrors UserPfp on the session. */
@@ -1404,6 +1404,66 @@ async function handle(req: NextRequest, path: string[]) {
     }
   }
 
+  /* ---------- profile pictures (real path: /api/v1/me/profile-pictures) -- */
+
+  if (path[0] === "v1" && path[1] === "me" && path[2] === "profile-pictures") {
+    const s = state()
+    if (req.method === "GET") {
+      return json({
+        pictures: s.providers
+          .filter((p) => p.picture)
+          .map((p) => ({
+            id: `${p.provider}_mock_${p.provider}_uid`,
+            url: p.picture!,
+            source: p.provider,
+            is_current: s.pfp?.url === p.picture,
+          })),
+      })
+    }
+    // POST /api/v1/me/profile-pictures/upload — real gates in order
+    // (services/image_ingest.py): missing field 422s (pydantic), then
+    // data-URI shape and the decoded-size cap are 400 validation_error
+    // with a `field: "image"` echo. The real backend re-hosts the bytes
+    // on the CDN; the mock stores the data URI itself as the pfp url.
+    if (req.method === "POST" && path[3] === "upload") {
+      if (typeof body.image !== "string" || !body.image)
+        return fail(422, "validation_error", "image: Field required", "image")
+      const m = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(
+        body.image
+      )
+      if (!m)
+        return fail(
+          400,
+          "validation_error",
+          "image must be a base64 data URI (image/png, image/jpeg, image/webp)",
+          "image"
+        )
+      if (m[2].length > (PFP_UPLOAD_MAX_BYTES * 4) / 3 + 4)
+        return fail(
+          400,
+          "validation_error",
+          `image exceeds ${PFP_UPLOAD_MAX_BYTES} bytes`,
+          "image"
+        )
+      s.pfp = { url: body.image, source: "upload" }
+      return json({ message: "Profile picture updated successfully" })
+    }
+    if (req.method === "POST") {
+      const id = String(body.picture_id ?? "")
+      const match = s.providers.find(
+        (p) => p.picture && id.startsWith(`${p.provider}_`)
+      )
+      if (!match) return fail(404, "not_found", "picture not found")
+      s.pfp = { url: match.picture!, source: match.provider }
+      return json({ message: "Profile picture updated successfully" })
+    }
+    // Idempotent: clearing an already-empty pfp still 200s.
+    if (req.method === "DELETE") {
+      s.pfp = null
+      return json({ message: "Profile picture removed" })
+    }
+  }
+
   /* ---------- oauth provider management (fixed paths first, like the
      real router: /oauth/providers must not be captured by /{provider}) --- */
 
@@ -1456,66 +1516,6 @@ async function handle(req: NextRequest, path: string[]) {
     return NextResponse.redirect(new URL("/dashboard/settings", req.url), {
       status: 302,
     })
-  }
-
-  /* ---------- profile pictures (real path: /dashboard/profile-pictures) -- */
-
-  if (path[0] === "dashboard" && path[1] === "profile-pictures") {
-    const s = state()
-    if (req.method === "GET") {
-      return json({
-        pictures: s.providers
-          .filter((p) => p.picture)
-          .map((p) => ({
-            id: `${p.provider}_mock_${p.provider}_uid`,
-            url: p.picture!,
-            source: p.provider,
-            is_current: s.pfp?.url === p.picture,
-          })),
-      })
-    }
-    // POST /dashboard/profile-pictures/upload — real gates in order
-    // (services/image_ingest.py): missing field 422s (pydantic), then
-    // data-URI shape and the decoded-size cap are 400 validation_error
-    // with a `field: "image"` echo. The real backend re-hosts the bytes
-    // on the CDN; the mock stores the data URI itself as the pfp url.
-    if (req.method === "POST" && path[2] === "upload") {
-      if (typeof body.image !== "string" || !body.image)
-        return fail(422, "validation_error", "image: Field required", "image")
-      const m = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(
-        body.image
-      )
-      if (!m)
-        return fail(
-          400,
-          "validation_error",
-          "image must be a base64 data URI (image/png, image/jpeg, image/webp)",
-          "image"
-        )
-      if (m[2].length > (PFP_UPLOAD_MAX_BYTES * 4) / 3 + 4)
-        return fail(
-          400,
-          "validation_error",
-          `image exceeds ${PFP_UPLOAD_MAX_BYTES} bytes`,
-          "image"
-        )
-      s.pfp = { url: body.image, source: "upload" }
-      return json({ message: "Profile picture updated successfully" })
-    }
-    if (req.method === "POST") {
-      const id = String(body.picture_id ?? "")
-      const match = s.providers.find(
-        (p) => p.picture && id.startsWith(`${p.provider}_`)
-      )
-      if (!match) return fail(404, "not_found", "picture not found")
-      s.pfp = { url: match.picture!, source: match.provider }
-      return json({ message: "Profile picture updated successfully" })
-    }
-    // Idempotent: clearing an already-empty pfp still 200s.
-    if (req.method === "DELETE") {
-      s.pfp = null
-      return json({ message: "Profile picture removed" })
-    }
   }
 
   // GET /api/mock/avatar/{provider} — generated stand-in for the distinct
