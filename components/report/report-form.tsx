@@ -179,7 +179,7 @@ export function ReportForm() {
             kind: "error",
             text:
               rejection.code === "not_found"
-                ? "That link doesn't exist on spoo.me — check the code."
+                ? "That link doesn't exist on spoo.me. Check the code."
                 : "That doesn't look like a spoo.me link or code.",
           })
         } else {
@@ -201,14 +201,14 @@ export function ReportForm() {
     if (ready.length === 0) {
       setStatus({
         kind: "error",
-        text: "Paste at least one spoo.me link — one per line.",
+        text: "Paste at least one spoo.me link, one per line.",
       })
       return
     }
     if (overCap > 0) {
       setStatus({
         kind: "error",
-        text: `That's ${ready.length} links — the cap is ${cap} per submission. Split the list.`,
+        text: `That's ${ready.length} links and the cap is ${cap} per submission. Split the list.`,
       })
       return
     }

@@ -39,7 +39,7 @@ export default function ReportPage() {
                   Report a malicious link.
                 </h1>
                 <p className="mt-5 max-w-md text-base text-muted-foreground leading-relaxed sm:text-lg">
-                  Anyone can shorten anything on spoo.me — if a link sent you
+                  Anyone can shorten anything on spoo.me. If a link sent you
                   somewhere harmful, tell us here.
                 </p>
 

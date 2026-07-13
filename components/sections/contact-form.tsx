@@ -54,7 +54,7 @@ export function ContactForm() {
     if (compiled.length > MESSAGE_MAX) {
       setStatus({
         kind: "error",
-        text: `That message is too long — keep it under ${MESSAGE_MAX.toLocaleString()} characters.`,
+        text: `That message is too long. Keep it under ${MESSAGE_MAX.toLocaleString()} characters.`,
       })
       return
     }
