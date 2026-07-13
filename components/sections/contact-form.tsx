@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Check, ChevronDown, Send } from "lucide-react"
 
 import { CaptchaError, useCaptcha } from "@/hooks/use-captcha"
@@ -90,6 +91,14 @@ export function ContactForm() {
         </h2>
         <p className="mt-1 text-muted-foreground text-sm">
           Fill out the form and we&apos;ll get back to you within 24 hours.
+          Reporting a malicious link?{" "}
+          <Link
+            href="/report"
+            className="text-foreground underline underline-offset-4 transition-colors duration-150 hover:text-foreground/80"
+          >
+            The report form
+          </Link>{" "}
+          is faster.
         </p>
       </div>
 

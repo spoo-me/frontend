@@ -28,11 +28,6 @@ const channels = [
     href: "mailto:security@spoo.me",
   },
   {
-    label: "Abuse",
-    value: "spoo.me/report",
-    href: "/report",
-  },
-  {
     label: "Discord",
     value: "spoo.me/discord",
     href: siteConfig.links.discord,
