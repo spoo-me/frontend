@@ -45,14 +45,21 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
   deleteUrl,
+  getUrl,
   listCustomDomains,
   listUrls,
   setUrlStatus,
+  SpooApiError,
   updateUrl,
   type UrlListFilter,
   type UrlListItem,
   type UrlStatus,
 } from "@/lib/api"
+import {
+  detailDomainOf,
+  linkSheetParam,
+  parseLinkSheetParam,
+} from "@/lib/link-detail"
 import { trackLinksBulkAction, trackUiAction } from "@/lib/analytics"
 import { displayUrl, domainOf, formatCount, formatWhen } from "@/lib/format"
 import { faviconUrl } from "@/lib/favicon"
@@ -296,18 +303,26 @@ export default function LinksPage() {
   }, [urls.data, page, sortBy, sortDir, JSON.stringify(filter)])
 
   const items = urls.data?.items ?? []
-  const selectedInPage = items.find((l) => l.alias === selected) ?? null
-  // The sheet is URL-addressable from anywhere — resolve links that aren't
-  // on the current page through a targeted search.
+  const selectedRef = selected === null ? null : parseLinkSheetParam(selected)
+  const selectedInPage = selectedRef
+    ? (items.find(
+        (l) =>
+          l.alias === selectedRef.alias &&
+          (l.domain ?? null) === selectedRef.domain
+      ) ?? null)
+    : null
+  // The sheet is URL-addressable from anywhere — links that aren't on the
+  // current page resolve through the single-resource endpoint. A 404 there
+  // is an answer (deleted or foreign), not something to retry.
   const lookup = useQuery({
-    queryKey: ["urls", "lookup", selected],
-    queryFn: () => listUrls({ pageSize: 100, filter: { search: selected! } }),
-    enabled: selected !== null && !selectedInPage && !urls.isPending,
+    queryKey: ["url", selectedRef?.domain ?? null, selectedRef?.alias],
+    queryFn: () =>
+      getUrl(detailDomainOf(selectedRef!.domain), selectedRef!.alias),
+    enabled: selectedRef !== null && !selectedInPage && !urls.isPending,
+    retry: (count, error) =>
+      !(error instanceof SpooApiError && error.status === 404) && count < 3,
   })
-  const selectedLink =
-    selectedInPage ??
-    lookup.data?.items.find((l) => l.alias === selected) ??
-    null
+  const selectedLink = selectedInPage ?? lookup.data ?? null
   const total = urls.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -837,7 +852,7 @@ export default function LinksPage() {
               <LinkRow
                 key={link.id}
                 link={link}
-                onOpen={() => setSelected(link.alias)}
+                onOpen={() => setSelected(linkSheetParam(link))}
                 rowSelected={selectedIds.has(link.id)}
                 onToggleSelect={() => toggleId(link.id)}
               />

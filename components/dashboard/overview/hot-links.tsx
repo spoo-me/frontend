@@ -7,6 +7,7 @@ import { motion } from "motion/react"
 import { ArrowUpRight, Flame } from "lucide-react"
 
 import { dimensionRowsOf, getStats } from "@/lib/api"
+import { linkDetailPath } from "@/lib/link-detail"
 import { formatCount } from "@/lib/format"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
@@ -72,7 +73,7 @@ export function HotLinks() {
             {rows.map((row, i) => (
               <Link
                 key={row.value}
-                href={`/dashboard/links/${row.value}`}
+                href={linkDetailPath({ alias: row.value })}
                 className="group relative flex h-9 items-center gap-2.5 overflow-hidden rounded-lg px-2.5"
               >
                 <motion.span

@@ -18,7 +18,7 @@ export type DashboardNavItem = {
   flag?: "webhooks" | "billing"
   /** Backend-gated items render only when /me/features says enabled. */
   feature?: FeatureName
-  /** Match nested routes (e.g. /dashboard/links/abc) for the active state. */
+  /** Match nested routes (e.g. /dashboard/links/spoo.me/abc) for the active state. */
   matchPrefix?: boolean
 }
 

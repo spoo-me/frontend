@@ -119,6 +119,11 @@ const state = () => g.__spooMock!
 
 const EXTRA_TAKEN = new Set(["spring", "ga"])
 
+/** Hostnames the natural-key read resolves to default-domain links, on top
+    of whatever host the dev server answers on (mirrors the backend, where
+    every system-domain hostname resolves the default domain). */
+const SYSTEM_HOSTS = new Set(["spoo.me", "www.spoo.me", "beta.spoo.me"])
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 function json(body: unknown, init?: ResponseInit) {
@@ -1041,6 +1046,43 @@ async function handle(req: NextRequest, path: string[]) {
         hasNext: startIdx + pageSize < items.length,
       })
     }
+  }
+
+  /* ---------- single-resource reads: urls/{id}, urls/{domain}/{alias} ---- */
+  if (
+    path[0] === "v1" &&
+    path[1] === "urls" &&
+    path[2] &&
+    req.method === "GET"
+  ) {
+    // Emoji aliases (and dots in domains) arrive percent-encoded.
+    const decode = (seg: string) => {
+      try {
+        return decodeURIComponent(seg)
+      } catch {
+        return seg
+      }
+    }
+    if (path[3]) {
+      // Natural key: the domain segment is explicit. The host serving the
+      // dashboard (localhost in dev) and the system domains resolve
+      // default-domain links; anything else must match the link's custom
+      // domain. Missing or foreign → 404.
+      const domain = decode(path[2])
+      const alias = decode(path[3])
+      const isDefaultDomain =
+        domain === req.nextUrl.hostname || SYSTEM_HOSTS.has(domain)
+      const link = s.links.find(
+        (l) =>
+          l.alias === alias &&
+          (isDefaultDomain ? l.domain === null : l.domain === domain)
+      )
+      if (!link) return fail(404, "not_found", "No such URL")
+      return json(linkItem(link))
+    }
+    const link = s.links.find((l) => l.id === decode(path[2]))
+    if (!link) return fail(404, "not_found", "No such URL")
+    return json(linkItem(link))
   }
 
   /* ---------- urls/{id} (+ /status) ---------- */

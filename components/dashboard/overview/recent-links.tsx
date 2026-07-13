@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowUpRight, History, Plus } from "lucide-react"
 
 import type { UrlListItem } from "@/lib/api"
+import { linkDetailPath } from "@/lib/link-detail"
 import { displayUrl, formatCount, formatWhen } from "@/lib/format"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { Button } from "@/components/ui/button"
@@ -55,7 +56,7 @@ export function RecentLinks({
                 className="group flex h-9 items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-150 hover:bg-accent/40"
               >
                 <Link
-                  href={`/dashboard/links/${l.alias}`}
+                  href={linkDetailPath(l)}
                   className="flex min-w-0 flex-1 items-baseline gap-2.5"
                 >
                   <span className="shrink-0 font-mono text-[13px] text-foreground">
