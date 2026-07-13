@@ -3,15 +3,25 @@
 import * as React from "react"
 import Link from "next/link"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowUpRight, BadgeCheck, ShieldCheck, UserRound } from "lucide-react"
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  Plus,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
   listProfilePictures,
   oauthLinkHref,
   OAUTH_PROVIDERS,
+  PROFILE_PICTURE_MAX_BYTES,
+  removeProfilePicture,
   setProfilePicture,
   unlinkProvider,
+  updateProfile,
+  uploadProfilePicture,
   type AuthUser,
   type OAuthProviderName,
 } from "@/lib/api"
@@ -69,30 +79,159 @@ function Row({
   )
 }
 
+/** Client mirror of the server's display-name bounds (1..255 after trim). */
+const NAME_MAX = 255
+
 /**
- * The avatar with a chooser: providers each hand us a different picture, so
- * when candidates exist the avatar opens a popover to pick one. No
- * candidates (email-only account) means no chooser affordance at all.
+ * The name with an inline editor: the value doubles as the edit affordance
+ * (same shape as the avatar's "change"). Enter or blur saves, Escape
+ * cancels; an empty submit clears the name back to "not set" — the same
+ * normalization the backend applies.
+ */
+function NameRow({ user }: { user: AuthUser }) {
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = React.useState(false)
+  const [draft, setDraft] = React.useState("")
+  const [error, setError] = React.useState<string | null>(null)
+
+  const save = useMutation({
+    mutationFn: (name: string | null) => updateProfile({ user_name: name }),
+    onSuccess: ({ user: updated }) => {
+      // Same shape as GET /auth/me — write it straight into the session
+      // cache so the sidebar, header menu, and greeting update together.
+      queryClient.setQueryData(SESSION_KEY, updated)
+      setEditing(false)
+    },
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Could not update name"),
+  })
+
+  const open = () => {
+    setDraft(user.user_name ?? "")
+    setError(null)
+    setEditing(true)
+  }
+
+  const submit = () => {
+    if (save.isPending) return
+    const trimmed = draft.trim()
+    if (trimmed.length > NAME_MAX) {
+      setError(`keep it under ${NAME_MAX} characters`)
+      return
+    }
+    if (trimmed === (user.user_name ?? "")) {
+      setEditing(false)
+      return
+    }
+    save.mutate(trimmed || null)
+  }
+
+  if (!editing)
+    return (
+      <button
+        type="button"
+        onClick={open}
+        className="group flex items-center gap-2.5"
+      >
+        <span className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 group-hover:text-foreground">
+          edit
+        </span>
+        {user.user_name ?? (
+          <span className="text-muted-foreground">not set</span>
+        )}
+      </button>
+    )
+
+  return (
+    <span className="flex items-center gap-2.5">
+      {error && (
+        <span className="font-mono text-[11px] text-destructive">{error}</span>
+      )}
+      <input
+        autoFocus
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value)
+          setError(null)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") submit()
+          if (e.key === "Escape") setEditing(false)
+        }}
+        onBlur={submit}
+        disabled={save.isPending}
+        placeholder="Your name"
+        aria-label="Display name"
+        className="h-7 w-44 rounded-md border border-border/60 bg-transparent px-2 text-foreground text-sm outline-none focus:border-border disabled:opacity-50"
+      />
+    </span>
+  )
+}
+
+/**
+ * The avatar with a chooser: provider pictures to pick from, an upload
+ * tile, and — only while a picture is set — a remove affordance that goes
+ * back to the initials avatar.
  */
 function AvatarRow({ user }: { user: AuthUser }) {
   const queryClient = useQueryClient()
+  const fileRef = React.useRef<HTMLInputElement>(null)
+  const [uploadError, setUploadError] = React.useState<string | null>(null)
   const { data } = useQuery({
     queryKey: PICTURES_KEY,
     queryFn: listProfilePictures,
   })
   const pictures = data?.pictures ?? []
 
+  const refreshAvatar = () => {
+    void queryClient.invalidateQueries({ queryKey: SESSION_KEY })
+    void queryClient.invalidateQueries({ queryKey: PICTURES_KEY })
+  }
+
   const setPfp = useMutation({
     mutationFn: setProfilePicture,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: SESSION_KEY })
-      void queryClient.invalidateQueries({ queryKey: PICTURES_KEY })
-    },
+    onSuccess: refreshAvatar,
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Could not update avatar"),
   })
 
-  if (!pictures.length) return <UserAvatar user={user} className="size-8" />
+  const upload = useMutation({
+    mutationFn: uploadProfilePicture,
+    onSuccess: () => {
+      setUploadError(null)
+      refreshAvatar()
+    },
+    onError: (e) =>
+      setUploadError(
+        e instanceof Error ? e.message : "Could not upload the image"
+      ),
+  })
+
+  const remove = useMutation({
+    mutationFn: removeProfilePicture,
+    onSuccess: refreshAvatar,
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Could not remove picture"),
+  })
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = "" // the same file can be re-picked after a rejection
+    if (!file) return
+    setUploadError(null)
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setUploadError("png, jpeg or webp only")
+      return
+    }
+    // Mirror the server's decoded-size cap before shipping the base64.
+    if (file.size > PROFILE_PICTURE_MAX_BYTES) {
+      setUploadError(`image is over ${PROFILE_PICTURE_MAX_BYTES / 1000} KB`)
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => upload.mutate(String(reader.result))
+    reader.readAsDataURL(file)
+  }
 
   return (
     <Popover>
@@ -136,7 +275,58 @@ function AvatarRow({ user }: { user: AuthUser }) {
               <TooltipContent>from {pic.source}</TooltipContent>
             </Tooltip>
           ))}
+          {user.pfp?.source === "upload" && user.pfp.url && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="rounded-full ring-2 ring-brand ring-offset-2 ring-offset-popover">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={user.pfp.url}
+                    alt="Your uploaded picture"
+                    className="size-9 rounded-full object-cover"
+                  />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>your upload</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Upload a picture"
+                onClick={() => fileRef.current?.click()}
+                disabled={upload.isPending}
+                className="flex size-9 items-center justify-center rounded-full border border-border border-dashed text-muted-foreground transition-colors duration-150 hover:border-foreground/40 hover:text-foreground disabled:opacity-50"
+              >
+                <Plus className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>upload an image, up to 512 KB</TooltipContent>
+          </Tooltip>
         </div>
+        {uploadError && (
+          <p className="mt-2 font-mono text-[11px] text-destructive">
+            {uploadError}
+          </p>
+        )}
+        {user.pfp?.url && (
+          <button
+            type="button"
+            onClick={() => remove.mutate()}
+            disabled={remove.isPending}
+            className="mt-2.5 text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground disabled:opacity-50"
+          >
+            remove picture
+          </button>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={onFile}
+          className="hidden"
+        />
       </PopoverContent>
     </Popover>
   )
@@ -281,9 +471,7 @@ export default function SettingsPage() {
             <AvatarRow user={user} />
           </Row>
           <Row label="Name">
-            {user.user_name ?? (
-              <span className="text-muted-foreground">not set</span>
-            )}
+            <NameRow user={user} />
           </Row>
           <Row label="Email">
             <span className="ph-no-capture truncate font-mono text-xs">
