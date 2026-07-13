@@ -5,15 +5,17 @@ import Link from "next/link"
 import {
   AppWindow,
   ArrowUpRight,
+  Bot,
   Boxes,
-  Command,
   Globe,
   KeyRound,
   Puzzle,
+  Smartphone,
   SquareTerminal,
 } from "lucide-react"
 
 import type { ApiKey, AppGrant, CustomDomain, UrlListItem } from "@/lib/api"
+import { connectedApps, type ConnectedApp } from "@/lib/apps-data"
 import { formatCount, formatWhen } from "@/lib/format"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
@@ -26,10 +28,20 @@ import { StatusPill } from "@/components/dashboard/status-pill"
  * Hairline-divided; quiet text actions only.
  */
 
-const GRANT_ICONS: Record<string, React.ElementType> = {
-  terminal: SquareTerminal,
-  puzzle: Puzzle,
-  command: Command,
+/** Grants don't carry a renderable icon (the wire's `icon` is a registry
+ *  filename); glyph comes from the catalogue join on the shared slug. */
+const CATEGORY_ICONS: Record<ConnectedApp["category"], React.ElementType> = {
+  cli: SquareTerminal,
+  sdk: SquareTerminal,
+  extension: Puzzle,
+  desktop: AppWindow,
+  mobile: Smartphone,
+  bot: Bot,
+}
+
+function grantIcon(grant: AppGrant): React.ElementType {
+  const app = connectedApps.find((a) => a.slug === grant.app)
+  return app ? CATEGORY_ICONS[app.category] : Puzzle
 }
 
 function ColumnHeader({
@@ -157,7 +169,7 @@ export function WorkspaceCard({
           />
           {grants.length ? (
             grants.map((g) => {
-              const Icon = GRANT_ICONS[g.icon] ?? Puzzle
+              const Icon = grantIcon(g)
               return (
                 <div
                   key={g.id}

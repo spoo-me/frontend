@@ -84,15 +84,18 @@ export type MockKey = {
   revoked: boolean
 }
 
+/** Mirrors AppGrantResponse (GET /api/v1/apps): grants aren't scoped, the
+ *  wire carries the consent-screen permission strings; `icon` is the
+ *  backend registry filename (null when the entry is gone); `last_used_at`
+ *  is null for never-used grants. */
 export type MockGrant = {
   id: string
   app: string
   app_name: string
-  icon: string
-  scopes: string[]
+  icon: string | null
+  permissions: string[]
   granted_at: string
-  last_used_at: string
-  device: string
+  last_used_at: string | null
 }
 
 const DESTINATIONS: Array<[alias: string, url: string, weight: number]> = [
@@ -337,36 +340,48 @@ export function buildKeys(): MockKey[] {
 
 export function buildGrants(): MockGrant[] {
   const rand = mulberry32(SEED + 3)
+  // The backend stamps explicit UTC offsets (+00:00), not Z.
+  const isoUtc = (days: number) => isoDaysAgo(days, rand).replace("Z", "+00:00")
   return [
+    // Names, icons, and permissions mirror the backend registry
+    // (config/apps.yaml) — permissions are the consent-screen strings.
     {
       id: "grant_cli",
       app: "spoo-cli",
-      app_name: "spoo CLI",
-      icon: "terminal",
-      scopes: ["shorten:create", "urls:manage", "stats:read"],
-      granted_at: isoDaysAgo(33, rand),
-      last_used_at: isoDaysAgo(0.1, rand),
-      device: "MacBook Pro · zsh",
+      app_name: "Spoo CLI",
+      icon: "spoo-cli.svg",
+      permissions: [
+        "Access your spoo.me account",
+        "Create and manage your short URLs",
+        "View your analytics",
+        "Manage your API keys",
+      ],
+      granted_at: isoUtc(33),
+      last_used_at: isoUtc(0.1),
     },
     {
       id: "grant_snap",
       app: "spoo-snap",
-      app_name: "spoo snap",
-      icon: "puzzle",
-      scopes: ["shorten:create"],
-      granted_at: isoDaysAgo(75, rand),
-      last_used_at: isoDaysAgo(0.8, rand),
-      device: "Chrome · macOS",
+      app_name: "Spoo Snap",
+      icon: "spoo-snap.svg",
+      permissions: [
+        "Access your spoo.me account",
+        "Create and manage short URLs",
+        "View your analytics",
+      ],
+      granted_at: isoUtc(75),
+      last_used_at: isoUtc(0.8),
     },
+    // Registry entry without a permissions list + never-used grant: both
+    // are legal on the wire, so the walkthrough exercises them.
     {
       id: "grant_raycast",
       app: "spoo-raycast",
-      app_name: "Raycast extension",
-      icon: "command",
-      scopes: ["shorten:create", "urls:read"],
-      granted_at: isoDaysAgo(12, rand),
-      last_used_at: isoDaysAgo(3.2, rand),
-      device: "Raycast · macOS",
+      app_name: "Raycast Extension",
+      icon: "raycast.svg",
+      permissions: [],
+      granted_at: isoUtc(12),
+      last_used_at: null,
     },
   ]
 }
