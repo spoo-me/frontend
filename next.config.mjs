@@ -81,10 +81,17 @@ const nextConfig = {
       source: "/:code\\+",
       destination: "/preview/:code",
     }
+    // RFC 9116 canonical home is /.well-known/security.txt; the bare root
+    // path is the legacy location scanners still probe.
+    const SECURITY_TXT_REWRITE = {
+      source: "/security.txt",
+      destination: "/.well-known/security.txt",
+    }
     if (MOCK) {
       return [
         ERROR_REWRITE,
         PREVIEW_REWRITE,
+        SECURITY_TXT_REWRITE,
         { source: "/auth/:path*", destination: "/api/mock/auth/:path*" },
         { source: "/oauth/:path*", destination: "/api/mock/oauth/:path*" },
         { source: "/api/v1/:path*", destination: "/api/mock/v1/:path*" },
@@ -102,6 +109,7 @@ const nextConfig = {
     return [
       ERROR_REWRITE,
       PREVIEW_REWRITE,
+      SECURITY_TXT_REWRITE,
       { source: "/auth/:path*", destination: `${SPOO_API_URL}/auth/:path*` },
       { source: "/oauth/:path*", destination: `${SPOO_API_URL}/oauth/:path*` },
       {
