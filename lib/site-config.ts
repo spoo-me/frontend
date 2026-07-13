@@ -263,6 +263,7 @@ export const footerLinks = {
     { label: "Login", href: "/login" },
     { label: "Sign up", href: "/signup" },
     { label: "Contact", href: "/contact" },
+    { label: "Report abuse", href: "/report" },
     { label: "Privacy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
   ],

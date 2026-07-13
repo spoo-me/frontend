@@ -44,9 +44,6 @@ export function BlockedBody() {
         link; the sender did. Its destination broke our rules, so the link no
         longer works.
       </p>
-      {/* No report CTA on purpose: /report takes URLs, and this one is
-          already blocked — a report here carries no new signal. Revisit
-          when the scam framework can ingest delivery-vector reports. */}
       <ul className="mt-8 space-y-3 border-border/60 border-t pt-6">
         {[
           "Never enter passwords or card details on a page a message sent you to.",
@@ -61,6 +58,9 @@ export function BlockedBody() {
           </li>
         ))}
       </ul>
+      {/* No report CTA — FINAL (settled twice): the block already
+          happened, a report here is process for its own sake. Reporting
+          lives where it's actionable: live links (preview page, footer). */}
     </div>
   )
 }
