@@ -49,7 +49,7 @@ export function StatsLookup() {
   const [pending, startTransition] = useTransition()
   const { code, foreignHost } = parse(
     value,
-    typeof window === "undefined" ? "" : window.location.hostname,
+    typeof window === "undefined" ? "" : window.location.hostname
   )
 
   function submit(event: React.FormEvent) {
