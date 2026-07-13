@@ -682,10 +682,17 @@ async function handle(req: NextRequest, path: string[]) {
     return fail(404, "mock_disabled", "Mock API is disabled (set SPOO_MOCK=1)")
 
   const route = `${req.method} /${path.join("/")}`
-  const body =
+  const hasBody =
     req.method === "POST" || req.method === "PUT" || req.method === "PATCH"
-      ? await req.json().catch(() => ({}))
-      : ({} as Record<string, unknown>)
+  // Most of the backend speaks JSON; /auth/device/revoke is Form-encoded.
+  const isForm = (req.headers.get("content-type") ?? "").includes(
+    "application/x-www-form-urlencoded"
+  )
+  const body: Record<string, unknown> = hasBody
+    ? isForm
+      ? Object.fromEntries(new URLSearchParams(await req.text()))
+      : await req.json().catch(() => ({}))
+    : {}
   const params = req.nextUrl.searchParams
 
   // Latency theater — enough to exercise loading states, not annoy.
@@ -784,9 +791,18 @@ async function handle(req: NextRequest, path: string[]) {
     case "POST /auth/reset-password":
       return json({ success: true })
     case "POST /auth/device/revoke": {
-      const id = String(body.grant_id ?? "")
-      s.grants = s.grants.filter((gr) => gr.id !== id)
-      return json({ success: true })
+      // Real wire (routes/auth/device.py): Form-encoded app_id keyed on the
+      // registry slug, CSRF-guarded by X-Requested-With, bare {error}
+      // bodies on failure (no code field on this pre-dashboard route).
+      if (req.headers.get("x-requested-with") !== "XMLHttpRequest")
+        return json({ error: "invalid request" }, { status: 403 })
+      const appId = String(body.app_id ?? "").trim()
+      if (!appId) return json({ error: "app_id is required" }, { status: 400 })
+      const before = s.grants.length
+      s.grants = s.grants.filter((gr) => gr.app !== appId)
+      if (s.grants.length === before)
+        return json({ error: "no active grant found" }, { status: 404 })
+      return json({ success: true, message: `Access revoked for ${appId}` })
     }
 
     /* ---------- onboarding cache ---------- */
@@ -1295,7 +1311,13 @@ async function handle(req: NextRequest, path: string[]) {
   }
 
   /* ---------- connected apps (device grants) ---------- */
-  if (route === "GET /v1/apps") return json({ items: s.grants })
+  if (route === "GET /v1/apps")
+    // Newest granted_at first, like the real endpoint.
+    return json({
+      items: [...s.grants].sort((a, b) =>
+        b.granted_at.localeCompare(a.granted_at)
+      ),
+    })
 
   /* ---------- per-user page layouts (sparse overrides; absent = default) ---------- */
   /* ---------- feature availability: the walkthrough shows everything ---------- */

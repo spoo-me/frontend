@@ -5,9 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowUpRight,
   Check,
-  Command,
   Plug2,
-  Puzzle,
   TerminalSquare,
   Unplug,
 } from "lucide-react"
@@ -47,18 +45,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
-import { scopeMeaning } from "@/components/dashboard/scopes"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
-const GRANT_ICONS: Record<string, React.ElementType> = {
-  terminal: TerminalSquare,
-  puzzle: Puzzle,
-  command: Command,
-}
 
 /** Grants → catalogue slugs, so connected rows share the brand tiles and
  *  already-connected apps drop out of the catalogue below. */
@@ -173,11 +164,11 @@ function CatalogueCard({
 function GrantRow({ grant }: { grant: AppGrant }) {
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
-  const Icon = GRANT_ICONS[grant.icon] ?? Plug2
   const app = grantApp(grant)
 
   const revoke = useMutation({
-    mutationFn: () => revokeAppGrant(grant.id),
+    // Revoke keys on the registry slug, not the grant row id.
+    mutationFn: () => revokeAppGrant(grant.app),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apps"] })
       toast.success(`${grant.app_name} disconnected`)
@@ -191,8 +182,10 @@ function GrantRow({ grant }: { grant: AppGrant }) {
       {app ? (
         <AppIconTile app={app} />
       ) : (
+        // Registry-gone grant: no catalogue entry to borrow a brand tile
+        // from, so a generic plug — still listed, it holds live tokens.
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
-          <Icon className="size-4 text-foreground" strokeWidth={1.75} />
+          <Plug2 className="size-4 text-foreground" strokeWidth={1.75} />
         </span>
       )}
       <div className="min-w-0 flex-1">
@@ -200,27 +193,29 @@ function GrantRow({ grant }: { grant: AppGrant }) {
           {grant.app_name}
         </div>
         <div className="truncate text-muted-foreground text-xs">
-          {grant.device} · last used {formatWhen(grant.last_used_at)}
+          connected {formatWhen(grant.granted_at)} · last used{" "}
+          {formatWhen(grant.last_used_at)}
         </div>
       </div>
-      <div className="hidden items-center gap-1 sm:flex">
-        {grant.scopes.slice(0, 3).map((s) => {
-          const chip = (
-            <span className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-              {s}
+      {/* Grants aren't scoped, so no scope chips: the quiet mono count
+          carries the state, the tooltip shows the consent-screen strings. */}
+      {grant.permissions.length > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="hidden shrink-0 cursor-default font-mono text-[11px] text-muted-foreground/70 sm:inline">
+              {grant.permissions.length} permission
+              {grant.permissions.length === 1 ? "" : "s"}
             </span>
-          )
-          const meaning = scopeMeaning(s)
-          return meaning ? (
-            <Tooltip key={s}>
-              <TooltipTrigger asChild>{chip}</TooltipTrigger>
-              <TooltipContent>{meaning}</TooltipContent>
-            </Tooltip>
-          ) : (
-            <React.Fragment key={s}>{chip}</React.Fragment>
-          )
-        })}
-      </div>
+          </TooltipTrigger>
+          <TooltipContent align="end">
+            <ul className="max-w-64 space-y-1">
+              {grant.permissions.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+          </TooltipContent>
+        </Tooltip>
+      )}
       <Button
         variant="outline"
         size="sm"
