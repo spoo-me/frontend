@@ -1168,6 +1168,44 @@ async function handle(req: NextRequest, path: string[]) {
         if (expire === null && link.status === "EXPIRED") link.status = "ACTIVE"
         return null
       }
+    } else if (op === "domain") {
+      const raw = body.domain
+      // The wire expresses the system default as null; a custom target is
+      // its fqdn. "spoo.me" folds onto the default too.
+      const target =
+        raw === null || raw === undefined || raw === "" || raw === "spoo.me"
+          ? null
+          : String(raw)
+      // Envelope precondition: a custom target must be a domain the caller
+      // owns and that is active. A bad target rejects the whole request
+      // before any item is touched.
+      if (
+        target !== null &&
+        !s.domains.some((d) => d.fqdn === target && d.status === "active")
+      )
+        return fail(
+          400,
+          "validation_error",
+          `no active domain ${target} in your account`,
+          "domain"
+        )
+      apply = (link) => {
+        if (link.status === "BLOCKED")
+          return { code: "forbidden", msg: "blocked URLs cannot be modified" }
+        // Already on the target = success no-op.
+        if (link.domain === target) return null
+        // Alias must be free on the target namespace.
+        const clash = s.links.some(
+          (l) => l !== link && l.alias === link.alias && l.domain === target
+        )
+        if (clash)
+          return {
+            code: "conflict",
+            msg: "alias already taken on the target domain",
+          }
+        link.domain = target
+        return null
+      }
     } else {
       return fail(404, "not_found", "Unknown bulk operation")
     }

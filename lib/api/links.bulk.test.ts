@@ -104,4 +104,16 @@ describe("summarizeBulkFailures", () => {
   it("falls back to a generic label for a missing code", () => {
     expect(summarizeBulkFailures([{ ...bad("1", null) }])).toBe("1 errored")
   })
+
+  it("reads a domain-move report: no-op successes, conflicts, blocked", () => {
+    // Shape a move-to-domain result: some links move, one alias already
+    // exists on the target, one is admin-blocked.
+    const report = mergeBulkResults([
+      part([ok("1"), ok("2"), bad("3", "conflict"), bad("4", "forbidden")]),
+    ])
+    expect(report.summary).toEqual({ total: 4, succeeded: 2, failed: 2 })
+    expect(summarizeBulkFailures(report.results)).toBe(
+      "1 alias already taken, 1 blocked"
+    )
+  })
 })

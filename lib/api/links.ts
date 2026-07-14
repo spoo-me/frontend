@@ -1,4 +1,4 @@
-import { authedFetch, jsonInit, parse, SpooApiError } from "./client"
+import { authedFetch, jsonInit, parse } from "./client"
 
 export type ShortUrl = {
   alias: string
@@ -342,7 +342,7 @@ export function summarizeBulkFailures(rows: BulkResultRow[]): string {
 }
 
 async function bulkPost(
-  op: "delete" | "status" | "expiry",
+  op: "delete" | "status" | "expiry" | "domain",
   ids: string[],
   extra: Record<string, unknown>
 ): Promise<BulkOperationResult> {
@@ -373,54 +373,14 @@ export function bulkSetUrlExpiry(ids: string[], expireAfter: number | null) {
 }
 
 /**
- * Move a selection to a domain. There is no bulk domain endpoint (the
- * shipped bulk set is delete/status/expiry), so this fans out over the
- * per-item PATCH — but maps each outcome into the same per-item report the
- * bulk ops return, so every action shares one partial-failure UX. `domain`
- * is the target fqdn, or "spoo.me"/null for the default namespace.
+ * Move a selection to a domain in one request. `domain` is the target
+ * custom-domain fqdn, or "spoo.me"/null for the system default (the wire
+ * expresses the default as null, not the fqdn). The whole batch shares one
+ * target; an unowned or inactive custom domain rejects the request before
+ * any item is touched (a thrown SpooApiError, not a per-item verdict).
  */
-export async function bulkMoveUrlDomain(
-  ids: string[],
-  domain: string | null
-): Promise<BulkOperationResult> {
-  const target = domain === "spoo.me" ? null : domain
-  const settled = await Promise.allSettled(
-    ids.map((id) => updateUrl(id, { domain: target }))
-  )
-  const results: BulkResultRow[] = settled.map((r, i) => {
-    const id = ids[i]
-    if (r.status === "fulfilled")
-      return {
-        id,
-        alias: r.value.alias,
-        ok: true,
-        error_code: null,
-        error: null,
-      }
-    const e = r.reason
-    return {
-      id,
-      alias: null,
-      ok: false,
-      error_code: fanoutErrorCode(e),
-      error: e instanceof Error ? e.message : "Move failed",
-    }
+export function bulkMoveUrlDomain(ids: string[], domain: string | null) {
+  return bulkPost("domain", ids, {
+    domain: domain === "spoo.me" ? null : domain,
   })
-  return mergeBulkResults([
-    {
-      results,
-      summary: { total: 0, succeeded: 0, failed: 0 },
-    },
-  ])
-}
-
-/** Map a single-item PATCH failure onto the bulk error vocabulary. */
-function fanoutErrorCode(e: unknown): BulkErrorCode {
-  if (e instanceof SpooApiError) {
-    if (e.status === 404) return "not_found"
-    if (e.status === 403) return "forbidden"
-    if (e.status === 409) return "conflict"
-    if (e.status === 400 || e.status === 422) return "validation_error"
-  }
-  return "internal"
 }

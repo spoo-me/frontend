@@ -413,9 +413,9 @@ export default function LinksPage() {
 
   // One bulk request per user intent (POST /api/v1/urls/bulk/*), which
   // returns a per-item report: every id gets a verdict, so partial failure
-  // is surfaced honestly rather than guessed. Move-to-domain has no bulk
-  // endpoint yet, so it fans out per item but returns the same report shape,
-  // keeping one partial-failure code path for every action.
+  // is surfaced honestly rather than guessed. All four actions (status,
+  // delete, expiry, domain) go through one bulk call and one shared
+  // partial-failure code path.
   const bulk = useMutation({
     mutationFn: async ({
       ids,
