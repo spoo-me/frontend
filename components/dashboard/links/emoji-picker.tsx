@@ -150,6 +150,37 @@ function EmojiPickerBody({
       el.scrollTop = top + CELL - el.clientHeight
   }, [])
 
+  // The picker is portaled to the body, outside the composer Dialog, whose
+  // react-remove-scroll lock cancels native wheel/trackpad scrolling for
+  // anything not inside the dialog subtree. So drive the windowed grid's
+  // scroll manually with a non-passive wheel listener (React's onWheel is
+  // passive and cannot preventDefault). A callback ref (re)attaches it every
+  // time the grid mounts, including when the popover reopens.
+  const wheelCleanup = React.useRef<(() => void) | null>(null)
+  const setScrollNode = React.useCallback((node: HTMLDivElement | null) => {
+    wheelCleanup.current?.()
+    wheelCleanup.current = null
+    scrollRef.current = node
+    if (!node) return
+    const onWheel = (e: WheelEvent) => {
+      const step =
+        e.deltaMode === 1
+          ? e.deltaY * CELL // lines
+          : e.deltaMode === 2
+            ? e.deltaY * node.clientHeight // pages
+            : e.deltaY // pixels (trackpad + most mice)
+      const max = node.scrollHeight - node.clientHeight
+      const next = Math.min(max, Math.max(0, node.scrollTop + step))
+      if (next !== node.scrollTop) {
+        node.scrollTop = next
+        setScrollTop(next)
+      }
+      e.preventDefault()
+    }
+    node.addEventListener("wheel", onWheel, { passive: false })
+    wheelCleanup.current = () => node.removeEventListener("wheel", onWheel)
+  }, [])
+
   const pick = (c: string) => {
     if (capped) return
     onPick(c)
@@ -279,7 +310,7 @@ function EmojiPickerBody({
           </p>
         ) : (
           <div
-            ref={scrollRef}
+            ref={setScrollNode}
             onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
             className="relative overflow-y-auto overscroll-contain"
             style={{ height: viewportH }}
