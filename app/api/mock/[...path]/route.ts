@@ -1085,6 +1085,167 @@ async function handle(req: NextRequest, path: string[]) {
     return json(linkItem(link))
   }
 
+  /* ---------- bulk ops: POST /urls/bulk/{delete,status,expiry} ----------
+     The batch answers 200 with a summary + one result row per unique id
+     (even all-failed). 4xx is envelope rejection where nothing was
+     attempted. Blocked links (seed alias "legacy") fail per-item with
+     "forbidden" and unknown ids with "not_found" — the two ways to
+     exercise the partial-failure path. */
+  if (
+    path[0] === "v1" &&
+    path[1] === "urls" &&
+    path[2] === "bulk" &&
+    req.method === "POST"
+  ) {
+    const op = path[3]
+    const rawIds = Array.isArray(body.ids) ? (body.ids as unknown[]) : null
+    // Envelope shape is DTO-level validation on the real backend, so it
+    // answers 422 (not 400) for an empty or over-cap id list.
+    if (!rawIds || rawIds.length === 0)
+      return fail(
+        422,
+        "validation_error",
+        "ids must be a non-empty list",
+        "ids"
+      )
+    if (rawIds.length > 100)
+      return fail(422, "validation_error", "at most 100 ids per request", "ids")
+    // Dedupe, first occurrence wins — mirrors the server envelope.
+    const seen = new Set<string>()
+    const ids = rawIds
+      .map(String)
+      .filter((id) => (seen.has(id) ? false : (seen.add(id), true)))
+
+    type Rejection = { code: string; msg: string }
+    let apply: (link: MockLink) => Rejection | null
+
+    if (op === "delete") {
+      apply = (link) => {
+        if (link.status === "BLOCKED")
+          return { code: "forbidden", msg: "blocked URLs cannot be deleted" }
+        s.links = s.links.filter((l) => l !== link)
+        return null
+      }
+    } else if (op === "status") {
+      const next = String(body.status ?? "").toUpperCase()
+      if (!["ACTIVE", "INACTIVE"].includes(next))
+        return fail(
+          422,
+          "validation_error",
+          "status must be ACTIVE or INACTIVE",
+          "status"
+        )
+      apply = (link) => {
+        if (link.status === "BLOCKED")
+          return { code: "forbidden", msg: "blocked URLs cannot be modified" }
+        link.status = next as MockLink["status"]
+        return null
+      }
+    } else if (op === "expiry") {
+      const raw = body.expire_after
+      let expire: number | null = null
+      if (raw !== null && raw !== undefined) {
+        expire = Number(raw)
+        if (!Number.isFinite(expire))
+          return fail(
+            422,
+            "validation_error",
+            "Invalid expire_after format",
+            "expire_after"
+          )
+        // One value for the whole batch, validated once at the envelope.
+        if (expire <= Math.floor(Date.now() / 1000))
+          return fail(
+            400,
+            "validation_error",
+            "expire_after must be in the future",
+            "expire_after"
+          )
+      }
+      apply = (link) => {
+        if (link.status === "BLOCKED")
+          return { code: "forbidden", msg: "blocked URLs cannot be modified" }
+        link.expire_after = expire
+        // An expired link reactivates when its expiry is cleared (null) or
+        // extended to a future value. The envelope already rejected any
+        // non-future value, so any non-null expire here is in the future.
+        if (link.status === "EXPIRED") link.status = "ACTIVE"
+        return null
+      }
+    } else if (op === "domain") {
+      const raw = body.domain
+      // The wire expresses the system default as null; a custom target is
+      // its fqdn. "spoo.me" folds onto the default too.
+      const target =
+        raw === null || raw === undefined || raw === "" || raw === "spoo.me"
+          ? null
+          : String(raw)
+      // Envelope precondition: a custom target must be a domain the caller
+      // owns and that is active. A bad target rejects the whole request
+      // before any item is touched.
+      if (
+        target !== null &&
+        !s.domains.some((d) => d.fqdn === target && d.status === "active")
+      )
+        return fail(
+          400,
+          "validation_error",
+          `no active domain ${target} in your account`,
+          "domain"
+        )
+      apply = (link) => {
+        if (link.status === "BLOCKED")
+          return { code: "forbidden", msg: "blocked URLs cannot be modified" }
+        // Already on the target = success no-op.
+        if (link.domain === target) return null
+        // Alias must be free on the target namespace.
+        const clash = s.links.some(
+          (l) => l !== link && l.alias === link.alias && l.domain === target
+        )
+        if (clash)
+          return {
+            code: "conflict",
+            msg: "alias already taken on the target domain",
+          }
+        link.domain = target
+        return null
+      }
+    } else {
+      return fail(404, "not_found", "Unknown bulk operation")
+    }
+
+    const results = ids.map((id) => {
+      const link = s.links.find((l) => l.id === id)
+      if (!link)
+        return {
+          id,
+          alias: null,
+          ok: false,
+          error_code: "not_found",
+          error: "No such URL in your account",
+        }
+      const err = apply(link)
+      if (err)
+        return {
+          id,
+          alias: link.alias,
+          ok: false,
+          error_code: err.code,
+          error: err.msg,
+        }
+      return { id, alias: link.alias, ok: true, error_code: null, error: null }
+    })
+    const succeeded = results.filter((r) => r.ok).length
+    return json({
+      summary: {
+        total: results.length,
+        succeeded,
+        failed: results.length - succeeded,
+      },
+      results,
+    })
+  }
+
   /* ---------- urls/{id} (+ /status) ---------- */
   if (path[0] === "v1" && path[1] === "urls" && path[2]) {
     const link = s.links.find((l) => l.id === path[2] || l.alias === path[2])

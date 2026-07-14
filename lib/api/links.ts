@@ -249,3 +249,166 @@ export async function deleteUrl(urlId: string) {
   })
   if (!res.ok) await parse(res) // throws SpooApiError
 }
+
+/* ---------------------------------------------------------------------------
+ * Bulk operations — POST /api/v1/urls/bulk/{delete,status,expiry}
+ *
+ * One request per user intent instead of a client-side fan-out over the
+ * per-item routes. The batch always answers 200 with a summary plus one
+ * result row per unique requested id (even all-failed — per-item failures
+ * are answers, not errors). A 4xx is envelope rejection where NOTHING was
+ * attempted (over-cap, invalid param, missing scope, rate limit, or — until
+ * the backend bulk routes are deployed — a 404), and surfaces as a thrown
+ * SpooApiError, never a false success.
+ *
+ * The server caps a request at BULK_MAX_IDS ids; larger selections are
+ * chunked here and the per-chunk reports merged, so callers pass the whole
+ * selection and get one combined report back.
+ * ------------------------------------------------------------------------- */
+
+/** Server cap per bulk request (schemas/dto/requests/bulk.py BULK_MAX_IDS). */
+export const BULK_MAX_IDS = 100
+
+/** Closed per-item error vocabulary shared with the single-item routes. */
+export type BulkErrorCode =
+  | "not_found"
+  | "forbidden"
+  | "conflict"
+  | "validation_error"
+  | "internal"
+  | "not_attempted"
+
+/** Per-item verdict. `errorCode` is the key to branch on; `error` is a
+    display-safe but unstable message. Both null when `ok`. */
+export type BulkResultRow = {
+  id: string
+  alias: string | null
+  ok: boolean
+  error_code: BulkErrorCode | null
+  error: string | null
+}
+
+/** Envelope for every bulk URL operation — summary derived from the rows. */
+export type BulkOperationResult = {
+  summary: { total: number; succeeded: number; failed: number }
+  results: BulkResultRow[]
+}
+
+/** Split a selection into cap-sized chunks (request order preserved). */
+export function chunkIds(ids: string[], size = BULK_MAX_IDS): string[][] {
+  if (size < 1) throw new Error("chunk size must be >= 1")
+  const out: string[][] = []
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size))
+  return out
+}
+
+/** Merge per-chunk reports into one, recomputing the summary from the rows
+    (the report is the contract; the counts are derived, never tracked
+    separately). Chunks carry disjoint ids, so rows simply concatenate. */
+export function mergeBulkResults(
+  parts: BulkOperationResult[]
+): BulkOperationResult {
+  const results = parts.flatMap((p) => p.results)
+  const succeeded = results.reduce((n, r) => n + (r.ok ? 1 : 0), 0)
+  return {
+    results,
+    summary: {
+      total: results.length,
+      succeeded,
+      failed: results.length - succeeded,
+    },
+  }
+}
+
+/** Fold delete's `not_found` verdicts into successes. Bulk delete treats an
+    id that is already gone as success-equivalent (the link is deleted either
+    way, per the endpoint contract), so a link removed in another tab or by a
+    prior retry must not count as a failure. Without this the retry loop never
+    converges and the gone id stays selected. Delete only: you cannot
+    deactivate, move or expire a link that does not exist. */
+export function reconcileDeletedNotFound(
+  result: BulkOperationResult
+): BulkOperationResult {
+  return mergeBulkResults([
+    {
+      summary: result.summary,
+      results: result.results.map((r) =>
+        !r.ok && r.error_code === "not_found"
+          ? { ...r, ok: true, error_code: null, error: null }
+          : r
+      ),
+    },
+  ])
+}
+
+/** Human-readable breakdown of the failed rows, grouped by cause — for an
+    honest partial-success message ("2 blocked, 1 already on the target").
+    Empty string when nothing failed. */
+export function summarizeBulkFailures(rows: BulkResultRow[]): string {
+  const labels: Record<BulkErrorCode, string> = {
+    not_found: "missing",
+    forbidden: "blocked",
+    conflict: "alias already taken",
+    validation_error: "invalid",
+    internal: "errored",
+    not_attempted: "not attempted",
+  }
+  const counts = new Map<string, number>()
+  for (const r of rows) {
+    if (r.ok) continue
+    const label = labels[r.error_code ?? "internal"] ?? "failed"
+    counts.set(label, (counts.get(label) ?? 0) + 1)
+  }
+  return [...counts.entries()].map(([label, n]) => `${n} ${label}`).join(", ")
+}
+
+async function bulkPost(
+  op: "delete" | "status" | "expiry" | "domain",
+  ids: string[],
+  extra: Record<string, unknown>
+): Promise<BulkOperationResult> {
+  const parts: BulkOperationResult[] = []
+  // Sequential: keeps within the per-request rate budget and gives
+  // deterministic ordering; chunking past the cap is the rare case.
+  //
+  // Limitation: a throw on a later chunk (after earlier chunks applied)
+  // rejects the whole call and discards the partial report. Unreachable
+  // today since selections are page-bounded, so >1 chunk cannot occur;
+  // when select-all-matching makes multi-chunk reachable, the clean shape
+  // is to catch each chunk's error, emit `not_attempted` rows for the
+  // remaining ids, and still return the merged report.
+  for (const chunk of chunkIds(ids)) {
+    const res = await authedFetch(
+      `/api/v1/urls/bulk/${op}`,
+      jsonInit("POST", { ids: chunk, ...extra })
+    )
+    parts.push(await parse<BulkOperationResult>(res))
+  }
+  return mergeBulkResults(parts)
+}
+
+export function bulkDeleteUrls(ids: string[]) {
+  return bulkPost("delete", ids, {})
+}
+
+export function bulkSetUrlStatus(ids: string[], status: "ACTIVE" | "INACTIVE") {
+  return bulkPost("status", ids, { status })
+}
+
+/** `expireAfter`: epoch seconds to set, or null to clear. */
+export function bulkSetUrlExpiry(ids: string[], expireAfter: number | null) {
+  return bulkPost("expiry", ids, { expire_after: expireAfter })
+}
+
+/**
+ * Move a selection to a domain in one request. `domain` is the target
+ * custom-domain fqdn, or "spoo.me"/null for the system default (the wire
+ * expresses the default as null, not the fqdn). The whole batch shares one
+ * target; an unowned or inactive custom domain rejects the request before
+ * any item is touched (a thrown SpooApiError, not a per-item verdict).
+ */
+export function bulkMoveUrlDomain(ids: string[], domain: string | null) {
+  return bulkPost("domain", ids, {
+    domain: domain === "spoo.me" ? null : domain,
+  })
+}
