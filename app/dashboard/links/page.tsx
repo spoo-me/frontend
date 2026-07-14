@@ -461,26 +461,26 @@ export default function LinksPage() {
                   : "set to expire"
                 : `moved to ${domain}`
 
+      // The action ran, so its dialog is done regardless of outcome — the
+      // selection bar and the toast carry the result, so no modal lingers.
+      setBulkConfirm(false)
+      setBulkConfirmText("")
+      setMoveOpen(false)
+      setMoveTarget(null)
+      setExpiryOpen(false)
+      setBulkExpiry("")
+
       if (failed === 0) {
-        // Clean sweep: dismiss the whole selection and its dialogs.
         clearSelection()
-        setBulkConfirm(false)
-        setBulkConfirmText("")
-        setMoveOpen(false)
-        setMoveTarget(null)
-        setExpiryOpen(false)
-        setBulkExpiry("")
         toast.success(`${total} link${total === 1 ? "" : "s"} ${verb}`)
         return
       }
 
       // Partial (or total) failure: narrow the selection down to exactly the
-      // links that failed so the user can inspect or retry that subset, and
-      // report which — no false "all done".
+      // links that failed so the user can inspect or retry that subset from
+      // the selection bar, and report which — no false "all done".
       const failedIds = result.results.filter((r) => !r.ok).map((r) => r.id)
       setSelectedIds(new Set(failedIds))
-      setBulkConfirm(false)
-      setBulkConfirmText("")
       const breakdown = summarizeBulkFailures(result.results)
       const message =
         succeeded > 0
