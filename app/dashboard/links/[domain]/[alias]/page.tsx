@@ -9,10 +9,11 @@ import { ArrowLeft, ChartLine, Globe2, Settings2 } from "lucide-react"
 import {
   dimensionRowsOf,
   getStats,
+  getUrl,
   listCustomDomains,
-  listUrls,
   timeSeriesOf,
 } from "@/lib/api"
+import { SpooApiError } from "@/lib/api/client"
 import { displayUrl, formatCount, formatPercent } from "@/lib/format"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
@@ -43,18 +44,23 @@ const RANGES = [
 ] as const
 
 export default function LinkDetailPage() {
-  const params = useParams<{ alias: string }>()
+  const params = useParams<{ domain: string; alias: string }>()
   const router = useRouter()
+  const domain = decodeURIComponent(params.domain)
   const alias = decodeURIComponent(params.alias)
   const [rangeDays, setRangeDays] = React.useState<number>(30)
   const [metric, setMetric] = React.useState<ChartMetric>("total")
 
-  // No single-URL GET on the backend — resolve through the list endpoint.
-  const urls = useQuery({
-    queryKey: ["urls", { search: alias }],
-    queryFn: () => listUrls({ pageSize: 100, filter: { search: alias } }),
+  // One fetch by natural key. A 404 (missing, or someone else's link) is a
+  // first-class answer — it renders the not-found state below, so don't
+  // burn retries on it.
+  const url = useQuery({
+    queryKey: ["url", domain, alias],
+    queryFn: () => getUrl(domain, alias),
+    retry: (count, error) =>
+      !(error instanceof SpooApiError && error.status === 404) && count < 3,
   })
-  const link = urls.data?.items.find((l) => l.alias === alias) ?? null
+  const link = url.data ?? null
 
   const range = React.useMemo(() => {
     const end = new Date()
@@ -62,7 +68,7 @@ export default function LinkDetailPage() {
   }, [rangeDays])
 
   const stats = useQuery({
-    queryKey: ["stats", { alias, rangeDays }],
+    queryKey: ["stats", { domain, alias, rangeDays }],
     queryFn: () =>
       getStats({
         startDate: range.start,
@@ -85,12 +91,12 @@ export default function LinkDetailPage() {
       .map((d) => d.fqdn) ?? []),
   ]
 
-  if (!urls.isPending && !link) {
+  if (!url.isPending && !link) {
     return (
       <div className="mx-auto w-full max-w-5xl">
         <div className="pattern-dots flex h-64 flex-col items-center justify-center gap-3 rounded-xl">
           <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
-            no link at spoo.me/{alias}
+            no link at {domain}/{alias}
           </span>
           <Link
             href="/dashboard/links"

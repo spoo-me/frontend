@@ -7,6 +7,7 @@ import { ArrowUpRight } from "lucide-react"
 import { motion } from "motion/react"
 
 import { listCustomDomains, type UrlListItem } from "@/lib/api"
+import { linkDetailPath } from "@/lib/link-detail"
 import { formatCount, formatWhen } from "@/lib/format"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { StatusPill } from "@/components/dashboard/status-pill"
@@ -123,7 +124,7 @@ export function LinkSheet({
               </div>
 
               <Link
-                href={`/dashboard/links/${link.alias}`}
+                href={linkDetailPath(link)}
                 className="mt-3 inline-flex items-center gap-1 text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
               >
                 Open full page for analytics and history

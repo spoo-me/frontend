@@ -19,6 +19,7 @@ import {
   formatPercent,
   formatWhen,
 } from "@/lib/format"
+import { useCurrentHost } from "@/hooks/use-current-host"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Panel } from "@/components/dashboard/section"
@@ -65,6 +66,10 @@ export function PublicStatsView({
 }) {
   const [rangeDays, setRangeDays] = React.useState(30)
   const [metric, setMetric] = React.useState<ChartMetric>("total")
+  // Public stats tenant-scope by Host, so the current host IS this link's
+  // domain — it becomes the domain segment of the dashboard detail route.
+  // Hydration-safe ("" during SSR) since this page renders on the server.
+  const host = useCurrentHost()
   // The submitted password lives only in memory and only in POST bodies.
   const [password, setPassword] = React.useState("")
   const [draft, setDraft] = React.useState("")
@@ -176,7 +181,9 @@ export function PublicStatsView({
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href={`/dashboard/links/${encodeURIComponent(link.alias)}`}>
+          <Link
+            href={`/dashboard/links/${encodeURIComponent(host)}/${encodeURIComponent(link.alias)}`}
+          >
             Your link? See it in the dashboard
           </Link>
         </Button>

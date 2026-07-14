@@ -44,15 +44,26 @@ import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import {
-  deleteUrl,
+  type BulkOperationResult,
+  bulkDeleteUrls,
+  bulkMoveUrlDomain,
+  bulkSetUrlExpiry,
+  bulkSetUrlStatus,
+  getUrl,
   listCustomDomains,
   listUrls,
-  setUrlStatus,
-  updateUrl,
+  reconcileDeletedNotFound,
+  SpooApiError,
+  summarizeBulkFailures,
   type UrlListFilter,
   type UrlListItem,
   type UrlStatus,
 } from "@/lib/api"
+import {
+  detailDomainOf,
+  linkSheetParam,
+  parseLinkSheetParam,
+} from "@/lib/link-detail"
 import { trackLinksBulkAction, trackUiAction } from "@/lib/analytics"
 import { displayUrl, domainOf, formatCount, formatWhen } from "@/lib/format"
 import { faviconUrl } from "@/lib/favicon"
@@ -296,18 +307,26 @@ export default function LinksPage() {
   }, [urls.data, page, sortBy, sortDir, JSON.stringify(filter)])
 
   const items = urls.data?.items ?? []
-  const selectedInPage = items.find((l) => l.alias === selected) ?? null
-  // The sheet is URL-addressable from anywhere — resolve links that aren't
-  // on the current page through a targeted search.
+  const selectedRef = selected === null ? null : parseLinkSheetParam(selected)
+  const selectedInPage = selectedRef
+    ? (items.find(
+        (l) =>
+          l.alias === selectedRef.alias &&
+          (l.domain ?? null) === selectedRef.domain
+      ) ?? null)
+    : null
+  // The sheet is URL-addressable from anywhere — links that aren't on the
+  // current page resolve through the single-resource endpoint. A 404 there
+  // is an answer (deleted or foreign), not something to retry.
   const lookup = useQuery({
-    queryKey: ["urls", "lookup", selected],
-    queryFn: () => listUrls({ pageSize: 100, filter: { search: selected! } }),
-    enabled: selected !== null && !selectedInPage && !urls.isPending,
+    queryKey: ["url", selectedRef?.domain ?? null, selectedRef?.alias],
+    queryFn: () =>
+      getUrl(detailDomainOf(selectedRef!.domain), selectedRef!.alias),
+    enabled: selectedRef !== null && !selectedInPage && !urls.isPending,
+    retry: (count, error) =>
+      !(error instanceof SpooApiError && error.status === 404) && count < 3,
   })
-  const selectedLink =
-    selectedInPage ??
-    lookup.data?.items.find((l) => l.alias === selected) ??
-    null
+  const selectedLink = selectedInPage ?? lookup.data ?? null
   const total = urls.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -393,10 +412,11 @@ export default function LinksPage() {
     return () => window.removeEventListener("keydown", onKey)
   }, [page, hasNextRef, items, setPage])
 
-  // Bulk ops fan out over the per-item API until the backend ships a bulk
-  // endpoint; swapping the mutationFn is the only change needed then.
-  // Fans out per-item calls (allSettled: one bad link never blocks the
-  // rest) until the backend ships bulk endpoints.
+  // One bulk request per user intent (POST /api/v1/urls/bulk/*), which
+  // returns a per-item report: every id gets a verdict, so partial failure
+  // is surfaced honestly rather than guessed. All four actions (status,
+  // delete, expiry, domain) go through one bulk call and one shared
+  // partial-failure code path.
   const bulk = useMutation({
     mutationFn: async ({
       ids,
@@ -408,32 +428,32 @@ export default function LinksPage() {
       action: "ACTIVE" | "INACTIVE" | "DELETE" | "DOMAIN" | "EXPIRY"
       domain?: string
       expireAfter?: number | null
-    }) => {
-      const results = await Promise.allSettled(
-        ids.map((id) =>
-          action === "DELETE"
-            ? deleteUrl(id)
-            : action === "DOMAIN"
-              ? updateUrl(id, { domain: domain === "spoo.me" ? null : domain! })
-              : action === "EXPIRY"
-                ? updateUrl(id, { expire_after: expireAfter ?? null })
-                : setUrlStatus(id, action)
-        )
-      )
-      const failed = results.filter((r) => r.status === "rejected").length
-      return { count: ids.length, failed, action, domain, expireAfter }
+    }): Promise<{
+      result: BulkOperationResult
+      action: typeof action
+      domain?: string
+      expireAfter?: number | null
+    }> => {
+      const result =
+        action === "DELETE"
+          ? await bulkDeleteUrls(ids)
+          : action === "DOMAIN"
+            ? await bulkMoveUrlDomain(ids, domain ?? null)
+            : action === "EXPIRY"
+              ? await bulkSetUrlExpiry(ids, expireAfter ?? null)
+              : await bulkSetUrlStatus(ids, action)
+      return { result, action, domain, expireAfter }
     },
-    onSuccess: ({ count, failed, action, domain, expireAfter }) => {
-      trackLinksBulkAction(action, count, failed)
+    onSuccess: ({ result, action, domain, expireAfter }) => {
+      // For delete, an already-gone id reports not_found, which is
+      // success-equivalent; fold those into successes so retries converge
+      // and gone ids do not stay selected.
+      const report =
+        action === "DELETE" ? reconcileDeletedNotFound(result) : result
+      const { total, succeeded, failed } = report.summary
+      trackLinksBulkAction(action, total, failed)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
-      clearSelection()
-      setBulkConfirm(false)
-      setBulkConfirmText("")
-      setMoveOpen(false)
-      setMoveTarget(null)
-      setExpiryOpen(false)
-      setBulkExpiry("")
       const verb =
         action === "DELETE"
           ? "deleted"
@@ -443,14 +463,40 @@ export default function LinksPage() {
               ? "deactivated"
               : action === "EXPIRY"
                 ? expireAfter == null
-                  ? "expiry removed"
+                  ? "expiry cleared"
                   : "set to expire"
                 : `moved to ${domain}`
-      if (failed)
-        toast.warning(
-          `${count - failed} of ${count} links ${verb}. ${failed} failed${action === "DOMAIN" ? " (alias already taken there)" : ""}.`
-        )
-      else toast.success(`${count} link${count === 1 ? "" : "s"} ${verb}`)
+
+      // The action ran, so its dialog is done regardless of outcome — the
+      // selection bar and the toast carry the result, so no modal lingers.
+      setBulkConfirm(false)
+      setBulkConfirmText("")
+      setMoveOpen(false)
+      setMoveTarget(null)
+      setExpiryOpen(false)
+      setBulkExpiry("")
+
+      if (failed === 0) {
+        clearSelection()
+        toast.success(`${total} link${total === 1 ? "" : "s"} ${verb}`)
+        return
+      }
+
+      // Partial (or total) failure: narrow the selection down to exactly the
+      // links that failed so the user can inspect or retry that subset from
+      // the selection bar, and report which — no false "all done".
+      const failedIds = report.results.filter((r) => !r.ok).map((r) => r.id)
+      setSelectedIds(new Set(failedIds))
+      const breakdown = summarizeBulkFailures(report.results)
+      const message =
+        succeeded > 0
+          ? `${succeeded} ${verb}, ${failed} failed`
+          : `${failed} failed`
+      toast.warning(message, {
+        description: breakdown
+          ? `${breakdown}. Still selected to retry.`
+          : "Still selected to retry.",
+      })
     },
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Bulk action failed"),
@@ -837,7 +883,7 @@ export default function LinksPage() {
               <LinkRow
                 key={link.id}
                 link={link}
-                onOpen={() => setSelected(link.alias)}
+                onOpen={() => setSelected(linkSheetParam(link))}
                 rowSelected={selectedIds.has(link.id)}
                 onToggleSelect={() => toggleId(link.id)}
               />
