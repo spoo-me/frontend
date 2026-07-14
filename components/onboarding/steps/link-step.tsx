@@ -25,14 +25,48 @@ import {
 import { celebrate } from "@/lib/confetti"
 import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
 import {
-  checkAlias,
   shorten,
   SpooApiError,
+  type CheckAliasReason,
   type ShortenInput,
   type ShortUrl,
 } from "@/lib/api"
+import { findUnsupportedGraphemes, isEmojiCandidate } from "@/lib/emoji-alias"
+import { useAliasCheck } from "@/hooks/use-alias-check"
+import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
 
-type AliasState =
+/** Terse register for the first-run badge (the muted-mono AliasBadge). The
+    hint-length prose the composer uses would be too loud here. The emoji_policy
+    case names the offending emoji from the accepted set when it is loaded. */
+function aliasTerse(
+  reason: CheckAliasReason,
+  alias: string,
+  accepted: Set<string> | null
+): string {
+  switch (reason) {
+    case "emoji_policy": {
+      const offenders = accepted
+        ? findUnsupportedGraphemes(alias, accepted)
+        : []
+      if (offenders.length === 1) return `${offenders[0]} not supported`
+      if (offenders.length > 1)
+        return `${offenders[0]} +${offenders.length - 1} not supported`
+      return "unsupported emoji"
+    }
+    case "length":
+      return !isEmojiCandidate(alias) && alias.length < 3
+        ? "3+ characters"
+        : "too long"
+    case "format":
+      return "letters or emoji, not both"
+    case "reserved":
+      return "reserved"
+    case "taken":
+      return "already taken"
+  }
+}
+
+type BadgeState =
   | { kind: "idle" }
   | { kind: "checking" }
   | { kind: "available" }
@@ -47,9 +81,6 @@ export function LinkStep({
 }) {
   const [url, setUrl] = React.useState("")
   const [alias, setAlias] = React.useState("")
-  const [aliasState, setAliasState] = React.useState<AliasState>({
-    kind: "idle",
-  })
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [created, setCreated] = React.useState<ShortUrl | null>(null)
@@ -59,40 +90,34 @@ export function LinkStep({
 
   const urlLooksValid = /^https?:\/\/\S+\.\S+/.test(url.trim())
 
-  // Debounced live alias availability — same affordance as the legacy
-  // create modal, against the real check-alias endpoint.
-  React.useEffect(() => {
-    if (!alias) {
-      setAliasState({ kind: "idle" })
-      return
-    }
-    if (alias.length < 3) {
-      setAliasState({ kind: "unavailable", reason: "3+ characters" })
-      return
-    }
-    setAliasState({ kind: "checking" })
-    const t = setTimeout(() => {
-      checkAlias(alias)
-        .then((r) =>
-          setAliasState(
-            r.available
-              ? { kind: "available" }
-              : {
-                  kind: "unavailable",
-                  reason:
-                    r.reason === "taken" ? "already taken" : "invalid format",
-                }
-          )
-        )
-        .catch(() => setAliasState({ kind: "idle" }))
-    }, 350)
-    return () => clearTimeout(t)
-  }, [alias])
+  // Live alias availability via the shared hook (letters/numbers OR emoji);
+  // the terse first-run badge maps the reason. A create-time collision is
+  // shown through `serverTaken`, keyed to the alias it answered.
+  const aliasVerdict = useAliasCheck({ alias })
+  const acceptedEmoji = useAcceptedEmoji()
+  const [serverTaken, setServerTaken] = React.useState<string | null>(null)
+  const badge: BadgeState =
+    aliasVerdict.state === "checking"
+      ? { kind: "checking" }
+      : aliasVerdict.state === "available"
+        ? { kind: "available" }
+        : // idle and unknown (check couldn't complete) show no badge; the
+          // create call re-validates.
+          aliasVerdict.state === "problem"
+          ? {
+              kind: "unavailable",
+              reason: aliasTerse(aliasVerdict.reason, alias, acceptedEmoji),
+            }
+          : { kind: "idle" }
+  const showBadge: BadgeState =
+    serverTaken === alias && alias
+      ? { kind: "unavailable", reason: "already taken" }
+      : badge
 
   async function submit(e?: React.FormEvent) {
     e?.preventDefault()
     if (!urlLooksValid || pending || created) return
-    if (alias && aliasState.kind === "unavailable") return
+    if (alias && aliasVerdict.state === "problem") return
     setPending(true)
     setError(null)
     try {
@@ -106,7 +131,7 @@ export function LinkStep({
     } catch (err) {
       if (err instanceof SpooApiError && err.status === 409) {
         setError("That alias just got taken. Try another.")
-        setAliasState({ kind: "unavailable", reason: "already taken" })
+        setServerTaken(alias)
       } else if (err instanceof SpooApiError && err.needsVerification) {
         setError("Your email needs to be verified before creating links.")
       } else if (err instanceof SpooApiError) {
@@ -252,18 +277,14 @@ export function LinkStep({
                 <input
                   id="ob-alias"
                   value={alias}
-                  onChange={(e) =>
-                    setAlias(
-                      e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 16)
-                    )
-                  }
+                  onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
                   placeholder="launch"
                   className="h-10 min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none placeholder:text-muted-foreground/50"
                 />
-                <span className="pr-3">
-                  <AliasBadge state={aliasState} />
-                </span>
               </div>
+              {/* State reads beneath the box, like every other field's helper
+                  line (no inline-right badge). */}
+              <AliasBadge state={showBadge} />
             </div>
 
             {error && (
@@ -278,7 +299,9 @@ export function LinkStep({
               disabled={
                 pending ||
                 !urlLooksValid ||
-                (alias.length > 0 && aliasState.kind !== "available")
+                // Block only on a known problem; a still-checking or
+                // indeterminate alias submits and is re-validated on create.
+                (alias.length > 0 && aliasVerdict.state === "problem")
               }
             >
               {pending ? "Shortening…" : "Shorten it"}
@@ -348,14 +371,17 @@ function LinkResult({
   )
 }
 
-function AliasBadge({ state }: { state: AliasState }) {
+/* The alias state as a beneath-the-box line, matching the other fields'
+   helper/error placement: muted mono while neutral, error color for a
+   blocking problem. */
+function AliasBadge({ state }: { state: BadgeState }) {
   if (state.kind === "idle") return null
   return (
-    <span
+    <p
       className={cn(
-        "label-mono whitespace-nowrap text-[9px]",
+        "font-mono text-xs",
         state.kind === "available" && "text-live",
-        state.kind === "checking" && "text-muted-foreground/60",
+        state.kind === "checking" && "text-muted-foreground/70",
         state.kind === "unavailable" && "text-destructive"
       )}
       aria-live="polite"
@@ -365,7 +391,7 @@ function AliasBadge({ state }: { state: AliasState }) {
         : state.kind === "available"
           ? "available"
           : state.reason}
-    </span>
+    </p>
   )
 }
 
