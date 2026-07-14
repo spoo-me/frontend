@@ -44,13 +44,16 @@ import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import {
-  deleteUrl,
+  type BulkOperationResult,
+  bulkDeleteUrls,
+  bulkMoveUrlDomain,
+  bulkSetUrlExpiry,
+  bulkSetUrlStatus,
   getUrl,
   listCustomDomains,
   listUrls,
-  setUrlStatus,
   SpooApiError,
-  updateUrl,
+  summarizeBulkFailures,
   type UrlListFilter,
   type UrlListItem,
   type UrlStatus,
@@ -408,10 +411,11 @@ export default function LinksPage() {
     return () => window.removeEventListener("keydown", onKey)
   }, [page, hasNextRef, items, setPage])
 
-  // Bulk ops fan out over the per-item API until the backend ships a bulk
-  // endpoint; swapping the mutationFn is the only change needed then.
-  // Fans out per-item calls (allSettled: one bad link never blocks the
-  // rest) until the backend ships bulk endpoints.
+  // One bulk request per user intent (POST /api/v1/urls/bulk/*), which
+  // returns a per-item report: every id gets a verdict, so partial failure
+  // is surfaced honestly rather than guessed. Move-to-domain has no bulk
+  // endpoint yet, so it fans out per item but returns the same report shape,
+  // keeping one partial-failure code path for every action.
   const bulk = useMutation({
     mutationFn: async ({
       ids,
@@ -423,32 +427,27 @@ export default function LinksPage() {
       action: "ACTIVE" | "INACTIVE" | "DELETE" | "DOMAIN" | "EXPIRY"
       domain?: string
       expireAfter?: number | null
-    }) => {
-      const results = await Promise.allSettled(
-        ids.map((id) =>
-          action === "DELETE"
-            ? deleteUrl(id)
-            : action === "DOMAIN"
-              ? updateUrl(id, { domain: domain === "spoo.me" ? null : domain! })
-              : action === "EXPIRY"
-                ? updateUrl(id, { expire_after: expireAfter ?? null })
-                : setUrlStatus(id, action)
-        )
-      )
-      const failed = results.filter((r) => r.status === "rejected").length
-      return { count: ids.length, failed, action, domain, expireAfter }
+    }): Promise<{
+      result: BulkOperationResult
+      action: typeof action
+      domain?: string
+      expireAfter?: number | null
+    }> => {
+      const result =
+        action === "DELETE"
+          ? await bulkDeleteUrls(ids)
+          : action === "DOMAIN"
+            ? await bulkMoveUrlDomain(ids, domain ?? null)
+            : action === "EXPIRY"
+              ? await bulkSetUrlExpiry(ids, expireAfter ?? null)
+              : await bulkSetUrlStatus(ids, action)
+      return { result, action, domain, expireAfter }
     },
-    onSuccess: ({ count, failed, action, domain, expireAfter }) => {
-      trackLinksBulkAction(action, count, failed)
+    onSuccess: ({ result, action, domain, expireAfter }) => {
+      const { total, succeeded, failed } = result.summary
+      trackLinksBulkAction(action, total, failed)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
-      clearSelection()
-      setBulkConfirm(false)
-      setBulkConfirmText("")
-      setMoveOpen(false)
-      setMoveTarget(null)
-      setExpiryOpen(false)
-      setBulkExpiry("")
       const verb =
         action === "DELETE"
           ? "deleted"
@@ -458,14 +457,40 @@ export default function LinksPage() {
               ? "deactivated"
               : action === "EXPIRY"
                 ? expireAfter == null
-                  ? "expiry removed"
+                  ? "expiry cleared"
                   : "set to expire"
                 : `moved to ${domain}`
-      if (failed)
-        toast.warning(
-          `${count - failed} of ${count} links ${verb}. ${failed} failed${action === "DOMAIN" ? " (alias already taken there)" : ""}.`
-        )
-      else toast.success(`${count} link${count === 1 ? "" : "s"} ${verb}`)
+
+      if (failed === 0) {
+        // Clean sweep: dismiss the whole selection and its dialogs.
+        clearSelection()
+        setBulkConfirm(false)
+        setBulkConfirmText("")
+        setMoveOpen(false)
+        setMoveTarget(null)
+        setExpiryOpen(false)
+        setBulkExpiry("")
+        toast.success(`${total} link${total === 1 ? "" : "s"} ${verb}`)
+        return
+      }
+
+      // Partial (or total) failure: narrow the selection down to exactly the
+      // links that failed so the user can inspect or retry that subset, and
+      // report which — no false "all done".
+      const failedIds = result.results.filter((r) => !r.ok).map((r) => r.id)
+      setSelectedIds(new Set(failedIds))
+      setBulkConfirm(false)
+      setBulkConfirmText("")
+      const breakdown = summarizeBulkFailures(result.results)
+      const message =
+        succeeded > 0
+          ? `${succeeded} ${verb}, ${failed} failed`
+          : `${failed} failed`
+      toast.warning(message, {
+        description: breakdown
+          ? `${breakdown}. Still selected to retry.`
+          : "Still selected to retry.",
+      })
     },
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Bulk action failed"),

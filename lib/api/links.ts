@@ -1,4 +1,4 @@
-import { authedFetch, jsonInit, parse } from "./client"
+import { authedFetch, jsonInit, parse, SpooApiError } from "./client"
 
 export type ShortUrl = {
   alias: string
@@ -248,4 +248,179 @@ export async function deleteUrl(urlId: string) {
     method: "DELETE",
   })
   if (!res.ok) await parse(res) // throws SpooApiError
+}
+
+/* ---------------------------------------------------------------------------
+ * Bulk operations — POST /api/v1/urls/bulk/{delete,status,expiry}
+ *
+ * One request per user intent instead of a client-side fan-out over the
+ * per-item routes. The batch always answers 200 with a summary plus one
+ * result row per unique requested id (even all-failed — per-item failures
+ * are answers, not errors). A 4xx is envelope rejection where NOTHING was
+ * attempted (over-cap, invalid param, missing scope, rate limit, or — until
+ * the backend bulk routes are deployed — a 404), and surfaces as a thrown
+ * SpooApiError, never a false success.
+ *
+ * The server caps a request at BULK_MAX_IDS ids; larger selections are
+ * chunked here and the per-chunk reports merged, so callers pass the whole
+ * selection and get one combined report back.
+ * ------------------------------------------------------------------------- */
+
+/** Server cap per bulk request (schemas/dto/requests/bulk.py BULK_MAX_IDS). */
+export const BULK_MAX_IDS = 100
+
+/** Closed per-item error vocabulary shared with the single-item routes. */
+export type BulkErrorCode =
+  | "not_found"
+  | "forbidden"
+  | "conflict"
+  | "validation_error"
+  | "internal"
+  | "not_attempted"
+
+/** Per-item verdict. `errorCode` is the key to branch on; `error` is a
+    display-safe but unstable message. Both null when `ok`. */
+export type BulkResultRow = {
+  id: string
+  alias: string | null
+  ok: boolean
+  error_code: BulkErrorCode | null
+  error: string | null
+}
+
+/** Envelope for every bulk URL operation — summary derived from the rows. */
+export type BulkOperationResult = {
+  summary: { total: number; succeeded: number; failed: number }
+  results: BulkResultRow[]
+}
+
+/** Split a selection into cap-sized chunks (request order preserved). */
+export function chunkIds(ids: string[], size = BULK_MAX_IDS): string[][] {
+  if (size < 1) throw new Error("chunk size must be >= 1")
+  const out: string[][] = []
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size))
+  return out
+}
+
+/** Merge per-chunk reports into one, recomputing the summary from the rows
+    (the report is the contract; the counts are derived, never tracked
+    separately). Chunks carry disjoint ids, so rows simply concatenate. */
+export function mergeBulkResults(
+  parts: BulkOperationResult[]
+): BulkOperationResult {
+  const results = parts.flatMap((p) => p.results)
+  const succeeded = results.reduce((n, r) => n + (r.ok ? 1 : 0), 0)
+  return {
+    results,
+    summary: {
+      total: results.length,
+      succeeded,
+      failed: results.length - succeeded,
+    },
+  }
+}
+
+/** Human-readable breakdown of the failed rows, grouped by cause — for an
+    honest partial-success message ("2 blocked, 1 already on the target").
+    Empty string when nothing failed. */
+export function summarizeBulkFailures(rows: BulkResultRow[]): string {
+  const labels: Record<BulkErrorCode, string> = {
+    not_found: "missing",
+    forbidden: "blocked",
+    conflict: "alias already taken",
+    validation_error: "invalid",
+    internal: "errored",
+    not_attempted: "not attempted",
+  }
+  const counts = new Map<string, number>()
+  for (const r of rows) {
+    if (r.ok) continue
+    const label = labels[r.error_code ?? "internal"] ?? "failed"
+    counts.set(label, (counts.get(label) ?? 0) + 1)
+  }
+  return [...counts.entries()].map(([label, n]) => `${n} ${label}`).join(", ")
+}
+
+async function bulkPost(
+  op: "delete" | "status" | "expiry",
+  ids: string[],
+  extra: Record<string, unknown>
+): Promise<BulkOperationResult> {
+  const parts: BulkOperationResult[] = []
+  // Sequential: keeps within the per-request rate budget and gives
+  // deterministic ordering; chunking past the cap is the rare case.
+  for (const chunk of chunkIds(ids)) {
+    const res = await authedFetch(
+      `/api/v1/urls/bulk/${op}`,
+      jsonInit("POST", { ids: chunk, ...extra })
+    )
+    parts.push(await parse<BulkOperationResult>(res))
+  }
+  return mergeBulkResults(parts)
+}
+
+export function bulkDeleteUrls(ids: string[]) {
+  return bulkPost("delete", ids, {})
+}
+
+export function bulkSetUrlStatus(ids: string[], status: "ACTIVE" | "INACTIVE") {
+  return bulkPost("status", ids, { status })
+}
+
+/** `expireAfter`: epoch seconds to set, or null to clear. */
+export function bulkSetUrlExpiry(ids: string[], expireAfter: number | null) {
+  return bulkPost("expiry", ids, { expire_after: expireAfter })
+}
+
+/**
+ * Move a selection to a domain. There is no bulk domain endpoint (the
+ * shipped bulk set is delete/status/expiry), so this fans out over the
+ * per-item PATCH — but maps each outcome into the same per-item report the
+ * bulk ops return, so every action shares one partial-failure UX. `domain`
+ * is the target fqdn, or "spoo.me"/null for the default namespace.
+ */
+export async function bulkMoveUrlDomain(
+  ids: string[],
+  domain: string | null
+): Promise<BulkOperationResult> {
+  const target = domain === "spoo.me" ? null : domain
+  const settled = await Promise.allSettled(
+    ids.map((id) => updateUrl(id, { domain: target }))
+  )
+  const results: BulkResultRow[] = settled.map((r, i) => {
+    const id = ids[i]
+    if (r.status === "fulfilled")
+      return {
+        id,
+        alias: r.value.alias,
+        ok: true,
+        error_code: null,
+        error: null,
+      }
+    const e = r.reason
+    return {
+      id,
+      alias: null,
+      ok: false,
+      error_code: fanoutErrorCode(e),
+      error: e instanceof Error ? e.message : "Move failed",
+    }
+  })
+  return mergeBulkResults([
+    {
+      results,
+      summary: { total: 0, succeeded: 0, failed: 0 },
+    },
+  ])
+}
+
+/** Map a single-item PATCH failure onto the bulk error vocabulary. */
+function fanoutErrorCode(e: unknown): BulkErrorCode {
+  if (e instanceof SpooApiError) {
+    if (e.status === 404) return "not_found"
+    if (e.status === 403) return "forbidden"
+    if (e.status === 409) return "conflict"
+    if (e.status === 400 || e.status === 422) return "validation_error"
+  }
+  return "internal"
 }
