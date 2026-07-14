@@ -7,7 +7,6 @@ import { motion } from "motion/react"
 import { ArrowUpRight, Flame } from "lucide-react"
 
 import { dimensionRowsOf, getStats } from "@/lib/api"
-import { linkDetailPath } from "@/lib/link-detail"
 import { formatCount } from "@/lib/format"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
@@ -73,7 +72,12 @@ export function HotLinks() {
             {rows.map((row, i) => (
               <Link
                 key={row.value}
-                href={linkDetailPath({ alias: row.value })}
+                // The stats dimension carries only the short code, not the
+                // link's domain, so a custom-domain link can't be deep-linked
+                // to its detail route without guessing the domain (and 404ing).
+                // Route to the links list filtered by alias instead: the real
+                // row there carries the correct domain and never 404s.
+                href={`/dashboard/links?q=${encodeURIComponent(row.value)}`}
                 className="group relative flex h-9 items-center gap-2.5 overflow-hidden rounded-lg px-2.5"
               >
                 <motion.span

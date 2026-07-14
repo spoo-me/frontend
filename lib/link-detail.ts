@@ -9,7 +9,14 @@
  * self-hosted deploys all stay correct without hardcoding spoo.me.
  */
 
-/** The domain segment for a link: its custom domain, else the current host. */
+/**
+ * The domain segment for a link: its custom domain, else the current host.
+ *
+ * Client-only: the inline window.location read returns "" during SSR, so
+ * server-rendered call sites must resolve the host via the useCurrentHost
+ * hook instead (as the public stats view does); every current caller renders
+ * from client-fetched query data, so no href is computed server-side.
+ */
 export function detailDomainOf(domain?: string | null): string {
   if (domain) return domain
   return typeof window === "undefined" ? "" : window.location.hostname
