@@ -83,16 +83,18 @@ export function LinkStep({
   const aliasVerdict = useAliasCheck({ alias })
   const [serverTaken, setServerTaken] = React.useState<string | null>(null)
   const badge: BadgeState =
-    aliasVerdict.state === "idle"
-      ? { kind: "idle" }
-      : aliasVerdict.state === "checking"
-        ? { kind: "checking" }
-        : aliasVerdict.state === "available"
-          ? { kind: "available" }
-          : {
+    aliasVerdict.state === "checking"
+      ? { kind: "checking" }
+      : aliasVerdict.state === "available"
+        ? { kind: "available" }
+        : // idle and unknown (check couldn't complete) show no badge; the
+          // create call re-validates.
+          aliasVerdict.state === "problem"
+          ? {
               kind: "unavailable",
               reason: aliasTerse(aliasVerdict.reason, alias),
             }
+          : { kind: "idle" }
   const showBadge: BadgeState =
     serverTaken === alias && alias
       ? { kind: "unavailable", reason: "already taken" }
@@ -283,7 +285,9 @@ export function LinkStep({
               disabled={
                 pending ||
                 !urlLooksValid ||
-                (alias.length > 0 && aliasVerdict.state !== "available")
+                // Block only on a known problem; a still-checking or
+                // indeterminate alias submits and is re-validated on create.
+                (alias.length > 0 && aliasVerdict.state === "problem")
               }
             >
               {pending ? "Shortening…" : "Shorten it"}

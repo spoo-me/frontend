@@ -23,6 +23,7 @@ import {
   type UrlListItem,
 } from "@/lib/api"
 import { normalizeUrl, urlProblem } from "@/lib/validation"
+import { countGraphemes } from "@/lib/emoji-alias"
 import { useAliasCheck } from "@/hooks/use-alias-check"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
@@ -40,6 +41,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
 import { InfoHint } from "@/components/dashboard/info-hint"
+import { EmojiPicker } from "@/components/dashboard/links/emoji-picker"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -356,11 +358,14 @@ export function LinkSettingsForm({
   const displayedMeta = metaCustomized ? meta : prefillDraftOf(destMeta.data)
 
   const aliasChanged = alias !== (link.alias ?? "")
-  // Live availability via the shared hook — only a CHANGED alias is checked,
-  // and the check is domain-scoped.
+  // Live availability via the shared hook — only a CHANGED alias is checked.
+  // Send the domain to check-alias only when it is a CUSTOM domain (any option
+  // past the first/system-default entry); the default goes with no domain
+  // param or the backend 404s it.
+  const defaultDomain = domains[0]
   const aliasVerdict = useAliasCheck({
     alias,
-    domain,
+    domain: domain === defaultDomain ? undefined : domain,
     enabled: aliasChanged,
   })
   // Create-time alias rejections carry the server's message, keyed to the
@@ -489,7 +494,11 @@ export function LinkSettingsForm({
     variantTotal(variants) <= 100 &&
     !geoRulesProblem(geoRules) &&
     !metaProblem &&
-    (!aliasChanged || aliasVerdict.state === "available" || alias === "") &&
+    (!aliasChanged ||
+      aliasVerdict.state === "available" ||
+      // Indeterminate check must not hard-block; the backend re-validates.
+      aliasVerdict.state === "unknown" ||
+      alias === "") &&
     (passwordMode !== "set" || newPassword.length > 0)
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
@@ -584,6 +593,10 @@ export function LinkSettingsForm({
           >
             <Dices />
           </Button>
+          <EmojiPicker
+            remaining={15 - countGraphemes(alias)}
+            onPick={(emoji) => setAlias((a) => a.replace(/\s+/g, "") + emoji)}
+          />
         </div>
       </Field>
 

@@ -1083,18 +1083,28 @@ async function handle(req: NextRequest, path: string[]) {
       const alias = params.get("alias") ?? ""
       return json(checkAliasVerdict(alias))
     }
-    case "GET /v1/emoji-set":
+    case "GET /v1/emoji-set": {
       // Immutable per deploy; the real backend derives this from
-      // shared/emoji_policy.generation_pool(). Mock returns a small real set.
+      // shared/emoji_policy.generation_pool(). Mock returns a small real set,
+      // with canonical CLDR group names so the picker's tab layout is
+      // exercised as it is in production.
+      const CANON: Record<string, string> = {
+        smileys: "Smileys & Emotion",
+        animals: "Animals & Nature",
+        food: "Food & Drink",
+        nature: "Animals & Nature",
+        objects: "Objects",
+      }
       return json(
         {
           accept_max_version: 15.1,
           generate_max_version: 12.0,
           max_graphemes: 15,
-          emoji: MOCK_EMOJI,
+          emoji: MOCK_EMOJI.map((e) => ({ ...e, g: CANON[e.g] ?? e.g })),
         },
         { headers: { "cache-control": "public, max-age=31536000, immutable" } }
       )
+    }
     case "POST /v1/shorten": {
       // The DTO accepts `url` as an alias for `long_url` (first alias wins).
       const rawLong = body.long_url !== undefined ? body.long_url : body.url

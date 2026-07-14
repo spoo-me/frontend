@@ -310,17 +310,24 @@ export function LinkComposer() {
     enabled: open && showDomains,
     staleTime: 60_000,
   })
-  const activeDomains = [
-    "spoo.me",
-    ...(domains.data?.items
+  // The system default is the first entry; custom domains follow it.
+  const customDomains = new Set(
+    domains.data?.items
       .filter((d) => d.status === "ACTIVE")
-      .map((d) => d.fqdn) ?? []),
-  ]
+      .map((d) => d.fqdn) ?? []
+  )
+  const activeDomains = ["spoo.me", ...customDomains]
 
   // Live alias availability via the shared hook (debounced, domain-scoped).
-  // Create-time alias rejections are kept separately, keyed to the alias they
-  // answered so fresh input clears them and the server's message shows through.
-  const aliasVerdict = useAliasCheck({ alias, domain })
+  // Only a CUSTOM domain is sent to check-alias; the system default must go
+  // with no domain param (the backend 404s a non-default domain that is not an
+  // owned custom domain). Create-time alias rejections are kept separately,
+  // keyed to the alias they answered so fresh input clears them and the
+  // server's message shows through.
+  const aliasVerdict = useAliasCheck({
+    alias,
+    domain: customDomains.has(domain) ? domain : undefined,
+  })
   const [serverAliasError, setServerAliasError] = React.useState<{
     alias: string
     domain: string
@@ -414,7 +421,10 @@ export function LinkComposer() {
     !metaProblem &&
     (alias === "" ||
       aliasVerdict.state === "available" ||
-      aliasVerdict.state === "checking")
+      aliasVerdict.state === "checking" ||
+      // Indeterminate (check couldn't complete): don't hard-block; the
+      // backend re-validates on create.
+      aliasVerdict.state === "unknown")
 
   const submit = () => {
     if (!canCreate) return

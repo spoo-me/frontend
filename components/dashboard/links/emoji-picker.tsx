@@ -272,9 +272,11 @@ function EmojiPickerBody({
         </div>
 
         {groups.length > 1 && q === "" && (
-          <div className="flex flex-wrap gap-1">
+          // One tidy horizontal row: scroll, never wrap, hidden scrollbar.
+          <div className="-mx-0.5 flex flex-nowrap gap-1 overflow-x-auto whitespace-nowrap px-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <CategoryChip
               active={group === null}
+              title="All emoji"
               onClick={() => setGroup(null)}
             >
               All
@@ -283,9 +285,10 @@ function EmojiPickerBody({
               <CategoryChip
                 key={g}
                 active={group === g}
+                title={g}
                 onClick={() => setGroup(g)}
               >
-                {g}
+                {shortGroupLabel(g)}
               </CategoryChip>
             ))}
           </div>
@@ -358,21 +361,47 @@ function EmojiPickerBody({
   )
 }
 
+/**
+ * Short display labels for the canonical CLDR group names, so the tab row
+ * stays a single tidy line. The backend group VALUES are unchanged; this only
+ * affects the rendered label. Unknown values (e.g. the mock's already-short
+ * names) fall through as-is.
+ */
+const GROUP_LABELS: Record<string, string> = {
+  "Smileys & Emotion": "Smileys",
+  "People & Body": "People",
+  "Animals & Nature": "Animals",
+  "Food & Drink": "Food",
+  "Travel & Places": "Travel",
+  Activities: "Activities",
+  Objects: "Objects",
+  Symbols: "Symbols",
+  Flags: "Flags",
+}
+function shortGroupLabel(group: string): string {
+  return GROUP_LABELS[group] ?? group
+}
+
 function CategoryChip({
   active,
   onClick,
+  title,
   children,
 }: {
   active: boolean
   onClick: () => void
+  /** Full canonical group name, kept for a11y while the label is shortened. */
+  title?: string
   children: React.ReactNode
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      title={title}
+      aria-label={title}
       className={cn(
-        "label-mono rounded-md px-1.5 py-0.5 text-[10px] capitalize transition-colors duration-100",
+        "label-mono shrink-0 rounded-md px-1.5 py-0.5 text-[10px] capitalize transition-colors duration-100",
         active
           ? "bg-accent text-foreground"
           : "text-muted-foreground/60 hover:text-foreground"
