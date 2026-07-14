@@ -194,6 +194,21 @@ export function listUrls(params?: ListUrlsParams) {
 }
 
 /**
+ * GET /api/v1/urls/{domain}/{alias} — one link by its natural key. The
+ * domain segment is explicit: the backend resolves its own hostnames to
+ * default-domain links, a custom domain resolves links on that domain.
+ * Both segments percent-encoded (emoji aliases). 404 for missing or
+ * foreign links; the response is one UrlListItem exactly as the list
+ * endpoint serves it. (GET /api/v1/urls/{url_id} is the by-id sibling.)
+ */
+export function getUrl(domain: string, alias: string) {
+  return authedFetch(
+    `/api/v1/urls/${encodeURIComponent(domain)}/${encodeURIComponent(alias)}`,
+    { method: "GET" }
+  ).then((r) => parse<UrlListItem>(r))
+}
+
+/**
  * PATCH-able link properties. Removal is a first-class verb: password /
  * max_clicks / expire_after accept null to clear (SPEC §5 removal semantics).
  */

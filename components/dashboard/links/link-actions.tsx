@@ -17,6 +17,7 @@ import { toast } from "sonner"
 
 import { trackLinkDeleted } from "@/lib/analytics"
 import { deleteUrl, setUrlStatus, type UrlListItem } from "@/lib/api"
+import { linkDetailPath } from "@/lib/link-detail"
 import { MAX_WIDGETS } from "@/lib/analytics-layout"
 import { useAnalyticsLayout } from "@/hooks/use-analytics-layout"
 import { Button } from "@/components/ui/button"
@@ -147,9 +148,7 @@ export function LinkActions({
             <ExternalLink />
             Open
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => router.push(`/dashboard/links/${link.alias}`)}
-          >
+          <DropdownMenuItem onSelect={() => router.push(linkDetailPath(link))}>
             <ScanLine />
             Full page
           </DropdownMenuItem>

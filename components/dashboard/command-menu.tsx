@@ -23,6 +23,7 @@ import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { trackUiAction } from "@/lib/analytics"
 import { listCustomDomains, listUrls } from "@/lib/api"
+import { linkSheetParam } from "@/lib/link-detail"
 import { faviconUrl } from "@/lib/favicon"
 import { Logo } from "@/components/shared/logo"
 import { dashboardFlags, dashboardNav } from "@/components/dashboard/nav"
@@ -338,7 +339,7 @@ export function DashboardCommandMenu() {
                         value={`${l.alias} ${l.long_url ?? ""} ${q}`}
                         onSelect={() =>
                           go(
-                            `/dashboard/links?link=${encodeURIComponent(l.alias ?? "")}`
+                            `/dashboard/links?link=${encodeURIComponent(linkSheetParam(l))}`
                           )
                         }
                         className="flex h-10 cursor-default select-none items-center gap-3 rounded-lg px-2.5 text-sm data-[selected=true]:bg-accent/70"

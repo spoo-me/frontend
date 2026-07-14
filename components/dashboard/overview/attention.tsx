@@ -6,6 +6,7 @@ import { ArrowUpRight, ChevronDown, ChevronUp, CircleAlert } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import type { CustomDomain, UrlListItem } from "@/lib/api"
+import { linkDetailPath } from "@/lib/link-detail"
 import { formatWhen } from "@/lib/format"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
@@ -103,7 +104,7 @@ export function buildAttentionItems(
                 ? "expires tomorrow"
                 : `expires in ${days} days`,
           action: "Extend",
-          href: `/dashboard/links/${l.alias}`,
+          href: linkDetailPath(l),
         })
       }
     }
@@ -124,7 +125,7 @@ export function buildAttentionItems(
           ? `hit its cap (${l.total_clicks}/${l.max_clicks}), stopped serving`
           : `${l.total_clicks}/${l.max_clicks} clicks used`,
         action: capped ? "Raise cap" : "Review",
-        href: `/dashboard/links/${l.alias}`,
+        href: linkDetailPath(l),
       })
     }
   }
@@ -147,7 +148,7 @@ export function buildAttentionItems(
         ? "blocked and not serving"
         : `expired, last click ${formatWhen(l.last_click)}`,
       action: "Review",
-      href: `/dashboard/links/${l.alias}`,
+      href: linkDetailPath(l),
     })
   }
 
