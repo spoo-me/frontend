@@ -310,9 +310,18 @@ function EmojiPickerBody({
           </div>
         )}
 
-        <p className="label-mono px-1 text-[10px] text-muted-foreground/50">
-          {capped ? "15 emoji max" : `${filtered.length} emoji`}
-        </p>
+        {/* No resting-state total (that reads as helper-chrome). The cap note
+            is actionable (it explains the disabled cells); a result count
+            appears only while a search is active. */}
+        {capped ? (
+          <p className="label-mono px-1 text-[10px] text-muted-foreground/50">
+            15 emoji max
+          </p>
+        ) : q !== "" && filtered.length > 0 ? (
+          <p className="label-mono px-1 text-[10px] text-muted-foreground/50">
+            {filtered.length} {filtered.length === 1 ? "result" : "results"}
+          </p>
+        ) : null}
       </PopoverContent>
     </Popover>
   )
