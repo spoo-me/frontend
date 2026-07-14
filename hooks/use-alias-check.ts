@@ -3,7 +3,11 @@
 import * as React from "react"
 
 import { checkAlias, type CheckAliasReason } from "@/lib/api"
-import { countGraphemes, isEmojiCandidate } from "@/lib/emoji-alias"
+import {
+  countGraphemes,
+  findUnsupportedGraphemes,
+  isEmojiCandidate,
+} from "@/lib/emoji-alias"
 
 /** The one alias state machine, shared by the composer, the settings form and
     onboarding. `unknown` = the check could not complete (404 / network /
@@ -41,11 +45,18 @@ const MIN_ALNUM = 3
 const MAX_ALNUM = 16
 const DEBOUNCE_MS = 350
 
+/** Accurate generic emoji-policy copy, used when the specific offender cannot
+    be pinpointed client-side (set not loaded, or nothing flagged locally). No
+    flags/keycaps/joined list — it misleads for the common VS16 case. */
+export const EMOJI_POLICY_GENERIC =
+  "Some of those emoji won't work in a link address. Solid emoji and skin tones work."
+
 /**
  * Reason → hint copy (muted register, used by the composer and settings form).
  * The alnum and emoji lanes phrase `length` differently; everything else is
  * shared. Onboarding does not use this map — it renders terse forms keyed on
- * the reason itself.
+ * the reason itself. `emoji_policy` returns the generic message; callers with
+ * the accepted set should prefer `emojiPolicyHint` to name the offender.
  */
 export function aliasHintMessage(
   reason: CheckAliasReason,
@@ -59,12 +70,32 @@ export function aliasHintMessage(
         ? `Up to ${MAX_EMOJI_GRAPHEMES} emoji.`
         : "3-16 characters: letters, numbers, - and _"
     case "emoji_policy":
-      return "Some of those emoji don't survive a browser address bar. Plain emoji and skin tones work; flags, keycaps and joined sequences don't."
+      return EMOJI_POLICY_GENERIC
     case "reserved":
       return "That alias is reserved."
     case "taken":
       return "That alias is taken, try another."
   }
+}
+
+/**
+ * Emoji-policy hint that NAMES the offending grapheme(s) using the fetched
+ * accepted set. Falls back to the accurate generic message when the set is
+ * unavailable or nothing is flagged locally (so it never blocks on the set and
+ * never misstates the cause). For the message only; the server stays
+ * authoritative.
+ */
+export function emojiPolicyHint(
+  alias: string,
+  accepted: Set<string> | null | undefined
+): string {
+  if (!accepted || accepted.size === 0) return EMOJI_POLICY_GENERIC
+  const offenders = findUnsupportedGraphemes(alias, accepted)
+  if (offenders.length === 0) return EMOJI_POLICY_GENERIC
+  if (offenders.length === 1)
+    return `${offenders[0]} won't work in a link address, try another.`
+  const others = offenders.length - 1
+  return `${offenders[0]} and ${others} other${others === 1 ? "" : "s"} won't work in a link address.`
 }
 
 /** Is this input locally gated (no server round trip needed / possible)? */

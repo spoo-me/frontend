@@ -31,15 +31,28 @@ import {
   type ShortenInput,
   type ShortUrl,
 } from "@/lib/api"
-import { isEmojiCandidate } from "@/lib/emoji-alias"
+import { findUnsupportedGraphemes, isEmojiCandidate } from "@/lib/emoji-alias"
 import { useAliasCheck } from "@/hooks/use-alias-check"
+import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
 
 /** Terse register for the first-run badge (the muted-mono AliasBadge). The
-    hint-length prose the composer uses would be too loud here. */
-function aliasTerse(reason: CheckAliasReason, alias: string): string {
+    hint-length prose the composer uses would be too loud here. The emoji_policy
+    case names the offending emoji from the accepted set when it is loaded. */
+function aliasTerse(
+  reason: CheckAliasReason,
+  alias: string,
+  accepted: Set<string> | null
+): string {
   switch (reason) {
-    case "emoji_policy":
+    case "emoji_policy": {
+      const offenders = accepted
+        ? findUnsupportedGraphemes(alias, accepted)
+        : []
+      if (offenders.length === 1) return `${offenders[0]} not supported`
+      if (offenders.length > 1)
+        return `${offenders[0]} +${offenders.length - 1} not supported`
       return "unsupported emoji"
+    }
     case "length":
       return !isEmojiCandidate(alias) && alias.length < 3
         ? "3+ characters"
@@ -81,6 +94,7 @@ export function LinkStep({
   // the terse first-run badge maps the reason. A create-time collision is
   // shown through `serverTaken`, keyed to the alias it answered.
   const aliasVerdict = useAliasCheck({ alias })
+  const acceptedEmoji = useAcceptedEmoji()
   const [serverTaken, setServerTaken] = React.useState<string | null>(null)
   const badge: BadgeState =
     aliasVerdict.state === "checking"
@@ -92,7 +106,7 @@ export function LinkStep({
           aliasVerdict.state === "problem"
           ? {
               kind: "unavailable",
-              reason: aliasTerse(aliasVerdict.reason, alias),
+              reason: aliasTerse(aliasVerdict.reason, alias, acceptedEmoji),
             }
           : { kind: "idle" }
   const showBadge: BadgeState =

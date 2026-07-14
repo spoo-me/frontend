@@ -1,17 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { useQuery } from "@tanstack/react-query"
 import { Search, Smile } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { getEmojiSet, type EmojiItem } from "@/lib/api"
+import { type EmojiItem } from "@/lib/api"
 import {
   loadRecents,
   mergeRecent,
   saveRecents,
   validRecents,
 } from "@/lib/emoji-recents"
+import { useEmojiSet } from "@/hooks/use-emoji-set"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -50,14 +50,7 @@ export function EmojiPicker({
   onPick: (emoji: string) => void
   remaining: number
 }) {
-  const { data } = useQuery({
-    queryKey: ["emoji-set"],
-    queryFn: getEmojiSet,
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: Number.POSITIVE_INFINITY,
-    retry: false,
-    refetchOnWindowFocus: false,
-  })
+  const { data } = useEmojiSet()
 
   const emoji = data?.emoji
   if (!emoji || emoji.length === 0) return null

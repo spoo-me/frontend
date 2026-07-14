@@ -30,7 +30,8 @@ import {
 } from "@/lib/api"
 import { urlProblem } from "@/lib/validation"
 import { countGraphemes, suggestEmojiAlias } from "@/lib/emoji-alias"
-import { useAliasCheck } from "@/hooks/use-alias-check"
+import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
+import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
@@ -342,11 +343,16 @@ export function LinkComposer() {
     serverAliasError.domain === domain
       ? serverAliasError.message
       : null
+  // Name the specific unsupported emoji for the emoji_policy case, from the
+  // fetched accepted set; every other problem keeps the hook's copy.
+  const acceptedEmoji = useAcceptedEmoji()
   const aliasHint =
     aliasVerdict.state === "available"
       ? `${domain}/${alias} is available.`
       : aliasVerdict.state === "problem"
-        ? aliasVerdict.message
+        ? aliasVerdict.reason === "emoji_policy"
+          ? emojiPolicyHint(alias, acceptedEmoji)
+          : aliasVerdict.message
         : "Leave the alias empty for a random one."
 
   const geoPayload = completeGeoRules(geoRules)

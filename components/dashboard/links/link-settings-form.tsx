@@ -24,7 +24,8 @@ import {
 } from "@/lib/api"
 import { normalizeUrl, urlProblem } from "@/lib/validation"
 import { countGraphemes } from "@/lib/emoji-alias"
-import { useAliasCheck } from "@/hooks/use-alias-check"
+import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
+import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
@@ -368,6 +369,8 @@ export function LinkSettingsForm({
     domain: domain === defaultDomain ? undefined : domain,
     enabled: aliasChanged,
   })
+  // Accepted set for naming a specific unsupported emoji in the hint.
+  const acceptedEmoji = useAcceptedEmoji()
   // Create-time alias rejections carry the server's message, keyed to the
   // alias/domain they answered so fresh input clears them.
   const [serverAliasError, setServerAliasError] = React.useState<{
@@ -533,7 +536,9 @@ export function LinkSettingsForm({
           aliasVerdict.state === "available"
             ? `${domain}/${alias} is available.`
             : aliasVerdict.state === "problem"
-              ? aliasVerdict.message
+              ? aliasVerdict.reason === "emoji_policy"
+                ? emojiPolicyHint(alias, acceptedEmoji)
+                : aliasVerdict.message
               : "Changing the alias breaks the old address."
         }
       >

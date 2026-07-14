@@ -712,25 +712,33 @@ function graphemesOf(s: string): string[] {
   return out
 }
 
-/** Coarse mirror of the accept rule: each grapheme a single Extended
-    Pictographic codepoint (skin tone + VS16 allowed), no ZWJ, flags or
-    keycaps. */
+/** Canonicalize like the client/backend before the membership check: drop
+    VS16 and a trailing skin-tone modifier. */
+function canonicalBase(g: string): string {
+  let out = ""
+  for (const ch of g) {
+    const cp = ch.codePointAt(0) ?? 0
+    if (cp === 0xfe0f) continue // VS16
+    if (cp >= 0x1f3fb && cp <= 0x1f3ff) continue // skin-tone modifier
+    out += ch
+  }
+  return out
+}
+
+let _mockAccepted: Set<string> | null = null
+function mockAcceptedSet(): Set<string> {
+  if (!_mockAccepted) _mockAccepted = new Set(MOCK_EMOJI.map((e) => e.c))
+  return _mockAccepted
+}
+
+/** Membership mirror of the real accept rule: a grapheme is accepted iff its
+    canonical base is in the served set. This is faithful to the emoji-set
+    endpoint (same source), so e.g. a VS16 text-style heart (not in the set) is
+    rejected while a skin-toned base emoji is accepted. */
 function emojiPolicyOk(alias: string): boolean {
-  const ZWJ = 0x200d
-  const VS16 = 0xfe0f
-  const KEYCAP = 0x20e3
+  const accepted = mockAcceptedSet()
   for (const g of graphemesOf(alias)) {
-    const cps = [...g].map((ch) => ch.codePointAt(0) ?? 0)
-    if (cps.includes(ZWJ)) return false // ZWJ sequence (families, etc.)
-    if (cps.includes(KEYCAP)) return false // keycap combiner
-    if (cps.some((cp) => cp >= 0x1f1e6 && cp <= 0x1f1ff)) return false // flags
-    // Drop VS16 and skin-tone modifiers, expect a single base codepoint.
-    const base = cps.filter(
-      (cp) => cp !== VS16 && !(cp >= 0x1f3fb && cp <= 0x1f3ff)
-    )
-    if (base.length !== 1) return false
-    if (!/\p{Extended_Pictographic}/u.test(String.fromCodePoint(base[0])))
-      return false
+    if (!accepted.has(canonicalBase(g))) return false
   }
   return true
 }
@@ -869,6 +877,13 @@ const MOCK_EMOJI: Array<{ c: string; n: string; gen: boolean; g: string }> = [
   { c: "⚽", n: "soccer football", gen: false, g: "objects" },
   { c: "🧩", n: "puzzle piece", gen: false, g: "objects" },
   { c: "📚", n: "books", gen: false, g: "objects" },
+  // Skin-tone-capable base emoji: their base must be in the set so a toned
+  // grapheme (e.g. 👍🏽) canonicalizes to an accepted base and is NOT flagged.
+  { c: "👍", n: "thumbs up", gen: false, g: "people" },
+  { c: "👋", n: "waving hand", gen: false, g: "people" },
+  { c: "🙌", n: "raising hands", gen: false, g: "people" },
+  { c: "👏", n: "clapping hands", gen: false, g: "people" },
+  { c: "🙏", n: "folded hands please thanks", gen: false, g: "people" },
 ]
 
 function pickEmojiAlias(n = 3): string {
@@ -1090,6 +1105,7 @@ async function handle(req: NextRequest, path: string[]) {
       // exercised as it is in production.
       const CANON: Record<string, string> = {
         smileys: "Smileys & Emotion",
+        people: "People & Body",
         animals: "Animals & Nature",
         food: "Food & Drink",
         nature: "Animals & Nature",

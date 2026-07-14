@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import {
   aliasHintMessage,
   aliasVerdictKey,
+  EMOJI_POLICY_GENERIC,
+  emojiPolicyHint,
   resolveAliasVerdict,
 } from "./use-alias-check"
 
@@ -20,8 +22,11 @@ describe("aliasHintMessage", () => {
     )
   })
 
-  it("teaches the address-bar rule for emoji_policy", () => {
-    expect(aliasHintMessage("emoji_policy", true)).toContain("address bar")
+  it("gives an accurate generic emoji_policy line without misleading examples", () => {
+    const msg = aliasHintMessage("emoji_policy", true)
+    expect(msg).toBe(EMOJI_POLICY_GENERIC)
+    expect(msg).not.toContain("flags")
+    expect(msg).not.toContain("keycaps")
   })
 
   it("maps reserved and taken", () => {
@@ -29,6 +34,34 @@ describe("aliasHintMessage", () => {
     expect(aliasHintMessage("taken", true)).toBe(
       "That alias is taken, try another."
     )
+  })
+})
+
+describe("emojiPolicyHint", () => {
+  const accepted = new Set(["😃", "🚀", "🎉"])
+
+  it("names a single offender", () => {
+    expect(emojiPolicyHint("😃❤️", accepted)).toBe(
+      "❤️ won't work in a link address, try another."
+    )
+  })
+
+  it("names the first offender and counts the rest", () => {
+    expect(emojiPolicyHint("❤️✨", accepted)).toBe(
+      "❤️ and 1 other won't work in a link address."
+    )
+    expect(emojiPolicyHint("❤️✨🧨", accepted)).toBe(
+      "❤️ and 2 others won't work in a link address."
+    )
+  })
+
+  it("falls back to the accurate generic when the set is unavailable", () => {
+    expect(emojiPolicyHint("😃❤️", null)).toBe(EMOJI_POLICY_GENERIC)
+  })
+
+  it("falls back to generic when nothing is flagged locally", () => {
+    // Server said emoji_policy but the client cannot pinpoint locally.
+    expect(emojiPolicyHint("🚀🎉", accepted)).toBe(EMOJI_POLICY_GENERIC)
   })
 })
 

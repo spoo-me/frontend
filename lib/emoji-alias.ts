@@ -152,3 +152,46 @@ export function suggestEmojiAlias(n = 3): string {
   }
   return out
 }
+
+/** Split a string into its grapheme clusters. */
+export function toGraphemes(input: string): string[] {
+  if (!input) return []
+  if (!segmenter) return Array.from(input)
+  const out: string[] = []
+  for (const { segment } of segmenter.segment(input)) out.push(segment)
+  return out
+}
+
+/**
+ * Canonicalize a grapheme the same way the backend does before membership:
+ * drop U+FE0F (VS16) anywhere, and drop a trailing skin-tone modifier
+ * (U+1F3FB..U+1F3FF). The accepted set lists BASE characters, so a skin-toned
+ * emoji must be reduced to its base before the check or it false-positives.
+ */
+export function canonicalEmojiBase(grapheme: string): string {
+  let out = ""
+  for (const ch of grapheme) {
+    const cp = ch.codePointAt(0) ?? 0
+    if (cp === 0xfe0f) continue // VS16
+    if (cp >= 0x1f3fb && cp <= 0x1f3ff) continue // skin-tone modifier
+    out += ch
+  }
+  return out
+}
+
+/**
+ * Which graphemes of `alias` are NOT in the accepted set (as TYPED, so they
+ * still render for the user). Canonical base membership only; this names the
+ * offenders for the message and is never the accept/reject authority — the
+ * server's check-alias remains the validator.
+ */
+export function findUnsupportedGraphemes(
+  alias: string,
+  accepted: Set<string>
+): string[] {
+  const out: string[] = []
+  for (const g of toGraphemes(alias)) {
+    if (!accepted.has(canonicalEmojiBase(g))) out.push(g)
+  }
+  return out
+}

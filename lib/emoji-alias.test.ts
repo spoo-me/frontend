@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  canonicalEmojiBase,
   countGraphemes,
   EMOJI_SUGGEST_POOL,
+  findUnsupportedGraphemes,
   isEmojiCandidate,
   suggestEmojiAlias,
 } from "./emoji-alias"
@@ -59,5 +61,40 @@ describe("suggestEmojiAlias", () => {
     for (const grapheme of Array.from(suggestEmojiAlias(6))) {
       expect(pool.has(grapheme)).toBe(true)
     }
+  })
+})
+
+describe("canonicalEmojiBase", () => {
+  it("strips VS16 so a text-style emoji matches its base", () => {
+    // ❤️ (U+2764 U+FE0F) -> ❤ (U+2764)
+    expect(canonicalEmojiBase("❤️")).toBe("❤")
+  })
+
+  it("strips a trailing skin-tone modifier", () => {
+    // 👍🏽 -> 👍
+    expect(canonicalEmojiBase("👍🏽")).toBe("👍")
+  })
+})
+
+describe("findUnsupportedGraphemes", () => {
+  // The accepted set lists canonical BASE characters (no VS16).
+  const accepted = new Set(["😃", "🚀", "🎉", "👍"])
+
+  it("names only the offender, not accepted neighbours", () => {
+    // 😃 accepted, ❤️ not -> only ❤️ flagged (as typed, VS16 retained).
+    expect(findUnsupportedGraphemes("😃❤️", accepted)).toEqual(["❤️"])
+  })
+
+  it("does not flag a skin-toned accepted emoji", () => {
+    // 👍🏽 canonicalizes to 👍 which IS accepted.
+    expect(findUnsupportedGraphemes("👍🏽", accepted)).toEqual([])
+  })
+
+  it("returns empty when every grapheme is accepted", () => {
+    expect(findUnsupportedGraphemes("🚀🎉", accepted)).toEqual([])
+  })
+
+  it("collects multiple offenders in order", () => {
+    expect(findUnsupportedGraphemes("❤️🚀✨", accepted)).toEqual(["❤️", "✨"])
   })
 })
