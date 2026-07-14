@@ -27,3 +27,14 @@ export function useAcceptedEmoji(): Set<string> | null {
     [data]
   )
 }
+
+/** The server's auto-gen pool (emoji-set `gen` entries), or null until loaded.
+    Dice suggestions draw from this so they match server auto-gen; before it
+    loads, callers fall back to the curated pre-load pool. */
+export function useGenerateEmoji(): string[] | null {
+  const { data } = useEmojiSet()
+  return React.useMemo(
+    () => (data ? data.emoji.filter((e) => e.gen).map((e) => e.c) : null),
+    [data]
+  )
+}

@@ -31,7 +31,7 @@ import {
 import { urlProblem } from "@/lib/validation"
 import { countGraphemes, suggestEmojiAlias } from "@/lib/emoji-alias"
 import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
-import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
+import { useAcceptedEmoji, useGenerateEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
@@ -346,6 +346,9 @@ export function LinkComposer() {
   // Name the specific unsupported emoji for the emoji_policy case, from the
   // fetched accepted set; every other problem keeps the hook's copy.
   const acceptedEmoji = useAcceptedEmoji()
+  // Dice emoji suggestions draw from the server auto-gen pool once loaded;
+  // the curated pool is only the pre-load fallback.
+  const generateEmoji = useGenerateEmoji()
   const aliasHint =
     aliasVerdict.state === "available"
       ? `${domain}/${alias} is available.`
@@ -699,7 +702,9 @@ export function LinkComposer() {
                         <DropdownMenuItem
                           onSelect={() => {
                             trackUiAction("alias_suggested", "emoji")
-                            setAlias(suggestEmojiAlias())
+                            setAlias(
+                              suggestEmojiAlias(3, generateEmoji ?? undefined)
+                            )
                           }}
                         >
                           Suggest emoji

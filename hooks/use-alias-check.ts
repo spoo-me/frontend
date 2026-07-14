@@ -173,21 +173,34 @@ export function useAliasCheck({
   const gatedLocally = isGatedLocally(alias, enabled)
   const [cached, setCached] = React.useState<CachedVerdict | null>(null)
 
+  // The key the hook currently cares about. A slow in-flight request whose
+  // input has since changed must not write state: if a stale OLDER response
+  // landed last it would overwrite a fresh answer with a non-matching key,
+  // and resolveAliasVerdict would then sit in "checking" with nothing pending
+  // (no timer, no request) — a terminal hang. Both branches drop late
+  // responses that no longer match the current key.
+  const latestKey = React.useRef(key)
+  latestKey.current = key
+
   React.useEffect(() => {
     if (gatedLocally) return
     const t = setTimeout(() => {
       checkAlias(alias, domain)
-        .then((r) =>
+        .then((r) => {
+          if (latestKey.current !== key) return
           setCached({
             key,
             kind: "ok",
             available: r.available,
             reason: r.reason,
           })
-        )
+        })
         // 404 / network / non-2xx: resolve to a non-blocking `unknown` so the
         // spinner always terminates and submit is not hard-blocked.
-        .catch(() => setCached({ key, kind: "fail" }))
+        .catch(() => {
+          if (latestKey.current !== key) return
+          setCached({ key, kind: "fail" })
+        })
     }, DEBOUNCE_MS)
     return () => clearTimeout(t)
   }, [alias, domain, key, gatedLocally])

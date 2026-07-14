@@ -40,14 +40,14 @@ export function isEmojiCandidate(input: string): boolean {
 }
 
 /**
- * Suggestions ONLY. The server is the validator.
+ * PRE-LOAD FALLBACK ONLY. The server is the single source of truth.
  *
- * Hand-picked single-codepoint, low Unicode-version, visually distinct emoji
- * (hearts, animals, food, weather, faces, objects) that sit comfortably under
- * an acceptance policy capped at 15.1. This is not the picker's list (that
- * comes from GET /api/v1/emoji-set) and carries no authority: every suggestion
- * round-trips check-alias before it can be submitted, so even if one somehow
- * fell out of policy the server would catch it visibly.
+ * Once GET /api/v1/emoji-set has loaded, dice suggestions are drawn from its
+ * `gen: true` entries, which match the server's auto-gen pool by construction
+ * (so the product never suggests an emoji it then rejects). This curated list
+ * is used only before that set has loaded: hand-picked single-codepoint, low
+ * Unicode-version emoji that sit comfortably under the accept cap, and every
+ * suggestion still round-trips check-alias before it can be submitted.
  */
 export const EMOJI_SUGGEST_POOL: readonly string[] = [
   // Smileys
@@ -141,14 +141,20 @@ function randInt(bound: number): number {
 }
 
 /**
- * A short emoji alias suggestion (default 3 graphemes), drawn from
- * EMOJI_SUGGEST_POOL. Picks may repeat, matching how the backend auto-gen
- * pool composes; the live check confirms availability before create.
+ * A short emoji alias suggestion (default 3 graphemes). Callers pass the
+ * server's auto-gen pool (the emoji-set `gen` entries) so suggestions match
+ * server auto-gen; when that has not loaded, the curated EMOJI_SUGGEST_POOL is
+ * the fallback. Picks may repeat, matching how the backend composes; the live
+ * check confirms availability before create.
  */
-export function suggestEmojiAlias(n = 3): string {
+export function suggestEmojiAlias(
+  n = 3,
+  pool: readonly string[] = EMOJI_SUGGEST_POOL
+): string {
+  const source = pool.length > 0 ? pool : EMOJI_SUGGEST_POOL
   let out = ""
   for (let i = 0; i < n; i++) {
-    out += EMOJI_SUGGEST_POOL[randInt(EMOJI_SUGGEST_POOL.length)]
+    out += source[randInt(source.length)]
   }
   return out
 }
