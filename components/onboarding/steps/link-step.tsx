@@ -265,10 +265,10 @@ export function LinkStep({
                   placeholder="launch"
                   className="h-10 min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none placeholder:text-muted-foreground/50"
                 />
-                <span className="pr-3">
-                  <AliasBadge state={showBadge} />
-                </span>
               </div>
+              {/* State reads beneath the box, like every other field's helper
+                  line (no inline-right badge). */}
+              <AliasBadge state={showBadge} />
             </div>
 
             {error && (
@@ -353,14 +353,17 @@ function LinkResult({
   )
 }
 
+/* The alias state as a beneath-the-box line, matching the other fields'
+   helper/error placement: muted mono while neutral, error color for a
+   blocking problem. */
 function AliasBadge({ state }: { state: BadgeState }) {
   if (state.kind === "idle") return null
   return (
-    <span
+    <p
       className={cn(
-        "label-mono whitespace-nowrap text-[9px]",
+        "font-mono text-xs",
         state.kind === "available" && "text-live",
-        state.kind === "checking" && "text-muted-foreground/60",
+        state.kind === "checking" && "text-muted-foreground/70",
         state.kind === "unavailable" && "text-destructive"
       )}
       aria-live="polite"
@@ -370,7 +373,7 @@ function AliasBadge({ state }: { state: BadgeState }) {
         : state.kind === "available"
           ? "available"
           : state.reason}
-    </span>
+    </p>
   )
 }
 
