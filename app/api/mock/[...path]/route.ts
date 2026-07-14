@@ -1099,15 +1099,17 @@ async function handle(req: NextRequest, path: string[]) {
   ) {
     const op = path[3]
     const rawIds = Array.isArray(body.ids) ? (body.ids as unknown[]) : null
+    // Envelope shape is DTO-level validation on the real backend, so it
+    // answers 422 (not 400) for an empty or over-cap id list.
     if (!rawIds || rawIds.length === 0)
       return fail(
-        400,
+        422,
         "validation_error",
         "ids must be a non-empty list",
         "ids"
       )
     if (rawIds.length > 100)
-      return fail(400, "validation_error", "at most 100 ids per request", "ids")
+      return fail(422, "validation_error", "at most 100 ids per request", "ids")
     // Dedupe, first occurrence wins — mirrors the server envelope.
     const seen = new Set<string>()
     const ids = rawIds
@@ -1164,8 +1166,10 @@ async function handle(req: NextRequest, path: string[]) {
         if (link.status === "BLOCKED")
           return { code: "forbidden", msg: "blocked URLs cannot be modified" }
         link.expire_after = expire
-        // Clearing/extending expiry reactivates an expired link.
-        if (expire === null && link.status === "EXPIRED") link.status = "ACTIVE"
+        // An expired link reactivates when its expiry is cleared (null) or
+        // extended to a future value. The envelope already rejected any
+        // non-future value, so any non-null expire here is in the future.
+        if (link.status === "EXPIRED") link.status = "ACTIVE"
         return null
       }
     } else if (op === "domain") {

@@ -320,6 +320,27 @@ export function mergeBulkResults(
   }
 }
 
+/** Fold delete's `not_found` verdicts into successes. Bulk delete treats an
+    id that is already gone as success-equivalent (the link is deleted either
+    way, per the endpoint contract), so a link removed in another tab or by a
+    prior retry must not count as a failure. Without this the retry loop never
+    converges and the gone id stays selected. Delete only: you cannot
+    deactivate, move or expire a link that does not exist. */
+export function reconcileDeletedNotFound(
+  result: BulkOperationResult
+): BulkOperationResult {
+  return mergeBulkResults([
+    {
+      summary: result.summary,
+      results: result.results.map((r) =>
+        !r.ok && r.error_code === "not_found"
+          ? { ...r, ok: true, error_code: null, error: null }
+          : r
+      ),
+    },
+  ])
+}
+
 /** Human-readable breakdown of the failed rows, grouped by cause — for an
     honest partial-success message ("2 blocked, 1 already on the target").
     Empty string when nothing failed. */
@@ -349,6 +370,13 @@ async function bulkPost(
   const parts: BulkOperationResult[] = []
   // Sequential: keeps within the per-request rate budget and gives
   // deterministic ordering; chunking past the cap is the rare case.
+  //
+  // Limitation: a throw on a later chunk (after earlier chunks applied)
+  // rejects the whole call and discards the partial report. Unreachable
+  // today since selections are page-bounded, so >1 chunk cannot occur;
+  // when select-all-matching makes multi-chunk reachable, the clean shape
+  // is to catch each chunk's error, emit `not_attempted` rows for the
+  // remaining ids, and still return the merged report.
   for (const chunk of chunkIds(ids)) {
     const res = await authedFetch(
       `/api/v1/urls/bulk/${op}`,

@@ -6,6 +6,7 @@ import {
   BULK_MAX_IDS,
   chunkIds,
   mergeBulkResults,
+  reconcileDeletedNotFound,
   summarizeBulkFailures,
 } from "./links"
 
@@ -115,5 +116,29 @@ describe("summarizeBulkFailures", () => {
     expect(summarizeBulkFailures(report.results)).toBe(
       "1 alias already taken, 1 blocked"
     )
+  })
+})
+
+describe("reconcileDeletedNotFound", () => {
+  it("folds not_found rows into successes and recomputes the summary", () => {
+    const out = reconcileDeletedNotFound(
+      part([ok("1"), bad("2", "not_found"), bad("3", "forbidden")])
+    )
+    expect(out.summary).toEqual({ total: 3, succeeded: 2, failed: 1 })
+    const gone = out.results.find((r) => r.id === "2")
+    expect(gone).toEqual({
+      id: "2",
+      alias: null,
+      ok: true,
+      error_code: null,
+      error: null,
+    })
+    // A genuine failure is untouched.
+    expect(out.results.find((r) => r.id === "3")?.ok).toBe(false)
+  })
+
+  it("leaves an all-success report unchanged", () => {
+    const out = reconcileDeletedNotFound(part([ok("1"), ok("2")]))
+    expect(out.summary).toEqual({ total: 2, succeeded: 2, failed: 0 })
   })
 })

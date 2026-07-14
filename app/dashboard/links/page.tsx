@@ -52,6 +52,7 @@ import {
   getUrl,
   listCustomDomains,
   listUrls,
+  reconcileDeletedNotFound,
   SpooApiError,
   summarizeBulkFailures,
   type UrlListFilter,
@@ -444,7 +445,12 @@ export default function LinksPage() {
       return { result, action, domain, expireAfter }
     },
     onSuccess: ({ result, action, domain, expireAfter }) => {
-      const { total, succeeded, failed } = result.summary
+      // For delete, an already-gone id reports not_found, which is
+      // success-equivalent; fold those into successes so retries converge
+      // and gone ids do not stay selected.
+      const report =
+        action === "DELETE" ? reconcileDeletedNotFound(result) : result
+      const { total, succeeded, failed } = report.summary
       trackLinksBulkAction(action, total, failed)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
@@ -479,9 +485,9 @@ export default function LinksPage() {
       // Partial (or total) failure: narrow the selection down to exactly the
       // links that failed so the user can inspect or retry that subset from
       // the selection bar, and report which — no false "all done".
-      const failedIds = result.results.filter((r) => !r.ok).map((r) => r.id)
+      const failedIds = report.results.filter((r) => !r.ok).map((r) => r.id)
       setSelectedIds(new Set(failedIds))
-      const breakdown = summarizeBulkFailures(result.results)
+      const breakdown = summarizeBulkFailures(report.results)
       const message =
         succeeded > 0
           ? `${succeeded} ${verb}, ${failed} failed`
