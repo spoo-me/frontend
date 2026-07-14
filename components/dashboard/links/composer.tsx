@@ -21,7 +21,6 @@ import { toast } from "sonner"
 
 import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
 import {
-  checkAlias,
   fetchUrlMetadata,
   listCustomDomains,
   shorten,
@@ -30,6 +29,8 @@ import {
   type ShortenInput,
 } from "@/lib/api"
 import { urlProblem } from "@/lib/validation"
+import { countGraphemes, suggestEmojiAlias } from "@/lib/emoji-alias"
+import { useAliasCheck } from "@/hooks/use-alias-check"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
@@ -54,6 +55,7 @@ import { DateTimeField } from "@/components/dashboard/date-time-field"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Kbd } from "@/components/dashboard/kbd"
 import { InfoHint } from "@/components/dashboard/info-hint"
+import { EmojiPicker } from "@/components/dashboard/links/emoji-picker"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -315,33 +317,30 @@ export function LinkComposer() {
       .map((d) => d.fqdn) ?? []),
   ]
 
-  // Live alias availability: idle/invalid/checking derive from the current
-  // input; only the server verdict lives in state (keyed to the alias it
-  // answered, so stale answers can't label fresh input).
-  const [verdict, setVerdict] = React.useState<{
+  // Live alias availability via the shared hook (debounced, domain-scoped).
+  // Create-time alias rejections are kept separately, keyed to the alias they
+  // answered so fresh input clears them and the server's message shows through.
+  const aliasVerdict = useAliasCheck({ alias, domain })
+  const [serverAliasError, setServerAliasError] = React.useState<{
     alias: string
-    available: boolean
+    domain: string
+    message: string
   } | null>(null)
-  const aliasFormatValid = /^[a-zA-Z0-9_-]{3,16}$/.test(alias)
-  React.useEffect(() => {
-    if (!alias || !/^[a-zA-Z0-9_-]{3,16}$/.test(alias)) return
-    const t = setTimeout(() => {
-      checkAlias(alias)
-        .then((r) => setVerdict({ alias, available: r.available }))
-        .catch(() => {})
-    }, 350)
-    return () => clearTimeout(t)
-  }, [alias])
-  const aliasState: "idle" | "checking" | "available" | "taken" | "invalid" =
-    !alias
-      ? "idle"
-      : !aliasFormatValid
-        ? "invalid"
-        : verdict?.alias === alias
-          ? verdict.available
-            ? "available"
-            : "taken"
-          : "checking"
+  // Only the cap is load-bearing for the picker; a running count is not shown
+  // in the hint (a trailing "N of 15" reads as helper-chrome at low counts).
+  const aliasGraphemes = countGraphemes(alias)
+  const aliasServerMsg =
+    serverAliasError &&
+    serverAliasError.alias === alias &&
+    serverAliasError.domain === domain
+      ? serverAliasError.message
+      : null
+  const aliasHint =
+    aliasVerdict.state === "available"
+      ? `${domain}/${alias} is available.`
+      : aliasVerdict.state === "problem"
+        ? aliasVerdict.message
+        : "Leave the alias empty for a random one."
 
   const geoPayload = completeGeoRules(geoRules)
   const geoCount = Object.keys(geoPayload).length
@@ -386,7 +385,9 @@ export function LinkComposer() {
     onError: (err) => {
       if (err instanceof SpooApiError && err.field === "alias") {
         setTab("basic")
-        setVerdict({ alias, available: false })
+        // The backend's 400/422 alias messages are user-grade; surface it
+        // instead of assuming "taken".
+        setServerAliasError({ alias, domain, message: err.message })
       } else if (err instanceof SpooApiError && err.field === "long_url") {
         setTab("basic")
         setServerUrlError({
@@ -411,7 +412,9 @@ export function LinkComposer() {
     weights <= 100 &&
     !geoProblem &&
     !metaProblem &&
-    (alias === "" || aliasState === "available" || aliasState === "checking")
+    (alias === "" ||
+      aliasVerdict.state === "available" ||
+      aliasVerdict.state === "checking")
 
   const submit = () => {
     if (!canCreate) return
@@ -574,15 +577,15 @@ export function LinkComposer() {
 
                 <Field
                   label="Short link"
-                  hint={
-                    aliasState === "taken"
-                      ? "That alias is taken, try another."
-                      : aliasState === "invalid"
-                        ? "3-16 characters: letters, numbers, - and _"
-                        : aliasState === "available"
-                          ? `${domain}/${alias} is available.`
-                          : "Leave the alias empty for a random one."
+                  labelHint={
+                    <InfoHint label="What can be an alias">
+                      Aliases are letters and numbers, or 1-15 emoji. Only emoji
+                      that render in every browser&apos;s address bar are
+                      accepted, so flags and multi-person combos are out.
+                    </InfoHint>
                   }
+                  error={aliasServerMsg}
+                  hint={aliasHint}
                 >
                   <div className="flex items-center gap-1.5">
                     {showDomains ? (
@@ -632,7 +635,9 @@ export function LinkComposer() {
                     <div className="relative flex-1">
                       <Input
                         value={alias}
-                        onChange={(e) => setAlias(e.target.value)}
+                        onChange={(e) =>
+                          setAlias(e.target.value.replace(/\s+/g, ""))
+                        }
                         onKeyDown={(e) => {
                           if (e.key === "Enter") submit()
                         }}
@@ -642,31 +647,55 @@ export function LinkComposer() {
                         className="h-9 pr-8 font-mono text-xs"
                       />
                       <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-                        {aliasState === "checking" && (
+                        {aliasVerdict.state === "checking" && (
                           <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
                         )}
-                        {aliasState === "available" && (
+                        {aliasVerdict.state === "available" && (
                           <Check className="size-3.5 text-live" />
                         )}
-                        {(aliasState === "taken" ||
-                          aliasState === "invalid") && (
+                        {(aliasVerdict.state === "problem" ||
+                          aliasServerMsg) && (
                           <CircleAlert className="size-3.5 text-destructive" />
                         )}
                       </span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      className="size-9 shrink-0"
-                      aria-label="Suggest an alias"
-                      onClick={() => {
-                        trackUiAction("alias_suggested")
-                        setAlias(suggestAlias())
-                      }}
-                    >
-                      <Dices />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon-sm"
+                          className="size-9 shrink-0"
+                          aria-label="Suggest an alias"
+                        >
+                          <Dices />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            trackUiAction("alias_suggested", "words")
+                            setAlias(suggestAlias())
+                          }}
+                        >
+                          Suggest words
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            trackUiAction("alias_suggested", "emoji")
+                            setAlias(suggestEmojiAlias())
+                          }}
+                        >
+                          Suggest emoji
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <EmojiPicker
+                      remaining={15 - aliasGraphemes}
+                      onPick={(emoji) =>
+                        setAlias((a) => a.replace(/\s+/g, "") + emoji)
+                      }
+                    />
                   </div>
                 </Field>
 

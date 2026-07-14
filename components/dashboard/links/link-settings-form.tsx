@@ -16,7 +16,6 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { trackLinkUpdated } from "@/lib/analytics"
 import {
-  checkAlias,
   fetchUrlMetadata,
   updateUrl,
   SpooApiError,
@@ -24,6 +23,7 @@ import {
   type UrlListItem,
 } from "@/lib/api"
 import { normalizeUrl, urlProblem } from "@/lib/validation"
+import { useAliasCheck } from "@/hooks/use-alias-check"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
@@ -356,12 +356,19 @@ export function LinkSettingsForm({
   const displayedMeta = metaCustomized ? meta : prefillDraftOf(destMeta.data)
 
   const aliasChanged = alias !== (link.alias ?? "")
-  // idle/invalid/checking derive from the input; only the server verdict
-  // lives in state, keyed to the alias it answered so a stale response
-  // can't label fresh input.
-  const [verdict, setVerdict] = React.useState<{
+  // Live availability via the shared hook — only a CHANGED alias is checked,
+  // and the check is domain-scoped.
+  const aliasVerdict = useAliasCheck({
+    alias,
+    domain,
+    enabled: aliasChanged,
+  })
+  // Create-time alias rejections carry the server's message, keyed to the
+  // alias/domain they answered so fresh input clears them.
+  const [serverAliasError, setServerAliasError] = React.useState<{
     alias: string
-    available: boolean
+    domain: string
+    message: string
   } | null>(null)
   // Server-side destination verdicts (the DB blocklist can't be mirrored
   // client-side) render inline like every other URL problem — keyed to the
@@ -370,26 +377,12 @@ export function LinkSettingsForm({
     url: string
     message: string
   } | null>(null)
-  const aliasFormatValid = /^[a-zA-Z0-9_-]{3,16}$/.test(alias)
-  React.useEffect(() => {
-    if (!alias || !/^[a-zA-Z0-9_-]{3,16}$/.test(alias)) return
-    const t = setTimeout(() => {
-      checkAlias(alias)
-        .then((r) => setVerdict({ alias, available: r.available }))
-        .catch(() => {})
-    }, 350)
-    return () => clearTimeout(t)
-  }, [alias])
-  const aliasState: "idle" | "checking" | "available" | "taken" | "invalid" =
-    !aliasChanged || !alias
-      ? "idle"
-      : !aliasFormatValid
-        ? "invalid"
-        : verdict?.alias === alias
-          ? verdict.available
-            ? "available"
-            : "taken"
-          : "checking"
+  const aliasServerMsg =
+    serverAliasError &&
+    serverAliasError.alias === alias &&
+    serverAliasError.domain === domain
+      ? serverAliasError.message
+      : null
 
   const patch: UpdateUrlInput = {}
   if (normalizeUrl(longUrl) !== (link.long_url ?? ""))
@@ -480,8 +473,10 @@ export function LinkSettingsForm({
         })
         return
       }
-      if (err instanceof SpooApiError && err.field === "alias")
-        setVerdict({ alias, available: false })
+      if (err instanceof SpooApiError && err.field === "alias") {
+        setServerAliasError({ alias, domain, message: err.message })
+        return
+      }
       toast.error(err instanceof Error ? err.message : "Couldn't save changes")
     },
   })
@@ -494,7 +489,7 @@ export function LinkSettingsForm({
     variantTotal(variants) <= 100 &&
     !geoRulesProblem(geoRules) &&
     !metaProblem &&
-    (!aliasChanged || aliasState === "available" || alias === "") &&
+    (!aliasChanged || aliasVerdict.state === "available" || alias === "") &&
     (passwordMode !== "set" || newPassword.length > 0)
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
@@ -517,11 +512,19 @@ export function LinkSettingsForm({
 
       <Field
         label="Short link"
+        labelHint={
+          <InfoHint label="What can be an alias">
+            Aliases are letters and numbers, or 1-15 emoji. Only emoji that
+            render in every browser&apos;s address bar are accepted, so flags
+            and multi-person combos are out.
+          </InfoHint>
+        }
+        error={aliasServerMsg}
         hint={
-          aliasState === "taken"
-            ? "That alias is taken."
-            : aliasState === "invalid"
-              ? "3-16 characters: letters, numbers, - and _"
+          aliasVerdict.state === "available"
+            ? `${domain}/${alias} is available.`
+            : aliasVerdict.state === "problem"
+              ? aliasVerdict.message
               : "Changing the alias breaks the old address."
         }
       >
@@ -555,18 +558,18 @@ export function LinkSettingsForm({
           <div className="relative flex-1">
             <Input
               value={alias}
-              onChange={(e) => setAlias(e.target.value)}
+              onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
               spellCheck={false}
               className="h-9 pr-8 font-mono text-xs"
             />
             <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-              {aliasState === "checking" && (
+              {aliasVerdict.state === "checking" && (
                 <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
               )}
-              {aliasState === "available" && (
+              {aliasVerdict.state === "available" && (
                 <Check className="size-3.5 text-live" />
               )}
-              {(aliasState === "taken" || aliasState === "invalid") && (
+              {(aliasVerdict.state === "problem" || aliasServerMsg) && (
                 <CircleAlert className="size-3.5 text-destructive" />
               )}
             </span>

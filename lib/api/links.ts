@@ -127,15 +127,84 @@ export function fetchUrlMetadata(url: string) {
   }).then((r) => parse<UrlMetadata>(r))
 }
 
-export function checkAlias(alias: string) {
-  return fetch(
-    `/api/v1/shorten/check-alias?alias=${encodeURIComponent(alias)}`
-  ).then((r) => parse<{ available: boolean; reason: string | null }>(r))
+/**
+ * Why an alias is unavailable (services/url_service.py). `format` and
+ * `length` are DTO-shape problems; `emoji_policy` and `reserved` are service
+ * policy; `taken` is a collision. `reserved` only ever applies to alnum
+ * aliases.
+ */
+export type CheckAliasReason =
+  | "format"
+  | "length"
+  | "emoji_policy"
+  | "reserved"
+  | "taken"
+
+/**
+ * The authoritative alias validator. Scoped per domain: the same alias can be
+ * free on a custom domain and taken on spoo.me, so the domain rides both the
+ * request and (caller-side) the verdict cache key. Public, no auth.
+ */
+export function checkAlias(alias: string, domain?: string) {
+  const q = new URLSearchParams({ alias })
+  if (domain) q.set("domain", domain)
+  return fetch(`/api/v1/shorten/check-alias?${q}`).then((r) =>
+    parse<{ available: boolean; reason: CheckAliasReason | null }>(r)
+  )
+}
+
+/**
+ * One accepted emoji, as served by GET /api/v1/emoji-set. `c` is the raw
+ * canonical character (VS16 stripped), `n` a searchable human name, `gen`
+ * whether it is in the auto-gen pool. `g` (category group) and `k` (extra
+ * keywords) MAY be present — treat both as optional and code defensively.
+ */
+export type EmojiItem = {
+  c: string
+  n: string
+  gen: boolean
+  g?: string
+  k?: string[]
+}
+
+/**
+ * The accepted emoji set, derived once per backend deploy and served with a
+ * long immutable cache (public, no auth). This is the ONLY source for the
+ * picker's list and search metadata — the acceptance policy and emoji names
+ * are never replicated client-side from a third-party dataset.
+ */
+export type EmojiSet = {
+  accept_max_version: number
+  generate_max_version: number
+  max_graphemes: number
+  emoji: EmojiItem[]
+}
+
+/** Hard client cache: the set is immutable per deploy, so one in-flight
+    promise is shared for the tab's lifetime. A failed fetch (e.g. the
+    endpoint has not deployed yet) is not memoized, so callers may retry and
+    degrade to type-and-validate meanwhile. */
+let emojiSetPromise: Promise<EmojiSet> | null = null
+export function getEmojiSet(): Promise<EmojiSet> {
+  if (!emojiSetPromise) {
+    emojiSetPromise = fetch("/api/v1/emoji-set")
+      .then((r) => parse<EmojiSet>(r))
+      .catch((e) => {
+        emojiSetPromise = null
+        throw e
+      })
+  }
+  return emojiSetPromise
 }
 
 export type ShortenInput = {
   long_url: string
   alias?: string
+  /** Alias family. Typed for contract completeness: `emoji` with `alias`
+      omitted asks the backend to auto-generate a 3-emoji alias. The composer
+      does not set this today (it fills the field and lets the live check
+      confirm); it is here for API-shaped callers. */
+  alias_type?: "alphanumeric" | "emoji"
   password?: string
   max_clicks?: number
   expire_after?: number

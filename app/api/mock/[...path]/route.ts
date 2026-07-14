@@ -682,6 +682,203 @@ function aliasTaken(alias: string) {
   )
 }
 
+/* ------------------------------------------------------------------ *
+ * Emoji alias policy — DEV-ONLY coarse approximation.
+ * The authoritative validator is shared/emoji_policy.py; this mirror only
+ * needs to exercise the four emoji reasons on :3001, nothing more.
+ * ------------------------------------------------------------------ */
+const RESERVED_ALIASES = new Set([
+  "api",
+  "app",
+  "admin",
+  "dashboard",
+  "login",
+  "logout",
+  "signup",
+  "stats",
+  "docs",
+  "help",
+  "about",
+  "contact",
+  "www",
+  "spoo",
+  "me",
+])
+
+function graphemesOf(s: string): string[] {
+  const seg = new Intl.Segmenter(undefined, { granularity: "grapheme" })
+  const out: string[] = []
+  for (const { segment } of seg.segment(s)) out.push(segment)
+  return out
+}
+
+/** Coarse mirror of the accept rule: each grapheme a single Extended
+    Pictographic codepoint (skin tone + VS16 allowed), no ZWJ, flags or
+    keycaps. */
+function emojiPolicyOk(alias: string): boolean {
+  const ZWJ = 0x200d
+  const VS16 = 0xfe0f
+  const KEYCAP = 0x20e3
+  for (const g of graphemesOf(alias)) {
+    const cps = [...g].map((ch) => ch.codePointAt(0) ?? 0)
+    if (cps.includes(ZWJ)) return false // ZWJ sequence (families, etc.)
+    if (cps.includes(KEYCAP)) return false // keycap combiner
+    if (cps.some((cp) => cp >= 0x1f1e6 && cp <= 0x1f1ff)) return false // flags
+    // Drop VS16 and skin-tone modifiers, expect a single base codepoint.
+    const base = cps.filter(
+      (cp) => cp !== VS16 && !(cp >= 0x1f3fb && cp <= 0x1f3ff)
+    )
+    if (base.length !== 1) return false
+    if (!/\p{Extended_Pictographic}/u.test(String.fromCodePoint(base[0])))
+      return false
+  }
+  return true
+}
+
+type AliasVerdict = { available: boolean; reason: string | null }
+
+function checkAliasVerdict(alias: string): AliasVerdict {
+  if (!alias) return { available: false, reason: "format" }
+  const isEmoji = /[^A-Za-z0-9_-]/.test(alias)
+  if (!isEmoji) {
+    if (alias.length < 3 || alias.length > 16)
+      return { available: false, reason: "length" }
+    if (RESERVED_ALIASES.has(alias.toLowerCase()))
+      return { available: false, reason: "reserved" }
+    return aliasTaken(alias)
+      ? { available: false, reason: "taken" }
+      : { available: true, reason: null }
+  }
+  const graphemes = graphemesOf(alias)
+  // Mixed = a bare alnum grapheme sitting alongside emoji ("abc😀"). A keycap
+  // ("1️⃣") is NOT bare alnum — it carries combiners — so it falls through to
+  // the policy check and reports emoji_policy, matching the real backend.
+  if (graphemes.some((g) => /^[A-Za-z0-9_-]+$/.test(g)))
+    return { available: false, reason: "format" }
+  if (graphemes.length > 15) return { available: false, reason: "length" }
+  if (!emojiPolicyOk(alias)) return { available: false, reason: "emoji_policy" }
+  return aliasTaken(alias)
+    ? { available: false, reason: "taken" }
+    : { available: true, reason: null }
+}
+
+function aliasFail(reason: string) {
+  switch (reason) {
+    case "taken":
+      return fail(409, "alias_taken", "That alias is already taken", "alias")
+    case "reserved":
+      return fail(400, "invalid_alias", "That alias is reserved", "alias")
+    case "emoji_policy":
+      return fail(
+        400,
+        "invalid_alias",
+        "Some of those emoji aren't accepted",
+        "alias"
+      )
+    case "length":
+      return fail(422, "invalid_alias", "Alias length is out of range", "alias")
+    default:
+      return fail(
+        422,
+        "invalid_alias",
+        "Letters, numbers, - and _, or emoji. Not both.",
+        "alias"
+      )
+  }
+}
+
+/** A small but real accepted set for GET /v1/emoji-set. `gen` marks the
+    auto-gen subset; `g` categorizes for the picker's bonus tabs. */
+const MOCK_EMOJI: Array<{ c: string; n: string; gen: boolean; g: string }> = [
+  { c: "😀", n: "grinning face", gen: true, g: "smileys" },
+  { c: "😃", n: "grinning face with big eyes", gen: true, g: "smileys" },
+  { c: "😄", n: "grinning face with smiling eyes", gen: true, g: "smileys" },
+  { c: "😁", n: "beaming face", gen: true, g: "smileys" },
+  { c: "😆", n: "grinning squinting face", gen: false, g: "smileys" },
+  { c: "😅", n: "grinning face with sweat", gen: true, g: "smileys" },
+  { c: "😂", n: "face with tears of joy", gen: true, g: "smileys" },
+  { c: "🙂", n: "slightly smiling face", gen: true, g: "smileys" },
+  { c: "😊", n: "smiling face with smiling eyes", gen: true, g: "smileys" },
+  { c: "😍", n: "smiling face with heart eyes", gen: true, g: "smileys" },
+  { c: "😘", n: "face blowing a kiss", gen: false, g: "smileys" },
+  { c: "😎", n: "smiling face with sunglasses", gen: true, g: "smileys" },
+  { c: "🤩", n: "star struck", gen: true, g: "smileys" },
+  { c: "🥳", n: "partying face", gen: true, g: "smileys" },
+  { c: "🤔", n: "thinking face", gen: false, g: "smileys" },
+  { c: "🤗", n: "hugging face", gen: false, g: "smileys" },
+  { c: "😴", n: "sleeping face", gen: false, g: "smileys" },
+  { c: "🤯", n: "exploding head", gen: false, g: "smileys" },
+  { c: "🐶", n: "dog face", gen: true, g: "animals" },
+  { c: "🐱", n: "cat face", gen: true, g: "animals" },
+  { c: "🐭", n: "mouse face", gen: false, g: "animals" },
+  { c: "🐹", n: "hamster", gen: false, g: "animals" },
+  { c: "🐰", n: "rabbit face", gen: true, g: "animals" },
+  { c: "🦊", n: "fox", gen: true, g: "animals" },
+  { c: "🐻", n: "bear", gen: true, g: "animals" },
+  { c: "🐼", n: "panda", gen: true, g: "animals" },
+  { c: "🐨", n: "koala", gen: true, g: "animals" },
+  { c: "🐯", n: "tiger face", gen: true, g: "animals" },
+  { c: "🦁", n: "lion", gen: true, g: "animals" },
+  { c: "🐮", n: "cow face", gen: false, g: "animals" },
+  { c: "🐷", n: "pig face", gen: false, g: "animals" },
+  { c: "🐸", n: "frog", gen: true, g: "animals" },
+  { c: "🐵", n: "monkey face", gen: false, g: "animals" },
+  { c: "🐔", n: "chicken", gen: false, g: "animals" },
+  { c: "🐧", n: "penguin", gen: true, g: "animals" },
+  { c: "🦄", n: "unicorn", gen: true, g: "animals" },
+  { c: "🐝", n: "honeybee", gen: false, g: "animals" },
+  { c: "🐢", n: "turtle", gen: true, g: "animals" },
+  { c: "🐬", n: "dolphin", gen: true, g: "animals" },
+  { c: "🐳", n: "spouting whale", gen: true, g: "animals" },
+  { c: "🐙", n: "octopus", gen: true, g: "animals" },
+  { c: "🍎", n: "red apple", gen: true, g: "food" },
+  { c: "🍊", n: "tangerine orange", gen: true, g: "food" },
+  { c: "🍋", n: "lemon", gen: true, g: "food" },
+  { c: "🍌", n: "banana", gen: true, g: "food" },
+  { c: "🍉", n: "watermelon", gen: true, g: "food" },
+  { c: "🍇", n: "grapes", gen: true, g: "food" },
+  { c: "🍓", n: "strawberry", gen: true, g: "food" },
+  { c: "🍒", n: "cherries", gen: true, g: "food" },
+  { c: "🍑", n: "peach", gen: false, g: "food" },
+  { c: "🥝", n: "kiwi fruit", gen: false, g: "food" },
+  { c: "🍔", n: "hamburger", gen: true, g: "food" },
+  { c: "🍕", n: "pizza", gen: true, g: "food" },
+  { c: "🌮", n: "taco", gen: true, g: "food" },
+  { c: "🍿", n: "popcorn", gen: true, g: "food" },
+  { c: "🍩", n: "doughnut", gen: true, g: "food" },
+  { c: "🍪", n: "cookie", gen: true, g: "food" },
+  { c: "🍰", n: "shortcake slice", gen: true, g: "food" },
+  { c: "🌞", n: "sun with face", gen: true, g: "nature" },
+  { c: "🌈", n: "rainbow", gen: true, g: "nature" },
+  { c: "🌸", n: "cherry blossom", gen: true, g: "nature" },
+  { c: "🌻", n: "sunflower", gen: true, g: "nature" },
+  { c: "🌵", n: "cactus", gen: true, g: "nature" },
+  { c: "🌴", n: "palm tree", gen: true, g: "nature" },
+  { c: "🍀", n: "four leaf clover", gen: true, g: "nature" },
+  { c: "🌊", n: "water wave", gen: true, g: "nature" },
+  { c: "🔥", n: "fire flame", gen: true, g: "nature" },
+  { c: "🎈", n: "balloon", gen: true, g: "objects" },
+  { c: "🎁", n: "wrapped gift present", gen: true, g: "objects" },
+  { c: "🎉", n: "party popper", gen: true, g: "objects" },
+  { c: "🚀", n: "rocket", gen: true, g: "objects" },
+  { c: "🎸", n: "guitar", gen: true, g: "objects" },
+  { c: "🎨", n: "artist palette paint", gen: true, g: "objects" },
+  { c: "💎", n: "gem stone diamond", gen: true, g: "objects" },
+  { c: "🔑", n: "key", gen: true, g: "objects" },
+  { c: "🎯", n: "bullseye direct hit target", gen: true, g: "objects" },
+  { c: "⚽", n: "soccer football", gen: false, g: "objects" },
+  { c: "🧩", n: "puzzle piece", gen: false, g: "objects" },
+  { c: "📚", n: "books", gen: false, g: "objects" },
+]
+
+function pickEmojiAlias(n = 3): string {
+  const gen = MOCK_EMOJI.filter((e) => e.gen)
+  let out = ""
+  for (let i = 0; i < n; i++)
+    out += gen[Math.floor(Math.random() * gen.length)].c
+  return out
+}
+
 async function handle(req: NextRequest, path: string[]) {
   if (!MOCK)
     return fail(404, "mock_disabled", "Mock API is disabled (set SPOO_MOCK=1)")
@@ -884,25 +1081,38 @@ async function handle(req: NextRequest, path: string[]) {
     /* ---------- shorten ---------- */
     case "GET /v1/shorten/check-alias": {
       const alias = params.get("alias") ?? ""
-      const taken = aliasTaken(alias)
-      return json({ available: !taken, reason: taken ? "taken" : null })
+      return json(checkAliasVerdict(alias))
     }
+    case "GET /v1/emoji-set":
+      // Immutable per deploy; the real backend derives this from
+      // shared/emoji_policy.generation_pool(). Mock returns a small real set.
+      return json(
+        {
+          accept_max_version: 15.1,
+          generate_max_version: 12.0,
+          max_graphemes: 15,
+          emoji: MOCK_EMOJI,
+        },
+        { headers: { "cache-control": "public, max-age=31536000, immutable" } }
+      )
     case "POST /v1/shorten": {
       // The DTO accepts `url` as an alias for `long_url` (first alias wins).
       const rawLong = body.long_url !== undefined ? body.long_url : body.url
       const longUrlErr = longUrlFail(rawLong, true)
       if (longUrlErr) return longUrlErr
       const longUrl = String(rawLong)
-      const alias = body.alias ? String(body.alias) : slug()
-      if (body.alias && !/^[a-zA-Z0-9_-]{3,16}$/.test(alias))
-        return fail(
-          422,
-          "invalid_alias",
-          "3-16 characters: letters, numbers, - and _",
-          "alias"
-        )
-      if (aliasTaken(alias))
-        return fail(409, "alias_taken", "That alias is already taken", "alias")
+      // Emoji or alnum alias accepted; `alias_type: "emoji"` with no alias
+      // auto-generates a 3-emoji alias (config emoji_generated_alias_length).
+      let alias: string
+      if (body.alias) {
+        alias = String(body.alias)
+        const v = checkAliasVerdict(alias)
+        if (!v.available) return aliasFail(v.reason ?? "format")
+      } else if (body.alias_type === "emoji") {
+        alias = pickEmojiAlias()
+      } else {
+        alias = slug()
+      }
       const domain = body.domain ? String(body.domain) : null
       if (
         domain &&
@@ -1074,20 +1284,8 @@ async function handle(req: NextRequest, path: string[]) {
         link.long_url = String(rawLong)
       }
       if (typeof body.alias === "string" && body.alias !== link.alias) {
-        if (!/^[a-zA-Z0-9_-]{3,16}$/.test(body.alias))
-          return fail(
-            422,
-            "invalid_alias",
-            "3-16 characters: letters, numbers, - and _",
-            "alias"
-          )
-        if (aliasTaken(body.alias))
-          return fail(
-            409,
-            "alias_taken",
-            "That alias is already taken",
-            "alias"
-          )
+        const v = checkAliasVerdict(body.alias)
+        if (!v.available) return aliasFail(v.reason ?? "format")
         link.alias = body.alias
       }
       if ("password" in body) {

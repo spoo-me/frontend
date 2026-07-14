@@ -148,7 +148,11 @@ export function LinkActions({
             Open
           </DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={() => router.push(`/dashboard/links/${link.alias}`)}
+            onSelect={() =>
+              router.push(
+                `/dashboard/links/${encodeURIComponent(link.alias ?? "")}`
+              )
+            }
           >
             <ScanLine />
             Full page

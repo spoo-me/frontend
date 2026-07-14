@@ -1,0 +1,344 @@
+"use client"
+
+import * as React from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Search, Smile } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import { getEmojiSet, type EmojiItem } from "@/lib/api"
+import {
+  loadRecents,
+  mergeRecent,
+  saveRecents,
+  validRecents,
+} from "@/lib/emoji-recents"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+const COLS = 9
+const CELL = 34 // px, square
+const VIEWPORT_ROWS = 6
+const OVERSCAN = 2
+
+type Cell = { c: string; label: string; hay: string; g?: string }
+
+/** codepoint hex of a grapheme (fallback filter, so pasting or typing a hex
+    codepoint also narrows without leaning on a name dataset). */
+function hexOf(grapheme: string): string {
+  return Array.from(grapheme)
+    .map((c) => c.codePointAt(0)?.toString(16) ?? "")
+    .join(" ")
+}
+
+/**
+ * Browse picker for emoji aliases, fed ONLY by GET /api/v1/emoji-set. The
+ * emoji ARE the alias, so a grid of emoji is product content; the chrome
+ * around it (search, recents, count) stays in the muted-mono house style.
+ * Search by name is the primary path (1000+ glyphs do not browse well); the
+ * grid is windowed so only visible rows mount. Renders nothing until the set
+ * loads and stays absent if the endpoint has not deployed, so the field
+ * degrades to type-and-validate without erroring.
+ */
+export function EmojiPicker({
+  onPick,
+  remaining,
+}: {
+  onPick: (emoji: string) => void
+  remaining: number
+}) {
+  const { data } = useQuery({
+    queryKey: ["emoji-set"],
+    queryFn: getEmojiSet,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: Number.POSITIVE_INFINITY,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+
+  const emoji = data?.emoji
+  if (!emoji || emoji.length === 0) return null
+
+  return <EmojiPickerBody emoji={emoji} onPick={onPick} remaining={remaining} />
+}
+
+function EmojiPickerBody({
+  emoji,
+  onPick,
+  remaining,
+}: {
+  emoji: EmojiItem[]
+  onPick: (emoji: string) => void
+  remaining: number
+}) {
+  const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState("")
+  const [group, setGroup] = React.useState<string | null>(null)
+  const [active, setActive] = React.useState(0)
+  const [recents, setRecents] = React.useState<string[]>([])
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = React.useState(0)
+  const capped = remaining <= 0
+
+  const cells = React.useMemo<Cell[]>(
+    () =>
+      emoji.map((e) => ({
+        c: e.c,
+        label: e.n,
+        hay: `${e.n} ${(e.k ?? []).join(" ")}`.toLowerCase(),
+        g: e.g,
+      })),
+    [emoji]
+  )
+  const byChar = React.useMemo(() => {
+    const m = new Map<string, Cell>()
+    for (const c of cells) m.set(c.c, c)
+    return m
+  }, [cells])
+
+  // Category tabs are a bonus: only when the endpoint tags items with `g`.
+  const groups = React.useMemo(() => {
+    const set = new Set<string>()
+    for (const c of cells) if (c.g) set.add(c.g)
+    return [...set]
+  }, [cells])
+
+  // Re-validate stored recents against the live accepted set (policy shrinks).
+  React.useEffect(() => {
+    setRecents(validRecents(loadRecents(), byChar.keys()))
+  }, [byChar])
+
+  const q = query.trim().toLowerCase()
+  const rawQ = query.trim()
+  const filtered = React.useMemo(() => {
+    const base = group ? cells.filter((c) => c.g === group) : cells
+    if (!q) return base
+    return cells.filter(
+      (c) =>
+        c.hay.includes(q) ||
+        (rawQ !== "" && c.c.includes(rawQ)) ||
+        hexOf(c.c).includes(q)
+    )
+  }, [cells, group, q, rawQ])
+
+  const showRecents = q === "" && !group && recents.length > 0
+
+  React.useEffect(() => {
+    setActive(0)
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+    setScrollTop(0)
+  }, [q, group])
+
+  const rows = Math.ceil(filtered.length / COLS)
+  const viewportH = VIEWPORT_ROWS * CELL
+  const startRow = Math.max(0, Math.floor(scrollTop / CELL) - OVERSCAN)
+  const endRow = Math.min(
+    rows,
+    Math.ceil((scrollTop + viewportH) / CELL) + OVERSCAN
+  )
+
+  const scrollActiveIntoView = React.useCallback((index: number) => {
+    const el = scrollRef.current
+    if (!el) return
+    const row = Math.floor(index / COLS)
+    const top = row * CELL
+    if (top < el.scrollTop) el.scrollTop = top
+    else if (top + CELL > el.scrollTop + el.clientHeight)
+      el.scrollTop = top + CELL - el.clientHeight
+  }, [])
+
+  const pick = (c: string) => {
+    if (capped) return
+    onPick(c)
+    const next = mergeRecent(recents, c)
+    setRecents(next)
+    saveRecents(next)
+  }
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (filtered.length === 0) return
+    let next = active
+    if (e.key === "ArrowRight") next = Math.min(filtered.length - 1, active + 1)
+    else if (e.key === "ArrowLeft") next = Math.max(0, active - 1)
+    else if (e.key === "ArrowDown")
+      next = Math.min(filtered.length - 1, active + COLS)
+    else if (e.key === "ArrowUp") next = Math.max(0, active - COLS)
+    else if (e.key === "Enter") {
+      e.preventDefault()
+      pick(filtered[active].c)
+      return
+    } else return
+    e.preventDefault()
+    setActive(next)
+    scrollActiveIntoView(next)
+  }
+
+  const cell = (c: Cell, index: number, activeMatch: boolean) => (
+    <button
+      key={`${c.c}-${index}`}
+      type="button"
+      disabled={capped}
+      onClick={() => pick(c.c)}
+      onMouseEnter={() => setActive(index)}
+      title={c.label}
+      aria-label={`Add ${c.label}`}
+      className={cn(
+        "flex items-center justify-center rounded-md text-lg leading-none transition-colors duration-100 disabled:opacity-40",
+        activeMatch ? "bg-accent" : "hover:bg-accent/60"
+      )}
+      style={{ width: CELL, height: CELL }}
+    >
+      {c.c}
+    </button>
+  )
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v)
+        if (v) {
+          setQuery("")
+          setGroup(null)
+          setActive(0)
+        }
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          className="size-9 shrink-0"
+          aria-label="Browse emoji"
+        >
+          <Smile />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="w-[19rem] gap-2 p-2"
+        onKeyDown={onKeyDown}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          const el = e.currentTarget as HTMLElement | null
+          el?.querySelector("input")?.focus()
+        }}
+      >
+        <div className="flex items-center gap-1.5 rounded-md border border-input px-2">
+          <Search className="size-3.5 shrink-0 text-muted-foreground/60" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search emoji"
+            spellCheck={false}
+            autoComplete="off"
+            className="h-8 min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/50"
+          />
+        </div>
+
+        {groups.length > 1 && q === "" && (
+          <div className="flex flex-wrap gap-1">
+            <CategoryChip
+              active={group === null}
+              onClick={() => setGroup(null)}
+            >
+              All
+            </CategoryChip>
+            {groups.map((g) => (
+              <CategoryChip
+                key={g}
+                active={group === g}
+                onClick={() => setGroup(g)}
+              >
+                {g}
+              </CategoryChip>
+            ))}
+          </div>
+        )}
+
+        {showRecents && (
+          <div className="space-y-1">
+            <p className="label-mono px-1 text-[10px] text-muted-foreground/50">
+              Recent
+            </p>
+            <div className="flex flex-wrap">
+              {recents.map((c, i) =>
+                cell(byChar.get(c) ?? { c, label: c, hay: "" }, -1 - i, false)
+              )}
+            </div>
+          </div>
+        )}
+
+        {filtered.length === 0 ? (
+          <p className="px-1 py-6 text-center text-muted-foreground/60 text-xs">
+            No matches.
+          </p>
+        ) : (
+          <div
+            ref={scrollRef}
+            onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+            className="relative overflow-y-auto overscroll-contain"
+            style={{ height: viewportH }}
+            role="grid"
+          >
+            <div style={{ height: rows * CELL }} className="relative">
+              {Array.from(
+                { length: Math.max(0, endRow - startRow) },
+                (_, r) => {
+                  const row = startRow + r
+                  return (
+                    <div
+                      key={row}
+                      className="absolute flex w-full"
+                      style={{ top: row * CELL, height: CELL }}
+                    >
+                      {filtered
+                        .slice(row * COLS, row * COLS + COLS)
+                        .map((c, ci) => {
+                          const index = row * COLS + ci
+                          return cell(c, index, index === active)
+                        })}
+                    </div>
+                  )
+                }
+              )}
+            </div>
+          </div>
+        )}
+
+        <p className="label-mono px-1 text-[10px] text-muted-foreground/50">
+          {capped ? "15 emoji max" : `${filtered.length} emoji`}
+        </p>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function CategoryChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "label-mono rounded-md px-1.5 py-0.5 text-[10px] capitalize transition-colors duration-100",
+        active
+          ? "bg-accent text-foreground"
+          : "text-muted-foreground/60 hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  )
+}
