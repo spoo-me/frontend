@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs"
+
 // Backend origin the auth/API proxy points at. Local dev = the compose
 // server on :8000; override with SPOO_API_URL (e.g. in prod deploys).
 const SPOO_API_URL =
@@ -116,4 +118,25 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+// Wrap the config with Sentry: injects the client SDK and, at build time,
+// uploads source maps for readable stack traces. Source-map upload only
+// happens when SENTRY_AUTH_TOKEN + org/project are set (CI); without them
+// the wrapper is inert, so local and unconfigured builds succeed. The
+// existing standalone output, headers() and rewrites() above are
+// preserved — withSentryConfig augments, it does not replace them.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // CI build secret; unset locally → no upload attempt.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Only log source-map upload noise in CI.
+  silent: !process.env.CI,
+  // Upload a wider set of source maps for prettier stack traces, then
+  // delete them from the build so they never ship to the client.
+  widenClientFileUpload: true,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+  // Anti-adblock event tunnel is intentionally not enabled here: it needs
+  // a Caddy route to survive the reverse proxy and is tracked separately.
+})

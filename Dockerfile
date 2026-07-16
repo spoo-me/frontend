@@ -21,10 +21,22 @@ WORKDIR /app
 ARG NEXT_PUBLIC_POSTHOG_KEY=""
 ARG NEXT_PUBLIC_PRICING=""
 ARG NEXT_PUBLIC_HCAPTCHA_SITEKEY=""
+ARG NEXT_PUBLIC_SENTRY_DSN=""
 ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY} \
     NEXT_PUBLIC_PRICING=${NEXT_PUBLIC_PRICING} \
     NEXT_PUBLIC_HCAPTCHA_SITEKEY=${NEXT_PUBLIC_HCAPTCHA_SITEKEY} \
+    NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN} \
     NEXT_TELEMETRY_DISABLED=1
+
+# Source-map upload runs during `next build` only when these are present
+# (CI). Unset → the Sentry bundler plugin is inert and the build still
+# succeeds; org/project are public identifiers, the token is the secret.
+ARG SENTRY_ORG=""
+ARG SENTRY_PROJECT=""
+ARG SENTRY_AUTH_TOKEN=""
+ENV SENTRY_ORG=${SENTRY_ORG} \
+    SENTRY_PROJECT=${SENTRY_PROJECT} \
+    SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

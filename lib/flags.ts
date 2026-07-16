@@ -31,3 +31,13 @@ export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING === "1"
  * is skipped entirely and the forms submit without a token.
  */
 export const HCAPTCHA_SITEKEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY
+
+/**
+ * Browser-side Sentry DSN. Distinct from the server DSN (SENTRY_DSN, a
+ * runtime env read only in the server/edge init) so the two runtimes send
+ * to separate projects with independent PII posture: the browser client
+ * strips IPs, the server keeps request context. Error and performance
+ * monitoring is a no-op without it (mock mode, CI, self-hosters). Set in
+ * the deploy environment; never in a committed file.
+ */
+export const SENTRY_BROWSER_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN

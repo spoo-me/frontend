@@ -77,6 +77,10 @@ jobs:
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
             NEXT_PUBLIC_PRICING=${{ vars.NEXT_PUBLIC_PRICING }}
             NEXT_PUBLIC_HCAPTCHA_SITEKEY=${{ vars.NEXT_PUBLIC_HCAPTCHA_SITEKEY }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+            SENTRY_ORG=${{ vars.SENTRY_ORG }}
+            SENTRY_PROJECT=${{ vars.SENTRY_PROJECT }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
