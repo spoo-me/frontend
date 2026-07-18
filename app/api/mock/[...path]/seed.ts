@@ -369,7 +369,7 @@ export function buildGrants(): MockGrant[] {
         "Read analytics data",
         "List custom domains",
         "Add and remove domains",
-        "Create, list, and delete your API keys",
+        "List and revoke your API keys",
       ],
       granted_at: isoUtc(33),
       last_used_at: isoUtc(0.1),

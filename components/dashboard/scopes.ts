@@ -18,7 +18,7 @@ export const SCOPE_INFO: Record<
   "reports:create": "Submit abuse reports",
   // Grantable to connected apps only — API keys can't manage other keys,
   // so it stays out of API_KEY_SCOPES and the create-key checklist.
-  "keys:manage": "Create, list, and delete your API keys",
+  "keys:manage": "List and revoke your API keys",
   "admin:all": "Full access, overrides all scopes",
 }
 
