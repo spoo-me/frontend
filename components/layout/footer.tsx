@@ -100,7 +100,7 @@ export function Footer() {
 
         <div className="mt-12 flex items-center justify-between border-border/40 border-t border-dashed pt-5">
           <p className="text-muted-foreground/70 text-xs">
-            © {new Date().getFullYear()} spoo.me, open source under Apache 2.0
+            © {new Date().getFullYear()} spoo.me, open source under AGPL-3.0
           </p>
           <ThemeToggle />
         </div>

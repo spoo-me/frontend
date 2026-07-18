@@ -50,7 +50,7 @@ const team: { label: string; people: Person[] }[] = [
 const pillars = [
   {
     title: "Open by default",
-    body: "Every component of the platform is Apache 2.0: the link service, dashboard, SDKs, native apps, and docs. Read the source, fork it, run it.",
+    body: "Every component of the platform is open source: the link service and dashboard under AGPL-3.0, the SDKs and native apps under permissive licenses. Read the source, fork it, run it.",
   },
   {
     title: "Generous by default",

@@ -221,7 +221,7 @@ export function PricingTiers() {
             Or run it yourself, free forever.
           </h3>
           <p className="mt-1 text-muted-foreground text-sm">
-            The entire stack is Apache 2.0 with 100% feature parity. Your
+            The entire stack is open source with 100% feature parity. Your
             database, your domain, no limits.
           </p>
         </div>
@@ -411,7 +411,7 @@ const faqGroups = [
       },
       {
         q: "Does self-hosting include paid features?",
-        a: "Yes. The open-source release has 100% feature parity under Apache 2.0. Paid plans are for the hosted cloud: infrastructure, scale, and support.",
+        a: "Yes. The open-source release has 100% feature parity under AGPL-3.0. Paid plans are for the hosted cloud: infrastructure, scale, and support.",
       },
     ],
   },

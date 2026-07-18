@@ -71,4 +71,4 @@ npx shadcn@latest add "@aceternity/<name>"
 
 ## License
 
-Apache 2.0 — same as the [spoo.me main repo](https://github.com/spoo-me/spoo).
+AGPL-3.0, same as the [spoo.me main repo](https://github.com/spoo-me/spoo). See [LICENSE](LICENSE).
