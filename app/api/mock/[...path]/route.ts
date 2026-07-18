@@ -906,7 +906,8 @@ async function handle(req: NextRequest, path: string[]) {
   const route = `${req.method} /${path.join("/")}`
   const hasBody =
     req.method === "POST" || req.method === "PUT" || req.method === "PATCH"
-  // Most of the backend speaks JSON; /auth/device/revoke is Form-encoded.
+  // Most of the backend speaks JSON; /auth/device/revoke also accepts a
+  // legacy Form-encoded body (app_id only).
   const isForm = (req.headers.get("content-type") ?? "").includes(
     "application/x-www-form-urlencoded"
   )
@@ -1053,18 +1054,32 @@ async function handle(req: NextRequest, path: string[]) {
     case "POST /auth/reset-password":
       return json({ success: true })
     case "POST /auth/device/revoke": {
-      // Real wire (routes/auth/device.py): Form-encoded app_id keyed on the
-      // registry slug, CSRF-guarded by X-Requested-With, bare {error}
-      // bodies on failure (no code field on this pre-dashboard route).
-      if (req.headers.get("x-requested-with") !== "XMLHttpRequest")
-        return json({ error: "invalid request" }, { status: 403 })
+      // Real wire (routes/auth/device.py): JSON {grant_id} and/or {app_id}
+      // (Form-encoded app_id still accepted for the legacy dashboard),
+      // CSRF-guarded by the exact header value X-Requested-With: fetch.
+      if (req.headers.get("x-requested-with") !== "fetch")
+        return json(
+          { error: "invalid request", code: "forbidden" },
+          { status: 403 }
+        )
       const appId = String(body.app_id ?? "").trim()
-      if (!appId) return json({ error: "app_id is required" }, { status: 400 })
+      const grantId = String(body.grant_id ?? "").trim()
+      if (!appId && !grantId)
+        return json(
+          { error: "app_id or grant_id is required", code: "validation_error" },
+          { status: 400 }
+        )
       const before = s.grants.length
-      s.grants = s.grants.filter((gr) => gr.app !== appId)
+      // app_id wins when both are present, mirroring the backend resolver.
+      s.grants = s.grants.filter((gr) =>
+        appId ? gr.app !== appId : gr.id !== grantId
+      )
       if (s.grants.length === before)
-        return json({ error: "no active grant found" }, { status: 404 })
-      return json({ success: true, message: `Access revoked for ${appId}` })
+        return json(
+          { error: "no active grant found", code: "not_found" },
+          { status: 404 }
+        )
+      return json({ success: true, message: "Access revoked" })
     }
 
     /* ---------- onboarding cache ---------- */

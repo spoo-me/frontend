@@ -22,6 +22,7 @@ import {
 } from "@/lib/apps-data"
 import { formatWhen } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { scopeMeaning } from "@/components/dashboard/scopes"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
 import { Button } from "@/components/ui/button"
 import {
@@ -161,14 +162,37 @@ function CatalogueCard({
   )
 }
 
+/** Quiet mono scope chip — same recipe as the catalogue category tag. */
+const scopeChipClass =
+  "rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+
+function ScopeChip({
+  label,
+  tooltip,
+}: {
+  label: string
+  tooltip?: React.ReactNode
+}) {
+  if (!tooltip)
+    return <span className={cn(scopeChipClass, "cursor-default")}>{label}</span>
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={cn(scopeChipClass, "cursor-default")}>{label}</span>
+      </TooltipTrigger>
+      <TooltipContent align="end">{tooltip}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 function GrantRow({ grant }: { grant: AppGrant }) {
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const app = grantApp(grant)
 
   const revoke = useMutation({
-    // Revoke keys on the registry slug, not the grant row id.
-    mutationFn: () => revokeAppGrant(grant.app),
+    // Revoke keys on the grant document id (`grant_id` on the wire).
+    mutationFn: () => revokeAppGrant(grant.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apps"] })
       toast.success(`${grant.app_name} disconnected`)
@@ -197,25 +221,35 @@ function GrantRow({ grant }: { grant: AppGrant }) {
           {formatWhen(grant.last_used_at)}
         </div>
       </div>
-      {/* Grants aren't scoped, so no scope chips: the quiet mono count
-          carries the state, the tooltip shows the consent-screen strings. */}
-      {grant.permissions.length > 0 && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="hidden shrink-0 cursor-default font-mono text-[11px] text-muted-foreground/70 sm:inline">
-              {grant.permissions.length} permission
-              {grant.permissions.length === 1 ? "" : "s"}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent align="end">
-            <ul className="max-w-64 space-y-1">
-              {grant.permissions.map((p) => (
-                <li key={p}>{p}</li>
-              ))}
-            </ul>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      {/* Scopes are the render source; `permissions` only backs tooltips.
+          An empty scope list is a legacy unrestricted grant, never "no
+          access", so it gets one full-access chip in the same voice. */}
+      <div className="hidden shrink-0 items-center gap-1 sm:flex">
+        {grant.scopes.length === 0 ? (
+          <ScopeChip
+            label="Full access"
+            tooltip={grant.permissions[0] ?? "Full access to your account"}
+          />
+        ) : (
+          <>
+            {grant.scopes.slice(0, 3).map((s) => (
+              <ScopeChip key={s} label={s} tooltip={scopeMeaning(s)} />
+            ))}
+            {grant.scopes.length > 3 && (
+              <ScopeChip
+                label={`+${grant.scopes.length - 3}`}
+                tooltip={
+                  <ul className="max-w-64 space-y-1">
+                    {grant.scopes.slice(3).map((s) => (
+                      <li key={s}>{scopeMeaning(s) ?? s}</li>
+                    ))}
+                  </ul>
+                }
+              />
+            )}
+          </>
+        )}
+      </div>
       <Button
         variant="outline"
         size="sm"

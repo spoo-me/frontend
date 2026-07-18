@@ -6,7 +6,7 @@ import { API_KEY_SCOPES } from "@/lib/api"
  * grants alike).
  */
 export const SCOPE_INFO: Record<
-  (typeof API_KEY_SCOPES)[number] | "admin:all",
+  (typeof API_KEY_SCOPES)[number] | "keys:manage" | "admin:all",
   string
 > = {
   "shorten:create": "Create short links",
@@ -16,6 +16,9 @@ export const SCOPE_INFO: Record<
   "domains:read": "List custom domains",
   "domains:manage": "Add and remove domains",
   "reports:create": "Submit abuse reports",
+  // Grantable to connected apps only — API keys can't manage other keys,
+  // so it stays out of API_KEY_SCOPES and the create-key checklist.
+  "keys:manage": "Create, list, and delete your API keys",
   "admin:all": "Full access, overrides all scopes",
 }
 

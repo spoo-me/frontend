@@ -84,15 +84,17 @@ export type MockKey = {
   revoked: boolean
 }
 
-/** Mirrors AppGrantResponse (GET /api/v1/apps): grants aren't scoped, the
- *  wire carries the consent-screen permission strings; `icon` is the
- *  backend registry filename (null when the entry is gone); `last_used_at`
- *  is null for never-used grants. */
+/** Mirrors AppGrantResponse (GET /api/v1/apps): `scopes` are the effective
+ *  slugs (empty = legacy unrestricted grant), `permissions` the consent
+ *  sentences the server derives from them; `icon` is the backend registry
+ *  filename (null when the entry is gone); `last_used_at` is null for
+ *  never-used grants. */
 export type MockGrant = {
   id: string
   app: string
   app_name: string
   icon: string | null
+  scopes: string[]
   permissions: string[]
   granted_at: string
   last_used_at: string | null
@@ -343,18 +345,31 @@ export function buildGrants(): MockGrant[] {
   // The backend stamps explicit UTC offsets (+00:00), not Z.
   const isoUtc = (days: number) => isoDaysAgo(days, rand).replace("Z", "+00:00")
   return [
-    // Names, icons, and permissions mirror the backend registry
-    // (config/apps.yaml) — permissions are the consent-screen strings.
+    // Names, icons, and scopes mirror the backend registry
+    // (config/apps.yaml) — permissions are the derived consent sentences.
+    // Seven scopes here so the walkthrough exercises the +N overflow chip.
     {
       id: "grant_cli",
       app: "spoo-cli",
       app_name: "Spoo CLI",
       icon: "spoo-cli.svg",
+      scopes: [
+        "shorten:create",
+        "urls:read",
+        "urls:manage",
+        "stats:read",
+        "domains:read",
+        "domains:manage",
+        "keys:manage",
+      ],
       permissions: [
-        "Access your spoo.me account",
-        "Create and manage your short URLs",
-        "View your analytics",
-        "Manage your API keys",
+        "Create short links",
+        "List and read links",
+        "Edit and delete links",
+        "Read analytics data",
+        "List custom domains",
+        "Add and remove domains",
+        "Create, list, and delete your API keys",
       ],
       granted_at: isoUtc(33),
       last_used_at: isoUtc(0.1),
@@ -364,22 +379,24 @@ export function buildGrants(): MockGrant[] {
       app: "spoo-snap",
       app_name: "Spoo Snap",
       icon: "spoo-snap.svg",
+      scopes: ["shorten:create", "urls:read", "stats:read"],
       permissions: [
-        "Access your spoo.me account",
-        "Create and manage short URLs",
-        "View your analytics",
+        "Create short links",
+        "List and read links",
+        "Read analytics data",
       ],
       granted_at: isoUtc(75),
       last_used_at: isoUtc(0.8),
     },
-    // Registry entry without a permissions list + never-used grant: both
+    // Legacy unrestricted grant (pre-scopes consent) + never-used: both
     // are legal on the wire, so the walkthrough exercises them.
     {
       id: "grant_raycast",
       app: "spoo-raycast",
       app_name: "Raycast Extension",
       icon: "raycast.svg",
-      permissions: [],
+      scopes: [],
+      permissions: ["Full access to your spoo.me account"],
       granted_at: isoUtc(12),
       last_used_at: null,
     },

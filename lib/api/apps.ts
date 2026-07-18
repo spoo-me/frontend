@@ -1,18 +1,19 @@
-import { authedFetch, parse, SpooApiError } from "./client"
+import { authedFetch, jsonInit, parse, SpooApiError } from "./client"
 
 /**
  * Connected apps = device-auth grants (CLI, extensions, bots).
  * GET /api/v1/apps lists the account's active grants (JWT-cookie only,
- * newest first); POST /auth/device/revoke disconnects one, keyed by `app`.
+ * newest first); POST /auth/device/revoke disconnects one, keyed by `id`.
  *
- * Grants are NOT scoped — a device grant acts as the full account — so the
- * wire carries the consent-screen permission strings, never scope slugs.
+ * Grants carry the effective scope slugs plus their derived consent
+ * sentences; legacy grants (pre-scopes) surface an empty scope list and
+ * the full-access sentence.
  */
 export type AppGrant = {
-  /** Grant document id. Row identity only; revoke keys on `app`. */
+  /** Grant document id — the revoke handle (`grant_id`). */
   id: string
   /** Backend registry key. Shares a namespace with lib/apps-data.ts slugs
-   *  (exact-match catalogue join) and is the revoke handle. */
+   *  (exact-match catalogue join). */
   app: string
   /** Server-owned display name; falls back to `app` when the registry
    *  entry is gone. */
@@ -20,7 +21,11 @@ export type AppGrant = {
   /** Registry icon filename, or null when the entry is gone. The UI
    *  prefers the catalogue brand tile via the `app` join. */
   icon: string | null
-  /** Consent-screen permission strings the user granted. May be empty. */
+  /** Effective scope slugs — the render source for scope chips. Empty
+   *  means a legacy unrestricted grant: full account access, not zero. */
+  scopes: string[]
+  /** Consent sentences the server derives from `scopes` (full-access
+   *  sentence for legacy grants). Display-ready fallback copy. */
   permissions: string[]
   /** ISO 8601 UTC (+00:00). */
   granted_at: string
@@ -45,16 +50,16 @@ export function listAppGrants() {
     })
 }
 
-/** `app` is the grant's registry key (AppGrant.app), not the grant id. */
-export function revokeAppGrant(app: string) {
+/** `grantId` is the grant document id (AppGrant.id). */
+export function revokeAppGrant(grantId: string) {
+  const init = jsonInit("POST", { grant_id: grantId })
   return authedFetch("/auth/device/revoke", {
-    method: "POST",
+    ...init,
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      // CSRF guard: the backend rejects cross-origin form posts by
-      // requiring this header, which forms cannot send.
-      "X-Requested-With": "XMLHttpRequest",
+      ...init.headers,
+      // CSRF guard: the backend rejects revokes without this exact
+      // header value, which cross-origin form posts cannot send.
+      "X-Requested-With": "fetch",
     },
-    body: new URLSearchParams({ app_id: app }).toString(),
   }).then((r) => parse<{ success: boolean; message: string }>(r))
 }
