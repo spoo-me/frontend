@@ -90,9 +90,9 @@ export type MockGrant = {
   app_name: string
   icon: string
   scopes: string[]
+  permissions: string[]
   granted_at: string
-  last_used_at: string
-  device: string
+  last_used_at: string | null
 }
 
 const DESTINATIONS: Array<[alias: string, url: string, weight: number]> = [
@@ -344,9 +344,13 @@ export function buildGrants(): MockGrant[] {
       app_name: "spoo CLI",
       icon: "terminal",
       scopes: ["shorten:create", "urls:manage", "stats:read"],
+      permissions: [
+        "Create short links",
+        "Edit and delete links",
+        "Read analytics data",
+      ],
       granted_at: isoDaysAgo(33, rand),
       last_used_at: isoDaysAgo(0.1, rand),
-      device: "MacBook Pro · zsh",
     },
     {
       id: "grant_snap",
@@ -354,9 +358,9 @@ export function buildGrants(): MockGrant[] {
       app_name: "spoo snap",
       icon: "puzzle",
       scopes: ["shorten:create"],
+      permissions: ["Create short links"],
       granted_at: isoDaysAgo(75, rand),
       last_used_at: isoDaysAgo(0.8, rand),
-      device: "Chrome · macOS",
     },
     {
       id: "grant_raycast",
@@ -364,9 +368,9 @@ export function buildGrants(): MockGrant[] {
       app_name: "Raycast extension",
       icon: "command",
       scopes: ["shorten:create", "urls:read"],
+      permissions: ["Create short links", "List and read links"],
       granted_at: isoDaysAgo(12, rand),
       last_used_at: isoDaysAgo(3.2, rand),
-      device: "Raycast · macOS",
     },
   ]
 }

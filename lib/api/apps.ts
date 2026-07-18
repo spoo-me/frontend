@@ -10,10 +10,12 @@ export type AppGrant = {
   app: string
   app_name: string
   icon: string
+  /** Effective scope slugs. Empty means a legacy unrestricted grant. */
   scopes: string[]
+  /** Human-readable consent sentences derived from `scopes`. */
+  permissions: string[]
   granted_at: string
-  last_used_at: string
-  device: string
+  last_used_at: string | null
 }
 
 export function listAppGrants() {
@@ -32,8 +34,12 @@ export function listAppGrants() {
 }
 
 export function revokeAppGrant(grantId: string) {
-  return authedFetch(
-    "/auth/device/revoke",
-    jsonInit("POST", { grant_id: grantId })
-  ).then((r) => parse<{ success: boolean }>(r))
+  const init = jsonInit("POST", { grant_id: grantId })
+  // Device revoke is CSRF-guarded by an X-Requested-With header the backend
+  // requires and cross-origin form posts can't set. jsonInit only sets
+  // Content-Type, so add it here.
+  init.headers = { ...init.headers, "X-Requested-With": "fetch" }
+  return authedFetch("/auth/device/revoke", init).then((r) =>
+    parse<{ success: boolean }>(r)
+  )
 }

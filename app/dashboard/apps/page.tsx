@@ -200,7 +200,7 @@ function GrantRow({ grant }: { grant: AppGrant }) {
           {grant.app_name}
         </div>
         <div className="truncate text-muted-foreground text-xs">
-          {grant.device} · last used {formatWhen(grant.last_used_at)}
+          last used {formatWhen(grant.last_used_at)}
         </div>
       </div>
       <div className="hidden items-center gap-1 sm:flex">
