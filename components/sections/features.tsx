@@ -1,6 +1,6 @@
 "use client"
 
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, useState } from "react"
 import {
   ArrowRight,
   Copy,
@@ -156,74 +156,86 @@ const MetaTagsDemo = () => {
   )
 }
 
-/* Origins and rules, no journeys — the dotted world as backdrop, the routing
-   table as the artifact. The catch-all is spelled out, arrows share a column
-   (paths sit in a fixed-width mono slot so every → lands on the same x). */
+/* Routing rules as pins on the map itself. One pin is active (sticky),
+   hover or tap moves the spotlight; the active pin unfolds to show where
+   that country goes. The fallback reads as a quiet line, not a box. */
 const GEO_RULES = [
-  { code: "FR", flag: "fr", path: "/shop-fr" },
-  { code: "US", flag: "us", path: "/shop-us" },
-  { code: "DE", flag: "de", path: "/shop-de" },
+  { code: "DE", flag: "de", path: "/shop-de", top: "20.5%", left: "53%" },
+  { code: "US", flag: "us", path: "/shop-us", top: "29%", left: "23%" },
+  { code: "JP", flag: "jp", path: "/shop-jp", top: "30%", left: "86%" },
 ]
 
 const GeoDemo = () => {
+  const [active, setActive] = useState("DE")
   return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_25%,#000_100%)]">
-      <div className="absolute inset-x-2 top-1 opacity-80">
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-x-2 top-3 [mask-image:linear-gradient(to_top,transparent_4%,#000_45%)]">
         <Suspense
           fallback={<Skeleton className="aspect-[2/1] w-full rounded-lg" />}
         >
           <WorldMap dots={[]} />
         </Suspense>
-        {/* origin dots for the rule countries: US, FR, DE */}
-        <span
-          aria-hidden
-          className="absolute top-[28%] left-[23%] size-1.5 rounded-full bg-foreground/50"
-        />
-        <span
-          aria-hidden
-          className="absolute top-[23%] left-[50.5%] size-1.5 rounded-full bg-foreground/50"
-        />
-        <span
-          aria-hidden
-          className="absolute top-[20.5%] left-[54%] size-1.5 rounded-full bg-foreground/50"
-        />
-      </div>
-      <div className="relative mx-auto mt-16 w-60 max-w-[calc(100%-3rem)]">
-        <div className="overflow-hidden rounded-lg border border-border/70 bg-card font-mono text-[10px] shadow-float transition-transform duration-300 group-hover:-translate-y-1">
-          <div className="divide-y divide-border/60">
-            {GEO_RULES.map((r) => (
-              <div key={r.code} className="flex items-center gap-2 px-3 py-2">
+
+        {GEO_RULES.map((r) => {
+          const isActive = active === r.code
+          return (
+            <button
+              key={r.code}
+              type="button"
+              aria-label={`${r.code} routes to ${r.path}`}
+              onMouseEnter={() => setActive(r.code)}
+              onFocus={() => setActive(r.code)}
+              onClick={() => setActive(r.code)}
+              className={cn("absolute", isActive ? "z-10" : "z-0")}
+              style={{ top: r.top, left: r.left }}
+            >
+              {/* Zero-size button parked on the country: the anchor dot
+                  never moves, the pill unfolds rightward above it. */}
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors duration-200",
+                  isActive ? "bg-foreground/70" : "bg-foreground/40"
+                )}
+              />
+              <span
+                aria-hidden
+                className="absolute -top-[13px] h-2.5 w-px bg-border"
+              />
+              <span
+                className={cn(
+                  "absolute -top-[41px] -left-[14px] flex h-7 items-center gap-1.5 overflow-hidden rounded-full border bg-card px-1.5 shadow-float transition-colors duration-200",
+                  isActive ? "border-border" : "border-border/60"
+                )}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://flagcdn.com/w40/${r.flag}.png`}
                   alt=""
                   loading="lazy"
-                  className="h-2.5 w-3.5 rounded-[2px] object-cover"
+                  className="size-4 shrink-0 rounded-full object-cover"
                 />
-                <span className="text-foreground/90">{r.code}</span>
-                <span className="ml-auto flex items-center gap-2">
-                  <span className="text-muted-foreground/50">→</span>
-                  <span className="w-[8ch] font-medium text-foreground">
-                    {r.path}
-                  </span>
-                </span>
-              </div>
-            ))}
-            <div className="flex items-center gap-2 px-3 py-2">
-              <Globe2
-                className="size-3.5 shrink-0 text-muted-foreground"
-                strokeWidth={1.75}
-              />
-              <span className="text-muted-foreground">everywhere else</span>
-              <span className="ml-auto flex items-center gap-2">
-                <span className="text-muted-foreground/50">→</span>
-                <span className="w-[8ch] font-medium text-foreground">
-                  /shop
+                <span
+                  className={cn(
+                    "overflow-hidden whitespace-nowrap font-mono text-[10px] text-foreground transition-all duration-200",
+                    isActive ? "max-w-24 opacity-100" : "max-w-0 opacity-0"
+                  )}
+                >
+                  {"→"} {r.path}
                 </span>
               </span>
-            </div>
-          </div>
-        </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* The catch-all, spelled out without a box */}
+      <div className="absolute inset-x-0 bottom-5 flex justify-center">
+        <span className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+          <Globe2 className="size-3" strokeWidth={1.75} />
+          everywhere else {"→"}{" "}
+          <span className="text-foreground/80">/shop</span>
+        </span>
       </div>
     </div>
   )
