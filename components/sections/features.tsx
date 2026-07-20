@@ -3,17 +3,13 @@
 import { lazy, Suspense, useEffect, useState } from "react"
 import {
   ArrowUpRight,
-  Cherry,
-  Cloud,
   FileDown,
   Globe2,
-  Leaf,
   ListChecks,
   Lock,
   MousePointerClick,
   QrCode,
   SmilePlus,
-  Sun,
   Timer,
   Webhook,
 } from "lucide-react"
@@ -23,21 +19,27 @@ import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Band } from "@/components/shared/section-shell"
+import {
+  MarkBolt,
+  MarkClover,
+  MarkPlay,
+  MarkVenn,
+} from "@/components/shared/brand-marks"
 import { siteConfig } from "@/lib/site-config"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
 
 /* The payoff, not the plumbing: one short link whose brand identity
-   rotates — colored logo tile + domain morph while the path stays put.
+   rotates — logomark + domain morph while the path stays put. Same
+   fictional brand universe as the onboarding wizard (shared marks), so
+   the product world stays coherent. Apex domains lead, subdomains follow.
    The roster below uses the geo pins' grammar: hover moves the sticky
-   spotlight and stops the auto-cycle. Fictional brands, real shape. */
-/* Apex domains lead, subdomains follow. Marks are name-coherent glyphs on
-   app-icon tiles so each reads as a real product logo, not a placeholder. */
+   spotlight and stops the auto-cycle. */
 const BRANDS = [
-  { id: "berry", domain: "brry.shop", color: "#E11D48", icon: Cherry },
-  { id: "sol", domain: "sol.supply", color: "#F59E0B", icon: Sun },
-  { id: "fern", domain: "go.fern.coffee", color: "#16A34A", icon: Leaf },
-  { id: "kumo", domain: "links.kumo.app", color: "#0EA5E9", icon: Cloud },
+  { id: "forma", domain: "forma.io", mark: MarkVenn },
+  { id: "vega", domain: "vega.tv", mark: MarkPlay },
+  { id: "boltlab", domain: "go.boltlab.co", mark: MarkBolt },
+  { id: "clove", domain: "links.clove.app", mark: MarkClover },
 ]
 
 const DOMAIN_CYCLE_MS = 2800
@@ -80,17 +82,7 @@ const DomainDemo = () => {
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center gap-3"
             >
-              <span
-                className="flex size-7 items-center justify-center rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ring-1 ring-black/10"
-                style={{ backgroundColor: brand.color }}
-              >
-                <brand.icon
-                  className="size-4 text-white"
-                  strokeWidth={2}
-                  fill="currentColor"
-                  fillOpacity={0.25}
-                />
-              </span>
+              <brand.mark className="size-5" />
               <span className="font-medium font-mono text-base text-foreground sm:text-lg">
                 {brand.domain}
               </span>
@@ -127,12 +119,7 @@ const DomainDemo = () => {
                   : "border-border/60 text-muted-foreground hover:text-foreground"
               )}
             >
-              <span
-                className="flex size-3.5 items-center justify-center rounded-[4px] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.3)]"
-                style={{ backgroundColor: b.color }}
-              >
-                <b.icon className="size-2.5 text-white" strokeWidth={2.25} />
-              </span>
+              <b.mark className="size-3" />
               {b.id}
             </button>
           ))}
@@ -334,7 +321,7 @@ function ProofBand({
       <div className="group grid gap-px bg-border lg:grid-cols-2">
         <div
           className={cn(
-            "flex flex-col justify-center bg-background p-7 sm:p-9",
+            "relative flex flex-col justify-center bg-background p-7 pb-20 sm:p-9 sm:pb-24",
             flip && "lg:order-2"
           )}
         >
@@ -344,14 +331,16 @@ function ProofBand({
           <p className="mt-3 max-w-md text-balance text-base text-muted-foreground">
             {body}
           </p>
+          {/* Pinned to the cell floor; fades in with the band, border firms
+              up under the cursor. Absolute, so nothing reflows. */}
           <a
             href={siteConfig.links.docs}
             target="_blank"
             rel="noreferrer"
-            className="mt-4 inline-flex w-fit items-center gap-1.5 font-medium text-muted-foreground text-sm opacity-0 transition-all duration-200 hover:text-foreground group-hover:opacity-100"
+            className="absolute bottom-4 left-7 inline-flex h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:bottom-5 sm:left-9"
           >
             Learn more
-            <ArrowUpRight className="size-3.5" data-icon="inline-end" />
+            <ArrowUpRight className="size-2.5" data-icon="inline-end" />
           </a>
         </div>
         <div className={cn("bg-background", flip && "lg:order-1")}>
@@ -452,7 +441,7 @@ export function Features() {
                 href={siteConfig.links.docs}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex h-full flex-col p-5 transition-colors duration-200 hover:bg-foreground/[0.02] sm:p-6"
+                className="group relative flex h-full flex-col p-5 transition-colors duration-200 hover:bg-foreground/[0.02] sm:p-6"
               >
                 <f.icon
                   className="size-4 text-muted-foreground transition-colors duration-200 group-hover:text-foreground"
@@ -462,9 +451,11 @@ export function Features() {
                 <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
                   {f.text}
                 </p>
-                <span className="mt-auto inline-flex items-center gap-1 pt-3 font-medium text-[12px] text-muted-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                {/* Overlay in the bottom-right corner, which every cell
+                    leaves empty: no reflow, no text collision */}
+                <span className="absolute right-5 bottom-3.5 inline-flex h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:right-6">
                   Learn more
-                  <ArrowUpRight className="size-3" />
+                  <ArrowUpRight className="size-2.5" />
                 </span>
               </a>
             </div>
