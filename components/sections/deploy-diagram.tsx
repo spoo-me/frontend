@@ -19,28 +19,30 @@ type DeployNode = {
   CustomIcon?: React.ComponentType<{ className?: string }>
   /** brand color — used for beam tint */
   accent: string
-  oneClick?: boolean
 }
+
+/* Nodes link to their docs walkthroughs, never raw deploy URLs. */
+const SELF_HOST_DOCS = "https://docs.spoo.me/self-hosting"
 
 const deps: DeployNode[] = [
   {
     id: "mongo",
     name: "MongoDB",
-    href: "https://github.com/spoo-me/spoo#mongodb",
+    href: `${SELF_HOST_DOCS}/setting-up-mongo`,
     iconSlug: "mongodb",
     accent: "#00ED64",
   },
   {
     id: "redis",
     name: "Redis",
-    href: "https://github.com/spoo-me/spoo#redis",
+    href: `${SELF_HOST_DOCS}/setting-up-redis`,
     iconSlug: "redis",
     accent: "#FF4438",
   },
   {
     id: "domain",
     name: "Your domain",
-    href: "https://github.com/spoo-me/spoo#custom-domain",
+    href: `${SELF_HOST_DOCS}/introduction`,
     CustomIcon: Globe,
     accent: "#8B5CF6",
   },
@@ -50,53 +52,48 @@ const targets: DeployNode[] = [
   {
     id: "vercel",
     name: "Vercel",
-    href: "https://vercel.com/new/clone?repository-url=https://github.com/spoo-me/spoo",
+    href: `${SELF_HOST_DOCS}/cloud-deployment#method-1-vercel-deployment-recommended`,
     iconSlug: "vercel",
     accent: "#ffffff",
-    oneClick: true,
   },
   {
     id: "render",
     name: "Render",
-    href: "https://render.com/deploy?repo=https://github.com/spoo-me/spoo",
+    href: `${SELF_HOST_DOCS}/cloud-deployment#method-3-render-deployment`,
     iconSlug: "render",
     accent: "#46E3B7",
-    oneClick: true,
   },
   {
-    id: "fly",
-    name: "Fly.io",
-    href: "https://fly.io/docs/launch/",
-    iconSlug: "fly",
+    id: "koyeb",
+    name: "Koyeb",
+    href: `${SELF_HOST_DOCS}/cloud-deployment#method-4-koyeb-deployment`,
+    iconSlug: "koyeb",
     accent: "#8B5CF6",
-    oneClick: true,
   },
   {
     id: "railway",
     name: "Railway",
-    href: "https://railway.app/template/spoo",
+    href: `${SELF_HOST_DOCS}/cloud-deployment#method-2-railway-deployment`,
     iconSlug: "railway",
     accent: "#9333EA",
-    oneClick: true,
   },
   {
     id: "docker",
     name: "Docker",
-    href: "https://github.com/spoo-me/spoo#docker",
+    href: `${SELF_HOST_DOCS}/docker-deployment`,
     iconSlug: "docker",
     accent: "#2496ED",
   },
 ]
 
 const ICON_OVERRIDES: Record<string, string> = {
-  fly: "https://cdn.simpleicons.org/flydotio/8B5CF6",
   render: "https://cdn.simpleicons.org/render/46E3B7",
   railway: "https://cdn.simpleicons.org/railway/9333EA",
 }
 
 function iconUrl(node: DeployNode, isDark: boolean): string | null {
-  if (node.id === "vercel") {
-    return `https://cdn.simpleicons.org/vercel/${isDark ? "white" : "black"}`
+  if (node.id === "vercel" || node.id === "koyeb") {
+    return `https://cdn.simpleicons.org/${node.iconSlug}/${isDark ? "white" : "black"}`
   }
   if (!node.iconSlug) return null
   if (ICON_OVERRIDES[node.id]) return ICON_OVERRIDES[node.id]
@@ -129,14 +126,6 @@ const IconTile = React.forwardRef<HTMLDivElement, { node: DeployNode }>(
         ) : node.CustomIcon ? (
           <node.CustomIcon className="size-6 text-muted-foreground" />
         ) : null}
-        {node.oneClick && (
-          <span
-            aria-hidden
-            className="absolute -top-1.5 -right-1.5 rounded-full bg-emerald-500 px-1 font-bold font-mono text-[8px] text-background uppercase leading-tight"
-          >
-            1·click
-          </span>
-        )}
       </div>
     )
   }
@@ -189,7 +178,7 @@ export function DeployDiagram({
   return (
     <div
       ref={containerRef}
-      className="relative mx-auto grid w-full max-w-4xl grid-cols-[1fr_auto_1fr] items-center gap-x-12 px-2 sm:gap-x-32 sm:px-6"
+      className="relative mx-auto grid w-full max-w-4xl grid-cols-[1fr_auto_1fr] items-center gap-x-8 px-2 sm:gap-x-32 sm:px-6"
     >
       {/* LEFT — data deps + custom domain, icon outside, label inside */}
       <div className="flex flex-col items-start gap-6">
@@ -203,7 +192,7 @@ export function DeployDiagram({
             className="group flex items-center gap-4"
           >
             <IconTile ref={depRefs.current[i]} node={d} />
-            <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.18em] transition-colors group-hover:text-foreground">
+            <span className="hidden font-mono text-[11px] text-muted-foreground uppercase tracking-[0.18em] transition-colors group-hover:text-foreground sm:inline">
               {d.name}
             </span>
           </Link>
@@ -233,11 +222,11 @@ export function DeployDiagram({
                     }
                   : undefined
               }
-              title={t.name + (t.oneClick ? " · 1-click deploy" : "")}
+              title={t.name}
               className="group flex flex-row-reverse items-center gap-4"
             >
               <IconTile ref={targetRefs.current[i]} node={t} />
-              <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.18em] transition-colors group-hover:text-foreground">
+              <span className="hidden font-mono text-[11px] text-muted-foreground uppercase tracking-[0.18em] transition-colors group-hover:text-foreground sm:inline">
                 {t.name}
               </span>
             </Link>

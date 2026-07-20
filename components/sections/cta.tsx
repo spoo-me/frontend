@@ -19,7 +19,7 @@ export function CTA() {
           frame so the bloom visibly bleeds across the rails */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -inset-x-40 inset-y-0 overflow-hidden [mask-image:radial-gradient(ellipse_70%_80%_at_50%_100%,black,transparent)]"
+        className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:radial-gradient(ellipse_70%_80%_at_50%_100%,black,transparent)] sm:-inset-x-40"
       >
         <div className="absolute bottom-[-12rem] left-1/2 size-[28rem] -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
       </div>

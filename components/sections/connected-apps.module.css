@@ -186,15 +186,47 @@
     height: 80px;
   }
 }
+/* Phones: the % scatter can't avoid the anchor text anymore, so the same
+   DOM reflows — anchor first, chips as a wrapped cloud beneath it. The
+   rotations keep the scattered temperament without the collisions. */
 @media (max-width: 640px) {
   .scatter {
-    height: 760px;
+    height: auto;
+    padding: 48px 12px 56px;
+    overflow: hidden;
   }
-  .chip {
-    transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(0.8);
+  .inner {
+    position: static;
+    inset: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 14px 12px;
+  }
+  .anchor {
+    position: static;
+    transform: none;
+    order: -1;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+  .chip,
+  .chip.sm,
+  .chip.md,
+  .chip.lg,
+  .chip.xl {
+    position: static;
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    opacity: 1;
+    transform: rotate(var(--rot, 0deg));
+  }
+  [data-in-view="true"] .chip {
+    animation: none;
   }
   .chip:hover {
-    transform: translate(-50%, calc(-50% - 3px)) rotate(var(--rot, 0deg))
-      scale(0.88);
+    transform: rotate(var(--rot, 0deg)) scale(1.06);
   }
 }

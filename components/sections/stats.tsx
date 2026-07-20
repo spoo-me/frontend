@@ -23,15 +23,9 @@ const supporting: Item[] = [
   {
     value: stats.links / 1_000_000,
     suffix: "M+",
+    decimals: 1,
     label: "links shortened",
     sub: "and counting",
-  },
-  {
-    value: stats.uptime,
-    suffix: "%",
-    decimals: 2,
-    label: "uptime",
-    sub: "rolling 12-month avg",
   },
   {
     value: stats.stars,
@@ -60,7 +54,7 @@ export function Stats() {
               </span>
             </>
           }
-          description="Real traffic, real uptime, real community. The metrics that make spoo dependable."
+          description="Real traffic, real numbers, real community. The metrics that make spoo dependable."
         />
       </Band>
 
@@ -109,8 +103,8 @@ export function Stats() {
             </div>
           </div>
 
-          {/* Supporting stats: 3-up stacked column */}
-          <ul className="grid grid-cols-1 grid-rows-3 border-border border-t bg-background lg:border-t-0 lg:border-l">
+          {/* Supporting stats */}
+          <ul className="grid grid-cols-1 grid-rows-2 border-border border-t bg-background lg:border-t-0 lg:border-l">
             {supporting.map((item, i) => {
               const numberBlock = (
                 <div className="flex items-baseline">

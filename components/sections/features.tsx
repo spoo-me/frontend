@@ -1,6 +1,6 @@
 "use client"
 
-import { lazy, Suspense, useEffect, useState } from "react"
+import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
   ArrowUpRight,
@@ -12,7 +12,12 @@ import {
   TrendingUp,
   Webhook,
 } from "lucide-react"
-import { AnimatePresence, motion, useReducedMotion } from "motion/react"
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "motion/react"
 
 import { AnimatedList } from "@/components/magicui/animated-list"
 import { cn } from "@/lib/utils"
@@ -48,20 +53,22 @@ const DomainDemo = () => {
   const [bi, setBi] = useState(0)
   const [manual, setManual] = useState(false)
   const reduced = useReducedMotion()
+  const rootRef = useRef<HTMLDivElement>(null)
+  const inView = useInView(rootRef, { amount: 0.35 })
 
   useEffect(() => {
-    if (reduced || manual) return
+    if (reduced || manual || !inView) return
     const t = setTimeout(
       () => setBi((i) => (i + 1) % BRANDS.length),
       DOMAIN_CYCLE_MS
     )
     return () => clearTimeout(t)
-  }, [bi, manual, reduced])
+  }, [bi, manual, reduced, inView])
 
   const brand = BRANDS[bi]
 
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div ref={rootRef} className="absolute inset-0 overflow-hidden">
       <div
         aria-hidden
         className="pattern-dots absolute inset-x-8 inset-y-6 opacity-70 [mask-image:radial-gradient(ellipse_65%_80%_at_50%_45%,black,transparent)]"
@@ -209,13 +216,22 @@ const Notification = ({
 }
 
 const NotificationsList = () => {
+  /* The feed holds until it's actually watched — mounting AnimatedList
+     early would burn its entrance off-screen. */
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, { once: true, amount: 0.4 })
   return (
-    <div className="absolute inset-0 flex scale-90 flex-col items-center overflow-hidden border-none p-4 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_30%)] group-hover:scale-100">
-      <AnimatedList delay={2000}>
-        {notifications.map((item, idx) => (
-          <Notification key={idx} {...item} />
-        ))}
-      </AnimatedList>
+    <div
+      ref={ref}
+      className="absolute inset-0 flex scale-90 flex-col items-center overflow-hidden border-none p-4 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_30%)] group-hover:scale-100"
+    >
+      {inView ? (
+        <AnimatedList delay={2000}>
+          {notifications.map((item, idx) => (
+            <Notification key={idx} {...item} />
+          ))}
+        </AnimatedList>
+      ) : null}
     </div>
   )
 }
@@ -354,10 +370,14 @@ function ProofBand({
           and the learn-more affordance fades in. Space is reserved, so
           nothing shifts. */}
       <div className="group grid gap-px bg-border lg:grid-cols-2">
+        {/* Phones read the artifact first, the claim second; desktop keeps
+            the alternating flip. */}
         <div
           className={cn(
-            "relative flex flex-col justify-center bg-background p-7 pb-20 sm:p-9 sm:pb-24",
-            flip && "lg:order-2"
+            /* The pb reserve holds the hover Learn-more's floor at sm+;
+               phones have no hover, so it collapses. */
+            "relative order-2 flex flex-col justify-center bg-background p-7 sm:p-9 sm:pb-24",
+            flip ? "lg:order-2" : "lg:order-1"
           )}
         >
           <h3 className="text-balance font-semibold text-2xl text-foreground tracking-tight sm:text-3xl">
@@ -372,13 +392,18 @@ function ProofBand({
             href={siteConfig.links.docs}
             target="_blank"
             rel="noreferrer"
-            className="absolute bottom-4 left-7 inline-flex h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:bottom-5 sm:left-9"
+            className="absolute bottom-4 left-7 hidden h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:bottom-5 sm:left-9 sm:inline-flex"
           >
             Learn more
             <ArrowUpRight className="size-2.5" data-icon="inline-end" />
           </a>
         </div>
-        <div className={cn("bg-background", flip && "lg:order-1")}>
+        <div
+          className={cn(
+            "order-1 bg-background",
+            flip ? "lg:order-1" : "lg:order-2"
+          )}
+        >
           <div className="relative h-72 overflow-hidden transition-transform duration-300 ease-out group-hover:scale-[1.02] sm:h-80">
             {demo}
           </div>

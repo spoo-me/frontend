@@ -64,9 +64,12 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
       <Band rule>
         <div className="grid gap-px bg-border lg:grid-cols-[1.4fr_1fr]">
           {/* Code playground — editor file-tabs fused into the panel */}
-          <div className="relative bg-background p-5 [--code-surface:var(--card)] sm:p-9 dark:[--code-surface:#09090b]">
-            {/* File tabs — no overflow container here, it would trap the -mb-px fusion */}
-            <div className="flex flex-wrap items-end gap-0.5 px-3">
+          <div className="relative min-w-0 bg-background p-5 [--code-surface:var(--card)] sm:p-9 dark:[--code-surface:#09090b]">
+            {/* File tabs. Phones: one scrollable row of detached pills — a
+                wrapped second row breaks the editor metaphor. sm+: fused
+                tabs (overflow must stay visible there or it traps the
+                -mb-px fusion). */}
+            <div className="flex items-end gap-1 overflow-x-auto pb-2 [scrollbar-width:none] sm:flex-wrap sm:gap-0.5 sm:overflow-visible sm:px-3 sm:pb-0 [&::-webkit-scrollbar]:hidden">
               {samples.map((s) => {
                 const Icon = s.iconKey ? BrandIcons[s.iconKey] : null
                 const isActive = active === s.id
@@ -76,9 +79,9 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                     onClick={() => setActive(s.id)}
                     aria-selected={isActive}
                     className={cn(
-                      "relative inline-flex shrink-0 items-center gap-1.5 rounded-t-lg border px-3 py-2 font-mono text-xs transition-colors",
+                      "relative inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 font-mono text-xs transition-colors sm:rounded-b-none",
                       isActive
-                        ? "z-10 -mb-px border-border/60 border-b-transparent bg-[var(--code-surface)] text-foreground"
+                        ? "z-10 border-border/60 bg-[var(--code-surface)] text-foreground sm:-mb-px sm:border-b-transparent"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -131,7 +134,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
           </div>
 
           {/* SDKs list */}
-          <div className="space-y-4 bg-background p-5 sm:p-8">
+          <div className="min-w-0 space-y-4 bg-background p-5 sm:p-8">
             <div>
               <h3 className="font-semibold text-base text-foreground tracking-tight">
                 Official SDKs
