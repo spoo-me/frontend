@@ -60,7 +60,7 @@ export function RecentLinksShelf() {
               {l.original.replace(/^https?:\/\//, "")}
             </span>
             <a
-              href={`https://spoo.me/stats/${l.code}`}
+              href={`/stats/${l.code}`}
               target="_blank"
               rel="noreferrer"
               onClick={() => trackRecentLinkClicked("stats")}

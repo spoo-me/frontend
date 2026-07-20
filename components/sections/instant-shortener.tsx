@@ -80,7 +80,9 @@ export function InstantShortener() {
     if (maxTrim) body.set("max-clicks", maxTrim)
 
     try {
-      const res = await fetch("https://spoo.me/", {
+      // Same-origin proxy (next.config.mjs): dev -> the local backend,
+      // mock -> the in-repo handler, prod -> spoo.me. No CORS anywhere.
+      const res = await fetch("/shorten", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -102,18 +104,6 @@ export function InstantShortener() {
         "Couldn't shorten that URL. Try again."
       setState({ kind: "error", message })
     } catch {
-      if (process.env.NODE_ENV === "development") {
-        // CORS-blocked in local dev — fabricate a sample so the flow is
-        // walkable. Never in production: a fake link must not be copyable.
-        succeed(
-          `https://spoo.me/${aliasTrim || "s9k"}`,
-          trimmed,
-          !!aliasTrim,
-          !!passwordTrim,
-          !!maxTrim
-        )
-        return
-      }
       setState({
         kind: "error",
         message: "Couldn't reach spoo.me. Check your connection and retry.",
@@ -206,7 +196,7 @@ export function InstantShortener() {
                 signup surface. */}
             <div className="mt-1 flex items-center justify-between gap-3 border-border/50 border-t px-3 pt-2 pb-1.5 text-xs">
               <a
-                href={`https://spoo.me/stats/${state.code}`}
+                href={`/stats/${state.code}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"

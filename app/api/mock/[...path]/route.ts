@@ -924,6 +924,20 @@ async function handle(req: NextRequest, path: string[]) {
   const s = state()
 
   switch (route) {
+    /* ---------- anonymous shorten (legacy POST / on the backend) ---------- */
+    case "POST /shorten": {
+      const alias = String(body.alias ?? "").trim()
+      if (alias === "taken")
+        return fail(409, "alias_taken", "That alias is already taken.")
+      const code =
+        alias ||
+        Math.random()
+          .toString(36)
+          .slice(2, 7)
+          .replace(/[01lo]/g, "x")
+      return json({ short_url: `https://spoo.me/${code}` })
+    }
+
     /* ---------- housekeeping ---------- */
     case "GET /reset": {
       try {

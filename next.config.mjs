@@ -95,6 +95,8 @@ const nextConfig = {
         { source: "/auth/:path*", destination: "/api/mock/auth/:path*" },
         { source: "/oauth/:path*", destination: "/api/mock/oauth/:path*" },
         { source: "/api/v1/:path*", destination: "/api/mock/v1/:path*" },
+        // Anonymous shorten (legacy POST / on the backend root)
+        { source: "/shorten", destination: "/api/mock/shorten" },
         ...POSTHOG_REWRITES,
       ]
     }
@@ -107,6 +109,8 @@ const nextConfig = {
       SECURITY_TXT_REWRITE,
       { source: "/auth/:path*", destination: `${SPOO_API_URL}/auth/:path*` },
       { source: "/oauth/:path*", destination: `${SPOO_API_URL}/oauth/:path*` },
+      // Anonymous shorten (legacy POST / on the backend root)
+      { source: "/shorten", destination: `${SPOO_API_URL}/` },
       {
         source: "/api/v1/:path*",
         destination: `${SPOO_API_URL}/api/v1/:path*`,
