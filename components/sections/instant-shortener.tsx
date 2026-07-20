@@ -342,7 +342,7 @@ export function InstantShortener() {
                       placeholder="Max clicks"
                       aria-label="Max clicks"
                       autoComplete="off"
-                      className="h-8 rounded-lg border-0 bg-input/30 px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
+                      className="h-8 rounded-lg border-0 bg-input/30 px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:shadow-none"
                     />
                   </div>
                 </motion.div>
