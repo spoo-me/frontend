@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   Globe2,
   Lock,
-  QrCode,
   Share2,
   SmilePlus,
   Timer,
@@ -390,6 +389,8 @@ function ProofBand({
 }
 
 /* The long tail as a manifest: everything real, nothing demanding a demo. */
+/* Five cells, one quiet row at desktop: the completeness receipt, not a
+   second features section. QR and the workflow items didn't earn ink. */
 const MANIFEST = [
   {
     icon: Share2,
@@ -397,13 +398,8 @@ const MANIFEST = [
     text: "Custom title, description, image, and theme color per link.",
   },
   {
-    icon: QrCode,
-    name: "QR codes",
-    text: "Branded QR for every link, logo and colors included.",
-  },
-  {
     icon: Lock,
-    name: "Password locks",
+    name: "Private links",
     text: "Gate any link behind a passphrase.",
   },
   {
@@ -413,8 +409,8 @@ const MANIFEST = [
   },
   {
     icon: SmilePlus,
-    name: "Emoji aliases",
-    text: "spoo.me/\u{1F680} is a real URL here.",
+    name: "Emoji links",
+    text: "spoo.me/\u{1F996} is a real URL. So is /\u{1F35C}.",
   },
   {
     icon: Webhook,
@@ -460,14 +456,20 @@ export function Features() {
 
       {/* Manifest row — the rest of the toolbox at index density */}
       <Band rule>
-        <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-3">
-          {MANIFEST.map((f) => (
-            <div key={f.name} className="bg-background">
+        <div className="grid grid-cols-2 gap-px bg-border lg:grid-cols-5">
+          {MANIFEST.map((f, i) => (
+            <div
+              key={f.name}
+              className={cn(
+                "bg-background",
+                i === MANIFEST.length - 1 && "col-span-2 lg:col-span-1"
+              )}
+            >
               <a
                 href={siteConfig.links.docs}
                 target="_blank"
                 rel="noreferrer"
-                className="group relative flex h-full flex-col p-5 transition-colors duration-200 hover:bg-foreground/[0.02] sm:p-6"
+                className="group relative flex h-full flex-col p-6 pb-10 transition-colors duration-200 hover:bg-foreground/[0.02] sm:py-8"
               >
                 <f.icon
                   className="size-4 text-muted-foreground transition-colors duration-200 group-hover:text-foreground"
