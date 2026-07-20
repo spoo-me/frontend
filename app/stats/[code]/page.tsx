@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { PublicStatsView } from "@/components/stats-public/stats-view"
+import { StatsManagePitch } from "@/components/stats-public/manage-pitch"
 import {
   StatsMissing,
   StatsUnavailable,
@@ -61,11 +62,14 @@ export default async function PublicStatsPage({ params }: Params) {
               ) : state === "unavailable" ? (
                 <StatsUnavailable />
               ) : (
-                <PublicStatsView
-                  code={code}
-                  initial={initial}
-                  gated={state === "gated"}
-                />
+                <>
+                  <PublicStatsView
+                    code={code}
+                    initial={initial}
+                    gated={state === "gated"}
+                  />
+                  <StatsManagePitch />
+                </>
               )}
             </div>
           </Section>

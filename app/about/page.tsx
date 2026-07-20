@@ -10,9 +10,9 @@ import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
 export const metadata: Metadata = {
-  title: "About: the link platform built for developers",
+  title: "About: the link platform that proves every click",
   description:
-    "spoo.me is an open-source, developer-first link management platform: API-first, self-hostable, and free of dark patterns.",
+    "spoo.me is an open-source link management platform: analytics-led, API-first, self-hostable, and free of dark patterns.",
 }
 
 type Person = { name: string; role: string; avatar: number }
@@ -54,7 +54,7 @@ const pillars = [
   },
   {
     title: "Generous by default",
-    body: "No ads, no selling click data, no dark patterns. Personal projects live comfortably on the free tier — the platform is funded by the people it serves, not by your data.",
+    body: "No ads, no selling click data, no dark patterns. The platform is funded by the people it serves, not by your data.",
   },
   {
     title: "API-first",
