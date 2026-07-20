@@ -228,7 +228,7 @@ const GeoDemo = () => {
                   src={`https://flagcdn.com/w40/${r.flag}.png`}
                   alt=""
                   loading="lazy"
-                  className="size-6 shrink-0 rounded-full object-cover"
+                  className="size-6 shrink-0 rounded-full object-cover ring-1 ring-foreground/15"
                 />
                 <span
                   className={cn(
@@ -241,7 +241,16 @@ const GeoDemo = () => {
                       : "max-w-0 opacity-0"
                   )}
                 >
-                  {"→"} {r.path}
+                  {/* Arrow always points from the flag toward the path */}
+                  {r.opens === "left" ? (
+                    <>
+                      {r.path} {"←"}
+                    </>
+                  ) : (
+                    <>
+                      {"→"} {r.path}
+                    </>
+                  )}
                 </span>
               </span>
             </button>
