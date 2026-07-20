@@ -25,6 +25,61 @@ import {
 } from "@/lib/analytics"
 import { addRecentLink } from "@/lib/recent-links"
 
+/* The legacy API reports field errors as { AliasError: "..." } etc.
+   Map them to fields (so a hidden options fold can open itself) and to
+   copy that fits a hero. Unknown messages pass through untouched: blocked
+   -URL texts and future cases stay honest. */
+const FIELD_BY_KEY: Record<string, "alias" | "password" | "maxClicks" | "url"> =
+  {
+    AliasError: "alias",
+    PasswordError: "password",
+    MaxClicksError: "maxClicks",
+    UrlError: "url",
+  }
+
+function friendlyError(
+  data: Record<string, unknown>,
+  status: number
+): { field: string | null; message: string } {
+  if (status === 429)
+    return {
+      field: null,
+      message: "You're creating links quickly. Give it a minute and retry.",
+    }
+  const key = Object.keys(data).find(
+    (k) => k in FIELD_BY_KEY && typeof data[k] === "string"
+  )
+  const raw = key
+    ? String(data[key])
+    : Object.values(data).find((v): v is string => typeof v === "string")
+  const field = key ? FIELD_BY_KEY[key] : null
+  if (key === "AliasError")
+    return {
+      field,
+      message:
+        raw === "Alias already exists"
+          ? "That alias is taken. Try another."
+          : "Aliases can only use letters, numbers, and dashes.",
+    }
+  if (key === "PasswordError")
+    return {
+      field,
+      message:
+        "Passwords need 8+ characters with a letter, a number, and @ or . included.",
+    }
+  if (key === "MaxClicksError")
+    return { field, message: "Max clicks must be a positive number." }
+  if (key === "UrlError" && raw?.startsWith("Invalid URL"))
+    return {
+      field,
+      message: "That URL doesn't look valid. Include the https:// part.",
+    }
+  return {
+    field,
+    message: raw ?? "Couldn't shorten that URL. Try again.",
+  }
+}
+
 type State =
   | { kind: "idle" }
   | { kind: "loading" }
@@ -47,6 +102,14 @@ export function InstantShortener({
   const [copied, setCopied] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const cardRef = React.useRef<HTMLDivElement>(null)
+
+  /* Editing anything retires a stale error. */
+  function edit(set: (v: string) => void) {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      set(e.target.value)
+      setState((st) => (st.kind === "error" ? { kind: "idle" } : st))
+    }
+  }
 
   React.useEffect(() => {
     function onPaste(e: ClipboardEvent) {
@@ -108,10 +171,8 @@ export function InstantShortener({
         succeed(data.short_url, trimmed, !!aliasTrim, !!passwordTrim, !!maxTrim)
         return
       }
-      // The v1 API reports field errors as { FieldName: "message" }.
-      const message =
-        Object.values(data).find((v): v is string => typeof v === "string") ??
-        "Couldn't shorten that URL. Try again."
+      const { field, message } = friendlyError(data, res.status)
+      if (field && field !== "url") setShowOptions(true)
       setState({ kind: "error", message })
     } catch {
       setState({
@@ -166,9 +227,13 @@ export function InstantShortener({
 
   async function copy() {
     if (state.kind !== "success") return
-    await navigator.clipboard.writeText(state.short)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1600)
+    try {
+      await navigator.clipboard.writeText(state.short)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1600)
+    } catch {
+      window.prompt("Copy your link:", state.short)
+    }
   }
 
   function reset() {
@@ -184,7 +249,10 @@ export function InstantShortener({
   return (
     <div
       ref={cardRef}
-      className="relative w-full rounded-xl border border-border/60 bg-background/45 p-1 shadow-soft backdrop-blur-md dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className={cn(
+        "relative w-full rounded-xl border border-border/60 bg-background/45 p-1 shadow-soft backdrop-blur-md transition-transform duration-300 ease-out dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+        state.kind === "success" && "translate-y-6"
+      )}
     >
       <AnimatePresence mode="wait" initial={false}>
         {state.kind === "success" ? (
@@ -268,7 +336,7 @@ export function InstantShortener({
                 ref={inputRef}
                 type="url"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={edit(setUrl)}
                 placeholder="Paste a long URL…"
                 className={cn(
                   "h-10 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
@@ -330,7 +398,7 @@ export function InstantShortener({
                       </span>
                       <Input
                         value={alias}
-                        onChange={(e) => setAlias(e.target.value)}
+                        onChange={edit(setAlias)}
                         placeholder="alias"
                         aria-label="Custom alias"
                         autoComplete="off"
@@ -340,7 +408,7 @@ export function InstantShortener({
                     <div className="flex items-center rounded-lg bg-input/30 pr-2">
                       <Input
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={edit(setPassword)}
                         type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         aria-label="Link password"
@@ -364,7 +432,7 @@ export function InstantShortener({
                     </div>
                     <Input
                       value={maxClicks}
-                      onChange={(e) => setMaxClicks(e.target.value)}
+                      onChange={edit(setMaxClicks)}
                       type="number"
                       min={1}
                       placeholder="Max clicks"
