@@ -453,7 +453,7 @@ export function Features() {
                 </p>
                 {/* Overlay in the bottom-right corner, which every cell
                     leaves empty: no reflow, no text collision */}
-                <span className="absolute right-5 bottom-3.5 inline-flex h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:right-6">
+                <span className="absolute right-3 bottom-2.5 inline-flex h-[22px] items-center gap-1 rounded-md border border-border/50 px-1.5 font-medium text-[10px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100">
                   Learn more
                   <ArrowUpRight className="size-2.5" />
                 </span>
