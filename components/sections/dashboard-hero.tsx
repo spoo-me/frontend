@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Compass,
   Globe2,
+  History,
   LineChart,
   Link2,
   MapPin,
@@ -296,10 +297,10 @@ function Callouts() {
         "Open any short link and get its own time series: clicks, unique visitors, repeat behavior.",
     },
     {
-      icon: Filter,
-      title: "Slice by anything",
+      icon: History,
+      title: "Compare periods",
       description:
-        "Country, city, browser, OS, referrer, link. Stack filters as deep as you like.",
+        "Ghost the previous range under any chart and read the drift at a glance.",
     },
     {
       icon: LayoutDashboard,
