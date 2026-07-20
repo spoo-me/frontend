@@ -122,15 +122,16 @@ export function SelfHostClient() {
               )}
             </button>
           </div>
-          <p className="mt-4 text-center text-muted-foreground text-xs">
-            or use{" "}
-            <code className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
-              docker compose up
-            </code>{" "}
-            with the included{" "}
-            <code className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
-              compose.yml
-            </code>
+          <p className="mt-4 text-center text-xs">
+            <a
+              href={`${siteConfig.links.docs}/self-hosting/docker-deployment`}
+              target="_blank"
+              rel="noreferrer"
+              className="group inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              full guide
+              <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
           </p>
         </motion.div>
       </Band>
