@@ -45,7 +45,7 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative flex min-h-svh w-full items-center justify-center px-5 pt-24 pb-16 sm:px-9 sm:pt-28 sm:pb-20">
+      <div className="relative flex min-h-[85svh] w-full items-center justify-center px-5 pt-24 pb-10 sm:px-9 sm:pt-28 sm:pb-12">
         <motion.div
           initial="hidden"
           animate="visible"

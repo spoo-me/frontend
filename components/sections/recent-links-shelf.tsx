@@ -48,7 +48,7 @@ export function RecentLinksShelf() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="relative flex justify-center px-5 pb-16 sm:px-9"
+      className="relative flex justify-center px-5 pb-14 sm:px-9"
     >
       <div className="w-full max-w-lg">
         <div className="label-mono mb-2 text-left text-muted-foreground/70">
