@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Logo } from "@/components/shared/logo"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { footerLinks, siteConfig } from "@/lib/site-config"
+import { StatusBadge } from "./status-badge"
 import { ThemeToggle } from "./theme-toggle"
 
 export function Footer() {
@@ -74,6 +75,7 @@ export function Footer() {
                 )
               })}
             </div>
+            <StatusBadge />
           </div>
           {sections.map((section) => (
             <div key={section.title} className="space-y-3">

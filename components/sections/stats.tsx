@@ -103,7 +103,7 @@ export function Stats() {
             </div>
           </div>
 
-          {/* Supporting stats: 3-up stacked column */}
+          {/* Supporting stats */}
           <ul className="grid grid-cols-1 grid-rows-2 border-border border-t bg-background lg:border-t-0 lg:border-l">
             {supporting.map((item, i) => {
               const numberBlock = (

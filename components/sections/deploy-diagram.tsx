@@ -21,8 +21,7 @@ type DeployNode = {
   accent: string
 }
 
-/* Every node lands on its walkthrough in the docs — a considered deploy,
-   not a one-click promise the configs can't keep. */
+/* Nodes link to their docs walkthroughs, never raw deploy URLs. */
 const SELF_HOST_DOCS = "https://docs.spoo.me/self-hosting"
 
 const deps: DeployNode[] = [

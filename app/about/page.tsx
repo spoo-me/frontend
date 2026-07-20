@@ -106,13 +106,13 @@ export default function AboutPage() {
                   redirect service, a dashboard for managing campaigns, a public
                   API for automation, and an ecosystem of native clients across
                   browser, desktop, mobile shortcuts, Discord, and Telegram. All
-                  of it open source. All of it free.
+                  of it open source.
                 </p>
                 <p>
-                  The platform handles over 100 million clicks across every
-                  region with rolling 99.99% uptime, and is used by independent
-                  developers, indie teams, and organizations that need link
-                  infrastructure without the lock-in of a SaaS vendor.
+                  The platform has served over 100 million clicks across every
+                  region, and is used by independent developers, indie teams,
+                  and organizations that need link infrastructure without the
+                  lock-in of a SaaS vendor.
                 </p>
               </div>
             </div>
