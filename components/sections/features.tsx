@@ -1,9 +1,8 @@
 "use client"
 
-import { lazy, Suspense, useState } from "react"
+import { lazy, Suspense, useEffect, useState } from "react"
 import {
-  ArrowRight,
-  Copy,
+  ArrowUpRight,
   FileDown,
   Globe2,
   ListChecks,
@@ -14,85 +13,115 @@ import {
   Timer,
   Webhook,
 } from "lucide-react"
+import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Band } from "@/components/shared/section-shell"
+import { siteConfig } from "@/lib/site-config"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
 
-/* Domain detail as a diptych — the setup (DNS records + live status) and the
-   payoff (your links, on your domain). The onboarding wizard's grammar. */
+/* The payoff, not the plumbing: one short link whose brand identity
+   rotates — colored logo tile + domain morph while the path stays put.
+   The roster below uses the geo pins' grammar: hover moves the sticky
+   spotlight and stops the auto-cycle. Fictional brands, real shape. */
+const BRANDS = [
+  { id: "fern", domain: "go.fern.coffee", color: "#16A34A", initial: "f" },
+  { id: "kumo", domain: "links.kumo.app", color: "#0EA5E9", initial: "k" },
+  { id: "sol", domain: "sol.supply", color: "#F59E0B", initial: "s" },
+  { id: "berry", domain: "brry.shop", color: "#E11D48", initial: "b" },
+]
+
+const DOMAIN_CYCLE_MS = 2800
+
 const DomainDemo = () => {
-  const records = [
-    { type: "CNAME", name: "links", value: "spoo.me" },
-    { type: "TXT", name: "_spoo", value: "spoo-verify=8f3a…" },
-  ]
-  const links = [
-    { path: "/launch", nudge: "" },
-    { path: "/docs", nudge: "ml-4" },
-    { path: "/careers", nudge: "ml-1.5" },
-  ]
+  const [bi, setBi] = useState(0)
+  const [manual, setManual] = useState(false)
+  const reduced = useReducedMotion()
+
+  useEffect(() => {
+    if (reduced || manual) return
+    const t = setTimeout(
+      () => setBi((i) => (i + 1) % BRANDS.length),
+      DOMAIN_CYCLE_MS
+    )
+    return () => clearTimeout(t)
+  }, [bi, manual, reduced])
+
+  const brand = BRANDS[bi]
+
   return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_22%,#000_100%)]">
+    <div className="absolute inset-0 overflow-hidden">
       <div
         aria-hidden
-        className="pattern-dots absolute inset-x-8 top-2 h-48 opacity-70 [mask-image:radial-gradient(ellipse_60%_90%_at_50%_40%,black,transparent)]"
+        className="pattern-dots absolute inset-x-8 inset-y-6 opacity-70 [mask-image:radial-gradient(ellipse_65%_80%_at_50%_45%,black,transparent)]"
       />
-      <div className="relative mx-auto mt-8 flex w-full max-w-xl items-center justify-center gap-5 px-6 transition-transform duration-300 group-hover:-translate-y-1">
-        <div className="w-72 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-card shadow-float">
-          <div className="flex items-center justify-between border-border/60 border-b px-3.5 py-2.5">
-            <span className="font-medium font-mono text-[11px] text-foreground">
-              links.acme.dev
-            </span>
-            <span className="flex items-center gap-1.5 rounded-full bg-live/10 px-2 py-0.5 font-mono text-[9px] text-live">
-              <span className="size-1 rounded-full bg-live" />
-              active
-            </span>
-          </div>
-          <div className="divide-y divide-border/60">
-            {records.map((r) => (
-              <div
-                key={r.type}
-                className="flex items-center gap-3 px-3.5 py-2 font-mono text-[10px]"
-              >
-                <span className="w-11 shrink-0 text-muted-foreground/70">
-                  {r.type}
-                </span>
-                <span className="w-10 shrink-0 text-foreground/90">
-                  {r.name}
-                </span>
-                <span className="flex-1 truncate text-muted-foreground">
-                  {r.value}
-                </span>
-                <Copy
-                  className="size-3 shrink-0 text-muted-foreground/40"
-                  strokeWidth={1.75}
-                />
-              </div>
-            ))}
-            <div className="flex items-center gap-3 px-3.5 py-2 font-mono text-[10px] text-muted-foreground/70">
-              <span className="w-11 shrink-0">SSL</span>
-              <span>auto · issued mar 12</span>
-            </div>
-          </div>
-        </div>
-        <ArrowRight
-          className="hidden size-4 shrink-0 text-muted-foreground/50 sm:block"
-          strokeWidth={1.75}
-        />
-        <div className="hidden flex-col gap-1.5 sm:flex">
-          {links.map((l) => (
-            <div
-              key={l.path}
-              className={`w-fit rounded-lg border border-border/70 bg-card px-2.5 py-1.5 font-mono text-[10px] shadow-float-sm ${l.nudge}`}
+      <div className="relative flex h-full flex-col items-center justify-center gap-8">
+        {/* The link, wearing whoever owns it */}
+        <motion.div
+          layout
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="flex h-14 items-center rounded-2xl border border-border/70 bg-card px-5 shadow-float"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={brand.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center gap-3"
             >
-              <span className="font-medium text-foreground">
-                links.acme.dev
+              <span
+                className="flex size-7 items-center justify-center rounded-lg font-semibold text-sm text-white"
+                style={{ backgroundColor: brand.color }}
+              >
+                {brand.initial}
               </span>
-              <span className="text-muted-foreground">{l.path}</span>
-            </div>
+              <span className="font-medium font-mono text-base text-foreground sm:text-lg">
+                {brand.domain}
+              </span>
+            </motion.span>
+          </AnimatePresence>
+          <span className="font-mono text-base text-muted-foreground sm:text-lg">
+            /launch
+          </span>
+        </motion.div>
+
+        {/* The roster — hover hands over the link */}
+        <div className="flex items-center gap-2">
+          {BRANDS.map((b, i) => (
+            <button
+              key={b.id}
+              type="button"
+              aria-label={`Show ${b.domain}`}
+              onMouseEnter={() => {
+                setManual(true)
+                setBi(i)
+              }}
+              onFocus={() => {
+                setManual(true)
+                setBi(i)
+              }}
+              onClick={() => {
+                setManual(true)
+                setBi(i)
+              }}
+              className={cn(
+                "flex h-7 items-center gap-1.5 rounded-full border bg-card px-2 font-mono text-[11px] transition-colors duration-200",
+                i === bi
+                  ? "border-border text-foreground"
+                  : "border-border/60 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span
+                className="size-3 rounded-[4px]"
+                style={{ backgroundColor: b.color }}
+              />
+              {b.id}
+            </button>
           ))}
         </div>
       </div>
@@ -286,7 +315,10 @@ function ProofBand({
 }) {
   return (
     <Band rule>
-      <div className="grid gap-px bg-border lg:grid-cols-2">
+      {/* One hover scope for the whole band: the artifact swells a touch
+          and the learn-more affordance fades in. Space is reserved, so
+          nothing shifts. */}
+      <div className="group grid gap-px bg-border lg:grid-cols-2">
         <div
           className={cn(
             "flex flex-col justify-center bg-background p-7 sm:p-9",
@@ -299,9 +331,20 @@ function ProofBand({
           <p className="mt-3 max-w-md text-balance text-base text-muted-foreground">
             {body}
           </p>
+          <a
+            href={siteConfig.links.docs}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex w-fit items-center gap-1.5 font-medium text-muted-foreground text-sm opacity-0 transition-all duration-200 hover:text-foreground group-hover:opacity-100"
+          >
+            Learn more
+            <ArrowUpRight className="size-3.5" data-icon="inline-end" />
+          </a>
         </div>
-        <div className={cn("group bg-background", flip && "lg:order-1")}>
-          <div className="relative h-72 overflow-hidden sm:h-80">{demo}</div>
+        <div className={cn("bg-background", flip && "lg:order-1")}>
+          <div className="relative h-72 overflow-hidden transition-transform duration-300 ease-out group-hover:scale-[1.02] sm:h-80">
+            {demo}
+          </div>
         </div>
       </div>
     </Band>
@@ -372,7 +415,7 @@ export function Features() {
 
       <ProofBand
         headline="Your brand on every link."
-        body="Bring your own domain, apex or subdomain. Guided DNS with copy-ready records, automatic SSL, and links.acme.dev/launch instead of somebody else's name."
+        body="Bring your own domain, apex or subdomain. A guided two-minute setup, and every short link speaks your name instead of ours."
         demo={<DomainDemo />}
       />
       <ProofBand
@@ -391,15 +434,26 @@ export function Features() {
       <Band rule>
         <div className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
           {MANIFEST.map((f) => (
-            <div key={f.name} className="bg-background p-5 sm:p-6">
-              <f.icon
-                className="size-4 text-muted-foreground"
-                strokeWidth={1.75}
-              />
-              <div className="label-mono mt-3 text-foreground">{f.name}</div>
-              <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
-                {f.text}
-              </p>
+            <div key={f.name} className="bg-background">
+              <a
+                href={siteConfig.links.docs}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex h-full flex-col p-5 transition-colors duration-200 hover:bg-foreground/[0.02] sm:p-6"
+              >
+                <f.icon
+                  className="size-4 text-muted-foreground transition-colors duration-200 group-hover:text-foreground"
+                  strokeWidth={1.75}
+                />
+                <div className="label-mono mt-3 text-foreground">{f.name}</div>
+                <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
+                  {f.text}
+                </p>
+                <span className="mt-auto inline-flex items-center gap-1 pt-3 font-medium text-[12px] text-muted-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  Learn more
+                  <ArrowUpRight className="size-3" />
+                </span>
+              </a>
             </div>
           ))}
         </div>
