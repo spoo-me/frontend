@@ -27,12 +27,13 @@ export const siteConfig = {
   },
 } as const
 
+/* Refreshed 2026-07-21: `links` from prod collStats (urls + urlsV2 +
+   emojis, rounded down), `stars` from the GitHub API. */
 export const stats = {
   clicks: 100_000_000,
-  links: 5_000_000,
+  links: 9_600_000,
   contributors: 12,
-  stars: 207,
-  uptime: 99.99,
+  stars: 235,
   apps: 8,
   sdks: 6,
 } as const
