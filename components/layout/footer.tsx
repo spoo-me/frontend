@@ -25,8 +25,8 @@ export function Footer() {
           <div className="space-y-5">
             <Logo />
             <p className="max-w-xs text-muted-foreground text-sm leading-relaxed">
-              Free, open-source link management platform with advanced
-              analytics. Built by developers, for developers.
+              Open-source link management with advanced analytics and an
+              API-first core. Built in the open.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               {(

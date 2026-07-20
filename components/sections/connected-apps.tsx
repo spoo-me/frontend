@@ -61,10 +61,8 @@ export function ConnectedApps() {
   return (
     <>
       {/* Header band */}
-      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+      <Band className="px-5 py-24 sm:px-9 sm:py-32">
         <SectionHeading
-          num="03"
-          caption="Ecosystem"
           title={
             <>
               spoo lives{" "}
@@ -145,13 +143,7 @@ export function ConnectedApps() {
       </Band>
 
       {/* Table-footer row */}
-      <Band
-        rule
-        className="flex items-center justify-between px-5 py-4 sm:px-9"
-      >
-        <span className="label-mono hidden text-muted-foreground/60 sm:block">
-          16 clients · one API
-        </span>
+      <Band rule className="flex items-center justify-end px-5 py-4 sm:px-9">
         <Button asChild variant="outline" size="sm">
           <Link href="/apps">
             Browse all apps

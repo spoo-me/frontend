@@ -4,7 +4,7 @@ export const siteConfig = {
   name: "spoo.me",
   url: "https://spoo.me",
   description:
-    "Free, open-source, API-first link management platform with advanced analytics. Self-hostable in one command.",
+    "Open-source link management platform with advanced analytics and an API-first core. Self-hostable in one command.",
   ogImage: "/brand/logo-text-dark.png",
   links: {
     github: "https://github.com/spoo-me/spoo",

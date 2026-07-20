@@ -34,11 +34,9 @@ export function SelfHostClient() {
   return (
     <>
       {/* Header band — heading + CTAs share the cell */}
-      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+      <Band className="px-5 py-24 sm:px-9 sm:py-32">
         <SectionHeading
           align="center"
-          num="06"
-          caption="Self-host"
           title={
             <>
               Run spoo.me on{" "}
@@ -47,7 +45,7 @@ export function SelfHostClient() {
               </span>
             </>
           }
-          description="Free isn't a tier. The entire stack is open source: back it with your own database, deploy on your VPS, ship to a Kubernetes cluster. Your data. Your domain."
+          description="The entire stack is open source: back it with your own database, deploy on your VPS, ship to a Kubernetes cluster. Your data. Your domain."
         />
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">

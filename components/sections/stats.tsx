@@ -46,14 +46,12 @@ export function Stats() {
   return (
     <>
       {/* Header band */}
-      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+      <Band className="px-5 py-24 sm:px-9 sm:py-32">
         <div
           aria-hidden
           className="pattern-dots pointer-events-none absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_60%_80%_at_50%_50%,black,transparent)]"
         />
         <SectionHeading
-          num="07"
-          caption="Scale"
           title={
             <>
               Trusted at scale,{" "}

@@ -21,7 +21,7 @@ const fontSerif = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} · open-source link management platform for developers`,
+    default: `${siteConfig.name} · open-source link management with advanced analytics`,
     template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,

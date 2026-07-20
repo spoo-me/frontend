@@ -45,10 +45,8 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
   return (
     <>
       {/* Header band */}
-      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+      <Band className="px-5 py-24 sm:px-9 sm:py-32">
         <SectionHeading
-          num="04"
-          caption="Developers"
           title={
             <>
               An API your team will{" "}
@@ -84,27 +82,6 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {/* Wedge flares — the tab pours into the panel */}
-                    {isActive && (
-                      <>
-                        <span
-                          aria-hidden
-                          className="absolute bottom-0 -left-2 size-2"
-                          style={{
-                            background:
-                              "radial-gradient(circle at 0 0, transparent 0.5rem, var(--code-surface) 0.5rem)",
-                          }}
-                        />
-                        <span
-                          aria-hidden
-                          className="absolute -right-2 bottom-0 size-2"
-                          style={{
-                            background:
-                              "radial-gradient(circle at 100% 0, transparent 0.5rem, var(--code-surface) 0.5rem)",
-                          }}
-                        />
-                      </>
-                    )}
                     {Icon ? <Icon className="size-3" /> : null}
                     {FILE_NAMES[s.id] ?? s.label}
                   </button>

@@ -5,8 +5,10 @@ import Link from "next/link"
 import { motion } from "motion/react"
 import { ArrowRight, Zap } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { InstantShortener } from "@/components/sections/instant-shortener"
+import { RecentLinksShelf } from "@/components/sections/recent-links-shelf"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
@@ -16,8 +18,11 @@ const fadeUp = {
 }
 
 export function Hero() {
+  /* A fresh result quiets the CTAs (opacity only, space reserved): the
+     card carries its own signup pitch, so the page holds its breath. */
+  const [linkMade, setLinkMade] = React.useState(false)
   return (
-    <section className="relative flex min-h-svh items-center justify-center overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20">
+    <section className="relative overflow-hidden">
       {/* Aurora — layered brand-tint blobs, slow drift */}
       <div
         aria-hidden
@@ -40,7 +45,7 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative w-full px-5 sm:px-9">
+      <div className="relative flex min-h-[85svh] w-full items-center justify-center px-5 pt-24 pb-10 sm:px-9 sm:pt-28 sm:pb-12">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -59,7 +64,7 @@ export function Hero() {
             The link platform
             <br />
             <span className="font-normal text-muted-foreground italic [font-family:var(--font-serif)]">
-              built for developers.
+              that proves every click.
             </span>
           </motion.h1>
 
@@ -68,9 +73,9 @@ export function Hero() {
             transition={{ duration: 0.6 }}
             className="mt-6 max-w-xl text-balance text-base text-muted-foreground sm:text-lg"
           >
-            Free, open-source link management platform with advanced analytics,
-            an API-first design, and an entire ecosystem of apps and SDKs.
-            Self-hostable in one command.
+            Open-source link management with advanced analytics, an API-first
+            core, and an entire ecosystem of apps and SDKs. Self-hostable in one
+            command.
           </motion.p>
 
           <motion.div
@@ -78,40 +83,51 @@ export function Hero() {
             transition={{ duration: 0.6 }}
             className="mt-8 flex w-full max-w-lg flex-col items-stretch gap-3"
           >
-            <InstantShortener />
-            <p className="text-muted-foreground text-xs">
+            <InstantShortener onSuccessChange={setLinkMade} />
+            <p
+              className={cn(
+                "text-muted-foreground text-xs transition-opacity duration-300",
+                linkMade && "opacity-0"
+              )}
+            >
               No sign-up required. Try it right here.
             </p>
           </motion.div>
 
-          <motion.div
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-3"
-          >
-            <Button asChild size="lg" className="h-10 px-4">
-              <Link href="/signup">
-                <Zap className="size-4" data-icon="inline-start" />
-                Start free
-                <ArrowRight className="size-4" data-icon="inline-end" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="h-10 px-4">
-              <a
-                href={siteConfig.links.github}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <BrandIcons.github
-                  className="size-4"
-                  data-icon="inline-start"
-                />
-                View on GitHub
-              </a>
-            </Button>
+          <motion.div variants={fadeUp} transition={{ duration: 0.6 }}>
+            <div
+              className={cn(
+                "mt-8 flex flex-wrap items-center justify-center gap-3 transition-opacity duration-300",
+                linkMade && "pointer-events-none opacity-0"
+              )}
+            >
+              <Button asChild size="lg" className="h-10 px-4">
+                <Link href="/signup">
+                  <Zap className="size-4" data-icon="inline-start" />
+                  Start free
+                  <ArrowRight className="size-4" data-icon="inline-end" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-10 px-4">
+                <a
+                  href={siteConfig.links.github}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <BrandIcons.github
+                    className="size-4"
+                    data-icon="inline-start"
+                  />
+                  View on GitHub
+                </a>
+              </Button>
+            </div>
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Below the fold on purpose: the shelf never displaces the hero */}
+      <RecentLinksShelf />
     </section>
   )
 }

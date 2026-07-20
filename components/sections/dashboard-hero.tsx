@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Compass,
   Globe2,
+  History,
   LineChart,
   Link2,
   MapPin,
@@ -62,10 +63,8 @@ const CountryMap = dynamic(
 export function DashboardHero() {
   return (
     <>
-      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+      <Band className="px-5 py-24 sm:px-9 sm:py-32">
         <SectionHeading
-          num="01"
-          caption="Analytics"
           title={
             <>
               Click insights without{" "}
@@ -74,7 +73,7 @@ export function DashboardHero() {
               </span>
             </>
           }
-          description="A real analytics product, included free in every link. No third-party scripts, no cookie banners. Yours by default."
+          description="A real analytics product, included with every link. No third-party scripts, no cookie banners. Yours by default."
         />
       </Band>
 
@@ -298,10 +297,10 @@ function Callouts() {
         "Open any short link and get its own time series: clicks, unique visitors, repeat behavior.",
     },
     {
-      icon: Filter,
-      title: "Slice by anything",
+      icon: History,
+      title: "Compare periods",
       description:
-        "Country, city, browser, OS, referrer, link. Stack filters as deep as you like.",
+        "Ghost the previous range under any chart and read the drift at a glance.",
     },
     {
       icon: LayoutDashboard,

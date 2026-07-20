@@ -16,10 +16,8 @@ export function Testimonials() {
   return (
     <>
       {/* Header band */}
-      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+      <Band className="px-5 py-24 sm:px-9 sm:py-32">
         <SectionHeading
-          num="05"
-          caption="Builders"
           title={
             <>
               Real teams, shipping with{" "}
@@ -34,11 +32,15 @@ export function Testimonials() {
 
       {/* Quote mosaic — breakout band: cards span the viewport minus fixed
           5rem hatch flanks, riding z-20 above the rails so no lines cross
-          them. pt-px (not mt-px — margin collapse) lets the container's
-          border tint draw the top line across the breakout span. */}
+          them. The overlay hairline draws the top rule across the breakout
+          span at the same border/60 weight as every other band rule. */}
       <Band rule>
         <GutterHatch area="outer" />
-        <div className="relative z-20 grid grid-cols-1 gap-px bg-border pt-px lg:grid-cols-12 min-[1400px]:mx-[calc(50%-50vw+5rem)]">
+        <div className="relative z-20 grid grid-cols-1 gap-px bg-border lg:grid-cols-12 min-[1400px]:mx-[calc(50%-50vw+5rem)]">
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-px bg-border/60"
+          />
           {featured.map((t) => (
             <QuoteCard key={t.slug} item={t} />
           ))}

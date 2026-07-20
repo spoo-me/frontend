@@ -36,14 +36,14 @@ export function CTA() {
         className="relative mx-auto max-w-2xl"
       >
         <h2 className="text-balance font-semibold text-4xl text-foreground tracking-tight sm:text-5xl">
-          Stop paying for{" "}
+          From one link{" "}
           <span className="font-normal font-serif text-muted-foreground italic">
-            link management.
+            to a hundred million.
           </span>
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-balance text-base text-muted-foreground sm:text-lg">
-          spoo.me is free, open source, and built to grow with you. From a
-          single link to 100M clicks, same product, no upsell.
+          spoo.me is open source, analytics-first, and built to grow with you.
+          The product you start with is the product at scale.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg" className="h-10 px-4">

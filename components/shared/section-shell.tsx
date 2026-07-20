@@ -93,21 +93,16 @@ export function PageFrame({
 
 /**
  * Section — a major chapter of the frame: full-bleed top rule + corner ticks.
- * The optional mono caption sits on the line (used by subpages); landing
- * sections instead carry their `[01] caption` inside the header band via
- * SectionHeading.
+ * The optional mono caption sits on the line (used by subpages).
  */
 export function Section({
   id,
   caption,
-  num,
   children,
   className,
 }: {
   id?: string
   caption?: string
-  /** chapter number rendered as a bracketed mono prefix: [01] */
-  num?: string
   children: React.ReactNode
   className?: string
 }) {
@@ -118,11 +113,6 @@ export function Section({
       <Tick className="-top-[4.5px] -right-[4.5px]" />
       {caption && (
         <span className="label-mono absolute top-0 left-5 z-10 -translate-y-1/2 bg-background px-2 text-muted-foreground sm:left-9">
-          {num && (
-            <span className="text-muted-foreground/50">
-              [<span className="text-muted-foreground/80">{num}</span>]{" "}
-            </span>
-          )}
           {caption}
         </span>
       )}

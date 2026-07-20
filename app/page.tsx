@@ -4,6 +4,7 @@ import { PageFrame, Section } from "@/components/shared/section-shell"
 import { Hero } from "@/components/sections/hero"
 import { Features } from "@/components/sections/features"
 import { DashboardHero } from "@/components/sections/dashboard-hero"
+import { AnalyticsQueryDemo } from "@/components/sections/analytics-query-demo"
 import { ConnectedApps } from "@/components/sections/connected-apps"
 import { Developer } from "@/components/sections/developer"
 import { Testimonials } from "@/components/sections/testimonials"
@@ -21,6 +22,7 @@ export default function HomePage() {
           {/* Chapter captions live inside each section's header band */}
           <Section id="analytics">
             <DashboardHero />
+            <AnalyticsQueryDemo />
           </Section>
           <Section id="features">
             <Features />
