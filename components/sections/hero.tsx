@@ -7,6 +7,7 @@ import { ArrowRight, Zap } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { InstantShortener } from "@/components/sections/instant-shortener"
+import { RecentLinksShelf } from "@/components/sections/recent-links-shelf"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
@@ -69,8 +70,8 @@ export function Hero() {
             className="mt-6 max-w-xl text-balance text-base text-muted-foreground sm:text-lg"
           >
             Open-source link management with advanced analytics, an API-first
-            core, and an entire ecosystem of apps and SDKs. Self-hostable in
-            one command.
+            core, and an entire ecosystem of apps and SDKs. Self-hostable in one
+            command.
           </motion.p>
 
           <motion.div
@@ -110,6 +111,8 @@ export function Hero() {
               </a>
             </Button>
           </motion.div>
+
+          <RecentLinksShelf />
         </motion.div>
       </div>
     </section>

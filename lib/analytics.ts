@@ -201,6 +201,38 @@ export function trackBoardLayoutImported(page: string) {
   capture("board_layout_imported", { page })
 }
 
+/* ---------- anonymous hero funnel ---------- */
+
+/** The landing's instant shortener: the top of the signup funnel. The
+    activation metric downstream is "created a link and returned to look
+    at it within 7 days" — these events are its raw material. */
+export function trackLinkCreatedAnonymous(props: {
+  usedOptions: boolean
+  hasAlias: boolean
+  hasPassword: boolean
+  hasMaxClicks: boolean
+}) {
+  capture("link_created_anonymous", {
+    used_options: props.usedOptions,
+    is_custom_alias: props.hasAlias,
+    has_password: props.hasPassword,
+    has_max_clicks: props.hasMaxClicks,
+  })
+}
+
+export function trackResultCardViewed() {
+  capture("result_card_viewed")
+}
+
+/** The manage pitch on the result card — the #1 signup surface. */
+export function trackManagePitchClicked() {
+  capture("manage_pitch_clicked")
+}
+
+export function trackRecentLinkClicked(kind: "open" | "copy" | "stats") {
+  capture("recent_links_clicked", { kind })
+}
+
 /* ---------- micro-features ---------- */
 
 /** Small affordances worth knowing anyone ever uses (copy buttons, the
