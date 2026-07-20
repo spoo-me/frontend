@@ -499,8 +499,6 @@ export function Features() {
       {/* Header band */}
       <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
-          num="02"
-          caption="Features"
           title={
             <>
               Everything you need.{" "}

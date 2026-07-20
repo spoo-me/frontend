@@ -52,8 +52,6 @@ export function Stats() {
           className="pattern-dots pointer-events-none absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_60%_80%_at_50%_50%,black,transparent)]"
         />
         <SectionHeading
-          num="07"
-          caption="Scale"
           title={
             <>
               Trusted at scale,{" "}

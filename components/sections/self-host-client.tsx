@@ -37,8 +37,6 @@ export function SelfHostClient() {
       <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
           align="center"
-          num="06"
-          caption="Self-host"
           title={
             <>
               Run spoo.me on{" "}

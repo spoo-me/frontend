@@ -18,8 +18,6 @@ export function Testimonials() {
       {/* Header band */}
       <Band className="px-5 py-20 sm:px-9 sm:py-24">
         <SectionHeading
-          num="05"
-          caption="Builders"
           title={
             <>
               Real teams, shipping with{" "}

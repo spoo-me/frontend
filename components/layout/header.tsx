@@ -52,7 +52,6 @@ import {
   productLinks,
   sdkLinks,
   siteConfig,
-  stats,
   type NavLink,
 } from "@/lib/site-config"
 
@@ -199,27 +198,6 @@ export function Header() {
 
           {/* Right: dev cluster */}
           <div className="flex items-center gap-1.5">
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="hidden h-8 items-center gap-1.5 px-2 text-muted-foreground hover:text-foreground sm:inline-flex"
-              aria-label={`Star spoo on GitHub, ${stats.stars} stars`}
-            >
-              <a
-                href={siteConfig.links.github}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <BrandIcons.github className="size-3.5" />
-                <span className="font-mono text-[11px] tabular-nums">
-                  {formatStars(stats.stars)}
-                </span>
-              </a>
-            </Button>
-
-            <span className="mx-1 hidden h-4 w-px bg-border/70 md:inline-block" />
-
             {/* Session slot — placeholder while /auth/me settles, no layout shift */}
             {authLoading ? (
               <span className="hidden h-8 w-36 md:inline-block" aria-hidden />
@@ -272,11 +250,6 @@ export function Header() {
       <CommandMenu open={cmdOpen} onOpenChange={setCmdOpen} />
     </>
   )
-}
-
-function formatStars(n: number) {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
-  return String(n)
 }
 
 function MobileAuthActions({ onClose }: { onClose: () => void }) {
@@ -696,8 +669,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 hover:text-foreground"
           >
-            <BrandIcons.github className="size-3.5" />{" "}
-            {formatStars(stats.stars)}
+            <BrandIcons.github className="size-3.5" /> GitHub
           </a>
           <a
             href={siteConfig.links.discord}
