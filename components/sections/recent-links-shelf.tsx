@@ -4,7 +4,13 @@ import * as React from "react"
 import { motion } from "motion/react"
 import { ChartLine, Check, Copy } from "lucide-react"
 
-import { trackRecentLinkClicked } from "@/lib/analytics"
+import Link from "next/link"
+
+import { Button } from "@/components/ui/button"
+import {
+  trackManagePitchClicked,
+  trackRecentLinkClicked,
+} from "@/lib/analytics"
 import {
   onRecentLinksChanged,
   readRecentLinks,
@@ -34,6 +40,9 @@ export function RecentLinksShelf() {
     setTimeout(() => setCopiedCode(null), 1600)
   }
 
+  const visible = links.slice(0, 3)
+  const overflow = links.slice(3, 5)
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -44,8 +53,8 @@ export function RecentLinksShelf() {
       <div className="label-mono mb-2 text-left text-muted-foreground/70">
         your recent links
       </div>
-      <ul className="divide-y divide-border/40 border-border/40 border-y">
-        {links.slice(0, 3).map((l) => (
+      <ul className="divide-y divide-border/40 border-border/40 border-t">
+        {visible.map((l) => (
           <li key={l.code} className="group flex h-9 items-center gap-3">
             <a
               href={l.short}
@@ -84,6 +93,36 @@ export function RecentLinksShelf() {
           </li>
         ))}
       </ul>
+      {overflow.length > 0 ? (
+        /* The rest pours under a fade, the dashboard-preview move: the
+           list keeps going, an account is how you keep up with it. */
+        <div className="relative">
+          <ul
+            aria-hidden
+            className="pointer-events-none divide-y divide-border/40 border-border/40 border-t [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+          >
+            {overflow.map((l) => (
+              <li key={l.code} className="flex h-9 items-center gap-3">
+                <span className="shrink-0 font-medium font-mono text-foreground/90 text-xs">
+                  {l.short.replace(/^https?:\/\//, "")}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-left text-muted-foreground/60 text-xs">
+                  {l.original.replace(/^https?:\/\//, "")}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/login" onClick={() => trackManagePitchClicked()}>
+                Sign in to manage all
+              </Link>
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="border-border/40 border-t" />
+      )}
     </motion.div>
   )
 }

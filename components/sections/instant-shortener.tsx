@@ -41,6 +41,7 @@ export function InstantShortener() {
   const [state, setState] = React.useState<State>({ kind: "idle" })
   const [copied, setCopied] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const cardRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     function onPaste(e: ClipboardEvent) {
@@ -128,6 +129,29 @@ export function InstantShortener() {
       hasMaxClicks,
     })
     trackResultCardViewed()
+
+    // One small brand-toned burst from the card. Deliberately restrained:
+    // ~2 dozen particles, quick decay, honors prefers-reduced-motion.
+    setTimeout(async () => {
+      const el = cardRef.current
+      if (!el || typeof window === "undefined") return
+      const r = el.getBoundingClientRect()
+      const confetti = (await import("canvas-confetti")).default
+      confetti({
+        particleCount: 26,
+        spread: 70,
+        startVelocity: 18,
+        gravity: 1.2,
+        ticks: 90,
+        scalar: 0.7,
+        origin: {
+          x: (r.left + r.width / 2) / window.innerWidth,
+          y: (r.top + 16) / window.innerHeight,
+        },
+        colors: ["#8B5CF6", "#A78BFA", "#D4D4D8", "#71717A"],
+        disableForReducedMotion: true,
+      })
+    }, 180)
   }
 
   async function copy() {
@@ -147,7 +171,10 @@ export function InstantShortener() {
   }
 
   return (
-    <div className="relative w-full rounded-xl border border-border/60 bg-background/45 p-1 shadow-soft backdrop-blur-md dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <div
+      ref={cardRef}
+      className="relative w-full rounded-xl border border-border/60 bg-background/45 p-1 shadow-soft backdrop-blur-md dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+    >
       <AnimatePresence mode="wait" initial={false}>
         {state.kind === "success" ? (
           <motion.div
@@ -172,8 +199,8 @@ export function InstantShortener() {
               <Button
                 onClick={copy}
                 size="sm"
-                variant="outline"
-                className="h-9"
+                variant="ghost"
+                className="h-9 text-muted-foreground hover:text-foreground"
               >
                 {copied ? (
                   <>
@@ -199,10 +226,10 @@ export function InstantShortener() {
                 href={`/stats/${state.code}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border/50 px-2 font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
               >
                 <ChartLine className="size-3" />
-                live stats
+                Live stats
               </a>
               <Link
                 href="/signup"
