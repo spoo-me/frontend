@@ -31,7 +31,12 @@ type State =
   | { kind: "success"; short: string; code: string; original: string }
   | { kind: "error"; message: string }
 
-export function InstantShortener() {
+export function InstantShortener({
+  onSuccessChange,
+}: {
+  /** Lets the hero quiet its CTAs while a result is showing. */
+  onSuccessChange?: (success: boolean) => void
+}) {
   const [url, setUrl] = React.useState("")
   const [alias, setAlias] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -55,6 +60,10 @@ export function InstantShortener() {
       ) {
         return
       }
+      // Only while the shortener is on screen — pasting three sections
+      // deep shouldn't silently hijack the clipboard into an unseen box.
+      const box = inputRef.current?.getBoundingClientRect()
+      if (!box || box.bottom < 0 || box.top > window.innerHeight) return
       const text = e.clipboardData?.getData("text/plain")?.trim()
       if (!text || !/^https?:\/\/\S+\.\S+/i.test(text)) return
       e.preventDefault()
@@ -121,6 +130,7 @@ export function InstantShortener() {
   ) {
     const code = short.replace(/^https?:\/\/[^/]+\//, "").replace(/\/$/, "")
     setState({ kind: "success", short, code, original })
+    onSuccessChange?.(true)
     addRecentLink({ code, short, original, createdAt: Date.now() })
     trackLinkCreatedAnonymous({
       usedOptions: hasAlias || hasPassword || hasMaxClicks,
@@ -163,6 +173,7 @@ export function InstantShortener() {
 
   function reset() {
     setState({ kind: "idle" })
+    onSuccessChange?.(false)
     setUrl("")
     setAlias("")
     setPassword("")
