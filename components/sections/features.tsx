@@ -25,6 +25,7 @@ import {
   MarkPlay,
   MarkVenn,
 } from "@/components/shared/brand-marks"
+import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
@@ -129,16 +130,127 @@ const DomainDemo = () => {
   )
 }
 
-/* The unfurl you control — tag chips above, the resulting Discord-anatomy
-   embed below (same anatomy as the dashboard's MetaPreview, fed fixtures). */
-const MetaTagsDemo = () => {
+/* One link, unfurled the way each platform actually renders it. X leads;
+   the switcher cycles until touched, then the spotlight is sticky (the
+   section's shared grammar). Tag chips above say "you set these". */
+const OG_TITLE = "Spring launch, everything new"
+const OG_DESC = "Release notes, demos, and the changelog."
+
+function OgImage({ className }: { className?: string }) {
   return (
-    <div className="absolute inset-0 overflow-hidden [mask-image:linear-gradient(to_top,transparent_22%,#000_100%)]">
+    <div
+      className={cn(
+        "flex items-center justify-center overflow-hidden bg-neutral-200/70 dark:bg-neutral-800",
+        className
+      )}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/logo-black.png"
+        alt=""
+        className="h-5 w-auto opacity-80 dark:hidden"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/logo-white.png"
+        alt=""
+        className="hidden h-5 w-auto opacity-80 dark:block"
+      />
+    </div>
+  )
+}
+
+/* X's summary_large_image anatomy: the image is the card, the title rides
+   it as a bottom-left pill, the source sits under in gray. */
+function XUnfurl() {
+  return (
+    <div className="w-64">
+      <div className="relative overflow-hidden rounded-xl border border-border/60 shadow-float">
+        <OgImage className="h-32" />
+        <span className="absolute bottom-2 left-2 rounded-[4px] bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
+          {OG_TITLE}
+        </span>
+      </div>
+      <p className="mt-1.5 text-[10px] text-neutral-500">From spoo.me</p>
+    </div>
+  )
+}
+
+/* Discord's embed anatomy: theme-color bar, dark panel, link-blue title. */
+function DiscordUnfurl() {
+  return (
+    <div className="flex w-64 overflow-hidden rounded-[4px] bg-[#f2f3f5] shadow-float dark:bg-[#2b2d31]">
+      <div className="w-1 shrink-0 bg-brand" />
+      <div className="min-w-0 flex-1 space-y-1 p-2.5 pl-2">
+        <p className="text-[9px] text-neutral-500 dark:text-neutral-400">
+          spoo.me
+        </p>
+        <p className="truncate font-semibold text-[#006ce7] text-[11px] dark:text-[#00a8fc]">
+          {OG_TITLE}
+        </p>
+        <p className="line-clamp-1 text-[10px] text-neutral-700 dark:text-neutral-300">
+          {OG_DESC}
+        </p>
+        <OgImage className="h-16 rounded" />
+      </div>
+    </div>
+  )
+}
+
+/* Slack's unfurl anatomy: gray gutter bar, favicon + source row, link-blue
+   title, description, image below. */
+function SlackUnfurl() {
+  return (
+    <div className="flex w-64 gap-2 rounded-lg border border-border/60 bg-white p-2.5 shadow-float dark:bg-[#1a1d21]">
+      <div className="w-1 shrink-0 rounded-full bg-neutral-300 dark:bg-neutral-600" />
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="font-bold text-[10px] text-neutral-800 dark:text-neutral-200">
+          spoo.me
+        </p>
+        <p className="truncate font-semibold text-[#1264a3] text-[11px] dark:text-[#1d9bd1]">
+          {OG_TITLE}
+        </p>
+        <p className="line-clamp-1 text-[10px] text-neutral-600 dark:text-neutral-400">
+          {OG_DESC}
+        </p>
+        <OgImage className="h-16 rounded" />
+      </div>
+    </div>
+  )
+}
+
+const PLATFORMS = [
+  { id: "x", icon: BrandIcons.x, unfurl: <XUnfurl /> },
+  { id: "discord", icon: BrandIcons.discord, unfurl: <DiscordUnfurl /> },
+  { id: "slack", icon: BrandIcons.slack, unfurl: <SlackUnfurl /> },
+]
+
+const UNFURL_CYCLE_MS = 2800
+
+const MetaTagsDemo = () => {
+  const [pi, setPi] = useState(0)
+  const [manual, setManual] = useState(false)
+  const reduced = useReducedMotion()
+
+  useEffect(() => {
+    if (reduced || manual) return
+    const t = setTimeout(
+      () => setPi((i) => (i + 1) % PLATFORMS.length),
+      UNFURL_CYCLE_MS
+    )
+    return () => clearTimeout(t)
+  }, [pi, manual, reduced])
+
+  const platform = PLATFORMS[pi]
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
       <div
         aria-hidden
-        className="pattern-dots absolute inset-x-6 top-2 h-44 opacity-70 [mask-image:radial-gradient(ellipse_70%_90%_at_50%_35%,black,transparent)]"
+        className="pattern-dots absolute inset-x-8 inset-y-6 opacity-70 [mask-image:radial-gradient(ellipse_65%_80%_at_50%_45%,black,transparent)]"
       />
-      <div className="relative mx-auto mt-7 flex w-fit flex-col items-center gap-2.5 transition-transform duration-300 group-hover:-translate-y-1">
+      <div className="relative flex h-full flex-col items-center justify-center gap-5">
+        {/* The tags you control */}
         <div className="flex items-center gap-1.5 font-mono text-[9px]">
           <span className="rounded-md border border-border/60 bg-card px-1.5 py-0.5 text-muted-foreground">
             og:title
@@ -151,34 +263,52 @@ const MetaTagsDemo = () => {
             theme
           </span>
         </div>
-        <div className="flex w-56 overflow-hidden rounded-[4px] bg-[#f2f3f5] shadow-float dark:bg-[#2b2d31]">
-          <div className="w-1 shrink-0 bg-brand" />
-          <div className="min-w-0 flex-1 space-y-1 p-2.5 pl-2">
-            <p className="text-[9px] text-neutral-500 dark:text-neutral-400">
-              spoo.me
-            </p>
-            <p className="truncate font-semibold text-[#006ce7] text-[11px] dark:text-[#00a8fc]">
-              Spring launch, everything new
-            </p>
-            <p className="line-clamp-1 text-[10px] text-neutral-700 dark:text-neutral-300">
-              Release notes, demos, and the changelog.
-            </p>
-            {/* og:image — logo-on-field, the shape real brand og images take */}
-            <div className="flex h-16 items-center justify-center overflow-hidden rounded bg-neutral-200/70 dark:bg-neutral-800">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/brand/logo-black.png"
-                alt=""
-                className="h-5 w-auto opacity-80 dark:hidden"
-              />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/brand/logo-white.png"
-                alt=""
-                className="hidden h-5 w-auto opacity-80 dark:block"
-              />
-            </div>
-          </div>
+
+        {/* The unfurl, per platform — fixed slot, nothing reflows */}
+        <div className="flex h-44 items-center">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={platform.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {platform.unfurl}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Platform switcher — sticky spotlight, X first */}
+        <div className="flex items-center gap-2">
+          {PLATFORMS.map((pf, i) => (
+            <button
+              key={pf.id}
+              type="button"
+              aria-label={`Preview on ${pf.id}`}
+              onMouseEnter={() => {
+                setManual(true)
+                setPi(i)
+              }}
+              onFocus={() => {
+                setManual(true)
+                setPi(i)
+              }}
+              onClick={() => {
+                setManual(true)
+                setPi(i)
+              }}
+              className={cn(
+                "flex h-7 items-center gap-1.5 rounded-full border bg-card px-2 font-mono text-[11px] transition-colors duration-200",
+                i === pi
+                  ? "border-border text-foreground"
+                  : "border-border/60 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <pf.icon className="size-3" />
+              {pf.id}
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -427,8 +557,8 @@ export function Features() {
         demo={<GeoDemo />}
       />
       <ProofBand
-        headline="Look right in every Discord paste."
-        body="Custom title, description, image, and theme color, set per link. The unfurl becomes part of the link instead of an accident of the destination."
+        headline="Look right in every timeline."
+        body="Custom title, description, image, and theme color, set per link. One URL that unfurls right on X, Discord, and Slack alike."
         demo={<MetaTagsDemo />}
       />
 
