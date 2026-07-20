@@ -64,7 +64,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
       <Band rule>
         <div className="grid gap-px bg-border lg:grid-cols-[1.4fr_1fr]">
           {/* Code playground — editor file-tabs fused into the panel */}
-          <div className="relative bg-background p-5 [--code-surface:var(--card)] sm:p-9 dark:[--code-surface:#09090b]">
+          <div className="relative min-w-0 bg-background p-5 [--code-surface:var(--card)] sm:p-9 dark:[--code-surface:#09090b]">
             {/* File tabs — no overflow container here, it would trap the -mb-px fusion */}
             <div className="flex flex-wrap items-end gap-0.5 px-3">
               {samples.map((s) => {
@@ -131,7 +131,7 @@ export function DeveloperClient({ samples }: { samples: HighlightedSample[] }) {
           </div>
 
           {/* SDKs list */}
-          <div className="space-y-4 bg-background p-5 sm:p-8">
+          <div className="min-w-0 space-y-4 bg-background p-5 sm:p-8">
             <div>
               <h3 className="font-semibold text-base text-foreground tracking-tight">
                 Official SDKs

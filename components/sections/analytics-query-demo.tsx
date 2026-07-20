@@ -265,7 +265,7 @@ export function AnalyticsQueryDemo() {
     <Band rule>
       <div className="grid gap-px bg-border lg:grid-cols-[1fr_1.5fr]">
         {/* Copy cell */}
-        <div className="flex flex-col justify-center bg-background p-7 sm:p-12">
+        <div className="flex min-w-0 flex-col justify-center bg-background p-7 sm:p-12">
           <h3 className="text-balance font-semibold text-2xl text-foreground tracking-tight sm:text-3xl">
             Ask for the exact slice.
           </h3>
@@ -276,7 +276,10 @@ export function AnalyticsQueryDemo() {
         </div>
 
         {/* Artifact cell — the real widget, scoped live */}
-        <div className="bg-background p-5 sm:px-12 sm:py-14" ref={stageRef}>
+        <div
+          className="min-w-0 bg-background p-5 sm:px-12 sm:py-14"
+          ref={stageRef}
+        >
           <div className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
             <SectionHeader
               className="h-10 shrink-0 px-2.5"
@@ -290,7 +293,7 @@ export function AnalyticsQueryDemo() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.12 }}
-                    className="flex min-w-0 items-center gap-1.5"
+                    className="flex min-w-0 items-center gap-1.5 overflow-hidden"
                   >
                     {pills.map((p) => (
                       <span
@@ -302,7 +305,10 @@ export function AnalyticsQueryDemo() {
                           value={p.pill!.value}
                           className="size-3.5 shrink-0"
                         />
-                        {p.pill!.label}
+                        {/* At phone widths the icons carry the chips alone */}
+                        <span className="hidden sm:inline">
+                          {p.pill!.label}
+                        </span>
                       </span>
                     ))}
                   </motion.span>
@@ -333,7 +339,7 @@ export function AnalyticsQueryDemo() {
           </div>
 
           {/* The question, beneath the widget it scopes */}
-          <div className="mt-8 flex h-14 items-center justify-center gap-3">
+          <div className="mt-8 flex min-h-14 items-center justify-center gap-3">
             <button
               type="button"
               aria-label="Previous example"
