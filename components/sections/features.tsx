@@ -159,23 +159,34 @@ const MetaTagsDemo = () => {
 /* Routing rules as pins on the map itself. One pin is active (sticky),
    hover or tap moves the spotlight; the active pin unfolds to show where
    that country goes. The fallback reads as a quiet line, not a box. */
+/* `opens` flips the unfold direction for pins near the right rail. */
 const GEO_RULES = [
   { code: "DE", flag: "de", path: "/shop-de", top: "20.5%", left: "53%" },
   { code: "US", flag: "us", path: "/shop-us", top: "29%", left: "23%" },
-  { code: "JP", flag: "jp", path: "/shop-jp", top: "30%", left: "86%" },
-  { code: "NG", flag: "ng", path: "/shop-ng", top: "53%", left: "51%" },
+  {
+    code: "JP",
+    flag: "jp",
+    path: "/shop-jp",
+    top: "30%",
+    left: "86%",
+    opens: "left" as const,
+  },
+  { code: "ZA", flag: "za", path: "/shop-za", top: "80%", left: "56%" },
 ]
 
 const GeoDemo = () => {
-  const [active, setActive] = useState("DE")
+  const [active, setActive] = useState("JP")
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-x-2 top-3 [mask-image:linear-gradient(to_top,transparent_4%,#000_45%)]">
-        <Suspense
-          fallback={<Skeleton className="aspect-[2/1] w-full rounded-lg" />}
-        >
-          <WorldMap dots={[]} />
-        </Suspense>
+      <div className="absolute inset-x-2 top-3">
+        {/* Mask only the map; pins stay crisp even over the faded south */}
+        <div className="[mask-image:linear-gradient(to_top,transparent_4%,#000_45%)]">
+          <Suspense
+            fallback={<Skeleton className="aspect-[2/1] w-full rounded-lg" />}
+          >
+            <WorldMap dots={[]} />
+          </Suspense>
+        </div>
 
         {GEO_RULES.map((r) => {
           const isActive = active === r.code
@@ -205,7 +216,10 @@ const GeoDemo = () => {
               />
               <span
                 className={cn(
-                  "absolute -top-[50px] -left-[18px] flex h-9 items-center overflow-hidden rounded-full border bg-card px-1.5 shadow-float transition-colors duration-200",
+                  "absolute -top-[50px] flex h-9 items-center overflow-hidden rounded-full border bg-card px-1.5 shadow-float transition-colors duration-200",
+                  r.opens === "left"
+                    ? "-right-[18px] flex-row-reverse"
+                    : "-left-[18px]",
                   isActive ? "border-border" : "border-border/60"
                 )}
               >
@@ -220,7 +234,10 @@ const GeoDemo = () => {
                   className={cn(
                     "overflow-hidden whitespace-nowrap font-mono text-[11px] text-foreground transition-all duration-200",
                     isActive
-                      ? "max-w-28 pl-1.5 opacity-100"
+                      ? cn(
+                          "max-w-28 opacity-100",
+                          r.opens === "left" ? "pr-1.5" : "pl-1.5"
+                        )
                       : "max-w-0 opacity-0"
                   )}
                 >
@@ -351,8 +368,8 @@ export function Features() {
       />
       <ProofBand
         flip
-        headline="Germany sees a different destination."
-        body="One short link, routed by country: send the EU to the EU store, the US to yours, and everyone else to the fallback. The rules read like a table because they are one."
+        headline="Japan sees a different destination."
+        body="One short link, routed by country: send the EU to the EU store, Tokyo to the JP page, and everyone else to the fallback. The rules read like a table because they are one."
         demo={<GeoDemo />}
       />
       <ProofBand
