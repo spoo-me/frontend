@@ -265,7 +265,7 @@ export function AnalyticsQueryDemo() {
     <Band rule>
       <div className="grid gap-px bg-border lg:grid-cols-[1fr_1.5fr]">
         {/* Copy cell */}
-        <div className="flex min-w-0 flex-col justify-center bg-background p-7 sm:p-12">
+        <div className="flex min-w-0 flex-col justify-center bg-background px-7 py-12 sm:p-12">
           <h3 className="text-balance font-semibold text-2xl text-foreground tracking-tight sm:text-3xl">
             Ask for the exact slice.
           </h3>
@@ -277,7 +277,7 @@ export function AnalyticsQueryDemo() {
 
         {/* Artifact cell — the real widget, scoped live */}
         <div
-          className="min-w-0 bg-background p-5 sm:px-12 sm:py-14"
+          className="min-w-0 bg-background px-5 py-10 sm:px-12 sm:py-14"
           ref={stageRef}
         >
           <div className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
