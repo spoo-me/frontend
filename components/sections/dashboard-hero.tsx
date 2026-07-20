@@ -72,7 +72,7 @@ export function DashboardHero() {
               </span>
             </>
           }
-          description="A real analytics product, included free in every link. No third-party scripts, no cookie banners. Yours by default."
+          description="A real analytics product, included with every link. No third-party scripts, no cookie banners. Yours by default."
         />
       </Band>
 

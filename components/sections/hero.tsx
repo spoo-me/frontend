@@ -59,7 +59,7 @@ export function Hero() {
             The link platform
             <br />
             <span className="font-normal text-muted-foreground italic [font-family:var(--font-serif)]">
-              built for developers.
+              that proves every click.
             </span>
           </motion.h1>
 
@@ -68,9 +68,9 @@ export function Hero() {
             transition={{ duration: 0.6 }}
             className="mt-6 max-w-xl text-balance text-base text-muted-foreground sm:text-lg"
           >
-            Free, open-source link management platform with advanced analytics,
-            an API-first design, and an entire ecosystem of apps and SDKs.
-            Self-hostable in one command.
+            Open-source link management with advanced analytics, an API-first
+            core, and an entire ecosystem of apps and SDKs. Self-hostable in
+            one command.
           </motion.p>
 
           <motion.div

@@ -45,7 +45,7 @@ export function SelfHostClient() {
               </span>
             </>
           }
-          description="Free isn't a tier. The entire stack is open source: back it with your own database, deploy on your VPS, ship to a Kubernetes cluster. Your data. Your domain."
+          description="The entire stack is open source: back it with your own database, deploy on your VPS, ship to a Kubernetes cluster. Your data. Your domain."
         />
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
