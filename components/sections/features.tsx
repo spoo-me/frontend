@@ -392,7 +392,7 @@ function ProofBand({
             href={siteConfig.links.docs}
             target="_blank"
             rel="noreferrer"
-            className="absolute bottom-4 left-7 hidden h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:inline-flex sm:bottom-5 sm:left-9"
+            className="absolute bottom-4 left-7 hidden h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:bottom-5 sm:left-9 sm:inline-flex"
           >
             Learn more
             <ArrowUpRight className="size-2.5" data-icon="inline-end" />
