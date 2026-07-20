@@ -61,7 +61,7 @@ export function ConnectedApps() {
   return (
     <>
       {/* Header band */}
-      <Band className="px-5 py-20 sm:px-9 sm:py-24">
+      <Band className="px-5 py-24 sm:px-9 sm:py-32">
         <SectionHeading
           title={
             <>
