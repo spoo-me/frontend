@@ -226,7 +226,7 @@ const QUERIES: Query[] = [
 
 /* The question lands, the pills follow, the widget answers, next. */
 const ANSWER_MS = 450
-const CYCLE_MS = 3400
+const CYCLE_MS = 5200
 
 export function AnalyticsQueryDemo() {
   const stageRef = React.useRef<HTMLDivElement>(null)
@@ -265,7 +265,7 @@ export function AnalyticsQueryDemo() {
     <Band rule>
       <div className="grid gap-px bg-border lg:grid-cols-[1fr_1.5fr]">
         {/* Copy cell */}
-        <div className="flex flex-col justify-center bg-background p-7 sm:p-9">
+        <div className="flex flex-col justify-center bg-background p-7 sm:p-12">
           <h3 className="text-balance font-semibold text-2xl text-foreground tracking-tight sm:text-3xl">
             Ask for the exact slice.
           </h3>
@@ -276,7 +276,7 @@ export function AnalyticsQueryDemo() {
         </div>
 
         {/* Artifact cell — the real widget, scoped live */}
-        <div className="bg-background p-5 sm:p-9" ref={stageRef}>
+        <div className="bg-background p-5 sm:px-12 sm:py-14" ref={stageRef}>
           <div className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
             <SectionHeader
               className="h-10 shrink-0 px-2.5"
@@ -333,7 +333,7 @@ export function AnalyticsQueryDemo() {
           </div>
 
           {/* The question, beneath the widget it scopes */}
-          <div className="mt-6 flex h-14 items-center justify-center gap-3">
+          <div className="mt-8 flex h-14 items-center justify-center gap-3">
             <button
               type="button"
               aria-label="Previous example"
