@@ -163,6 +163,7 @@ const GEO_RULES = [
   { code: "DE", flag: "de", path: "/shop-de", top: "20.5%", left: "53%" },
   { code: "US", flag: "us", path: "/shop-us", top: "29%", left: "23%" },
   { code: "JP", flag: "jp", path: "/shop-jp", top: "30%", left: "86%" },
+  { code: "NG", flag: "ng", path: "/shop-ng", top: "53%", left: "51%" },
 ]
 
 const GeoDemo = () => {
@@ -194,17 +195,17 @@ const GeoDemo = () => {
               <span
                 aria-hidden
                 className={cn(
-                  "absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors duration-200",
+                  "absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors duration-200",
                   isActive ? "bg-foreground/70" : "bg-foreground/40"
                 )}
               />
               <span
                 aria-hidden
-                className="absolute -top-[13px] h-2.5 w-px bg-border"
+                className="absolute -top-[14px] h-2.5 w-px bg-border"
               />
               <span
                 className={cn(
-                  "absolute -top-[41px] -left-[14px] flex h-7 items-center gap-1.5 overflow-hidden rounded-full border bg-card px-1.5 shadow-float transition-colors duration-200",
+                  "absolute -top-[50px] -left-[18px] flex h-9 items-center overflow-hidden rounded-full border bg-card px-1.5 shadow-float transition-colors duration-200",
                   isActive ? "border-border" : "border-border/60"
                 )}
               >
@@ -213,12 +214,14 @@ const GeoDemo = () => {
                   src={`https://flagcdn.com/w40/${r.flag}.png`}
                   alt=""
                   loading="lazy"
-                  className="size-4 shrink-0 rounded-full object-cover"
+                  className="size-6 shrink-0 rounded-full object-cover"
                 />
                 <span
                   className={cn(
-                    "overflow-hidden whitespace-nowrap font-mono text-[10px] text-foreground transition-all duration-200",
-                    isActive ? "max-w-24 opacity-100" : "max-w-0 opacity-0"
+                    "overflow-hidden whitespace-nowrap font-mono text-[11px] text-foreground transition-all duration-200",
+                    isActive
+                      ? "max-w-28 pl-1.5 opacity-100"
+                      : "max-w-0 opacity-0"
                   )}
                 >
                   {"→"} {r.path}
