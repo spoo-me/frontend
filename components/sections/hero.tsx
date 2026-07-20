@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { InstantShortener } from "@/components/sections/instant-shortener"
 import { RecentLinksShelf } from "@/components/sections/recent-links-shelf"
 import { BrandIcons } from "@/components/icons/brand-icons"
+import { readRecentLinks } from "@/lib/recent-links"
 import { siteConfig } from "@/lib/site-config"
 
 const fadeUp = {
@@ -21,6 +22,15 @@ export function Hero() {
   /* A fresh result quiets the CTAs (opacity only, space reserved): the
      card carries its own signup pitch, so the page holds its breath. */
   const [linkMade, setLinkMade] = React.useState(false)
+
+  /* Hero height is decided ONCE at hydration: full viewport for a fresh
+     visitor, 85svh + shelf for a returner with history. Never re-evaluated
+     mid-session — a first link must not shrink the hero under the user. */
+  const [shelved, setShelved] = React.useState(false)
+  React.useEffect(() => {
+    setShelved(readRecentLinks().length > 0)
+  }, [])
+
   return (
     <section className="relative overflow-hidden">
       {/* Aurora — layered brand-tint blobs, slow drift */}
@@ -45,7 +55,12 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative flex min-h-[85svh] w-full items-center justify-center px-5 pt-24 pb-10 sm:px-9 sm:pt-28 sm:pb-12">
+      <div
+        className={cn(
+          "relative flex w-full items-center justify-center px-5 pt-24 pb-10 sm:px-9 sm:pt-28 sm:pb-12",
+          shelved ? "min-h-[85svh]" : "min-h-svh"
+        )}
+      >
         <motion.div
           initial="hidden"
           animate="visible"
