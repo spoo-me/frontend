@@ -138,63 +138,66 @@ export function Header() {
           style={{ opacity: bg }}
           className="absolute inset-0 -z-10 bg-background/70"
         />
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          {/* Left: logo + desktop nav */}
-          <div className="flex items-center gap-6">
-            <Logo />
-            <NavigationMenu className="hidden md:flex" viewport>
-              <NavigationMenuList className="gap-3">
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
-                    Product
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ProductMenu />
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+        <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+          {/* Left: logo */}
+          <Logo />
 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
-                    Apps & SDKs
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <AppsMenu />
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+          {/* Center: desktop nav — absolutely centered in the bar */}
+          <NavigationMenu
+            className="absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+            viewport
+          >
+            <NavigationMenuList className="gap-3">
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
+                  Product
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ProductMenu />
+                </NavigationMenuContent>
+              </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
-                    Developers
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <DevelopersMenu />
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
+                  Apps & SDKs
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <AppsMenu />
+                </NavigationMenuContent>
+              </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
-                    Company
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <CompanyMenu />
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
+                  Developers
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <DevelopersMenu />
+                </NavigationMenuContent>
+              </NavigationMenuItem>
 
-                {PRICING_ENABLED && (
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link
-                        href="/pricing"
-                        className="rounded-lg px-2.5 py-1.5 font-medium text-muted-foreground text-sm hover:bg-muted/0 hover:text-foreground"
-                      >
-                        Pricing
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                )}
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground">
+                  Company
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <CompanyMenu />
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              {PRICING_ENABLED && (
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      href="/pricing"
+                      className="rounded-lg px-2.5 py-1.5 font-medium text-muted-foreground text-sm hover:bg-muted/0 hover:text-foreground"
+                    >
+                      Pricing
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
 
           {/* Right: dev cluster */}
           <div className="flex items-center gap-1.5">
