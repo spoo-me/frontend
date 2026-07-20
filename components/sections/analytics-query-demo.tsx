@@ -3,7 +3,7 @@
 import * as React from "react"
 import dynamic from "next/dynamic"
 import {
-  CalendarDays,
+  ChartColumn,
   ChartSpline,
   ChevronLeft,
   ChevronRight,
@@ -57,13 +57,6 @@ const DonutChart = dynamic(
     ),
   { ssr: false, loading: () => null }
 )
-const CalendarHeatmap = dynamic(
-  () =>
-    import("@/components/dashboard/analytics/widgets/calendar-heatmap").then(
-      (m) => m.CalendarHeatmap
-    ),
-  { ssr: false, loading: () => null }
-)
 
 /* A filtered slice of the board series — visibly smaller than the full
    preview above, so the scope reads as a real cut. */
@@ -71,6 +64,14 @@ const scopedSeries = clickSeries.map((b) => ({
   ...b,
   clicks: Math.round(b.clicks * 0.18),
   unique_clicks: Math.round(b.unique_clicks * 0.18),
+}))
+
+/* A second slice with its own rhythm, so the bars example doesn't mirror
+   the step chart bucket-for-bucket. */
+const scopedSeriesB = clickSeries.map((b) => ({
+  ...b,
+  clicks: Math.round(b.unique_clicks * 0.4),
+  unique_clicks: Math.round(b.unique_clicks * 0.27),
 }))
 
 /* Browsers Windows users in Delhi arrive on — DimensionRow wire shape. */
@@ -96,6 +97,8 @@ type Query = {
   parts: QueryPart[]
   widget: { icon: React.ElementType; title: string }
   ink: string
+  /** The map bleeds to the panel edge, like the dashboard renders it. */
+  flush?: boolean
   chart: React.ReactNode
 }
 
@@ -125,7 +128,7 @@ const QUERIES: Query[] = [
     chart: (
       <ClicksChart
         series={scopedSeries}
-        height={320}
+        height="100%"
         metric="total"
         variant="step"
       />
@@ -149,13 +152,14 @@ const QUERIES: Query[] = [
     ],
     widget: { icon: MapPin, title: "Countries" },
     ink: "var(--chart-amber)",
+    flush: true,
     chart: <CountryMap rows={countryRows} metric="total" />,
   },
   {
-    id: "launch-in-referrers",
+    id: "launch-br-referrers",
     parts: [
       { t: "Show me who in " },
-      { t: "India", pill: { dim: "country", value: "IN", label: "India" } },
+      { t: "Brazil", pill: { dim: "country", value: "BR", label: "Brazil" } },
       { t: " clicks the " },
       {
         t: "launch link",
@@ -175,7 +179,7 @@ const QUERIES: Query[] = [
     ),
   },
   {
-    id: "delhi-windows-browsers",
+    id: "tokyo-windows-browsers",
     parts: [
       { t: "Show me what " },
       {
@@ -183,7 +187,7 @@ const QUERIES: Query[] = [
         pill: { dim: "os", value: "Windows", label: "Windows" },
       },
       { t: " users in " },
-      { t: "Delhi", pill: { dim: "city", value: "Delhi", label: "Delhi" } },
+      { t: "Tokyo", pill: { dim: "city", value: "Tokyo", label: "Tokyo" } },
       { t: " browse with." },
     ],
     widget: { icon: Compass, title: "Browsers" },
@@ -207,10 +211,15 @@ const QUERIES: Query[] = [
       { t: "macOS", pill: { dim: "os", value: "macOS", label: "macOS" } },
       { t: " readers." },
     ],
-    widget: { icon: CalendarDays, title: "Calendar" },
+    widget: { icon: ChartColumn, title: "Clicks over time" },
     ink: "var(--chart-sky)",
     chart: (
-      <CalendarHeatmap series={scopedSeries} hourly={false} metric="total" />
+      <ClicksChart
+        series={scopedSeriesB}
+        height="100%"
+        metric="total"
+        variant="bars"
+      />
     ),
   },
 ]
@@ -268,10 +277,7 @@ export function AnalyticsQueryDemo() {
 
         {/* Artifact cell — the real widget, scoped live */}
         <div className="bg-background p-5 sm:p-9" ref={stageRef}>
-          <div
-            className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5"
-            style={{ "--chart-accent": shown.ink } as React.CSSProperties}
-          >
+          <div className="flex flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
             <SectionHeader
               className="h-10 shrink-0 px-2.5"
               icon={shown.widget.icon}
@@ -306,13 +312,18 @@ export function AnalyticsQueryDemo() {
             <Panel className="mt-0 min-h-0 flex-1 overflow-hidden rounded-[14px] bg-background">
               <div className="h-[320px]">
                 <AnimatePresence mode="wait" initial={false}>
+                  {/* The ink rides each keyed instance, so an exiting chart
+                      keeps its own color instead of inheriting the next. */}
                   <motion.div
                     key={shown.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="h-full"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                    className={cn("h-full", !shown.flush && "p-4")}
+                    style={
+                      { "--chart-accent": shown.ink } as React.CSSProperties
+                    }
                   >
                     {shown.chart}
                   </motion.div>
