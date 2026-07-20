@@ -140,6 +140,8 @@ interface NotificationProps {
   description: string
   icon: LucideIcon
   time: string
+  /* Event-category ink: duotone tile, tinted hairline, colored glyph. */
+  tint: string
 }
 
 const notifications: NotificationProps[] = [
@@ -148,24 +150,28 @@ const notifications: NotificationProps[] = [
     description: "spring/launch crossed 1,000 clicks",
     time: "2m",
     icon: TrendingUp,
+    tint: "#10B981",
   },
   {
     name: "geo.new_country",
     description: "First click from Japan detected",
     time: "1h",
     icon: Globe2,
+    tint: "#0EA5E9",
   },
   {
     name: "webhook.delivered",
     description: "POST /hooks/slack returned 200",
     time: "3h",
     icon: Webhook,
+    tint: "#F59E0B",
   },
   {
     name: "link.expired",
     description: "spring-promo reached its end date",
     time: "5h",
     icon: Timer,
+    tint: "#F43F5E",
   },
 ]
 
@@ -174,12 +180,19 @@ const Notification = ({
   description,
   icon: Icon,
   time,
+  tint,
 }: NotificationProps) => {
   return (
     <figure className="relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card/80 p-3 shadow-float-sm backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
       <div className="flex flex-row items-center gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/40">
-          <Icon className="size-4 text-foreground" />
+        <div
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+          style={{
+            backgroundColor: `color-mix(in oklab, ${tint} 14%, transparent)`,
+            border: `1px solid color-mix(in oklab, ${tint} 32%, transparent)`,
+          }}
+        >
+          <Icon className="size-4" style={{ color: tint }} />
         </div>
         <div className="flex min-w-0 flex-col overflow-hidden">
           <figcaption className="flex items-baseline gap-2 whitespace-pre">
