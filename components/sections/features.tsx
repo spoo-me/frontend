@@ -4,11 +4,8 @@ import { lazy, Suspense, useEffect, useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
   ArrowUpRight,
-  FileDown,
   Globe2,
-  ListChecks,
   Lock,
-  MousePointerClick,
   QrCode,
   Share2,
   SmilePlus,
@@ -410,29 +407,14 @@ const MANIFEST = [
     text: "Gate any link behind a passphrase.",
   },
   {
-    icon: MousePointerClick,
-    name: "Max clicks",
-    text: "Cap total clicks; the link retires itself.",
-  },
-  {
     icon: Timer,
-    name: "Link expiry",
-    text: "Set an end date and walk away.",
+    name: "Self-destructing links",
+    text: "Cap total clicks or set an end date. The link retires itself.",
   },
   {
     icon: SmilePlus,
     name: "Emoji aliases",
     text: "spoo.me/\u{1F680} is a real URL here.",
-  },
-  {
-    icon: ListChecks,
-    name: "Bulk actions",
-    text: "Edit, move, and retire links hundreds at a time.",
-  },
-  {
-    icon: FileDown,
-    name: "Exports",
-    text: "Your data leaves as CSV or JSON, any time.",
   },
   {
     icon: Webhook,
