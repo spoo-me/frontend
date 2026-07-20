@@ -295,7 +295,7 @@ export function InstantShortener() {
                   transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-1 grid grid-cols-1 gap-1.5 border-border/50 border-t pt-1 sm:grid-cols-3">
+                  <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                     <div className="flex items-center rounded-lg bg-input/30 pl-2.5">
                       <span className="shrink-0 font-mono text-muted-foreground/70 text-xs">
                         spoo.me/
@@ -306,7 +306,7 @@ export function InstantShortener() {
                         placeholder="alias"
                         aria-label="Custom alias"
                         autoComplete="off"
-                        className="h-8 border-0 bg-transparent px-1 font-mono text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
+                        className="h-8 border-0 bg-transparent px-1 font-mono text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent dark:shadow-none"
                       />
                     </div>
                     <div className="flex items-center rounded-lg bg-input/30 pr-2">
@@ -317,7 +317,7 @@ export function InstantShortener() {
                         placeholder="Password"
                         aria-label="Link password"
                         autoComplete="new-password"
-                        className="h-8 border-0 bg-transparent px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
+                        className="h-8 border-0 bg-transparent px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent dark:shadow-none"
                       />
                       <button
                         type="button"
