@@ -3,13 +3,17 @@
 import { lazy, Suspense, useEffect, useState } from "react"
 import {
   ArrowUpRight,
+  Cherry,
+  Cloud,
   FileDown,
   Globe2,
+  Leaf,
   ListChecks,
   Lock,
   MousePointerClick,
   QrCode,
   SmilePlus,
+  Sun,
   Timer,
   Webhook,
 } from "lucide-react"
@@ -27,11 +31,13 @@ const WorldMap = lazy(() => import("@/components/ui/world-map"))
    rotates — colored logo tile + domain morph while the path stays put.
    The roster below uses the geo pins' grammar: hover moves the sticky
    spotlight and stops the auto-cycle. Fictional brands, real shape. */
+/* Apex domains lead, subdomains follow. Marks are name-coherent glyphs on
+   app-icon tiles so each reads as a real product logo, not a placeholder. */
 const BRANDS = [
-  { id: "fern", domain: "go.fern.coffee", color: "#16A34A", initial: "f" },
-  { id: "kumo", domain: "links.kumo.app", color: "#0EA5E9", initial: "k" },
-  { id: "sol", domain: "sol.supply", color: "#F59E0B", initial: "s" },
-  { id: "berry", domain: "brry.shop", color: "#E11D48", initial: "b" },
+  { id: "berry", domain: "brry.shop", color: "#E11D48", icon: Cherry },
+  { id: "sol", domain: "sol.supply", color: "#F59E0B", icon: Sun },
+  { id: "fern", domain: "go.fern.coffee", color: "#16A34A", icon: Leaf },
+  { id: "kumo", domain: "links.kumo.app", color: "#0EA5E9", icon: Cloud },
 ]
 
 const DOMAIN_CYCLE_MS = 2800
@@ -75,10 +81,15 @@ const DomainDemo = () => {
               className="flex items-center gap-3"
             >
               <span
-                className="flex size-7 items-center justify-center rounded-lg font-semibold text-sm text-white"
+                className="flex size-7 items-center justify-center rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] ring-1 ring-black/10"
                 style={{ backgroundColor: brand.color }}
               >
-                {brand.initial}
+                <brand.icon
+                  className="size-4 text-white"
+                  strokeWidth={2}
+                  fill="currentColor"
+                  fillOpacity={0.25}
+                />
               </span>
               <span className="font-medium font-mono text-base text-foreground sm:text-lg">
                 {brand.domain}
@@ -117,9 +128,11 @@ const DomainDemo = () => {
               )}
             >
               <span
-                className="size-3 rounded-[4px]"
+                className="flex size-3.5 items-center justify-center rounded-[4px] shadow-[inset_0_0.5px_0_rgba(255,255,255,0.3)]"
                 style={{ backgroundColor: b.color }}
-              />
+              >
+                <b.icon className="size-2.5 text-white" strokeWidth={2.25} />
+              </span>
               {b.id}
             </button>
           ))}
