@@ -9,6 +9,8 @@ import {
   Check,
   ChevronDown,
   Copy,
+  Eye,
+  EyeOff,
   Link2,
   Loader2,
 } from "lucide-react"
@@ -35,6 +37,7 @@ export function InstantShortener() {
   const [password, setPassword] = React.useState("")
   const [maxClicks, setMaxClicks] = React.useState("")
   const [showOptions, setShowOptions] = React.useState(false)
+  const [showPassword, setShowPassword] = React.useState(false)
   const [state, setState] = React.useState<State>({ kind: "idle" })
   const [copied, setCopied] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -292,8 +295,8 @@ export function InstantShortener() {
                   transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="grid grid-cols-1 gap-1.5 border-border/50 border-t p-1.5 pt-2 sm:grid-cols-3">
-                    <div className="flex items-center rounded-lg bg-muted/40 pl-2.5">
+                  <div className="mt-1 grid grid-cols-1 gap-1.5 border-border/50 border-t pt-1 sm:grid-cols-3">
+                    <div className="flex items-center rounded-lg bg-input/30 pl-2.5">
                       <span className="shrink-0 font-mono text-muted-foreground/70 text-xs">
                         spoo.me/
                       </span>
@@ -306,14 +309,31 @@ export function InstantShortener() {
                         className="h-8 border-0 bg-transparent px-1 font-mono text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
                       />
                     </div>
-                    <Input
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Password"
-                      aria-label="Link password"
-                      autoComplete="off"
-                      className="h-8 rounded-lg border-0 bg-muted/40 px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
-                    />
+                    <div className="flex items-center rounded-lg bg-input/30 pr-2">
+                      <Input
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        aria-label="Link password"
+                        autoComplete="new-password"
+                        className="h-8 border-0 bg-transparent px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="shrink-0 text-muted-foreground/60 transition-colors duration-150 hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
+                      </button>
+                    </div>
                     <Input
                       value={maxClicks}
                       onChange={(e) => setMaxClicks(e.target.value)}
@@ -322,7 +342,7 @@ export function InstantShortener() {
                       placeholder="Max clicks"
                       aria-label="Max clicks"
                       autoComplete="off"
-                      className="h-8 rounded-lg border-0 bg-muted/40 px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
+                      className="h-8 rounded-lg border-0 bg-input/30 px-2.5 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
                     />
                   </div>
                 </motion.div>
