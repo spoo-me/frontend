@@ -7,7 +7,6 @@ import {
   Globe2,
   Lock,
   Share2,
-  SmilePlus,
   Timer,
   TrendingUp,
   Webhook,
@@ -404,13 +403,8 @@ const MANIFEST = [
   },
   {
     icon: Timer,
-    name: "Self-destructing links",
+    name: "Self-destruct",
     text: "Cap total clicks or set an end date. The link retires itself.",
-  },
-  {
-    icon: SmilePlus,
-    name: "Emoji links",
-    text: "spoo.me/\u{1F996} is a real URL. So is /\u{1F35C}.",
   },
   {
     icon: Webhook,
@@ -456,15 +450,9 @@ export function Features() {
 
       {/* Manifest row — the rest of the toolbox at index density */}
       <Band rule>
-        <div className="grid grid-cols-2 gap-px bg-border lg:grid-cols-5">
-          {MANIFEST.map((f, i) => (
-            <div
-              key={f.name}
-              className={cn(
-                "bg-background",
-                i === MANIFEST.length - 1 && "col-span-2 lg:col-span-1"
-              )}
-            >
+        <div className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
+          {MANIFEST.map((f) => (
+            <div key={f.name} className="bg-background">
               <a
                 href={siteConfig.links.docs}
                 target="_blank"
