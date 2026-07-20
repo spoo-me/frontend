@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
   ArrowUpRight,
-  ChartLine,
+  FlaskConical,
   Globe2,
   Lock,
   Share2,
@@ -408,9 +408,9 @@ const MANIFEST = [
     text: "Cap total clicks or set an end date. The link retires itself.",
   },
   {
-    icon: ChartLine,
-    name: "Public stats",
-    text: "Every link gets a shareable stats page. No login to read it.",
+    icon: FlaskConical,
+    name: "A/B testing",
+    text: "Split traffic across destinations by weight, scored by clicks.",
   },
 ]
 
