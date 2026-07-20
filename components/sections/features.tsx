@@ -1,6 +1,7 @@
 "use client"
 
 import { lazy, Suspense, useEffect, useState } from "react"
+import type { LucideIcon } from "lucide-react"
 import {
   ArrowUpRight,
   FileDown,
@@ -9,12 +10,15 @@ import {
   Lock,
   MousePointerClick,
   QrCode,
+  Share2,
   SmilePlus,
   Timer,
+  TrendingUp,
   Webhook,
 } from "lucide-react"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 
+import { AnimatedList } from "@/components/magicui/animated-list"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SectionHeading } from "@/components/shared/section-heading"
@@ -25,7 +29,6 @@ import {
   MarkPlay,
   MarkVenn,
 } from "@/components/shared/brand-marks"
-import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/lib/site-config"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
@@ -130,187 +133,80 @@ const DomainDemo = () => {
   )
 }
 
-/* One link, unfurled the way each platform actually renders it. X leads;
-   the switcher cycles until touched, then the spotlight is sticky (the
-   section's shared grammar). Tag chips above say "you set these". */
-const OG_TITLE = "Spring launch, everything new"
-const OG_DESC = "Release notes, demos, and the changelog."
-
-function OgImage({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-center overflow-hidden bg-neutral-200/70 dark:bg-neutral-800",
-        className
-      )}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/brand/logo-black.png"
-        alt=""
-        className="h-5 w-auto opacity-80 dark:hidden"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/brand/logo-white.png"
-        alt=""
-        className="hidden h-5 w-auto opacity-80 dark:block"
-      />
-    </div>
-  )
+/* The alerts feed, restored from the bento: real event names, real
+   payload shapes, sliding in on the AnimatedList cadence. */
+interface NotificationProps {
+  name: string
+  description: string
+  icon: LucideIcon
+  time: string
 }
 
-/* X's summary_large_image anatomy: the image is the card, the title rides
-   it as a bottom-left pill, the source sits under in gray. */
-function XUnfurl() {
-  return (
-    <div className="w-64">
-      <div className="relative overflow-hidden rounded-xl border border-border/60 shadow-float">
-        <OgImage className="h-32" />
-        <span className="absolute bottom-2 left-2 rounded-[4px] bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
-          {OG_TITLE}
-        </span>
-      </div>
-      <p className="mt-1.5 text-[10px] text-neutral-500">From spoo.me</p>
-    </div>
-  )
-}
-
-/* Discord's embed anatomy: theme-color bar, dark panel, link-blue title. */
-function DiscordUnfurl() {
-  return (
-    <div className="flex w-64 overflow-hidden rounded-[4px] bg-[#f2f3f5] shadow-float dark:bg-[#2b2d31]">
-      <div className="w-1 shrink-0 bg-brand" />
-      <div className="min-w-0 flex-1 space-y-1 p-2.5 pl-2">
-        <p className="text-[9px] text-neutral-500 dark:text-neutral-400">
-          spoo.me
-        </p>
-        <p className="truncate font-semibold text-[#006ce7] text-[11px] dark:text-[#00a8fc]">
-          {OG_TITLE}
-        </p>
-        <p className="line-clamp-1 text-[10px] text-neutral-700 dark:text-neutral-300">
-          {OG_DESC}
-        </p>
-        <OgImage className="h-16 rounded" />
-      </div>
-    </div>
-  )
-}
-
-/* Slack's unfurl anatomy: gray gutter bar, favicon + source row, link-blue
-   title, description, image below. */
-function SlackUnfurl() {
-  return (
-    <div className="flex w-64 gap-2 rounded-lg border border-border/60 bg-white p-2.5 shadow-float dark:bg-[#1a1d21]">
-      <div className="w-1 shrink-0 rounded-full bg-neutral-300 dark:bg-neutral-600" />
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="font-bold text-[10px] text-neutral-800 dark:text-neutral-200">
-          spoo.me
-        </p>
-        <p className="truncate font-semibold text-[#1264a3] text-[11px] dark:text-[#1d9bd1]">
-          {OG_TITLE}
-        </p>
-        <p className="line-clamp-1 text-[10px] text-neutral-600 dark:text-neutral-400">
-          {OG_DESC}
-        </p>
-        <OgImage className="h-16 rounded" />
-      </div>
-    </div>
-  )
-}
-
-const PLATFORMS = [
-  { id: "x", icon: BrandIcons.x, unfurl: <XUnfurl /> },
-  { id: "discord", icon: BrandIcons.discord, unfurl: <DiscordUnfurl /> },
-  { id: "slack", icon: BrandIcons.slack, unfurl: <SlackUnfurl /> },
+const notifications: NotificationProps[] = [
+  {
+    name: "clicks.threshold",
+    description: "spring/launch crossed 1,000 clicks",
+    time: "2m",
+    icon: TrendingUp,
+  },
+  {
+    name: "geo.new_country",
+    description: "First click from Japan detected",
+    time: "1h",
+    icon: Globe2,
+  },
+  {
+    name: "webhook.delivered",
+    description: "POST /hooks/slack returned 200",
+    time: "3h",
+    icon: Webhook,
+  },
+  {
+    name: "link.expired",
+    description: "spring-promo reached its end date",
+    time: "5h",
+    icon: Timer,
+  },
 ]
 
-const UNFURL_CYCLE_MS = 2800
-
-const MetaTagsDemo = () => {
-  const [pi, setPi] = useState(0)
-  const [manual, setManual] = useState(false)
-  const reduced = useReducedMotion()
-
-  useEffect(() => {
-    if (reduced || manual) return
-    const t = setTimeout(
-      () => setPi((i) => (i + 1) % PLATFORMS.length),
-      UNFURL_CYCLE_MS
-    )
-    return () => clearTimeout(t)
-  }, [pi, manual, reduced])
-
-  const platform = PLATFORMS[pi]
-
+const Notification = ({
+  name,
+  description,
+  icon: Icon,
+  time,
+}: NotificationProps) => {
   return (
-    <div className="absolute inset-0 overflow-hidden">
-      <div
-        aria-hidden
-        className="pattern-dots absolute inset-x-8 inset-y-6 opacity-70 [mask-image:radial-gradient(ellipse_65%_80%_at_50%_45%,black,transparent)]"
-      />
-      <div className="relative flex h-full flex-col items-center justify-center gap-5">
-        {/* The tags you control */}
-        <div className="flex items-center gap-1.5 font-mono text-[9px]">
-          <span className="rounded-md border border-border/60 bg-card px-1.5 py-0.5 text-muted-foreground">
-            og:title
-          </span>
-          <span className="rounded-md border border-border/60 bg-card px-1.5 py-0.5 text-muted-foreground">
-            og:image
-          </span>
-          <span className="flex items-center gap-1 rounded-md border border-border/60 bg-card px-1.5 py-0.5 text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-brand" />
-            theme
-          </span>
+    <figure className="relative w-full max-w-[300px] cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card/80 p-3 shadow-float-sm backdrop-blur-sm transition-all duration-200 hover:scale-[102%]">
+      <div className="flex flex-row items-center gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/40">
+          <Icon className="size-4 text-foreground" />
         </div>
-
-        {/* The unfurl, per platform — fixed slot, nothing reflows */}
-        <div className="flex h-44 items-center">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={platform.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {platform.unfurl}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Platform switcher — sticky spotlight, X first */}
-        <div className="flex items-center gap-2">
-          {PLATFORMS.map((pf, i) => (
-            <button
-              key={pf.id}
-              type="button"
-              aria-label={`Preview on ${pf.id}`}
-              onMouseEnter={() => {
-                setManual(true)
-                setPi(i)
-              }}
-              onFocus={() => {
-                setManual(true)
-                setPi(i)
-              }}
-              onClick={() => {
-                setManual(true)
-                setPi(i)
-              }}
-              className={cn(
-                "flex h-7 items-center gap-1.5 rounded-full border bg-card px-2 font-mono text-[11px] transition-colors duration-200",
-                i === pi
-                  ? "border-border text-foreground"
-                  : "border-border/60 text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <pf.icon className="size-3" />
-              {pf.id}
-            </button>
-          ))}
+        <div className="flex min-w-0 flex-col overflow-hidden">
+          <figcaption className="flex items-baseline gap-2 whitespace-pre">
+            <code className="font-medium font-mono text-foreground text-xs">
+              {name}
+            </code>
+            <span className="font-mono text-[10px] text-muted-foreground/60">
+              {time}
+            </span>
+          </figcaption>
+          <p className="truncate text-muted-foreground text-xs">
+            {description}
+          </p>
         </div>
       </div>
+    </figure>
+  )
+}
+
+const NotificationsList = () => {
+  return (
+    <div className="absolute inset-0 flex scale-90 flex-col items-center overflow-hidden border-none p-4 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_30%)] group-hover:scale-100">
+      <AnimatedList delay={2000}>
+        {notifications.map((item, idx) => (
+          <Notification key={idx} {...item} />
+        ))}
+      </AnimatedList>
     </div>
   )
 }
@@ -486,6 +382,11 @@ function ProofBand({
 /* The long tail as a manifest: everything real, nothing demanding a demo. */
 const MANIFEST = [
   {
+    icon: Share2,
+    name: "Social previews",
+    text: "Custom title, description, image, and theme color per link.",
+  },
+  {
     icon: QrCode,
     name: "QR codes",
     text: "Branded QR for every link, logo and colors included.",
@@ -557,14 +458,14 @@ export function Features() {
         demo={<GeoDemo />}
       />
       <ProofBand
-        headline="Look right in every timeline."
-        body="Custom title, description, image, and theme color, set per link. One URL that unfurls right on X, Discord, and Slack alike."
-        demo={<MetaTagsDemo />}
+        headline="Know the moment it spikes."
+        body="A link crosses a click threshold, lands its first visit from a new country, expires, or delivers a webhook. The feed tells you before anyone asks."
+        demo={<NotificationsList />}
       />
 
       {/* Manifest row — the rest of the toolbox at index density */}
       <Band rule>
-        <div className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-3">
           {MANIFEST.map((f) => (
             <div key={f.name} className="bg-background">
               <a
