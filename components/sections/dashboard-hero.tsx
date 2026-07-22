@@ -117,7 +117,7 @@ export function DashboardPreview() {
 /* The app frame: glass border › topbar + board                        */
 /* ------------------------------------------------------------------ */
 
-function AppFrame() {
+export function AppFrame() {
   return (
     <div className="relative">
       {/* Thin padded glass frame around the whole app — the panels' own

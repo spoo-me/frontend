@@ -7,10 +7,7 @@ import { Footer } from "@/components/layout/footer"
 import { Button } from "@/components/ui/button"
 import { PageFrame, Section, Band } from "@/components/shared/section-shell"
 import { ProductPageHero } from "@/components/product/page-hero"
-import {
-  Callouts,
-  DashboardPreview,
-} from "@/components/sections/dashboard-hero"
+import { AnnotatedDashboard } from "@/components/product/annotated-dashboard"
 import { AnalyticsQueryDemo } from "@/components/sections/analytics-query-demo"
 import { CTA } from "@/components/sections/cta"
 import { siteConfig } from "@/lib/site-config"
@@ -59,8 +56,7 @@ export default function AnalyticsProductPage() {
                 </Button>
               }
             />
-            <DashboardPreview />
-            <Callouts />
+            <AnnotatedDashboard />
           </Section>
 
           <Section>
