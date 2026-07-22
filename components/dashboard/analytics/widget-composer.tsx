@@ -366,9 +366,6 @@ export function ComposerForm({
         >
           Scope
         </FieldLabel>
-        <p className="text-[11px] text-muted-foreground/60 leading-snug">
-          Only clicks matching these filters are counted.
-        </p>
         <div className="grid grid-cols-2 gap-1.5">
           {SCOPE_FIELDS.map((f) => (
             <DimensionFilter
@@ -394,7 +391,7 @@ export function ComposerForm({
         >
           Chart ink
         </FieldLabel>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1">
           {ACCENTS.map((a) => (
             <button
               key={a}
@@ -403,7 +400,7 @@ export function ComposerForm({
               title={a}
               onClick={() => onChange({ accent: a })}
               className={cn(
-                "size-4.5 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
+                "size-4 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
                 state.accent === a &&
                   "ring-1 ring-foreground/60 ring-offset-2 ring-offset-background"
               )}
@@ -457,7 +454,7 @@ export function WidgetComposer({
             The preview is live: exactly what lands on the board.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-8 sm:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="grid items-center gap-8 sm:grid-cols-[minmax(0,1fr)_300px]">
           {/* ── live preview ──────────────────────────────────────────── */}
           <div className="pattern-dots flex items-center justify-center rounded-xl p-6">
             <div
