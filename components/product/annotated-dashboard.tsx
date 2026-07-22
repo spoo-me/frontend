@@ -6,20 +6,24 @@ import { motion, useReducedMotion } from "motion/react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Band, GutterHatch } from "@/components/shared/section-shell"
 import { AppFrame } from "@/components/sections/dashboard-hero"
+import { sketchFont } from "@/components/product/sketch"
+import { cn } from "@/lib/utils"
 
 /**
- * The board, annotated: the full dashboard preview (no crop) with
- * hand-drawn arrows and floating notes calling out what each piece is
- * for. Arrows draw in as the band scrolls into view. Below lg the
+ * The board, annotated: the full dashboard preview, narrowed so the
+ * margins become sketchbook gutters — handwritten notes left and right,
+ * arrows drawn into the real UI. Arrows draw in on scroll. Below xl the
  * overlay disappears and the same notes stack as a plain list — sketch
- * annotations don't survive a phone-width zoom.
+ * annotations don't survive small screens.
  */
 
 type Annotation = {
   id: string
   text: string
-  /** Label position, % of the frame wrapper. */
-  label: { top: string; left: string; rotate?: number }
+  side: "left" | "right"
+  /** Label position, % of the outer wrapper. */
+  top: string
+  rotate?: number
   /** Arrow path in the 1200x820 overlay space, label edge → target. */
   d: string
 }
@@ -27,40 +31,48 @@ type Annotation = {
 const ANNOTATIONS: Annotation[] = [
   {
     id: "filters",
-    text: "Stack filters as deep as the question goes",
-    label: { top: "-9%", left: "1%", rotate: -2 },
-    d: "M96 -26 C 76 10, 82 46, 106 72",
-  },
-  {
-    id: "kpis",
-    text: "Uniques, totals, and redirect speed at a glance",
-    label: { top: "-9.5%", left: "73%", rotate: 1.5 },
-    d: "M1012 -30 C 1052 4, 1048 84, 1024 128",
+    text: "stack filters as deep as the question goes",
+    side: "left",
+    top: "6%",
+    rotate: -3,
+    d: "M165 82 C 205 98, 240 100, 292 96",
   },
   {
     id: "chart",
-    text: "Every bucket hoverable, previous period ghosted",
-    label: { top: "40%", left: "27%", rotate: -1.5 },
-    d: "M312 336 C 272 328, 244 300, 254 262",
+    text: "previous period ghosted under every chart",
+    side: "left",
+    top: "38%",
+    rotate: -2,
+    d: "M165 344 C 225 356, 285 330, 322 304",
   },
   {
     id: "toggle",
-    text: "Any widget flips between chart and table",
-    label: { top: "104%", left: "34%", rotate: 1 },
-    d: "M478 872 C 468 760, 452 600, 414 516",
+    text: "any widget flips between chart & table",
+    side: "left",
+    top: "66%",
+    rotate: 2,
+    d: "M165 580 C 270 600, 380 560, 448 514",
+  },
+  {
+    id: "kpis",
+    text: "uniques, totals & redirect speed at a glance",
+    side: "right",
+    top: "12%",
+    rotate: 2.5,
+    d: "M1035 126 C 990 128, 962 138, 936 148",
   },
   {
     id: "map",
-    text: "First-party choropleth, not a script in sight",
-    label: { top: "104%", left: "69%", rotate: -1.5 },
-    d: "M908 868 C 936 796, 918 716, 878 662",
+    text: "a first-party choropleth, not a script in sight",
+    side: "right",
+    top: "70%",
+    rotate: -2,
+    d: "M1035 610 C 985 630, 930 645, 884 652",
   },
 ]
 
 /** Excalidraw-style open arrowhead: two short strokes, no fill. */
 function arrowHead(d: string): { x: number; y: number; angle: number } {
-  // The head rides the path's end point; angle comes from the last
-  // control point → end point segment.
   const nums = d.match(/-?\d+(\.\d+)?/g)!.map(Number)
   const [x, y] = nums.slice(-2)
   const [cx, cy] = nums.slice(-4, -2)
@@ -73,18 +85,23 @@ export function AnnotatedDashboard() {
   return (
     <Band
       rule
-      className="overflow-hidden px-5 py-16 sm:px-12 sm:py-24 lg:pt-28 lg:pb-32"
+      className={cn("px-5 py-16 sm:px-9 sm:py-24", sketchFont.variable)}
     >
       <GutterHatch />
-      <div className="relative mx-auto max-w-6xl">
-        <TooltipProvider delayDuration={0}>
-          <AppFrame />
-        </TooltipProvider>
+      {/* Breakout stage: fixed width past 1400px so the notes escape the
+          lattice rails AND the arrow geometry stays constant. */}
+      <div className="relative z-20 mx-auto w-full min-[1400px]:w-[1340px] min-[1400px]:max-w-none">
+        {/* The board itself, narrowed so the margins can speak */}
+        <div className="mx-auto xl:max-w-[52rem]">
+          <TooltipProvider delayDuration={0}>
+            <AppFrame />
+          </TooltipProvider>
+        </div>
 
-        {/* Annotation layer — lg+ only */}
+        {/* Annotation layer — wide screens only */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 hidden lg:block"
+          className="pointer-events-none absolute inset-0 hidden min-[1400px]:block"
         >
           <svg
             className="absolute inset-0 size-full overflow-visible"
@@ -95,7 +112,7 @@ export function AnnotatedDashboard() {
             {ANNOTATIONS.map((a, i) => {
               const head = arrowHead(a.d)
               return (
-                <g key={a.id} className="text-muted-foreground/70">
+                <g key={a.id} className="text-muted-foreground/80">
                   <motion.path
                     d={a.d}
                     stroke="currentColor"
@@ -106,8 +123,8 @@ export function AnnotatedDashboard() {
                     whileInView={{ pathLength: 1, opacity: 1 }}
                     viewport={{ once: true, amount: 0.4 }}
                     transition={{
-                      duration: reduced ? 0 : 0.6,
-                      delay: 0.15 + i * 0.18,
+                      duration: reduced ? 0 : 0.5,
+                      delay: 0.15 + i * 0.15,
                       ease: [0.16, 1, 0.3, 1],
                     }}
                   />
@@ -115,7 +132,7 @@ export function AnnotatedDashboard() {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true, amount: 0.4 }}
-                    transition={{ duration: 0.2, delay: 0.6 + i * 0.18 }}
+                    transition={{ duration: 0.2, delay: 0.55 + i * 0.15 }}
                     transform={`translate(${head.x}, ${head.y}) rotate(${head.angle})`}
                   >
                     <path
@@ -137,13 +154,12 @@ export function AnnotatedDashboard() {
               initial={{ opacity: 0, y: 6 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.3, delay: 0.1 + i * 0.18 }}
-              className="absolute max-w-52 font-normal text-base text-muted-foreground italic leading-snug [font-family:var(--font-serif)]"
-              style={{
-                top: a.label.top,
-                left: a.label.left,
-                rotate: `${a.label.rotate ?? 0}deg`,
-              }}
+              transition={{ duration: 0.3, delay: 0.05 + i * 0.15 }}
+              className={cn(
+                "absolute w-44 text-2xl text-muted-foreground leading-[1.15] [font-family:var(--font-sketch)]",
+                a.side === "left" ? "left-0 text-left" : "right-0 text-left"
+              )}
+              style={{ top: a.top, rotate: `${a.rotate ?? 0}deg` }}
             >
               {a.text}
             </motion.span>
@@ -151,8 +167,8 @@ export function AnnotatedDashboard() {
         </div>
       </div>
 
-      {/* Phone fallback: the same notes, stacked plainly */}
-      <ul className="mx-auto mt-8 grid max-w-lg gap-3 lg:hidden">
+      {/* Small-screen fallback: the same notes, stacked plainly */}
+      <ul className="mx-auto mt-8 grid max-w-lg gap-3 min-[1400px]:hidden">
         {ANNOTATIONS.map((a) => (
           <li
             key={a.id}
