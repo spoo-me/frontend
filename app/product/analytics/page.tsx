@@ -9,7 +9,7 @@ import { PageFrame, Section, Band } from "@/components/shared/section-shell"
 import { ProductPageHero } from "@/components/product/page-hero"
 import { AnnotatedDashboard } from "@/components/product/annotated-dashboard"
 import { Dimensions } from "@/components/product/dimensions"
-import { AnalyticsQueryDemo } from "@/components/sections/analytics-query-demo"
+import { ComposerDemo } from "@/components/product/composer-demo"
 import { CTA } from "@/components/sections/cta"
 import { siteConfig } from "@/lib/site-config"
 
@@ -62,7 +62,7 @@ export default function AnalyticsProductPage() {
 
           <Section>
             <Dimensions />
-            <AnalyticsQueryDemo />
+            <ComposerDemo />
           </Section>
 
           {/* The reach beyond the board: where the numbers travel */}
