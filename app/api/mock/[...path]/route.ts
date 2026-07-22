@@ -1660,7 +1660,8 @@ async function handle(req: NextRequest, path: string[]) {
 
   /* ---------- api keys ----------
      Wire shape mirrors the REAL backend's ApiKeyResponse exactly: envelope
-     key `keys`, Unix-second timestamps, NO last_used_at (not served yet).
+     key `keys`, Unix-second timestamps, last_used_at nullable (null until
+     the key first authenticates; server debounces updates to ~hourly).
      The frontend normalizes; keeping the mock honest prevents drift. */
   const keyToWire = (k: MockKey) => ({
     id: k.id,
@@ -1672,6 +1673,9 @@ async function handle(req: NextRequest, path: string[]) {
       : null,
     expires_at: k.expires_at
       ? Math.floor(new Date(k.expires_at).getTime() / 1000)
+      : null,
+    last_used_at: k.last_used_at
+      ? Math.floor(new Date(k.last_used_at).getTime() / 1000)
       : null,
     revoked: k.revoked,
     token_prefix: k.token_prefix,
