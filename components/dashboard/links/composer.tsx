@@ -31,6 +31,7 @@ import {
 import { urlProblem } from "@/lib/validation"
 import { countGraphemes, suggestEmojiAlias } from "@/lib/emoji-alias"
 import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
+import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 import { useAcceptedEmoji, useGenerateEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
@@ -168,6 +169,10 @@ export function LinkComposer() {
   const queryClient = useQueryClient()
   const [open, setOpen] = React.useState(false)
   const [tab, setTab] = React.useState("basic")
+  // Deliberate option use, noted at the interaction (set <-> cleared edges
+  // only) — the submit-time link_created booleans can't tell a considered
+  // default from an option nobody touched.
+  const optionUse = useCreateOptionTracker("composer")
 
   // Backend-gated capabilities: hidden features simply don't exist here.
   const showGeo = useFeature("geo_targeting") === "enabled"
@@ -288,6 +293,7 @@ export function LinkComposer() {
     setPrivateStats(false)
     setDebouncedUrl("")
     setServerUrlError(null)
+    optionUse.reset()
   }
 
   // Animated tab height: measure the active panel, glide the container.
@@ -623,7 +629,10 @@ export function LinkComposer() {
                           {activeDomains.map((d) => (
                             <DropdownMenuItem
                               key={d}
-                              onSelect={() => setDomain(d)}
+                              onSelect={() => {
+                                optionUse.note("domain", d !== "spoo.me")
+                                setDomain(d)
+                              }}
                             >
                               <span className="font-mono text-xs">{d}</span>
                               {d === domain && (
@@ -654,9 +663,11 @@ export function LinkComposer() {
                     <div className="relative flex-1">
                       <Input
                         value={alias}
-                        onChange={(e) =>
-                          setAlias(e.target.value.replace(/\s+/g, ""))
-                        }
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\s+/g, "")
+                          optionUse.note("alias", v !== "")
+                          setAlias(v)
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") submit()
                         }}
@@ -694,6 +705,7 @@ export function LinkComposer() {
                         <DropdownMenuItem
                           onSelect={() => {
                             trackUiAction("alias_suggested", "words")
+                            optionUse.note("alias", true)
                             setAlias(suggestAlias())
                           }}
                         >
@@ -702,6 +714,7 @@ export function LinkComposer() {
                         <DropdownMenuItem
                           onSelect={() => {
                             trackUiAction("alias_suggested", "emoji")
+                            optionUse.note("alias", true)
                             setAlias(
                               suggestEmojiAlias(3, generateEmoji ?? undefined)
                             )
@@ -713,9 +726,10 @@ export function LinkComposer() {
                     </DropdownMenu>
                     <EmojiPicker
                       remaining={15 - aliasGraphemes}
-                      onPick={(emoji) =>
+                      onPick={(emoji) => {
+                        optionUse.note("alias", true)
                         setAlias((a) => a.replace(/\s+/g, "") + emoji)
-                      }
+                      }}
                     />
                   </div>
                 </Field>
@@ -727,7 +741,10 @@ export function LinkComposer() {
                   >
                     <DateTimeField
                       value={expiry}
-                      onChange={setExpiry}
+                      onChange={(v) => {
+                        optionUse.note("expiry", v !== "")
+                        setExpiry(v)
+                      }}
                       placeholder="Never"
                       className="h-9 w-full"
                     />
@@ -736,13 +753,14 @@ export function LinkComposer() {
                         <button
                           key={label}
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
+                            optionUse.note("expiry", true)
                             setExpiry(
                               toLocalInputValue(
                                 new Date(Date.now() + hours * 3_600_000)
                               )
                             )
-                          }
+                          }}
                           className="h-6 rounded-md border border-border/60 px-2 text-[11px] text-muted-foreground transition-colors duration-150 hover:bg-accent/50 hover:text-foreground"
                         >
                           {label}
@@ -759,7 +777,10 @@ export function LinkComposer() {
                       type="number"
                       min={1}
                       value={maxClicks}
-                      onChange={(e) => setMaxClicks(e.target.value)}
+                      onChange={(e) => {
+                        optionUse.note("max_clicks", e.target.value !== "")
+                        setMaxClicks(e.target.value)
+                      }}
                       placeholder="Unlimited"
                       className="h-9 font-mono text-xs"
                     />
@@ -781,7 +802,10 @@ export function LinkComposer() {
                   <div className="flex items-center gap-1.5">
                     <PasswordInput
                       value={password}
-                      onChange={setPassword}
+                      onChange={(v) => {
+                        optionUse.note("password", v !== "")
+                        setPassword(v)
+                      }}
                       visible={passwordVisible}
                       onVisibleChange={setPasswordVisible}
                       placeholder="None"
@@ -794,6 +818,7 @@ export function LinkComposer() {
                       className="h-9 shrink-0"
                       onClick={() => {
                         trackUiAction("password_suggested")
+                        optionUse.note("password", true)
                         setPassword(suggestPassword())
                         setPasswordVisible(true)
                       }}
@@ -822,7 +847,10 @@ export function LinkComposer() {
                     </span>
                     <Switch
                       checked={blockBots}
-                      onCheckedChange={setBlockBots}
+                      onCheckedChange={(v) => {
+                        optionUse.note("block_bots", v)
+                        setBlockBots(v)
+                      }}
                     />
                   </label>
                   <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
@@ -840,7 +868,10 @@ export function LinkComposer() {
                     </span>
                     <Switch
                       checked={privateStats}
-                      onCheckedChange={setPrivateStats}
+                      onCheckedChange={(v) => {
+                        optionUse.note("private_stats", v)
+                        setPrivateStats(v)
+                      }}
                     />
                   </label>
                 </div>
@@ -848,10 +879,30 @@ export function LinkComposer() {
 
               <TabsContent value="targeting" className="space-y-5">
                 <Velvet feature="geo_targeting">
-                  <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
+                  <GeoRulesEditor
+                    rules={geoRules}
+                    onChange={(v) => {
+                      // Set = at least one complete rule; half-filled drafts
+                      // aren't a choice yet.
+                      optionUse.note(
+                        "geo_rules",
+                        Object.keys(completeGeoRules(v)).length > 0
+                      )
+                      setGeoRules(v)
+                    }}
+                  />
                 </Velvet>
                 <Velvet feature="ab_testing">
-                  <VariantsEditor variants={variants} onChange={setVariants} />
+                  <VariantsEditor
+                    variants={variants}
+                    onChange={(v) => {
+                      optionUse.note(
+                        "ab_variants",
+                        completeVariants(v).length > 0
+                      )
+                      setVariants(v)
+                    }}
+                  />
                 </Velvet>
               </TabsContent>
 
@@ -877,7 +928,10 @@ export function LinkComposer() {
                   {metaCustomized && (
                     <button
                       type="button"
-                      onClick={() => setMetaCustomized(false)}
+                      onClick={() => {
+                        optionUse.note("meta_tags", false)
+                        setMetaCustomized(false)
+                      }}
                       className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
                     >
                       Reset to destination
@@ -889,6 +943,7 @@ export function LinkComposer() {
                   onChange={(v) => {
                     // Any manual edit — typing, clearing, a color pick —
                     // flips customized; auto-fill goes through setMeta only.
+                    optionUse.note("meta_tags", Boolean(metaTagsOf(v)))
                     setMeta(v)
                     setMetaCustomized(true)
                   }}

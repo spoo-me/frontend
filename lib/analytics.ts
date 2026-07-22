@@ -105,6 +105,35 @@ export function trackLinkCreated(
   })
 }
 
+/** Which create-form options users deliberately touch, as it happens.
+    Submit-time booleans (link_created) can't tell a considered default from
+    an option nobody found, and the server only ever sees the final payload —
+    this is the client-only signal. One event, option enum + set flag, so the
+    whole option matrix is a single breakdown chart. */
+export type CreateOption =
+  | "alias"
+  | "domain"
+  | "password"
+  | "expiry"
+  | "max_clicks"
+  | "block_bots"
+  | "private_stats"
+  | "geo_rules"
+  | "ab_variants"
+  | "meta_tags"
+
+export type CreateOptionSurface = "composer" | "hero" | "onboarding"
+
+/** `set` is the option's new state: true when it now holds a value (or the
+    switch is on), false when the user cleared it. Values never travel. */
+export function trackCreateOptionToggled(
+  option: CreateOption,
+  set: boolean,
+  surface: CreateOptionSurface
+) {
+  capture("create_option_toggled", { option, set, surface })
+}
+
 export function trackLinkUpdated(patch: UpdateUrlInput) {
   capture("link_updated", {
     changed_fields: Object.keys(patch).sort(),
@@ -258,6 +287,7 @@ export type UiAction =
   | "links_filtered"
   | "links_sorted"
   | "composer_tab_opened"
+  | "shortener_options_opened"
   | "chart_expanded"
   | "app_explored"
   | "error_alias_claimed"
