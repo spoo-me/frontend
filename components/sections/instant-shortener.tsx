@@ -24,6 +24,7 @@ import {
   trackResultCardViewed,
 } from "@/lib/analytics"
 import { addRecentLink } from "@/lib/recent-links"
+import { apiFetch } from "@/lib/api/client"
 
 /* The legacy API reports field errors as { AliasError: "..." } etc.
    Map them to fields (so a hidden options fold can open itself) and to
@@ -155,7 +156,7 @@ export function InstantShortener({
     try {
       // Same-origin proxy (next.config.mjs): dev -> the local backend,
       // mock -> the in-repo handler, prod -> spoo.me. No CORS anywhere.
-      const res = await fetch("/shorten", {
+      const res = await apiFetch("/shorten", {
         method: "POST",
         headers: {
           Accept: "application/json",

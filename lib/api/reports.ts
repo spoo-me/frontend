@@ -1,4 +1,4 @@
-import { jsonInit, parse, SpooApiError } from "./client"
+import { apiFetch, jsonInit, parse, SpooApiError } from "./client"
 
 /**
  * Abuse-report intake + contact — the frozen wire contract from
@@ -79,7 +79,7 @@ export type ReportSubmissionResult = {
 export async function submitReports(
   input: ReportSubmissionInput
 ): Promise<ReportSubmissionResult> {
-  const res = await fetch("/api/v1/reports", jsonInit("POST", input))
+  const res = await apiFetch("/api/v1/reports", jsonInit("POST", input))
   return parse<ReportSubmissionResult>(res)
 }
 
@@ -92,7 +92,7 @@ export type ContactInput = {
 export async function sendContactMessage(
   input: ContactInput
 ): Promise<{ ok: true }> {
-  const res = await fetch("/api/v1/contact", jsonInit("POST", input))
+  const res = await apiFetch("/api/v1/contact", jsonInit("POST", input))
   return parse<{ ok: true }>(res)
 }
 

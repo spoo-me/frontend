@@ -1,4 +1,4 @@
-import { jsonInit, parse } from "./client"
+import { apiFetch, jsonInit, parse } from "./client"
 import { adaptStats, type StatsResponse, type StatsWire } from "./stats"
 
 /**
@@ -64,7 +64,7 @@ export async function getPublicStats(
   // re-buckets the moment the browser's timezone gets a say.
   if (params.timezone) q.set("timezone", params.timezone)
   const url = `${baseUrl}/v1/public/stats/${encodeURIComponent(code)}?${q}`
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     ...(params.password
       ? jsonInit("POST", { password: params.password })
       : { method: "GET" }),

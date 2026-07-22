@@ -1,4 +1,4 @@
-import { parse } from "./client"
+import { apiFetch, parse } from "./client"
 
 /**
  * Public link preview — the contract behind /{code}+
@@ -46,7 +46,7 @@ export async function getPublicPreview(
   code: string,
   baseUrl = "/api"
 ): Promise<PublicPreview> {
-  const res = await fetch(
+  const res = await apiFetch(
     `${baseUrl}/v1/public/preview/${encodeURIComponent(code)}`,
     { method: "GET", cache: "no-store" }
   )
