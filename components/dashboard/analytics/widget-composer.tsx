@@ -251,146 +251,83 @@ export function ComposerForm({
           className="h-8 text-xs"
         />
       </div>
-      <div className="space-y-2" ref={fieldRef?.("x")}>
-        <FieldLabel
-          hintLabel="How the X axis works"
-          hint="What each point or row represents: time buckets for a series, or a dimension's values for a breakdown."
-        >
-          X axis
-        </FieldLabel>
-        <Select value={state.x} onValueChange={(v) => handleX(v as XAxis)}>
-          <SelectTrigger size="sm" className="w-full text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {X_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value} className="text-xs">
-                <o.icon className="size-3.5" strokeWidth={1.75} />
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2" ref={fieldRef?.("y")}>
-        <FieldLabel
-          hintLabel="How the Y axis works"
-          hint="The measure being counted: total clicks, unique visitors, or both."
-        >
-          Y axis
-        </FieldLabel>
-        {kind === "stat" ? (
-          <Select
-            value={state.statMetric}
-            onValueChange={(v) => {
-              const m = v as StatMetric
-              onChange({
-                statMetric: m,
-                // Gauges only exist for the percentage metric.
-                ...(m !== "unique_rate" && state.statViz === "gauge"
-                  ? { statViz: "number" as StatViz }
-                  : {}),
-              })
-            }}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2" ref={fieldRef?.("x")}>
+          <FieldLabel
+            hintLabel="How the X axis works"
+            hint="What each point or row represents: time buckets for a series, or a dimension's values for a breakdown."
           >
+            X axis
+          </FieldLabel>
+          <Select value={state.x} onValueChange={(v) => handleX(v as XAxis)}>
             <SelectTrigger size="sm" className="w-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {STAT_METRICS.map((m) => (
-                <SelectItem key={m} value={m} className="text-xs">
-                  {STAT_META[m].label}
+              {X_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-xs">
+                  <o.icon className="size-3.5" strokeWidth={1.75} />
+                  {o.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        ) : (
-          <Select
-            value={state.seriesMetric}
-            onValueChange={(v) => onChange({ seriesMetric: v as SeriesMetric })}
+        </div>
+        <div className="space-y-2" ref={fieldRef?.("y")}>
+          <FieldLabel
+            hintLabel="How the Y axis works"
+            hint="The measure being counted: total clicks, unique visitors, or both."
           >
-            <SelectTrigger size="sm" className="w-full text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SERIES_METRIC_META.map((m) => (
-                <SelectItem key={m.value} value={m.value} className="text-xs">
-                  <m.icon className="size-3.5" strokeWidth={1.75} />
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+            Y axis
+          </FieldLabel>
+          {kind === "stat" ? (
+            <Select
+              value={state.statMetric}
+              onValueChange={(v) => {
+                const m = v as StatMetric
+                onChange({
+                  statMetric: m,
+                  // Gauges only exist for the percentage metric.
+                  ...(m !== "unique_rate" && state.statViz === "gauge"
+                    ? { statViz: "number" as StatViz }
+                    : {}),
+                })
+              }}
+            >
+              <SelectTrigger size="sm" className="w-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STAT_METRICS.map((m) => (
+                  <SelectItem key={m} value={m} className="text-xs">
+                    {STAT_META[m].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Select
+              value={state.seriesMetric}
+              onValueChange={(v) =>
+                onChange({ seriesMetric: v as SeriesMetric })
+              }
+            >
+              <SelectTrigger size="sm" className="w-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SERIES_METRIC_META.map((m) => (
+                  <SelectItem key={m.value} value={m.value} className="text-xs">
+                    <m.icon className="size-3.5" strokeWidth={1.75} />
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
-      <div className="space-y-2" ref={fieldRef?.("chart")}>
-        <FieldLabel
-          hintLabel="Choosing a chart"
-          hint="How the data draws. Some charts need a minimum number of categories to read well."
-        >
-          Chart
-        </FieldLabel>
-        <Select
-          value={
-            kind === "stat"
-              ? state.statViz
-              : kind === "timeseries"
-                ? state.tsViz
-                : state.bdViz
-          }
-          onValueChange={(v) =>
-            kind === "stat"
-              ? onChange({ statViz: v as StatViz })
-              : kind === "timeseries"
-                ? onChange({ tsViz: v as TimeseriesViz })
-                : onChange({ bdViz: v as BreakdownViz })
-          }
-        >
-          <SelectTrigger size="sm" className="w-full text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {chartOptions.map((o) => (
-              <SelectItem key={o.value} value={o.value} className="text-xs">
-                <o.icon className="size-3.5" strokeWidth={1.75} />
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2" ref={fieldRef?.("ink")}>
-        <FieldLabel
-          hintLabel="What chart ink does"
-          hint="The accent color this widget draws with; purely visual."
-        >
-          Chart ink
-        </FieldLabel>
-        <Select
-          value={state.accent}
-          onValueChange={(v) => onChange({ accent: v as Accent })}
-        >
-          <SelectTrigger size="sm" className="w-full text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ACCENTS.map((a) => (
-              <SelectItem key={a} value={a} className="text-xs">
-                <span
-                  aria-hidden
-                  className="size-3 shrink-0 rounded-full"
-                  style={{ background: ACCENT_VARS[a] }}
-                />
-                {a.charAt(0).toUpperCase() + a.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div
-        className="space-y-2 border-border/60 border-t pt-5"
-        ref={fieldRef?.("scope")}
-      >
+      <div className="space-y-2" ref={fieldRef?.("scope")}>
         <FieldLabel
           hintLabel="How scope works"
           hint="Filters only this widget's data; the board's shared filters still apply on top."
@@ -413,6 +350,72 @@ export function ComposerForm({
               modal
             />
           ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3 border-border/60 border-t pt-5">
+        <div className="space-y-2" ref={fieldRef?.("chart")}>
+          <FieldLabel
+            hintLabel="Choosing a chart"
+            hint="How the data draws. Some charts need a minimum number of categories to read well."
+          >
+            Chart
+          </FieldLabel>
+          <Select
+            value={
+              kind === "stat"
+                ? state.statViz
+                : kind === "timeseries"
+                  ? state.tsViz
+                  : state.bdViz
+            }
+            onValueChange={(v) =>
+              kind === "stat"
+                ? onChange({ statViz: v as StatViz })
+                : kind === "timeseries"
+                  ? onChange({ tsViz: v as TimeseriesViz })
+                  : onChange({ bdViz: v as BreakdownViz })
+            }
+          >
+            <SelectTrigger size="sm" className="w-full text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {chartOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-xs">
+                  <o.icon className="size-3.5" strokeWidth={1.75} />
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2" ref={fieldRef?.("ink")}>
+          <FieldLabel
+            hintLabel="What chart ink does"
+            hint="The accent color this widget draws with; purely visual."
+          >
+            Chart ink
+          </FieldLabel>
+          <Select
+            value={state.accent}
+            onValueChange={(v) => onChange({ accent: v as Accent })}
+          >
+            <SelectTrigger size="sm" className="w-full text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACCENTS.map((a) => (
+                <SelectItem key={a} value={a} className="text-xs">
+                  <span
+                    aria-hidden
+                    className="size-3 shrink-0 rounded-full"
+                    style={{ background: ACCENT_VARS[a] }}
+                  />
+                  {a.charAt(0).toUpperCase() + a.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
