@@ -166,7 +166,7 @@ export function AnnotatedDashboard() {
               transition={{ duration: 0.3, delay: 0.05 + i * 0.15 }}
               className={cn(
                 "absolute w-48 text-2xl text-muted-foreground leading-[1.15] [font-family:var(--font-sketch)]",
-                a.side === "left" ? "-left-60 text-left" : "-right-60 text-left"
+                a.side === "left" ? "-left-60 text-right" : "-right-60 text-left"
               )}
               style={{ top: a.top, rotate: `${a.rotate ?? 0}deg` }}
             >
