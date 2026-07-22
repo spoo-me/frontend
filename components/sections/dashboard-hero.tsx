@@ -142,7 +142,7 @@ export function AppFrame() {
   )
 }
 
-function Topbar() {
+export function Topbar() {
   return (
     <div className="flex h-[52px] items-center justify-between border-border/60 border-b px-4">
       <span className="flex items-center gap-1.5 text-sm">
@@ -169,7 +169,7 @@ function Chip({
   )
 }
 
-function ChipsRow() {
+export function ChipsRow() {
   return (
     <div className="flex items-center gap-2 overflow-hidden">
       <Chip icon={CalendarDays}>Last 30 days</Chip>
@@ -186,7 +186,7 @@ function ChipsRow() {
 }
 
 /** Widget-header control cluster: viz toggle + expand. */
-function HeaderControls({ table = false }: { table?: boolean }) {
+export function HeaderControls({ table = false }: { table?: boolean }) {
   return (
     <span className="flex items-center gap-2">
       <span className="hidden h-7 items-center rounded-lg border border-border/60 bg-shell sm:inline-flex">

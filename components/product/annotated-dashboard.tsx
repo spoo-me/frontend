@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react"
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Band, GutterHatch } from "@/components/shared/section-shell"
-import { AppFrame } from "@/components/sections/dashboard-hero"
+import { FullBoard } from "@/components/product/full-board"
 import { sketchFont } from "@/components/product/sketch"
 import { cn } from "@/lib/utils"
 
@@ -24,50 +24,58 @@ type Annotation = {
   /** Label position, % of the outer wrapper. */
   top: string
   rotate?: number
-  /** Arrow path in board space (992x846), label edge → target. */
+  /** Arrow path in board space (992x1503), label edge → target. */
   d: string
 }
 
 const ANNOTATIONS: Annotation[] = [
   {
     id: "filters",
-    text: "stack filters as deep as the question goes",
+    text: "filter by link, country, browser, OS or city",
     side: "left",
-    top: "6%",
-    rotate: -3,
+    top: "4%",
+    rotate: -2,
     d: "M-44 88 C 10 104, 40 106, 82 100",
   },
   {
-    id: "chart",
-    text: "previous period ghosted under every chart",
-    side: "left",
-    top: "38%",
-    rotate: -2,
-    d: "M-44 348 C 30 362, 90 340, 136 312",
-  },
-  {
-    id: "toggle",
-    text: "any widget flips between chart & table",
-    side: "left",
-    top: "66%",
-    rotate: 2,
-    d: "M-44 588 C 90 606, 230 560, 312 528",
-  },
-  {
     id: "kpis",
-    text: "uniques, totals & redirect speed at a glance",
+    text: "totals, uniques and rates, always on top",
     side: "right",
-    top: "12%",
-    rotate: 2.5,
-    d: "M1036 124 C 1000 126, 972 138, 950 150",
+    top: "7%",
+    rotate: 2,
+    d: "M1036 120 C 1000 122, 972 136, 950 152",
+  },
+  {
+    id: "ghost",
+    text: "the previous period, ghosted for comparison",
+    side: "left",
+    top: "26%",
+    rotate: -2,
+    d: "M-44 402 C 40 420, 180 452, 288 442",
   },
   {
     id: "map",
-    text: "a first-party choropleth, not a script in sight",
+    text: "click geography, on a built-in map",
+    side: "left",
+    top: "46%",
+    rotate: 2,
+    d: "M-44 700 C 20 716, 120 732, 260 726",
+  },
+  {
+    id: "toggle",
+    text: "every widget flips between chart and table",
     side: "right",
-    top: "70%",
+    top: "57%",
     rotate: -2,
-    d: "M1036 622 C 990 646, 930 658, 872 664",
+    d: "M1036 884 C 1000 886, 962 898, 934 910",
+  },
+  {
+    id: "os",
+    text: "browser and OS splits, tracked by default",
+    side: "right",
+    top: "84%",
+    rotate: 2,
+    d: "M1036 1286 C 996 1296, 964 1304, 938 1310",
   },
 ]
 
@@ -96,7 +104,7 @@ export function AnnotatedDashboard() {
           enough to show it. */}
       <div className="relative z-20 mx-auto w-full min-[1480px]:w-[62rem] min-[1480px]:max-w-none">
         <TooltipProvider delayDuration={0}>
-          <AppFrame />
+          <FullBoard />
         </TooltipProvider>
 
         {/* Annotation layer — wide screens only */}
@@ -106,7 +114,7 @@ export function AnnotatedDashboard() {
         >
           <svg
             className="absolute inset-0 size-full overflow-visible"
-            viewBox="0 0 992 846"
+            viewBox="0 0 992 1503"
             preserveAspectRatio="none"
             fill="none"
           >
