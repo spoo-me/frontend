@@ -241,16 +241,6 @@ export function ComposerForm({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="space-y-2" ref={fieldRef?.("title")}>
-        <FieldLabel>Title</FieldLabel>
-        <Input
-          value={state.title}
-          onChange={(e) => onChange({ title: e.target.value })}
-          placeholder="Optional"
-          maxLength={40}
-          className="h-8 text-xs"
-        />
-      </div>
       <div className="space-y-2" ref={fieldRef?.("x")}>
         <FieldLabel
           hintLabel="How the X axis works"
@@ -359,7 +349,10 @@ export function ComposerForm({
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2" ref={fieldRef?.("scope")}>
+      <div
+        className="space-y-2 border-border/60 border-t pt-5"
+        ref={fieldRef?.("scope")}
+      >
         <FieldLabel
           hintLabel="How scope works"
           hint="Filters only this widget's data; the board's shared filters still apply on top."
@@ -384,29 +377,41 @@ export function ComposerForm({
           ))}
         </div>
       </div>
-      <div className="space-y-2" ref={fieldRef?.("ink")}>
-        <FieldLabel
-          hintLabel="What chart ink does"
-          hint="The accent color this widget draws with; purely visual."
-        >
-          Chart ink
-        </FieldLabel>
-        <div className="flex flex-wrap items-center gap-1">
-          {ACCENTS.map((a) => (
-            <button
-              key={a}
-              type="button"
-              aria-label={`${a} ink`}
-              title={a}
-              onClick={() => onChange({ accent: a })}
-              className={cn(
-                "size-4 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
-                state.accent === a &&
-                  "ring-1 ring-foreground/60 ring-offset-2 ring-offset-background"
-              )}
-              style={{ background: ACCENT_VARS[a] }}
-            />
-          ))}
+      <div className="flex flex-col gap-5 border-border/60 border-t pt-5">
+        <div className="space-y-2" ref={fieldRef?.("title")}>
+          <FieldLabel>Title</FieldLabel>
+          <Input
+            value={state.title}
+            onChange={(e) => onChange({ title: e.target.value })}
+            placeholder="Optional"
+            maxLength={40}
+            className="h-8 text-xs"
+          />
+        </div>
+        <div className="space-y-2" ref={fieldRef?.("ink")}>
+          <FieldLabel
+            hintLabel="What chart ink does"
+            hint="The accent color this widget draws with; purely visual."
+          >
+            Chart ink
+          </FieldLabel>
+          <div className="flex flex-wrap items-center gap-1">
+            {ACCENTS.map((a) => (
+              <button
+                key={a}
+                type="button"
+                aria-label={`${a} ink`}
+                title={a}
+                onClick={() => onChange({ accent: a })}
+                className={cn(
+                  "size-4 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
+                  state.accent === a &&
+                    "ring-1 ring-foreground/60 ring-offset-2 ring-offset-background"
+                )}
+                style={{ background: ACCENT_VARS[a] }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -475,7 +480,9 @@ export function WidgetComposer({
           </div>
 
           {/* ── form ──────────────────────────────────────────────────── */}
-          <ComposerForm state={state} onChange={onChange} range={range} />
+          <div className="sm:border-border/60 sm:border-l sm:pl-8">
+            <ComposerForm state={state} onChange={onChange} range={range} />
+          </div>
         </div>
         <DialogFooter className="items-center">
           {full && (
