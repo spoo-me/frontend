@@ -24,7 +24,7 @@ type Annotation = {
   /** Label position, % of the outer wrapper. */
   top: string
   rotate?: number
-  /** Arrow path in the 1200x820 overlay space, label edge → target. */
+  /** Arrow path in board space (992x846), label edge → target. */
   d: string
 }
 
@@ -35,7 +35,7 @@ const ANNOTATIONS: Annotation[] = [
     side: "left",
     top: "6%",
     rotate: -3,
-    d: "M165 82 C 205 98, 240 100, 292 96",
+    d: "M-44 88 C 10 104, 40 106, 82 100",
   },
   {
     id: "chart",
@@ -43,7 +43,7 @@ const ANNOTATIONS: Annotation[] = [
     side: "left",
     top: "38%",
     rotate: -2,
-    d: "M165 344 C 225 356, 285 330, 322 304",
+    d: "M-44 348 C 30 362, 90 340, 136 312",
   },
   {
     id: "toggle",
@@ -51,7 +51,7 @@ const ANNOTATIONS: Annotation[] = [
     side: "left",
     top: "66%",
     rotate: 2,
-    d: "M165 580 C 270 600, 380 560, 448 514",
+    d: "M-44 588 C 90 606, 230 560, 312 528",
   },
   {
     id: "kpis",
@@ -59,7 +59,7 @@ const ANNOTATIONS: Annotation[] = [
     side: "right",
     top: "12%",
     rotate: 2.5,
-    d: "M1035 126 C 990 128, 962 138, 936 148",
+    d: "M1036 124 C 1000 126, 972 138, 950 150",
   },
   {
     id: "map",
@@ -67,7 +67,7 @@ const ANNOTATIONS: Annotation[] = [
     side: "right",
     top: "70%",
     rotate: -2,
-    d: "M1035 610 C 985 630, 930 645, 884 652",
+    d: "M1036 622 C 990 646, 930 658, 872 664",
   },
 ]
 
@@ -76,7 +76,10 @@ function arrowHead(d: string): { x: number; y: number; angle: number } {
   const nums = d.match(/-?\d+(\.\d+)?/g)!.map(Number)
   const [x, y] = nums.slice(-2)
   const [cx, cy] = nums.slice(-4, -2)
-  return { x, y, angle: (Math.atan2(y - cy, x - cx) * 180) / Math.PI }
+  // Rounded so SSR and hydration serialize the same transform.
+  const angle =
+    Math.round(((Math.atan2(y - cy, x - cx) * 180) / Math.PI) * 100) / 100
+  return { x, y, angle }
 }
 
 export function AnnotatedDashboard() {
@@ -88,24 +91,22 @@ export function AnnotatedDashboard() {
       className={cn("px-5 py-16 sm:px-9 sm:py-24", sketchFont.variable)}
     >
       <GutterHatch />
-      {/* Breakout stage: fixed width past 1400px so the notes escape the
-          lattice rails AND the arrow geometry stays constant. */}
-      <div className="relative z-20 mx-auto w-full min-[1400px]:w-[1340px] min-[1400px]:max-w-none">
-        {/* The board itself, narrowed so the margins can speak */}
-        <div className="mx-auto xl:max-w-[52rem]">
-          <TooltipProvider delayDuration={0}>
-            <AppFrame />
-          </TooltipProvider>
-        </div>
+      {/* The board is the anchor: notes hang at fixed offsets outside its
+          edges, so the sketch geometry is identical at every viewport wide
+          enough to show it. */}
+      <div className="relative z-20 mx-auto w-full min-[1480px]:w-[62rem] min-[1480px]:max-w-none">
+        <TooltipProvider delayDuration={0}>
+          <AppFrame />
+        </TooltipProvider>
 
         {/* Annotation layer — wide screens only */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 hidden min-[1400px]:block"
+          className="pointer-events-none absolute inset-0 hidden min-[1480px]:block"
         >
           <svg
             className="absolute inset-0 size-full overflow-visible"
-            viewBox="0 0 1200 820"
+            viewBox="0 0 992 846"
             preserveAspectRatio="none"
             fill="none"
           >
@@ -156,8 +157,8 @@ export function AnnotatedDashboard() {
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.3, delay: 0.05 + i * 0.15 }}
               className={cn(
-                "absolute w-44 text-2xl text-muted-foreground leading-[1.15] [font-family:var(--font-sketch)]",
-                a.side === "left" ? "left-0 text-left" : "right-0 text-left"
+                "absolute w-48 text-2xl text-muted-foreground leading-[1.15] [font-family:var(--font-sketch)]",
+                a.side === "left" ? "-left-60 text-left" : "-right-60 text-left"
               )}
               style={{ top: a.top, rotate: `${a.rotate ?? 0}deg` }}
             >
@@ -168,7 +169,7 @@ export function AnnotatedDashboard() {
       </div>
 
       {/* Small-screen fallback: the same notes, stacked plainly */}
-      <ul className="mx-auto mt-8 grid max-w-lg gap-3 min-[1400px]:hidden">
+      <ul className="mx-auto mt-8 grid max-w-lg gap-3 min-[1480px]:hidden">
         {ANNOTATIONS.map((a) => (
           <li
             key={a.id}
