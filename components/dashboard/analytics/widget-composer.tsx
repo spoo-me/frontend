@@ -260,7 +260,7 @@ export function ComposerForm({
             X axis
           </FieldLabel>
           <Select value={state.x} onValueChange={(v) => handleX(v as XAxis)}>
-            <SelectTrigger size="sm" className="w-full text-xs">
+            <SelectTrigger className="w-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -294,7 +294,7 @@ export function ComposerForm({
                 })
               }}
             >
-              <SelectTrigger size="sm" className="w-full text-xs">
+              <SelectTrigger className="w-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -312,7 +312,7 @@ export function ComposerForm({
                 onChange({ seriesMetric: v as SeriesMetric })
               }
             >
-              <SelectTrigger size="sm" className="w-full text-xs">
+              <SelectTrigger className="w-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -376,7 +376,7 @@ export function ComposerForm({
                   : onChange({ bdViz: v as BreakdownViz })
             }
           >
-            <SelectTrigger size="sm" className="w-full text-xs">
+            <SelectTrigger className="w-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -400,7 +400,7 @@ export function ComposerForm({
             value={state.accent}
             onValueChange={(v) => onChange({ accent: v as Accent })}
           >
-            <SelectTrigger size="sm" className="w-full text-xs">
+            <SelectTrigger className="w-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
