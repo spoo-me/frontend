@@ -352,7 +352,7 @@ export function ComposerForm({
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3 border-border/60 border-t pt-5">
+      <div className="grid grid-cols-2 items-end gap-3 border-border/60 border-t pt-5">
         <div className="space-y-2" ref={fieldRef?.("chart")}>
           <FieldLabel
             hintLabel="Choosing a chart"
@@ -390,12 +390,7 @@ export function ComposerForm({
           </Select>
         </div>
         <div className="space-y-2" ref={fieldRef?.("ink")}>
-          <FieldLabel
-            hintLabel="What chart ink does"
-            hint="The accent color this widget draws with; purely visual."
-          >
-            Chart ink
-          </FieldLabel>
+          <FieldLabel>Chart accent</FieldLabel>
           <Select
             value={state.accent}
             onValueChange={(v) => onChange({ accent: v as Accent })}
@@ -485,7 +480,7 @@ export function WidgetComposer({
           </div>
 
           {/* ── form ──────────────────────────────────────────────────── */}
-          <div className="sm:border-border/60 sm:border-l sm:pl-8">
+          <div>
             <ComposerForm state={state} onChange={onChange} range={range} />
           </div>
         </div>
