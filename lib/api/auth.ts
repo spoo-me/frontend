@@ -1,4 +1,4 @@
-import { authedFetch, jsonInit, parse } from "./client"
+import { apiFetch, authedFetch, jsonInit, parse } from "./client"
 
 export type AuthProvider = {
   provider: "google" | "github" | "discord"
@@ -24,7 +24,7 @@ export function register(input: {
   password: string
   user_name?: string
 }) {
-  return fetch("/auth/register", jsonInit("POST", input)).then((r) =>
+  return apiFetch("/auth/register", jsonInit("POST", input)).then((r) =>
     parse<{
       access_token: string
       user: AuthUser
@@ -35,13 +35,13 @@ export function register(input: {
 }
 
 export function login(input: { email: string; password: string }) {
-  return fetch("/auth/login", jsonInit("POST", input)).then((r) =>
+  return apiFetch("/auth/login", jsonInit("POST", input)).then((r) =>
     parse<{ access_token: string; user: AuthUser }>(r)
   )
 }
 
 export function logout() {
-  return fetch("/auth/logout", { method: "POST" }).then((r) =>
+  return apiFetch("/auth/logout", { method: "POST" }).then((r) =>
     parse<{ success: boolean }>(r)
   )
 }
@@ -141,7 +141,7 @@ export function removeProfilePicture() {
 }
 
 export function requestPasswordReset(email: string) {
-  return fetch(
+  return apiFetch(
     "/auth/request-password-reset",
     jsonInit("POST", { email })
   ).then((r) => parse<{ success: boolean }>(r))
@@ -152,7 +152,7 @@ export function resetPassword(input: {
   code: string
   password: string
 }) {
-  return fetch("/auth/reset-password", jsonInit("POST", input)).then((r) =>
+  return apiFetch("/auth/reset-password", jsonInit("POST", input)).then((r) =>
     parse<{ success: boolean }>(r)
   )
 }

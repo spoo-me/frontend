@@ -12,7 +12,7 @@ import {
   Loader2,
 } from "lucide-react"
 
-import { jsonInit, parse } from "@/lib/api/client"
+import { apiFetch, jsonInit, parse } from "@/lib/api/client"
 import { celebrate } from "@/lib/confetti"
 import { trackUiAction } from "@/lib/analytics"
 import { normalizeUrl, urlProblem, validDestinationUrl } from "@/lib/validation"
@@ -56,7 +56,7 @@ export function AliasClaim({
     }
     setState({ kind: "claiming" })
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         "/api/v1/shorten",
         jsonInit("POST", alias ? { url: wire, alias } : { url: wire })
       )

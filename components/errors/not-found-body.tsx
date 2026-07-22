@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { AliasClaim } from "@/components/errors/alias-claim"
+import { apiFetch } from "@/lib/api/client"
 
 /** Creatable-alias shape (mirrors the backend + mock validator). */
 const ALIAS_RE = /^[a-zA-Z0-9_-]{3,16}$/
@@ -47,7 +48,7 @@ export function NotFoundBody({ from }: { from?: string }) {
   React.useEffect(() => {
     if (!alias) return
     let cancelled = false
-    fetch(`/api/v1/shorten/check-alias?alias=${encodeURIComponent(alias)}`)
+    apiFetch(`/api/v1/shorten/check-alias?alias=${encodeURIComponent(alias)}`)
       .then((r) => r.json())
       .then((d: { available?: boolean }) => {
         if (!cancelled) setAvailable(Boolean(d.available))
