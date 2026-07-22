@@ -240,7 +240,17 @@ export function ComposerForm({
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      <div className="space-y-2" ref={fieldRef?.("title")}>
+        <FieldLabel>Title</FieldLabel>
+        <Input
+          value={state.title}
+          onChange={(e) => onChange({ title: e.target.value })}
+          placeholder="Optional"
+          maxLength={40}
+          className="h-8 text-xs"
+        />
+      </div>
       <div className="space-y-2" ref={fieldRef?.("x")}>
         <FieldLabel
           hintLabel="How the X axis works"
@@ -349,6 +359,34 @@ export function ComposerForm({
           </SelectContent>
         </Select>
       </div>
+      <div className="space-y-2" ref={fieldRef?.("ink")}>
+        <FieldLabel
+          hintLabel="What chart ink does"
+          hint="The accent color this widget draws with; purely visual."
+        >
+          Chart ink
+        </FieldLabel>
+        <Select
+          value={state.accent}
+          onValueChange={(v) => onChange({ accent: v as Accent })}
+        >
+          <SelectTrigger size="sm" className="w-full text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ACCENTS.map((a) => (
+              <SelectItem key={a} value={a} className="text-xs">
+                <span
+                  aria-hidden
+                  className="size-3 shrink-0 rounded-full"
+                  style={{ background: ACCENT_VARS[a] }}
+                />
+                {a.charAt(0).toUpperCase() + a.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div
         className="space-y-2 border-border/60 border-t pt-5"
         ref={fieldRef?.("scope")}
@@ -375,43 +413,6 @@ export function ComposerForm({
               modal
             />
           ))}
-        </div>
-      </div>
-      <div className="flex flex-col gap-5 border-border/60 border-t pt-5">
-        <div className="space-y-2" ref={fieldRef?.("title")}>
-          <FieldLabel>Title</FieldLabel>
-          <Input
-            value={state.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-            placeholder="Optional"
-            maxLength={40}
-            className="h-8 text-xs"
-          />
-        </div>
-        <div className="space-y-2" ref={fieldRef?.("ink")}>
-          <FieldLabel
-            hintLabel="What chart ink does"
-            hint="The accent color this widget draws with; purely visual."
-          >
-            Chart ink
-          </FieldLabel>
-          <div className="flex flex-wrap items-center gap-1">
-            {ACCENTS.map((a) => (
-              <button
-                key={a}
-                type="button"
-                aria-label={`${a} ink`}
-                title={a}
-                onClick={() => onChange({ accent: a })}
-                className={cn(
-                  "size-4 shrink-0 rounded-full transition-transform duration-150 hover:scale-110",
-                  state.accent === a &&
-                    "ring-1 ring-foreground/60 ring-offset-2 ring-offset-background"
-                )}
-                style={{ background: ACCENT_VARS[a] }}
-              />
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -469,6 +470,7 @@ export function WidgetComposer({
               <WidgetCell
                 widget={draft}
                 ctx={ctx}
+                preview
                 rangeLabel={rangeLabel}
                 deltaLabel={deltaLabel}
                 onConfigChange={() => {}}
