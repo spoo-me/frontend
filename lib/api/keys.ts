@@ -18,9 +18,10 @@ export type ApiKeyCreated = ApiKey & {
 }
 
 /** Wire shape of /api/v1/keys (backend ApiKeyResponse): the list envelope
-    key is `keys`, timestamps are Unix SECONDS, and last_used_at is not
-    served yet (optional so it lights up if the backend adds it). Normalized
-    here so the rest of the app keeps ISO strings. */
+    key is `keys`, timestamps are Unix SECONDS, and last_used_at is null
+    until the key first authenticates a request (the server debounces
+    updates to at most once an hour). Normalized here so the rest of the
+    app keeps ISO strings. */
 type ApiKeyWire = {
   id: string
   name: string

@@ -337,6 +337,19 @@ export function buildKeys(): MockKey[] {
       last_used_at: isoDaysAgo(61, rand),
       revoked: true,
     },
+    // Never-used key: legal on the wire (last_used_at is null until the
+    // key first authenticates), so the walkthrough exercises it.
+    {
+      id: "key_fresh",
+      name: "local testing",
+      description: null,
+      token_prefix: "spk_live_e51b",
+      scopes: ["shorten:create", "stats:read"],
+      created_at: isoDaysAgo(2, rand),
+      expires_at: null,
+      last_used_at: null,
+      revoked: false,
+    },
   ]
 }
 

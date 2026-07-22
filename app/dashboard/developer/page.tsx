@@ -110,8 +110,10 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
             </TooltipContent>
           </Tooltip>{" "}
           <span className="font-sans">
-            · created {formatWhen(apiKey.created_at)} · last used{" "}
-            {formatWhen(apiKey.last_used_at)}
+            · created {formatWhen(apiKey.created_at)} ·{" "}
+            {apiKey.last_used_at
+              ? `last used ${formatWhen(apiKey.last_used_at)}`
+              : "never used"}
             {apiKey.expires_at && (
               <>
                 {" "}
