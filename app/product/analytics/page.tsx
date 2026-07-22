@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { PageFrame, Section, Band } from "@/components/shared/section-shell"
 import { ProductPageHero } from "@/components/product/page-hero"
 import { AnnotatedDashboard } from "@/components/product/annotated-dashboard"
-import { WidgetGallery } from "@/components/product/widget-gallery"
 import { Dimensions } from "@/components/product/dimensions"
 import { AnalyticsQueryDemo } from "@/components/sections/analytics-query-demo"
 import { CTA } from "@/components/sections/cta"
@@ -59,10 +58,6 @@ export default function AnalyticsProductPage() {
               }
             />
             <AnnotatedDashboard />
-          </Section>
-
-          <Section>
-            <WidgetGallery />
           </Section>
 
           <Section>
