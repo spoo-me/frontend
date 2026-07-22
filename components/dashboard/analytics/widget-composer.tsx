@@ -463,7 +463,7 @@ export function WidgetComposer({
             The preview is live: exactly what lands on the board.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid items-center gap-8 sm:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="grid items-center gap-8 sm:grid-cols-[minmax(0,1fr)_340px]">
           {/* ── live preview ──────────────────────────────────────────── */}
           <div className="pattern-dots flex items-center justify-center rounded-xl p-6">
             <div
