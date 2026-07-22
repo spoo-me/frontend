@@ -168,8 +168,8 @@ await record("composer-geo", async (page) => {
   }
   await page.keyboard.press("Escape")
   await pause(page, 600)
-  // Ink: amber
-  await glide(page, dialog.getByRole("button", { name: "amber ink" }))
+  // Accent: amber
+  await pick(page, 3, "Amber")
   await pause(page, 2200)
 })
 
