@@ -34,6 +34,7 @@ import {
 import { findUnsupportedGraphemes, isEmojiCandidate } from "@/lib/emoji-alias"
 import { useAliasCheck } from "@/hooks/use-alias-check"
 import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
+import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 
 /** Terse register for the first-run badge (the muted-mono AliasBadge). The
     hint-length prose the composer uses would be too loud here. The emoji_policy
@@ -87,6 +88,9 @@ export function LinkStep({
   const [copied, setCopied] = React.useState(false)
   const [qrOpen, setQrOpen] = React.useState(false)
   const linkRef = React.useRef<HTMLDivElement>(null)
+  // Deliberate option use (set <-> cleared edges only); the alias is the
+  // one create option this step offers.
+  const optionUse = useCreateOptionTracker("onboarding")
 
   const urlLooksValid = /^https?:\/\/\S+\.\S+/.test(url.trim())
 
@@ -277,7 +281,11 @@ export function LinkStep({
                 <input
                   id="ob-alias"
                   value={alias}
-                  onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\s+/g, "")
+                    optionUse.note("alias", v !== "")
+                    setAlias(v)
+                  }}
                   placeholder="launch"
                   className="h-10 min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none placeholder:text-muted-foreground/50"
                 />
