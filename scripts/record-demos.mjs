@@ -1,10 +1,11 @@
 /**
- * Records product-demo clips by driving the REAL dashboard (mock mode)
- * with Playwright. No CI: `npm run record:demos` with the mock server
- * running on :3005. Output lands in public/demos/.
+ * Records product-demo clips by driving the dev-only recording stage
+ * (/stage/*) with Playwright. No CI: `npm run record:demos` with the
+ * mock server on :3005. Output lands in public/demos/.
  *
- * The cursor is an injected overlay (headless Chromium paints no OS
- * pointer); clicks ripple. Motion pacing lives in glide()/pause().
+ * The stage puts the component alone on the band's own background, so
+ * there is nothing to crop and dropdowns have room inside the frame.
+ * The cursor is an injected overlay; clicks ripple.
  */
 import { execSync } from "node:child_process"
 import { mkdirSync, renameSync, rmSync } from "node:fs"
@@ -12,8 +13,8 @@ import { chromium } from "playwright"
 
 const BASE = process.env.DEMO_BASE ?? "http://localhost:3005"
 const OUT = "public/demos"
-const W = 1560
-const H = 980
+const W = 1280
+const H = 960
 
 const CURSOR_JS = `
   (() => {
@@ -35,10 +36,13 @@ const CURSOR_JS = `
       setTimeout(() => r.remove(), 500)
     }, true)
     const s = document.createElement('style')
-    s.textContent = '@keyframes pwRip{from{transform:scale(.4);opacity:.9}to{transform:scale(1.4);opacity:0}}'
+    s.textContent = '@keyframes pwRip{from{transform:scale(.4);opacity:.9}to{transform:scale(1.4);opacity:0}} nextjs-portal{display:none!important}'
     document.head.appendChild(s)
   })()
 `
+
+let clipStart = 0
+let t0 = 0
 
 async function glide(page, locator, { dwell = 450 } = {}) {
   const box = await locator.boundingBox()
@@ -56,37 +60,17 @@ async function pause(page, ms) {
   await page.waitForTimeout(ms)
 }
 
-let clipStart = 0
-let clipBox = null
-let t0 = 0
-
-async function openComposer(page) {
-  await page.goto(`${BASE}/dashboard/analytics`)
-  await page.getByRole("button", { name: "Edit layout" }).waitFor()
-  await pause(page, 1400)
-  await glide(page, page.getByRole("button", { name: "Edit layout" }))
-  await pause(page, 700)
-  await glide(page, page.getByRole("button", { name: "Add widget" }))
-  await pause(page, 500)
-  await glide(page, page.getByRole("menuitem", { name: /Custom chart/ }))
-  await page.getByRole("dialog").waitFor()
-  await pause(page, 900)
-  // Everything before this instant gets trimmed; everything outside
-  // this box gets cropped.
+async function openStage(page, path) {
+  await page.goto(`${BASE}${path}`)
+  await page.getByRole("combobox").first().waitFor()
+  // Let charts and fonts settle before the take starts.
+  await pause(page, 2000)
   clipStart = (Date.now() - t0) / 1000
-  const box = await page.getByRole("dialog").boundingBox()
-  const pad = 10
-  clipBox = {
-    x: Math.max(0, Math.floor((box.x - pad) / 2) * 2),
-    y: Math.max(0, Math.floor((box.y - pad) / 2) * 2),
-    w: Math.min(W, Math.ceil((box.width + pad * 2) / 2) * 2),
-    h: Math.min(H, Math.ceil((box.height + pad * 2) / 2) * 2),
-  }
 }
 
-/** The dialog's selects, in DOM order: X axis, Y axis, Chart. */
+/** Stage selects, DOM order: X axis, Y axis, Chart, Chart accent. */
 function combo(page, i) {
-  return page.getByRole("dialog").getByRole("combobox").nth(i)
+  return page.getByRole("combobox").nth(i)
 }
 
 async function pick(page, comboIndex, optionName) {
@@ -115,9 +99,6 @@ async function record(name, run) {
     colorScheme: "dark",
     recordVideo: { dir: OUT, size: { width: W, height: H } },
   })
-  await context.addCookies([
-    { name: "access_token", value: "demo", url: BASE },
-  ])
   await context.addInitScript(CURSOR_JS)
   const page = await context.newPage()
   t0 = Date.now()
@@ -133,32 +114,25 @@ async function record(name, run) {
       const p = await video.path()
       const raw = `${OUT}/${name}-raw.webm`
       renameSync(p, raw)
-      if (clipBox) {
-        const { x, y, w, h } = clipBox
-        execSync(
-          `ffmpeg -y -loglevel error -ss ${clipStart.toFixed(2)} -i "${raw}" ` +
-            `-vf "crop=${w}:${h}:${x}:${y}" -c:v libvpx-vp9 -b:v 0 -crf 34 ` +
-            `"${OUT}/${name}.webm"`
-        )
-        rmSync(raw)
-      } else {
-        renameSync(raw, `${OUT}/${name}.webm`)
-      }
+      execSync(
+        `ffmpeg -y -loglevel error -ss ${clipStart.toFixed(2)} -i "${raw}" ` +
+          `-c:v libvpx-vp9 -b:v 0 -crf 32 "${OUT}/${name}.webm"`
+      )
+      rmSync(raw)
       console.log(`✓ ${OUT}/${name}.webm`)
     }
     await browser.close()
   }
 }
 
-/* ── workflow 1: Instagram's iOS geography, as a map ────────────────── */
+/* ── workflow 1: Instagram's geography, as an amber map ─────────────── */
 await record("composer-geo", async (page) => {
-  await openComposer(page)
+  await openStage(page, "/stage/composer")
   await pick(page, 0, "Countries")
   await pick(page, 2, "Map")
   // Scope: referrer
-  const dialog = page.getByRole("dialog")
-  await glide(page, dialog.getByRole("button", { name: /^Referrer/ }))
-  await pause(page, 800)
+  await glide(page, page.getByRole("button", { name: /^Referrer/ }))
+  await pause(page, 900)
   const opt = page.getByRole("option").first()
   if (await opt.isVisible().catch(() => false)) {
     await glide(page, opt)
@@ -168,7 +142,6 @@ await record("composer-geo", async (page) => {
   }
   await page.keyboard.press("Escape")
   await pause(page, 600)
-  // Accent: amber
   await pick(page, 3, "Amber")
   await pause(page, 2200)
 })
