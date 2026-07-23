@@ -44,3 +44,6 @@ next-env.d.ts
 /.claude/
 /.claude-screens/
 /*.png
+
+# generated demo takes (npm run record:demos)
+public/demos/

@@ -3,9 +3,21 @@
 import * as React from "react"
 import dynamic from "next/dynamic"
 
+import {
+  Building2,
+  ChartSpline,
+  Compass,
+  Globe2,
+  Link2,
+  MapPin,
+  MonitorSmartphone,
+} from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { BreakdownList } from "@/components/dashboard/breakdown-list"
+import { SectionHeader } from "@/components/dashboard/section"
+import { DimensionIcon } from "@/components/dashboard/dim-icon"
 import {
   COMPOSER_DEFAULTS,
   ComposerForm,
@@ -52,6 +64,42 @@ const RANGE: TimeRange = {
   preset: "30d",
 }
 
+const X_META = {
+  time: { title: "Clicks over time", icon: ChartSpline },
+  short_code: { title: "Links", icon: Link2 },
+  referrer: { title: "Referrers", icon: Globe2 },
+  country: { title: "Countries", icon: MapPin },
+  city: { title: "Cities", icon: Building2 },
+  browser: { title: "Browsers", icon: Compass },
+  os: { title: "Operating systems", icon: MonitorSmartphone },
+  none: { title: "Stat", icon: ChartSpline },
+}
+
+/** The scope chips the real widget header carries. */
+function ScopeChips({ state }: { state: ComposerState }) {
+  const chips = Object.entries(state.scope).flatMap(([dim, values]) =>
+    (values ?? []).slice(0, 1).map((v) => ({ dim, v }))
+  )
+  if (!chips.length) return null
+  return (
+    <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+      {chips.map((c) => (
+        <span
+          key={c.dim}
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5 font-mono text-[11px] text-muted-foreground tabular-nums"
+        >
+          <DimensionIcon
+            dimension={c.dim}
+            value={c.v}
+            className="size-3.5 shrink-0"
+          />
+          {c.v}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 /* Fixture stand-in for the dialog's live WidgetCell — same components
    the board renders, no fetching. */
 function PreviewChart({ state }: { state: ComposerState }) {
@@ -94,7 +142,7 @@ export function ComposerStage() {
        stay inside the frame. */
     <div
       data-stage
-      className="flex min-h-screen items-start justify-center bg-background pt-12"
+      className="flex min-h-screen items-start justify-start bg-background pt-6 pl-6"
     >
       <div className="w-[1024px] rounded-xl border border-border/60 bg-background p-6 shadow-2xl shadow-black/40">
         <div className="mb-4">
@@ -118,6 +166,12 @@ export function ComposerStage() {
               }
             >
               <div className="flex h-full flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
+                <SectionHeader
+                  className="h-10 shrink-0 px-2.5"
+                  icon={X_META[state.x].icon}
+                  title={X_META[state.x].title}
+                  badge={<ScopeChips state={state} />}
+                />
                 <div className="mt-0 min-h-0 flex-1 overflow-hidden rounded-[14px] bg-background">
                   <PreviewChart state={state} />
                 </div>

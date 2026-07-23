@@ -13,8 +13,8 @@ import { chromium } from "playwright"
 
 const BASE = process.env.DEMO_BASE ?? "http://localhost:3005"
 const OUT = "public/demos"
-const W = 1280
-const H = 960
+const W = 1072
+const H = 880
 
 const CURSOR_JS = `
   (() => {
