@@ -279,10 +279,14 @@ export function LinkSettingsForm({
   link,
   domains = ["spoo.me"],
   onSaved,
+  layout = "stack",
 }: {
   link: UrlListItem
   domains?: string[]
   onSaved?: (next: UrlListItem) => void
+  /** "stack" fits the sheet; "wide" pairs core fields with the feature
+      sections side by side on the full link page. */
+  layout?: "stack" | "wide"
 }) {
   const queryClient = useQueryClient()
 
@@ -508,349 +512,362 @@ export function LinkSettingsForm({
   const changes = describeChanges(link, patch)
 
   return (
-    <div className="space-y-5">
-      <Field
-        label="Destination"
-        error={destProblem}
-        hint="Where the short link sends visitors."
-      >
-        <Input
-          value={longUrl}
-          onChange={(e) => setLongUrl(e.target.value)}
-          spellCheck={false}
-          className="h-9 font-mono text-xs"
-        />
-      </Field>
-
-      <Field
-        label="Short link"
-        labelHint={
-          <InfoHint label="What can be an alias">
-            Aliases are letters and numbers, or 1-15 emoji. Only emoji that
-            render in every browser&apos;s address bar are accepted, so flags
-            and multi-person combos are out.
-          </InfoHint>
-        }
-        error={aliasServerMsg}
-        hint={
-          aliasVerdict.state === "available"
-            ? `${domain}/${alias} is available.`
-            : aliasVerdict.state === "problem"
-              ? aliasVerdict.reason === "emoji_policy"
-                ? emojiPolicyHint(alias, acceptedEmoji)
-                : aliasVerdict.message
-              : "Changing the alias breaks the old address."
-        }
-      >
-        <div className="flex items-center gap-1.5">
-          {showDomains ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/60"
-                >
-                  {domain}
-                  <ChevronDown className="size-3 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {domains.map((d) => (
-                  <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
-                    <span className="font-mono text-xs">{d}</span>
-                    {d === domain && <Check className="ml-auto size-3.5" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <span className="flex h-9 shrink-0 items-center rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs">
-              {domain}
-            </span>
-          )}
-          <span className="font-mono text-muted-foreground text-xs">/</span>
-          <div className="relative flex-1">
-            <Input
-              value={alias}
-              onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
-              spellCheck={false}
-              className="h-9 pr-8 font-mono text-xs"
-            />
-            <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-              {aliasVerdict.state === "checking" && (
-                <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
-              )}
-              {aliasVerdict.state === "available" && (
-                <Check className="size-3.5 text-live" />
-              )}
-              {(aliasVerdict.state === "problem" || aliasServerMsg) && (
-                <CircleAlert className="size-3.5 text-destructive" />
-              )}
-            </span>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            className="size-9 shrink-0"
-            aria-label="Suggest an alias"
-            onClick={() => setAlias(suggestAlias())}
-          >
-            <Dices />
-          </Button>
-          <EmojiPicker
-            remaining={15 - countGraphemes(alias)}
-            onPick={(emoji) => setAlias((a) => a.replace(/\s+/g, "") + emoji)}
+    <div
+      className={
+        layout === "wide"
+          ? "grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start lg:gap-x-10"
+          : "space-y-5"
+      }
+    >
+      <div className="space-y-5">
+        <Field
+          label="Destination"
+          error={destProblem}
+          hint="Where the short link sends visitors."
+        >
+          <Input
+            value={longUrl}
+            onChange={(e) => setLongUrl(e.target.value)}
+            spellCheck={false}
+            className="h-9 font-mono text-xs"
           />
-        </div>
-      </Field>
+        </Field>
 
-      <Field
-        label="Password"
-        labelHint={
-          <InfoHint label="How the password is stored">
-            The password is hashed and never shown; replace or remove it,
-            don&apos;t edit it.
-          </InfoHint>
-        }
-      >
-        {link.password_set && passwordMode === "keep" ? (
-          <div className="flex items-center gap-2">
-            {link.password ? (
-              <PasswordInput
-                value={link.password}
-                visible={passwordVisible}
-                onVisibleChange={setPasswordVisible}
-                readOnly
-                className="[&_input]:h-9 [&_input]:bg-muted/30"
-              />
+        <Field
+          label="Short link"
+          labelHint={
+            <InfoHint label="What can be an alias">
+              Aliases are letters and numbers, or 1-15 emoji. Only emoji that
+              render in every browser&apos;s address bar are accepted, so flags
+              and multi-person combos are out.
+            </InfoHint>
+          }
+          error={aliasServerMsg}
+          hint={
+            aliasVerdict.state === "available"
+              ? `${domain}/${alias} is available.`
+              : aliasVerdict.state === "problem"
+                ? aliasVerdict.reason === "emoji_policy"
+                  ? emojiPolicyHint(alias, acceptedEmoji)
+                  : aliasVerdict.message
+                : "Changing the alias breaks the old address."
+          }
+        >
+          <div className="flex items-center gap-1.5">
+            {showDomains ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/60"
+                  >
+                    {domain}
+                    <ChevronDown className="size-3 text-muted-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {domains.map((d) => (
+                    <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
+                      <span className="font-mono text-xs">{d}</span>
+                      {d === domain && <Check className="ml-auto size-3.5" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <span className="flex h-9 flex-1 items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-muted-foreground text-xs">
-                <KeyRound className="size-3.5" strokeWidth={1.75} />
-                Password is set.
+              <span className="flex h-9 shrink-0 items-center rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs">
+                {domain}
               </span>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setPasswordMode("set")
-                setPasswordVisible(false)
-              }}
-              className="shrink-0 text-foreground text-xs underline underline-offset-4"
-            >
-              Replace
-            </button>
-            <button
-              type="button"
-              onClick={() => setPasswordMode("remove")}
-              className="shrink-0 text-destructive text-xs underline underline-offset-4"
-            >
-              Remove
-            </button>
-          </div>
-        ) : passwordMode === "remove" ? (
-          <div className="flex h-9 items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3">
-            <span className="flex-1 text-destructive text-xs">
-              Password will be removed on save.
-            </span>
-            <button
-              type="button"
-              onClick={() => setPasswordMode("keep")}
-              className="text-foreground text-xs underline underline-offset-4"
-            >
-              Undo
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5">
-            <PasswordInput
-              value={newPassword}
-              onChange={setNewPassword}
-              visible={passwordVisible}
-              onVisibleChange={setPasswordVisible}
-              placeholder={
-                link.password_set ? "New password" : "Add a password (optional)"
-              }
-              className="[&_input]:h-9"
-            />
+            <span className="font-mono text-muted-foreground text-xs">/</span>
+            <div className="relative flex-1">
+              <Input
+                value={alias}
+                onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
+                spellCheck={false}
+                className="h-9 pr-8 font-mono text-xs"
+              />
+              <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
+                {aliasVerdict.state === "checking" && (
+                  <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
+                )}
+                {aliasVerdict.state === "available" && (
+                  <Check className="size-3.5 text-live" />
+                )}
+                {(aliasVerdict.state === "problem" || aliasServerMsg) && (
+                  <CircleAlert className="size-3.5 text-destructive" />
+                )}
+              </span>
+            </div>
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              className="h-9 shrink-0"
-              onClick={() => {
-                setPasswordMode("set")
-                setNewPassword(suggestPassword())
-                setPasswordVisible(true)
-              }}
+              size="icon-sm"
+              className="size-9 shrink-0"
+              aria-label="Suggest an alias"
+              onClick={() => setAlias(suggestAlias())}
             >
-              <Dices data-icon="inline-start" />
-              Suggest
+              <Dices />
             </Button>
-            {(newPassword || link.password_set) && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Cancel password change"
-                onClick={() => {
-                  setPasswordMode("keep")
-                  setNewPassword("")
-                }}
-              >
-                <X />
-              </Button>
-            )}
-          </div>
-        )}
-        {passwordMode !== "remove" && !link.password_set && null}
-      </Field>
-
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field
-          label="Expires"
-          hint="The link stops redirecting after this moment."
-        >
-          <div className="flex items-center gap-1.5">
-            <DateTimeField
-              value={expiry}
-              onChange={setExpiry}
-              placeholder="Never"
-              className="min-w-0 flex-1"
+            <EmojiPicker
+              remaining={15 - countGraphemes(alias)}
+              onPick={(emoji) => setAlias((a) => a.replace(/\s+/g, "") + emoji)}
             />
-            {expiry && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Remove expiry"
-                onClick={() => setExpiry("")}
-              >
-                <X />
-              </Button>
-            )}
           </div>
         </Field>
+
         <Field
-          label="Max clicks"
-          hint="The link deactivates after this many clicks."
+          label="Password"
+          labelHint={
+            <InfoHint label="How the password is stored">
+              The password is hashed and never shown; replace or remove it,
+              don&apos;t edit it.
+            </InfoHint>
+          }
         >
-          <div className="flex items-center gap-1.5">
-            <Input
-              type="number"
-              min={1}
-              value={maxClicks}
-              onChange={(e) => setMaxClicks(e.target.value)}
-              placeholder="Unlimited"
-              className="h-9 font-mono text-xs"
-            />
-            {maxClicks && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Remove click limit"
-                onClick={() => setMaxClicks("")}
-              >
-                <X />
-              </Button>
-            )}
-          </div>
-        </Field>
-      </div>
-
-      <div className="divide-y divide-border/60 rounded-xl border border-border/60">
-        <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
-          <span>
-            <span className="block font-medium text-foreground text-xs">
-              Block bots
-            </span>
-            <span className="text-muted-foreground/70 text-xs">
-              Crawlers get a preview page instead of the redirect.
-            </span>
-          </span>
-          <Switch checked={blockBots} onCheckedChange={setBlockBots} />
-        </label>
-        <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
-          <span>
-            <span className="block font-medium text-foreground text-xs">
-              Private stats
-            </span>
-            <span className="text-muted-foreground/70 text-xs">
-              Only you can see this link&apos;s analytics.
-            </span>
-          </span>
-          <Switch checked={privateStats} onCheckedChange={setPrivateStats} />
-        </label>
-      </div>
-
-      <Velvet feature="geo_targeting">
-        <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
-      </Velvet>
-
-      <Velvet feature="ab_testing">
-        <VariantsEditor variants={variants} onChange={setVariants} />
-      </Velvet>
-
-      {showMeta && (
-        <div className="space-y-3">
-          {/* Fixed-height header row: the live-dot status and reset action
-            swap in place, zero layout shift either way. */}
-          <div className="flex h-7 items-center justify-between">
-            <div className="flex items-baseline gap-3">
-              <span className="flex items-center gap-1.5">
-                <div className="label-mono text-[10px] text-muted-foreground/60">
-                  Meta tags
-                </div>
-                <InfoHint label="What meta tags do">
-                  The social card crawlers see when this link is shared;
-                  overrides the destination&apos;s own card.
-                </InfoHint>
-              </span>
-              {metaMirroring && (
-                <span className="flex items-center gap-1.5">
-                  <span className="label-mono text-[10px] text-muted-foreground/40">
-                    fetched from destination
-                  </span>
-                  <InfoHint label="About fetched meta tags">
-                    These preview tags are read live from the destination until
-                    you customize them.
-                  </InfoHint>
+          {link.password_set && passwordMode === "keep" ? (
+            <div className="flex items-center gap-2">
+              {link.password ? (
+                <PasswordInput
+                  value={link.password}
+                  visible={passwordVisible}
+                  onVisibleChange={setPasswordVisible}
+                  readOnly
+                  className="[&_input]:h-9 [&_input]:bg-muted/30"
+                />
+              ) : (
+                <span className="flex h-9 flex-1 items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-muted-foreground text-xs">
+                  <KeyRound className="size-3.5" strokeWidth={1.75} />
+                  Password is set.
                 </span>
               )}
-            </div>
-            {metaCustomized && (
               <button
                 type="button"
-                onClick={() => setMetaCustomized(false)}
-                className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+                onClick={() => {
+                  setPasswordMode("set")
+                  setPasswordVisible(false)
+                }}
+                className="shrink-0 text-foreground text-xs underline underline-offset-4"
               >
-                Reset to destination
+                Replace
               </button>
-            )}
-          </div>
-          <MetaTagsEditor
-            value={displayedMeta}
-            onChange={(v) => {
-              // Any manual edit — typing, clearing, a color pick — flips
-              // customized; the mirror effect goes through setMeta only.
-              setMeta(v)
-              setMetaCustomized(true)
-            }}
-            domain={domain}
-            alias={alias}
-            preview="below"
-            loading={!metaCustomized && destMeta.isFetching}
-            notice={metaNotice}
-            problem={metaProblem}
-            source={metaCustomized ? metaSource : undefined}
-          />
+              <button
+                type="button"
+                onClick={() => setPasswordMode("remove")}
+                className="shrink-0 text-destructive text-xs underline underline-offset-4"
+              >
+                Remove
+              </button>
+            </div>
+          ) : passwordMode === "remove" ? (
+            <div className="flex h-9 items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3">
+              <span className="flex-1 text-destructive text-xs">
+                Password will be removed on save.
+              </span>
+              <button
+                type="button"
+                onClick={() => setPasswordMode("keep")}
+                className="text-foreground text-xs underline underline-offset-4"
+              >
+                Undo
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <PasswordInput
+                value={newPassword}
+                onChange={setNewPassword}
+                visible={passwordVisible}
+                onVisibleChange={setPasswordVisible}
+                placeholder={
+                  link.password_set
+                    ? "New password"
+                    : "Add a password (optional)"
+                }
+                className="[&_input]:h-9"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 shrink-0"
+                onClick={() => {
+                  setPasswordMode("set")
+                  setNewPassword(suggestPassword())
+                  setPasswordVisible(true)
+                }}
+              >
+                <Dices data-icon="inline-start" />
+                Suggest
+              </Button>
+              {(newPassword || link.password_set) && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Cancel password change"
+                  onClick={() => {
+                    setPasswordMode("keep")
+                    setNewPassword("")
+                  }}
+                >
+                  <X />
+                </Button>
+              )}
+            </div>
+          )}
+          {passwordMode !== "remove" && !link.password_set && null}
+        </Field>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <Field
+            label="Expires"
+            hint="The link stops redirecting after this moment."
+          >
+            <div className="flex items-center gap-1.5">
+              <DateTimeField
+                value={expiry}
+                onChange={setExpiry}
+                placeholder="Never"
+                className="min-w-0 flex-1"
+              />
+              {expiry && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Remove expiry"
+                  onClick={() => setExpiry("")}
+                >
+                  <X />
+                </Button>
+              )}
+            </div>
+          </Field>
+          <Field
+            label="Max clicks"
+            hint="The link deactivates after this many clicks."
+          >
+            <div className="flex items-center gap-1.5">
+              <Input
+                type="number"
+                min={1}
+                value={maxClicks}
+                onChange={(e) => setMaxClicks(e.target.value)}
+                placeholder="Unlimited"
+                className="h-9 font-mono text-xs"
+              />
+              {maxClicks && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Remove click limit"
+                  onClick={() => setMaxClicks("")}
+                >
+                  <X />
+                </Button>
+              )}
+            </div>
+          </Field>
         </div>
-      )}
+
+        <div className="divide-y divide-border/60 rounded-xl border border-border/60">
+          <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
+            <span>
+              <span className="block font-medium text-foreground text-xs">
+                Block bots
+              </span>
+              <span className="text-muted-foreground/70 text-xs">
+                Crawlers get a preview page instead of the redirect.
+              </span>
+            </span>
+            <Switch checked={blockBots} onCheckedChange={setBlockBots} />
+          </label>
+          <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">
+            <span>
+              <span className="block font-medium text-foreground text-xs">
+                Private stats
+              </span>
+              <span className="text-muted-foreground/70 text-xs">
+                Only you can see this link&apos;s analytics.
+              </span>
+            </span>
+            <Switch checked={privateStats} onCheckedChange={setPrivateStats} />
+          </label>
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        <Velvet feature="geo_targeting">
+          <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
+        </Velvet>
+
+        <Velvet feature="ab_testing">
+          <VariantsEditor variants={variants} onChange={setVariants} />
+        </Velvet>
+
+        {showMeta && (
+          <div className="space-y-3">
+            {/* Fixed-height header row: the live-dot status and reset action
+            swap in place, zero layout shift either way. */}
+            <div className="flex h-7 items-center justify-between">
+              <div className="flex items-baseline gap-3">
+                <span className="flex items-center gap-1.5">
+                  <div className="label-mono text-[10px] text-muted-foreground/60">
+                    Meta tags
+                  </div>
+                  <InfoHint label="What meta tags do">
+                    The social card crawlers see when this link is shared;
+                    overrides the destination&apos;s own card.
+                  </InfoHint>
+                </span>
+                {metaMirroring && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="label-mono text-[10px] text-muted-foreground/40">
+                      fetched from destination
+                    </span>
+                    <InfoHint label="About fetched meta tags">
+                      These preview tags are read live from the destination
+                      until you customize them.
+                    </InfoHint>
+                  </span>
+                )}
+              </div>
+              {metaCustomized && (
+                <button
+                  type="button"
+                  onClick={() => setMetaCustomized(false)}
+                  className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+                >
+                  Reset to destination
+                </button>
+              )}
+            </div>
+            <MetaTagsEditor
+              value={displayedMeta}
+              onChange={(v) => {
+                // Any manual edit — typing, clearing, a color pick — flips
+                // customized; the mirror effect goes through setMeta only.
+                setMeta(v)
+                setMetaCustomized(true)
+              }}
+              domain={domain}
+              alias={alias}
+              preview="below"
+              loading={!metaCustomized && destMeta.isFetching}
+              notice={metaNotice}
+              problem={metaProblem}
+              source={metaCustomized ? metaSource : undefined}
+            />
+          </div>
+        )}
+      </div>
 
       <div
         className={cn(
           "flex items-center justify-end gap-2 transition-opacity duration-150",
+          layout === "wide" && "lg:col-span-2",
           dirty ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       >

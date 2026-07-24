@@ -402,7 +402,7 @@ function CountrySelect({
         <button
           type="button"
           aria-label="Choose a country"
-          className="flex h-9 w-40 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 text-xs shadow-soft transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+          className="flex h-9 w-40 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 text-xs transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
         >
           {valid ? (
             <>
@@ -964,7 +964,7 @@ export function MetaTagsEditor({
           {imageUploaded ? (
             /* A raw data URI is unreadable garbage in a text input — show
                a quiet chip instead. Same h-9 as the input: zero shift. */
-            <span className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-input px-3 shadow-soft dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+            <span className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-input px-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
               <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground text-xs">
                 uploaded image ·{" "}
                 {Math.max(1, Math.round(dataUriBytes(imageValue) / 1024))}
@@ -1038,7 +1038,7 @@ export function MetaTagsEditor({
                 type="button"
                 aria-label="Pick a theme color"
                 onClick={() => setPreviewOn("discord")}
-                className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-input shadow-soft transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-input transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                 style={
                   colorValid ? { backgroundColor: value.color } : undefined
                 }

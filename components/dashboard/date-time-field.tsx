@@ -92,7 +92,7 @@ export function DateTimeField({
           className={cn(
             // Mirrors the Input recipe so "Never" reads as an editable field,
             // not a disabled button.
-            "flex h-9 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 font-mono text-xs shadow-soft outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
+            "flex h-9 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 font-mono text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
             date ? "text-foreground" : "text-muted-foreground",
             className
           )}

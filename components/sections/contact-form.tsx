@@ -133,7 +133,7 @@ export function ContactForm() {
       </div>
 
       <Field label="Company website" htmlFor="website" optional>
-        <div className="flex h-10 items-center rounded-lg border border-input bg-transparent shadow-soft transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+        <div className="flex h-10 items-center rounded-lg border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
           <span className="select-none border-input border-r px-2.5 font-mono text-[13px] text-muted-foreground/70">
             https://
           </span>
@@ -174,7 +174,7 @@ export function ContactForm() {
           required
           maxLength={MESSAGE_MAX}
           placeholder="Tell us what's on your mind…"
-          className="w-full resize-none rounded-lg border border-input bg-transparent px-3 py-2.5 text-sm shadow-soft outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+          className="w-full resize-none rounded-lg border border-input bg-transparent px-3 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
