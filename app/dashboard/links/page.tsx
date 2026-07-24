@@ -37,7 +37,7 @@ import {
   Timer,
   Trash2,
   X,
-} from "lucide-react"
+} from "@/components/icons"
 
 import { AnimatePresence, motion } from "motion/react"
 import { toast } from "sonner"

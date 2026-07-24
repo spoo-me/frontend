@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { ChartBar, Map as MapIcon, Table2 } from "lucide-react"
+import { ChartBar, Map as MapIcon, Table2 } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import type { DimensionRow } from "@/lib/api"

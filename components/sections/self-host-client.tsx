@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { ArrowUpRight, Check, Copy } from "lucide-react"
+import { ArrowUpRight, Check, Copy } from "@/components/icons"
 
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"

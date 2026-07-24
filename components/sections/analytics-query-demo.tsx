@@ -10,7 +10,7 @@ import {
   Compass,
   Globe2,
   MapPin,
-} from "lucide-react"
+} from "@/components/icons"
 import {
   AnimatePresence,
   motion,

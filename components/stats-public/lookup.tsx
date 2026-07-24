@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight } from "@/components/icons"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

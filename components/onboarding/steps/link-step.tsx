@@ -9,7 +9,7 @@ import {
   Copy,
   Download,
   QrCode,
-} from "lucide-react"
+} from "@/components/icons"
 import { BaseQr, encodeData } from "simple-qrbtf"
 
 import { cn } from "@/lib/utils"

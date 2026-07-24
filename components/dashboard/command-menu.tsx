@@ -17,7 +17,7 @@ import {
   Plus,
   Search,
   Sun,
-} from "lucide-react"
+} from "@/components/icons"
 import { useTheme } from "next-themes"
 
 import { cn } from "@/lib/utils"

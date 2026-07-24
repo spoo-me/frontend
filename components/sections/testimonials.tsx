@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight } from "@/components/icons"
 
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Band, GutterHatch } from "@/components/shared/section-shell"

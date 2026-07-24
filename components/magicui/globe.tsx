@@ -12,7 +12,7 @@ import {
   Ticket,
   UtensilsCrossed,
   type LucideIcon,
-} from "lucide-react"
+} from "@/components/icons"
 import { useTheme } from "next-themes"
 
 import { cn } from "@/lib/utils"

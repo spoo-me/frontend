@@ -12,7 +12,7 @@ import {
   Puzzle,
   Smartphone,
   SquareTerminal,
-} from "lucide-react"
+} from "@/components/icons"
 
 import type { ApiKey, AppGrant, CustomDomain, UrlListItem } from "@/lib/api"
 import { connectedApps, type ConnectedApp } from "@/lib/apps-data"

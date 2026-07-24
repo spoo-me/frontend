@@ -10,7 +10,7 @@ import {
   ShieldOff,
   Trash2,
   TriangleAlert,
-} from "lucide-react"
+} from "@/components/icons"
 import { toast } from "sonner"
 
 import { trackApiKeyCreated, trackApiKeyDeleted } from "@/lib/analytics"
@@ -43,7 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Ellipsis } from "lucide-react"
+import { Ellipsis } from "@/components/icons"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { SCOPE_INFO, scopeMeaning } from "@/components/dashboard/scopes"

@@ -8,7 +8,7 @@ import {
   Link2,
   Webhook,
   type LucideIcon,
-} from "lucide-react"
+} from "@/components/icons"
 
 export type DashboardNavItem = {
   title: string

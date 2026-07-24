@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowUpRight, History, Plus } from "lucide-react"
+import { ArrowUpRight, History, Plus } from "@/components/icons"
 
 import type { UrlListItem } from "@/lib/api"
 import { linkDetailPath } from "@/lib/link-detail"

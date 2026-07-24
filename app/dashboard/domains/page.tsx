@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ChevronRight, Globe, Plus } from "lucide-react"
+import { ChevronRight, Globe, Plus } from "@/components/icons"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 

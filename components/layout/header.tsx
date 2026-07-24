@@ -22,8 +22,8 @@ import {
   Shield,
   Star,
   Users,
-} from "lucide-react"
-import type { LucideIcon } from "lucide-react"
+} from "@/components/icons"
+import type { LucideIcon } from "@/components/icons"
 
 import { PRICING_ENABLED } from "@/lib/flags"
 import { cn } from "@/lib/utils"

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ArrowRight, Check, Copy } from "lucide-react"
+import { ArrowRight, Check, Copy } from "@/components/icons"
 import { AnimatePresence, motion } from "motion/react"
 
 import { cn } from "@/lib/utils"

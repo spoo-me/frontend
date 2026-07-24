@@ -10,7 +10,7 @@ import {
   Copy,
   Link2,
   Loader2,
-} from "lucide-react"
+} from "@/components/icons"
 
 import { apiFetch, jsonInit, parse } from "@/lib/api/client"
 import { celebrate } from "@/lib/confetti"

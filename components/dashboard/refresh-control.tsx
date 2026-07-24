@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronDown, RefreshCw } from "lucide-react"
+import { ChevronDown, RefreshCw } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { trackUiAction } from "@/lib/analytics"

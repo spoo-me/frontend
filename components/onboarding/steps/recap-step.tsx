@@ -3,7 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight, CircleCheck } from "lucide-react"
+import { ArrowRight, ArrowUpRight, CircleCheck } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/lib/site-config"

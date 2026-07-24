@@ -1,7 +1,7 @@
 "use client"
 
 import { lazy, Suspense, useEffect, useRef, useState } from "react"
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "@/components/icons"
 import {
   ArrowUpRight,
   FlaskConical,
@@ -11,7 +11,7 @@ import {
   Timer,
   TrendingUp,
   Webhook,
-} from "lucide-react"
+} from "@/components/icons"
 import {
   AnimatePresence,
   motion,

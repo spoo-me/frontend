@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight } from "@/components/icons"
 
 import { NumberTicker } from "@/components/ui/number-ticker"
 import { SectionHeading } from "@/components/shared/section-heading"

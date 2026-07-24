@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Smile } from "lucide-react"
+import { Search, Smile } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { type EmojiItem } from "@/lib/api"

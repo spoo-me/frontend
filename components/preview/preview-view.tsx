@@ -10,7 +10,7 @@ import {
   MoveUpRight,
   Pause,
   ShieldAlert,
-} from "lucide-react"
+} from "@/components/icons"
 
 import type {
   PreviewDestination,

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { Monitor, Moon, Sun } from "lucide-react"
+import { Monitor, Moon, Sun } from "@/components/icons"
 import { useTheme } from "next-themes"
 
 import { themeTransition } from "@/components/theme-provider"

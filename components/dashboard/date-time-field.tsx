@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CalendarDays } from "lucide-react"
+import { CalendarDays } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

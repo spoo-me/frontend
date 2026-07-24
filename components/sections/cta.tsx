@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "motion/react"
-import { ArrowRight, Zap } from "lucide-react"
+import { ArrowRight, Zap } from "@/components/icons"
 
 import { Button } from "@/components/ui/button"
 import { Band, GutterHatch } from "@/components/shared/section-shell"

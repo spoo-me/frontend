@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/dashboard/info-hint"

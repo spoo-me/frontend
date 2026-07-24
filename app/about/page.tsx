@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { ArrowUpRight, Building2 } from "lucide-react"
+import { ArrowUpRight, Building2 } from "@/components/icons"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"

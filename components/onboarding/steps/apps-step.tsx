@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight } from "lucide-react"
+import { ArrowRight, ArrowUpRight } from "@/components/icons"
 import { motion } from "motion/react"
 
 import { connectedApps } from "@/lib/apps-data"

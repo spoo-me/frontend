@@ -19,7 +19,7 @@ import {
   MonitorSmartphone,
   Table2,
   Filter,
-} from "lucide-react"
+} from "@/components/icons"
 
 import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"

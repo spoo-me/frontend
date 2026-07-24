@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { ChartLine, Check, Copy } from "lucide-react"
+import { ChartLine, Check, Copy } from "@/components/icons"
 
 import Link from "next/link"
 

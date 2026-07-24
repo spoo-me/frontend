@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
-import { ArrowUpRight, Flame } from "lucide-react"
+import { ArrowUpRight, Flame } from "@/components/icons"
 
 import { dimensionRowsOf, getStats } from "@/lib/api"
 import { formatCount } from "@/lib/format"

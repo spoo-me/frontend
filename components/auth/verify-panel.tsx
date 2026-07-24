@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { AnimatePresence, motion } from "motion/react"
-import { CircleCheck } from "lucide-react"
+import { CircleCheck } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import {

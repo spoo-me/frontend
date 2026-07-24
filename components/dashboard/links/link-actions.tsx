@@ -12,7 +12,7 @@ import {
   Play,
   ScanLine,
   Trash2,
-} from "lucide-react"
+} from "@/components/icons"
 import { toast } from "sonner"
 
 import { trackLinkDeleted } from "@/lib/analytics"

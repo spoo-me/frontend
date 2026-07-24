@@ -10,7 +10,7 @@ import {
   Link2,
   MapPin,
   MonitorSmartphone,
-} from "lucide-react"
+} from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import {

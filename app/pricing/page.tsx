@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { Server } from "lucide-react"
+import { Server } from "@/components/icons"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"

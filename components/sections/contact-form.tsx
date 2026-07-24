@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Check, Send } from "lucide-react"
+import { Check, Send } from "@/components/icons"
 
 import { useCaptcha } from "@/hooks/use-captcha"
 import { trackUiAction } from "@/lib/analytics"

@@ -11,7 +11,7 @@ import {
   PanelLeft,
   Search,
   Settings,
-} from "lucide-react"
+} from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/shared/logo"

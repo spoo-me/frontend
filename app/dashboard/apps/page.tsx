@@ -8,7 +8,7 @@ import {
   Plug2,
   TerminalSquare,
   Unplug,
-} from "lucide-react"
+} from "@/components/icons"
 import { toast } from "sonner"
 import { motion } from "motion/react"
 

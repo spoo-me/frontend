@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useInView } from "motion/react"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight } from "@/components/icons"
 
 import { Button } from "@/components/ui/button"
 import { SectionHeading } from "@/components/shared/section-heading"

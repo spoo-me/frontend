@@ -8,7 +8,7 @@ import {
   MapPin,
   MonitorSmartphone,
   MoveUpRight,
-} from "lucide-react"
+} from "@/components/icons"
 import { FaWindows } from "react-icons/fa6"
 import { SiAndroid, SiApple, SiLinux } from "react-icons/si"
 

@@ -11,7 +11,7 @@ import {
   Minimize2,
   Table2,
   TrendingUp,
-} from "lucide-react"
+} from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { formatCount } from "@/lib/format"

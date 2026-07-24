@@ -3,7 +3,7 @@
 import * as React from "react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Command as CommandPrimitive } from "cmdk"
-import { Check } from "lucide-react"
+import { Check } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { getStats, type StatsDimension } from "@/lib/api"

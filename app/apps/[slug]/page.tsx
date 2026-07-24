@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ArrowUpRight, Check } from "lucide-react"
+import { ArrowLeft, ArrowUpRight, Check } from "@/components/icons"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"

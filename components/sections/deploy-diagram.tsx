@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useTheme } from "next-themes"
-import { Globe } from "lucide-react"
+import { Globe } from "@/components/icons"
 
 import { AnimatedBeam } from "@/components/magicui/animated-beam"
 

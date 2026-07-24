@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CalendarDays, Check } from "lucide-react"
+import { CalendarDays, Check } from "@/components/icons"
 import type { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"

@@ -15,7 +15,7 @@ import {
   RotateCcw,
   Upload,
   X,
-} from "lucide-react"
+} from "@/components/icons"
 import {
   FaDiscord,
   FaLinkedinIn,

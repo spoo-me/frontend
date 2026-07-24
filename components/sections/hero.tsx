@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { motion } from "motion/react"
-import { ArrowRight, Zap } from "lucide-react"
+import { ArrowRight, Zap } from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

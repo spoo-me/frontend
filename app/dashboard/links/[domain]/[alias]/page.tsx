@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, ChartLine, Globe2, Settings2 } from "lucide-react"
+import { ArrowLeft, ChartLine, Globe2, Settings2 } from "@/components/icons"
 
 import {
   dimensionRowsOf,

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight } from "@/components/icons"
 
 import { useAuth } from "@/components/auth/auth-context"
 import { trackManagePitchClicked } from "@/lib/analytics"

@@ -2,7 +2,12 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowUpRight, ChevronDown, ChevronUp, CircleAlert } from "lucide-react"
+import {
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
+  CircleAlert,
+} from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import type { CustomDomain, UrlListItem } from "@/lib/api"

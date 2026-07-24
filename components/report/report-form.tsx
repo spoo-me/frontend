@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { Check, Flag } from "lucide-react"
+import { Check, Flag } from "@/components/icons"
 
 import { useCaptcha } from "@/hooks/use-captcha"
 import { trackUiAction } from "@/lib/analytics"

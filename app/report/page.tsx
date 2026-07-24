@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { CircleCheck } from "lucide-react"
+import { CircleCheck } from "@/components/icons"
 
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"

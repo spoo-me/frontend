@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { Bot, ChartLine, Lock } from "lucide-react"
+import { Bot, ChartLine, Lock } from "@/components/icons"
 
 import { SpooApiError } from "@/lib/api/client"
 import { getPublicStats, type PublicStats } from "@/lib/api/public-stats"

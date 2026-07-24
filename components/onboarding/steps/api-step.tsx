@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { ArrowRight, Check, Copy, KeyRound, Terminal } from "lucide-react"
+import { ArrowRight, Check, Copy, KeyRound, Terminal } from "@/components/icons"
 
 import { Button } from "@/components/ui/button"
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text"

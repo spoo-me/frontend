@@ -22,7 +22,7 @@ import {
   MapPin,
   MonitorSmartphone,
   Plus,
-} from "lucide-react"
+} from "@/components/icons"
 import { getStats, type StatsDimension } from "@/lib/api"
 import { trackUiAction } from "@/lib/analytics"
 import type { Widget } from "@/lib/analytics-layout"

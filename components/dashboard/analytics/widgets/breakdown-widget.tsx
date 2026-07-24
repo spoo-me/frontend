@@ -16,7 +16,7 @@ import {
   Minimize2,
   Radar,
   Table2,
-} from "lucide-react"
+} from "@/components/icons"
 
 import { cn } from "@/lib/utils"
 import type { DimensionRow } from "@/lib/api"

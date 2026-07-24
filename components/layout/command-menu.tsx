@@ -20,8 +20,8 @@ import {
   Shield,
   Star,
   Users,
-} from "lucide-react"
-import type { LucideIcon } from "lucide-react"
+} from "@/components/icons"
+import type { LucideIcon } from "@/components/icons"
 
 import {
   CommandDialog,

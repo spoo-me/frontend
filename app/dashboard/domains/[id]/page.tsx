@@ -13,7 +13,7 @@ import {
   Route,
   ShieldAlert,
   TriangleAlert,
-} from "lucide-react"
+} from "@/components/icons"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 

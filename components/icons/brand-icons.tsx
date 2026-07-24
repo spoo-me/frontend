@@ -25,7 +25,7 @@ import {
   SiZapier,
 } from "react-icons/si"
 import { FaLinkedinIn } from "react-icons/fa6"
-import { Smartphone, TerminalSquare } from "lucide-react"
+import { Smartphone, TerminalSquare } from "@/components/icons"
 
 type IconProps = React.SVGProps<SVGSVGElement> & { className?: string }
 

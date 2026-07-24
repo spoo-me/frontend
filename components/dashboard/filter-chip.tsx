@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { X } from "lucide-react"
+import { X } from "@/components/icons"
 
 /**
  * Applied-filter pill, duotone: muted label segment | hairline | value
