@@ -193,11 +193,6 @@ function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
             <CopyCell value={rec.name} />
             <span className="sm:hidden" aria-hidden />
             <CopyCell value={rec.value} />
-            {rec.purpose && (
-              <span className="col-span-full font-mono text-[10px] text-muted-foreground/50">
-                {rec.purpose}
-              </span>
-            )}
           </div>
         ))}
       </div>
