@@ -140,12 +140,8 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
             </span>
           )}
         </div>
-        <div className="truncate text-muted-foreground text-xs">
+        <div className="mt-1 truncate text-muted-foreground text-xs">
           {hostOf(endpoint.url)} ·{" "}
-          {endpoint.events.length === 1
-            ? "1 event"
-            : `${endpoint.events.length} events`}{" "}
-          ·{" "}
           {endpoint.last_delivery_at
             ? `last delivery ${formatWhen(endpoint.last_delivery_at)}`
             : "no deliveries yet"}

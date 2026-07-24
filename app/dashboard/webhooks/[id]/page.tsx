@@ -59,6 +59,7 @@ import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { StatusPill } from "@/components/dashboard/status-pill"
 import { EndpointDialog } from "@/components/dashboard/webhooks/endpoint-dialog"
+import { JsonView } from "@/components/dashboard/webhooks/json-view"
 
 const PAGE_SIZE = 25
 
@@ -197,9 +198,9 @@ function DeliverySheet({
                     </span>
                     <CopyButton value={delivery.rendered_body ?? ""} />
                   </div>
-                  <pre className="mt-1.5 max-h-80 overflow-auto rounded-lg border border-border/60 bg-muted/30 p-3 font-mono text-[11px] leading-relaxed">
-                    {body}
-                  </pre>
+                  <div className="mt-1.5 max-h-80 overflow-auto rounded-lg border border-border/60 bg-muted/30 p-3">
+                    <JsonView json={body} />
+                  </div>
                 </div>
               )}
 
@@ -215,30 +216,66 @@ function DeliverySheet({
                         ` · next ${formatWhen(delivery.next_attempt_at)}`}
                     </p>
                   )}
-                  {delivery.attempts.map((attempt, i) => (
-                    <div key={`${delivery.id}-${i}`} className="px-3 py-2.5">
-                      <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                        <span className="text-foreground">
-                          {attempt.status_code ?? "no response"}
+                  {delivery.attempts.map((attempt, i) => {
+                    const ok =
+                      attempt.status_code != null &&
+                      attempt.status_code >= 200 &&
+                      attempt.status_code < 300
+                    return (
+                      <div
+                        key={`${delivery.id}-${i}`}
+                        className="flex gap-2.5 px-3 py-2.5"
+                      >
+                        <span className="w-6 shrink-0 font-mono text-[11px] text-muted-foreground/50 tabular-nums">
+                          #{i + 1}
                         </span>
-                        {attempt.duration_ms != null &&
-                          ` · ${attempt.duration_ms}ms`}
-                        {" · "}
-                        {formatWhen(attempt.attempted_at)}
-                        {attempt.error && (
-                          <span className="text-destructive">
-                            {" "}
-                            · {attempt.error}
-                          </span>
-                        )}
-                      </p>
-                      {attempt.response_body && (
-                        <pre className="mt-1.5 overflow-x-auto rounded-md bg-muted/40 px-2.5 py-1.5 font-mono text-[11px] text-muted-foreground">
-                          {attempt.response_body}
-                        </pre>
-                      )}
-                    </div>
-                  ))}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-3 font-mono text-[11px] tabular-nums">
+                            <span className="min-w-0 truncate">
+                              <span
+                                className={
+                                  ok
+                                    ? "text-live"
+                                    : attempt.status_code != null
+                                      ? "text-destructive"
+                                      : "text-muted-foreground"
+                                }
+                              >
+                                {ok
+                                  ? "delivered"
+                                  : attempt.status_code != null
+                                    ? "failed"
+                                    : "no response"}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {attempt.status_code != null &&
+                                  ` · HTTP ${attempt.status_code}`}
+                                {attempt.duration_ms != null &&
+                                  ` in ${attempt.duration_ms}ms`}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-muted-foreground/60">
+                              {formatWhen(attempt.attempted_at)}
+                            </span>
+                          </div>
+                          {/* Backend records "status NNN" for HTTP failures,
+                              which the row already states. */}
+                          {attempt.error &&
+                            attempt.error !==
+                              `status ${attempt.status_code}` && (
+                              <p className="mt-1 font-mono text-[11px] text-destructive">
+                                {attempt.error}
+                              </p>
+                            )}
+                          {attempt.response_body && (
+                            <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground/60">
+                              answered “{attempt.response_body}”
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
