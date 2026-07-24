@@ -272,6 +272,7 @@ export type UiAction =
   | "copy_short_link"
   | "copy_api_key"
   | "copy_dns_record"
+  | "copy_webhook_secret"
   | "command_menu_opened"
   | "command_executed"
   | "shortcuts_help_opened"

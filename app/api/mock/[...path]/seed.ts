@@ -746,3 +746,236 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
     api_version: "v1",
   }
 }
+
+/** Mirrors WebhookEndpointResponse minus wire conversion (ISO internally,
+ *  the handler converts to Unix seconds like keys). `scope_links: null`
+ *  = all links, including future ones. */
+export type MockWebhook = {
+  id: string
+  url: string
+  description: string | null
+  events: string[]
+  scope_links: string[] | null
+  flavor: "raw" | "discord" | "slack"
+  status: "active" | "paused" | "disabled"
+  disabled_reason:
+    | "gone"
+    | "consecutive_failures"
+    | "secret_unreadable"
+    | "admin"
+    | null
+  signing_secret_prefix: string
+  /** Full secret, for the reveal endpoint (mock keeps it in memory). */
+  signing_secret: string
+  consecutive_failures: number
+  total_deliveries: number
+  total_successes: number
+  last_delivery_at: string | null
+  last_success_at: string | null
+  last_failure_reason: string | null
+  created_at: string
+}
+
+export type MockDeliveryAttempt = {
+  attempted_at: string
+  status_code: number | null
+  duration_ms: number | null
+  error: string | null
+  response_body: string | null
+}
+
+export type MockDelivery = {
+  id: string
+  endpoint_id: string
+  webhook_id: string
+  event_type: string
+  is_test: boolean
+  status: "pending" | "success" | "failed"
+  attempt_count: number
+  attempts: MockDeliveryAttempt[]
+  rendered_body: string | null
+  next_attempt_at: string | null
+  created_at: string
+}
+
+const hoursAgo = (h: number) =>
+  new Date(Date.now() - h * 3_600_000).toISOString()
+
+export function buildWebhooks(): MockWebhook[] {
+  return [
+    {
+      id: "wh_ops",
+      url: "https://ops.acme.dev/hooks/spoo",
+      description: "Ops pipeline",
+      events: ["link.clicked", "link.expired"],
+      scope_links: null,
+      flavor: "raw",
+      status: "active",
+      disabled_reason: null,
+      signing_secret_prefix: "whsec_Kf3mQ9",
+      signing_secret: "whsec_Kf3mQ9vTn4Lp8RwXs2Ye6Ub0Cd",
+      consecutive_failures: 0,
+      total_deliveries: 412,
+      total_successes: 409,
+      last_delivery_at: hoursAgo(1),
+      last_success_at: hoursAgo(1),
+      last_failure_reason: null,
+      created_at: hoursAgo(24 * 40),
+    },
+    {
+      id: "wh_launch",
+      url: "https://discord.com/api/webhooks/1234567890/mock",
+      description: "clicks to #launch-channel",
+      events: ["link.clicked"],
+      scope_links: ["url_2026_0", "url_2026_2"],
+      flavor: "discord",
+      status: "paused",
+      disabled_reason: null,
+      signing_secret_prefix: "whsec_p2Xw7L",
+      signing_secret: "whsec_p2Xw7Lq9Mv3Ta6Hj1Zk5Ng8Es",
+      consecutive_failures: 0,
+      total_deliveries: 96,
+      total_successes: 96,
+      last_delivery_at: hoursAgo(72),
+      last_success_at: hoursAgo(72),
+      last_failure_reason: null,
+      created_at: hoursAgo(24 * 12),
+    },
+    {
+      id: "wh_legacy",
+      url: "https://legacy.acme.dev/webhook",
+      description: null,
+      events: ["link.created", "link.updated", "link.deleted", "link.expired"],
+      scope_links: null,
+      flavor: "raw",
+      status: "disabled",
+      disabled_reason: "consecutive_failures",
+      signing_secret_prefix: "whsec_Zr8dN4",
+      signing_secret: "whsec_Zr8dN4Fb7Kc2Qm5Vx9Jw3Ph6Ry",
+      consecutive_failures: 10,
+      total_deliveries: 58,
+      total_successes: 31,
+      last_delivery_at: hoursAgo(24 * 5),
+      last_success_at: hoursAgo(24 * 9),
+      last_failure_reason: "status 503",
+      created_at: hoursAgo(24 * 80),
+    },
+  ]
+}
+
+export function buildWebhookDeliveries(): MockDelivery[] {
+  const rows: MockDelivery[] = []
+  const events = [
+    "link.clicked",
+    "link.clicked",
+    "link.clicked",
+    "link.expired",
+  ]
+  for (let i = 0; i < 32; i++) {
+    const failed = i % 9 === 4
+    const created = hoursAgo(1 + i * 2)
+    rows.push({
+      id: `whd_ops_${i}`,
+      endpoint_id: "wh_ops",
+      webhook_id: `msg_${(1000 + i).toString(36)}mock${i}`,
+      event_type: events[i % events.length],
+      is_test: false,
+      status: failed ? "failed" : "success",
+      attempt_count: failed ? 3 : 1,
+      attempts: failed
+        ? [
+            {
+              attempted_at: created,
+              status_code: 500,
+              duration_ms: 812,
+              error: "status 500",
+              response_body: '{"error":"internal"}',
+            },
+            {
+              attempted_at: hoursAgo(1 + i * 2 - 0.1),
+              status_code: 500,
+              duration_ms: 774,
+              error: "status 500",
+              response_body: '{"error":"internal"}',
+            },
+            {
+              attempted_at: hoursAgo(1 + i * 2 - 0.2),
+              status_code: null,
+              duration_ms: null,
+              error: "ConnectTimeout: timed out",
+              response_body: null,
+            },
+          ]
+        : [
+            {
+              attempted_at: created,
+              status_code: 200,
+              duration_ms: 120 + ((i * 37) % 400),
+              error: null,
+              response_body: "ok",
+            },
+          ],
+      next_attempt_at: failed ? hoursAgo(-2) : null,
+      rendered_body: JSON.stringify({
+        id: `evt_mock${i}`,
+        type: events[i % events.length],
+        timestamp: created,
+        data: { alias: "launch", country: "IN", total_clicks: 1200 + i },
+      }),
+      created_at: created,
+    })
+  }
+  rows.push({
+    id: "whd_ops_pending",
+    endpoint_id: "wh_ops",
+    webhook_id: "msg_pendingmock1",
+    event_type: "link.clicked",
+    is_test: false,
+    status: "pending",
+    attempt_count: 1,
+    attempts: [
+      {
+        attempted_at: hoursAgo(0.4),
+        status_code: 503,
+        duration_ms: 220,
+        error: "status 503",
+        response_body: '{"error":"maintenance"}',
+      },
+    ],
+    next_attempt_at: hoursAgo(-0.5),
+    rendered_body: JSON.stringify({
+      id: "evt_mockpending",
+      type: "link.clicked",
+      timestamp: hoursAgo(0.4),
+      data: { alias: "launch", country: "DE", total_clicks: 1233 },
+    }),
+    created_at: hoursAgo(0.4),
+  })
+  rows.push({
+    id: "whd_launch_test",
+    endpoint_id: "wh_launch",
+    webhook_id: "msg_testmock1",
+    event_type: "webhook.test",
+    is_test: true,
+    status: "success",
+    attempt_count: 1,
+    attempts: [
+      {
+        attempted_at: hoursAgo(72),
+        status_code: 204,
+        duration_ms: 233,
+        error: null,
+        response_body: null,
+      },
+    ],
+    next_attempt_at: null,
+    rendered_body: JSON.stringify({
+      id: "evt_mocktest",
+      type: "webhook.test",
+      timestamp: hoursAgo(72),
+      data: { message: "If you can read this, your endpoint works." },
+    }),
+    created_at: hoursAgo(72),
+  })
+  return rows
+}
