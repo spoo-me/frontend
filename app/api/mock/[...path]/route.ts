@@ -7,15 +7,20 @@ import { LONG_URL_MAX_LENGTH, validDestinationUrl } from "@/lib/validation"
 import { handlePublicStats } from "./public"
 import { handlePublicPreview } from "./public-preview"
 import { handleContact, handleReports } from "./reports"
+import { handleWebhooks } from "./webhooks"
 import {
   buildDomains,
   buildGrants,
   buildKeys,
   buildLinks,
+  buildWebhookDeliveries,
+  buildWebhooks,
   generateStats,
   type MockDomain,
   type MockKey,
+  type MockDelivery,
   type MockLink,
+  type MockWebhook,
   type StatsDimension,
 } from "./seed"
 
@@ -57,6 +62,8 @@ type MockState = {
   links: MockLink[]
   domains: MockDomain[]
   keys: MockKey[]
+  webhooks: MockWebhook[]
+  webhookDeliveries: MockDelivery[]
   grants: ReturnType<typeof buildGrants>
   /** Per-page dashboard layout overrides, stored opaquely (client owns schema). */
   layouts: Record<string, unknown>
@@ -108,6 +115,8 @@ const initial = (): MockState => ({
   links: buildLinks(),
   domains: buildDomains(),
   keys: buildKeys(),
+  webhooks: buildWebhooks(),
+  webhookDeliveries: buildWebhookDeliveries(),
   grants: buildGrants(),
   layouts: readLayoutsFile(),
 })
@@ -923,6 +932,11 @@ async function handle(req: NextRequest, path: string[]) {
 
   const s = state()
 
+  if (path[0] === "v1" && path[1] === "webhooks") {
+    const res = handleWebhooks(req, path, body, params, s)
+    if (res) return res
+  }
+
   switch (route) {
     /* ---------- anonymous shorten (legacy POST / on the backend) ---------- */
     case "POST /shorten": {
@@ -954,6 +968,8 @@ async function handle(req: NextRequest, path: string[]) {
             links: [],
             domains: [],
             keys: [],
+            webhooks: [],
+            webhookDeliveries: [],
             grants: [],
             providers: [],
             pfp: null,
@@ -1838,6 +1854,7 @@ async function handle(req: NextRequest, path: string[]) {
         geo_targeting: "enabled",
         custom_meta_tags: "enabled",
         ab_testing: "enabled",
+        webhooks: "enabled",
       },
     })
   }
