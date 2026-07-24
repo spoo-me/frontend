@@ -159,10 +159,10 @@ export function EndpointDialog({
         {newSecret ? (
           <>
             <DialogHeader>
-              <DialogTitle>Copy your signing secret now</DialogTitle>
+              <DialogTitle>Your secret</DialogTitle>
               <DialogDescription>
-                This is the only time the full secret is shown. You need it to
-                verify webhook signatures.
+                Use it to verify delivery signatures. You can reveal it again
+                from the endpoint page.
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">
@@ -173,8 +173,8 @@ export function EndpointDialog({
             </div>
             <div className="flex items-start gap-2 text-muted-foreground text-xs">
               <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-              Anyone with this secret can forge signed deliveries. It&apos;s
-              shown once; delete the endpoint if it leaks.
+              Anyone with this secret can forge signed deliveries. Delete the
+              endpoint if it leaks.
             </div>
             <DialogFooter>
               <Button size="sm" onClick={() => onOpenChange(false)}>

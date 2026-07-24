@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  Eye,
   History,
   LoaderCircle,
   Pause,
@@ -24,6 +25,7 @@ import { toast } from "sonner"
 import {
   deleteWebhook,
   getWebhook,
+  getWebhookSecret,
   listWebhookDeliveries,
   listWebhookEventTypes,
   retryWebhookDelivery,
@@ -35,7 +37,6 @@ import { formatWhen } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useFeatureGuard } from "@/hooks/use-features"
 import { Button } from "@/components/ui/button"
-import { NativeSelect } from "@/components/ui/native-select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -47,6 +48,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { StatusPill } from "@/components/dashboard/status-pill"
@@ -59,7 +67,7 @@ const DISABLED_REASONS: Record<string, string> = {
   consecutive_failures:
     "Too many deliveries failed in a row after exhausting their retries.",
   secret_unreadable:
-    "The stored signing secret can no longer be read. Delete this endpoint and create it again.",
+    "The stored secret can no longer be read. Delete this endpoint and create it again.",
   admin: "Disabled by an administrator.",
 }
 
@@ -68,6 +76,15 @@ function hostOf(url: string) {
     return new URL(url).host
   } catch {
     return url
+  }
+}
+
+function prettyBody(body: string | null): string | null {
+  if (!body) return null
+  try {
+    return JSON.stringify(JSON.parse(body), null, 2)
+  } catch {
+    return body
   }
 }
 
@@ -100,20 +117,33 @@ function DetailRow({
   )
 }
 
-function DeliveryRow({
+function DeliveryStatusText({ status }: { status: WebhookDelivery["status"] }) {
+  return (
+    <span
+      className={cn(
+        "font-mono text-[11px]",
+        status === "failed" ? "text-destructive" : "text-muted-foreground"
+      )}
+    >
+      {status}
+    </span>
+  )
+}
+
+/** The rich view of one delivery: what was sent, where it stands on the
+    ladder, and every attempt's outcome. */
+function DeliverySheet({
   webhookId,
   delivery,
-  expanded,
-  onToggle,
+  onOpenChange,
 }: {
   webhookId: string
-  delivery: WebhookDelivery
-  expanded: boolean
-  onToggle: () => void
+  delivery: WebhookDelivery | null
+  onOpenChange: (open: boolean) => void
 }) {
   const queryClient = useQueryClient()
   const retry = useMutation({
-    mutationFn: () => retryWebhookDelivery(webhookId, delivery.id),
+    mutationFn: (d: WebhookDelivery) => retryWebhookDelivery(webhookId, d.id),
     onSuccess: (next) => {
       queryClient.invalidateQueries({
         queryKey: ["webhooks", webhookId, "deliveries"],
@@ -129,89 +159,110 @@ function DeliveryRow({
       toast.error(e instanceof Error ? e.message : "Couldn't retry"),
   })
 
+  const body = prettyBody(delivery?.rendered_body ?? null)
+
   return (
-    <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 hover:bg-accent/30"
+    <Sheet open={delivery !== null} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="gap-0 overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-lg"
       >
-        <span
-          className={cn(
-            "w-14 shrink-0 font-mono text-[11px]",
-            delivery.status === "failed"
-              ? "text-destructive"
-              : "text-muted-foreground"
-          )}
-        >
-          {delivery.status}
-        </span>
-        <span className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
-          {delivery.event_type}
-        </span>
-        {delivery.is_test && (
-          <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
-            test
-          </span>
-        )}
-        {delivery.attempt_count > 1 && (
-          <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-            ×{delivery.attempt_count}
-          </span>
-        )}
-        <span className="shrink-0 font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-          {formatWhen(delivery.created_at)}
-        </span>
-      </button>
-      {expanded && (
-        <div className="space-y-2 border-border/60 border-t bg-muted/20 px-4 py-3">
-          {delivery.attempts.length === 0 && (
-            <p className="font-mono text-[11px] text-muted-foreground/60">
-              no attempts yet
-              {delivery.next_attempt_at &&
-                ` · next ${formatWhen(delivery.next_attempt_at)}`}
-            </p>
-          )}
-          {delivery.attempts.map((attempt, i) => (
-            <div key={`${delivery.id}-${i}`} className="space-y-1">
-              <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                {formatWhen(attempt.attempted_at)} ·{" "}
-                {attempt.status_code ?? "no response"}
-                {attempt.duration_ms != null && ` · ${attempt.duration_ms}ms`}
-                {attempt.error && (
-                  <span className="text-destructive"> · {attempt.error}</span>
+        {delivery && (
+          <>
+            <div className="border-border/60 border-b px-5 py-4">
+              <SheetTitle className="flex items-center gap-2.5 pr-8 text-left">
+                <span className="font-mono text-base">
+                  {delivery.event_type}
+                </span>
+                <DeliveryStatusText status={delivery.status} />
+                {delivery.is_test && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
+                    test
+                  </span>
                 )}
+              </SheetTitle>
+              <p className="mt-1.5 flex items-center gap-2 font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+                <span>{delivery.webhook_id}</span>
+                <span aria-hidden>·</span>
+                <span>{formatWhen(delivery.created_at)}</span>
               </p>
-              {attempt.response_body && (
-                <pre className="overflow-x-auto rounded-md bg-muted/40 px-2.5 py-1.5 font-mono text-[11px] text-muted-foreground">
-                  {attempt.response_body}
-                </pre>
+            </div>
+
+            <div className="space-y-6 px-5 py-5">
+              {body && (
+                <div>
+                  <div className="flex h-6 items-center justify-between">
+                    <span className="label-mono text-muted-foreground/60">
+                      Request body
+                    </span>
+                    <CopyButton value={delivery.rendered_body ?? ""} />
+                  </div>
+                  <pre className="mt-1.5 max-h-80 overflow-auto rounded-lg border border-border/60 bg-muted/30 p-3 font-mono text-[11px] leading-relaxed">
+                    {body}
+                  </pre>
+                </div>
+              )}
+
+              <div>
+                <span className="label-mono text-muted-foreground/60">
+                  Attempts
+                </span>
+                <div className="mt-1.5 divide-y divide-border/60 rounded-lg border border-border/60">
+                  {delivery.attempts.length === 0 && (
+                    <p className="px-3 py-2.5 font-mono text-[11px] text-muted-foreground/60">
+                      none yet
+                      {delivery.next_attempt_at &&
+                        ` · next ${formatWhen(delivery.next_attempt_at)}`}
+                    </p>
+                  )}
+                  {delivery.attempts.map((attempt, i) => (
+                    <div key={`${delivery.id}-${i}`} className="px-3 py-2.5">
+                      <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                        <span className="text-foreground">
+                          {attempt.status_code ?? "no response"}
+                        </span>
+                        {attempt.duration_ms != null &&
+                          ` · ${attempt.duration_ms}ms`}
+                        {" · "}
+                        {formatWhen(attempt.attempted_at)}
+                        {attempt.error && (
+                          <span className="text-destructive">
+                            {" "}
+                            · {attempt.error}
+                          </span>
+                        )}
+                      </p>
+                      {attempt.response_body && (
+                        <pre className="mt-1.5 overflow-x-auto rounded-md bg-muted/40 px-2.5 py-1.5 font-mono text-[11px] text-muted-foreground">
+                          {attempt.response_body}
+                        </pre>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {delivery.status === "failed" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={retry.isPending}
+                  onClick={() => retry.mutate(delivery)}
+                >
+                  {retry.isPending && (
+                    <LoaderCircle
+                      data-icon="inline-start"
+                      className="animate-spin"
+                    />
+                  )}
+                  Retry now
+                </Button>
               )}
             </div>
-          ))}
-          <p className="font-mono text-[10px] text-muted-foreground/50">
-            {delivery.webhook_id}
-          </p>
-          {delivery.status === "failed" && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7"
-              disabled={retry.isPending}
-              onClick={() => retry.mutate()}
-            >
-              {retry.isPending && (
-                <LoaderCircle
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
-              )}
-              Retry now
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -224,9 +275,11 @@ export default function WebhookDetailPage() {
   const queryClient = useQueryClient()
   const [editOpen, setEditOpen] = React.useState(false)
   const [confirmOpen, setConfirmOpen] = React.useState(false)
-  const [testEvent, setTestEvent] = React.useState("webhook.test")
   const [page, setPage] = React.useState(1)
-  const [expandedId, setExpandedId] = React.useState<string | null>(null)
+  const [openDeliveryId, setOpenDeliveryId] = React.useState<string | null>(
+    null
+  )
+  const [secret, setSecret] = React.useState<string | null>(null)
 
   const endpoint = useQuery({
     queryKey: ["webhooks", params.id],
@@ -254,7 +307,7 @@ export default function WebhookDetailPage() {
   }
 
   const sendTest = useMutation({
-    mutationFn: () => sendTestWebhook(params.id, testEvent),
+    mutationFn: (eventType: string) => sendTestWebhook(params.id, eventType),
     onSuccess: (delivery) => {
       invalidate()
       const attempt = delivery.attempts[0]
@@ -284,11 +337,7 @@ export default function WebhookDetailPage() {
       queryClient.setQueryData(["webhooks", params.id], next)
       invalidate()
       toast.success(
-        next.status === "paused"
-          ? "Endpoint paused"
-          : next.status === "active"
-            ? "Endpoint active"
-            : "Endpoint updated"
+        next.status === "paused" ? "Endpoint paused" : "Endpoint active"
       )
     },
     onError: (e) =>
@@ -306,14 +355,21 @@ export default function WebhookDetailPage() {
       toast.error(e instanceof Error ? e.message : "Couldn't delete"),
   })
 
+  const reveal = useMutation({
+    mutationFn: () => getWebhookSecret(params.id),
+    onSuccess: setSecret,
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Couldn't reveal"),
+  })
+
   if (endpoint.isPending) {
     return (
       <div className="mx-auto w-full max-w-4xl">
         <Skeleton className="h-4 w-20" />
         <Skeleton className="mt-2 h-7 w-64" />
         <Skeleton className="mt-2.5 h-3.5 w-44" />
-        <Skeleton className="mt-8 h-40 w-full" />
-        <Skeleton className="mt-6 h-64 w-full" />
+        <Skeleton className="mt-8 h-64 w-full" />
+        <Skeleton className="mt-6 h-40 w-full" />
       </div>
     )
   }
@@ -324,6 +380,7 @@ export default function WebhookDetailPage() {
   const total = deliveries.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const testOptions = catalog.data ?? []
+  const openDelivery = rows.find((d) => d.id === openDeliveryId) ?? null
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-8">
@@ -340,28 +397,57 @@ export default function WebhookDetailPage() {
             {name}
           </h1>
           <StatusPill status={ep.status} kind="webhook" explain />
-          {ep.status !== "disabled" && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="ml-auto max-sm:ml-0"
-              disabled={setStatus.isPending}
-              onClick={() =>
-                setStatus.mutate(ep.status === "paused" ? "active" : "paused")
-              }
-            >
-              {ep.status === "paused" ? (
-                <Play data-icon="inline-start" />
-              ) : (
-                <Pause data-icon="inline-start" />
-              )}
-              {ep.status === "paused" ? "Resume" : "Pause"}
-            </Button>
-          )}
+          <div className="ml-auto flex items-center gap-2 max-sm:ml-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={sendTest.isPending}
+                >
+                  {sendTest.isPending ? (
+                    <LoaderCircle
+                      data-icon="inline-start"
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Send data-icon="inline-start" />
+                  )}
+                  Send test
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {testOptions.map((spec) => (
+                  <DropdownMenuItem
+                    key={spec.type}
+                    className="font-mono text-xs"
+                    onSelect={() => sendTest.mutate(spec.type)}
+                  >
+                    {spec.type}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {ep.status !== "disabled" && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={setStatus.isPending}
+                onClick={() =>
+                  setStatus.mutate(ep.status === "paused" ? "active" : "paused")
+                }
+              >
+                {ep.status === "paused" ? (
+                  <Play data-icon="inline-start" />
+                ) : (
+                  <Pause data-icon="inline-start" />
+                )}
+                {ep.status === "paused" ? "Resume" : "Pause"}
+              </Button>
+            )}
+          </div>
         </div>
         <p className="mt-1.5 flex items-center gap-2 font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-          <span>{ep.signing_secret_prefix}…</span>
-          <span aria-hidden>·</span>
           <span>created {formatWhen(ep.created_at)}</span>
           {ep.last_delivery_at && (
             <>
@@ -408,109 +494,6 @@ export default function WebhookDetailPage() {
 
       <Enter i={0}>
         <div className="mt-8">
-          <SectionHeader
-            icon={Webhook}
-            title="Endpoint"
-            action={
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7"
-                onClick={() => setEditOpen(true)}
-              >
-                <Pencil data-icon="inline-start" />
-                Edit
-              </Button>
-            }
-          />
-          <Panel className="mt-2 divide-y divide-border/60">
-            <DetailRow label="URL">
-              <span className="flex min-w-0 items-center gap-1.5">
-                <span className="truncate font-mono text-foreground text-xs">
-                  {ep.url}
-                </span>
-                <CopyButton value={ep.url} />
-              </span>
-            </DetailRow>
-            <DetailRow label="Events">
-              <span className="flex flex-wrap items-center gap-1">
-                {ep.events.map((event) => (
-                  <span
-                    key={event}
-                    className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
-                  >
-                    {event}
-                  </span>
-                ))}
-              </span>
-            </DetailRow>
-            <DetailRow label="Flavor">
-              <span className="font-mono text-foreground text-xs">
-                {ep.flavor}
-              </span>
-            </DetailRow>
-            <DetailRow label="Links">
-              <span className="font-mono text-foreground text-xs">
-                {ep.scope_links
-                  ? `${ep.scope_links.length} selected`
-                  : "all links"}
-              </span>
-            </DetailRow>
-            {ep.description && (
-              <DetailRow label="Notes">
-                <span className="text-foreground text-xs">
-                  {ep.description}
-                </span>
-              </DetailRow>
-            )}
-            <DetailRow label="Delivered">
-              <span className="font-mono text-foreground text-xs tabular-nums">
-                {ep.total_successes} of {ep.total_deliveries}
-              </span>
-            </DetailRow>
-          </Panel>
-        </div>
-      </Enter>
-
-      <Enter i={1}>
-        <div className="mt-8">
-          <SectionHeader icon={Send} title="Test" />
-          <Panel className="mt-2 flex flex-wrap items-center gap-3 p-4">
-            <NativeSelect
-              value={testEvent}
-              onChange={(e) => setTestEvent(e.target.value)}
-              className="h-8 w-48 font-mono text-xs"
-              aria-label="Test event type"
-            >
-              {testOptions.map((spec) => (
-                <option key={spec.type} value={spec.type}>
-                  {spec.type}
-                </option>
-              ))}
-            </NativeSelect>
-            <Button
-              size="sm"
-              disabled={sendTest.isPending}
-              onClick={() => sendTest.mutate()}
-            >
-              {sendTest.isPending && (
-                <LoaderCircle
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
-              )}
-              Send test
-            </Button>
-            <p className="w-full text-muted-foreground/70 text-xs sm:w-auto">
-              Sends the event&apos;s documented sample through the real
-              pipeline.
-            </p>
-          </Panel>
-        </div>
-      </Enter>
-
-      <Enter i={2}>
-        <div className="mt-8">
           <SectionHeader icon={History} title="Deliveries" />
           <Panel className="mt-2">
             {deliveries.isPending ? (
@@ -528,17 +511,32 @@ export default function WebhookDetailPage() {
               <>
                 <div className="divide-y divide-border/60">
                   {rows.map((delivery) => (
-                    <DeliveryRow
+                    <button
                       key={delivery.id}
-                      webhookId={params.id}
-                      delivery={delivery}
-                      expanded={expandedId === delivery.id}
-                      onToggle={() =>
-                        setExpandedId(
-                          expandedId === delivery.id ? null : delivery.id
-                        )
-                      }
-                    />
+                      type="button"
+                      onClick={() => setOpenDeliveryId(delivery.id)}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 hover:bg-accent/30"
+                    >
+                      <span className="w-14 shrink-0">
+                        <DeliveryStatusText status={delivery.status} />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
+                        {delivery.event_type}
+                      </span>
+                      {delivery.is_test && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
+                          test
+                        </span>
+                      )}
+                      {delivery.attempt_count > 1 && (
+                        <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+                          ×{delivery.attempt_count}
+                        </span>
+                      )}
+                      <span className="shrink-0 font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+                        {formatWhen(delivery.created_at)}
+                      </span>
+                    </button>
                   ))}
                 </div>
                 {totalPages > 1 && (
@@ -574,7 +572,96 @@ export default function WebhookDetailPage() {
         </div>
       </Enter>
 
-      <Enter i={3}>
+      <Enter i={1}>
+        <div className="mt-8">
+          <SectionHeader
+            icon={Webhook}
+            title="Endpoint"
+            action={
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil data-icon="inline-start" />
+                Edit
+              </Button>
+            }
+          />
+          <Panel className="mt-2 divide-y divide-border/60">
+            <DetailRow label="URL">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate font-mono text-foreground text-xs">
+                  {ep.url}
+                </span>
+                <CopyButton value={ep.url} />
+              </span>
+            </DetailRow>
+            <DetailRow label="Secret">
+              <span className="flex min-w-0 items-center gap-1.5">
+                {secret ? (
+                  <>
+                    <code className="ph-no-capture truncate font-mono text-foreground text-xs">
+                      {secret}
+                    </code>
+                    <CopyButton value={secret} trackAs="copy_webhook_secret" />
+                  </>
+                ) : (
+                  <>
+                    <span className="font-mono text-muted-foreground text-xs">
+                      {ep.signing_secret_prefix}…
+                    </span>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label="Reveal secret"
+                      className="size-6 text-muted-foreground/60"
+                      disabled={reveal.isPending}
+                      onClick={() => reveal.mutate()}
+                    >
+                      <Eye className="size-3.5" />
+                    </Button>
+                  </>
+                )}
+              </span>
+            </DetailRow>
+            <DetailRow label="Events">
+              <span className="flex flex-wrap items-center gap-1">
+                {ep.events.map((event) => (
+                  <span
+                    key={event}
+                    className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+                  >
+                    {event}
+                  </span>
+                ))}
+              </span>
+            </DetailRow>
+            <DetailRow label="Links">
+              <span className="font-mono text-foreground text-xs">
+                {ep.scope_links
+                  ? `${ep.scope_links.length} selected`
+                  : "all links"}
+              </span>
+            </DetailRow>
+            {ep.description && (
+              <DetailRow label="Notes">
+                <span className="text-foreground text-xs">
+                  {ep.description}
+                </span>
+              </DetailRow>
+            )}
+            <DetailRow label="Delivered">
+              <span className="font-mono text-foreground text-xs tabular-nums">
+                {ep.total_successes} of {ep.total_deliveries}
+              </span>
+            </DetailRow>
+          </Panel>
+        </div>
+      </Enter>
+
+      <Enter i={2}>
         <div className="mt-8">
           <SectionHeader icon={ShieldAlert} title="Danger zone" />
           <Panel className="mt-2 flex flex-wrap items-center justify-between gap-3 border-destructive/20 p-4">
@@ -583,8 +670,7 @@ export default function WebhookDetailPage() {
                 Delete this endpoint
               </div>
               <div className="text-muted-foreground text-xs">
-                Deliveries stop immediately and the signing secret is gone for
-                good.
+                Deliveries stop immediately and the secret stops working.
               </div>
             </div>
             <Button
@@ -598,6 +684,14 @@ export default function WebhookDetailPage() {
         </div>
       </Enter>
 
+      <DeliverySheet
+        webhookId={params.id}
+        delivery={openDelivery}
+        onOpenChange={(open) => {
+          if (!open) setOpenDeliveryId(null)
+        }}
+      />
+
       <EndpointDialog
         mode="edit"
         endpoint={ep}
@@ -605,7 +699,9 @@ export default function WebhookDetailPage() {
         onOpenChange={(v) => {
           setEditOpen(v)
           if (!v)
-            queryClient.invalidateQueries({ queryKey: ["webhooks", params.id] })
+            queryClient.invalidateQueries({
+              queryKey: ["webhooks", params.id],
+            })
         }}
       />
 
@@ -614,8 +710,8 @@ export default function WebhookDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Deliveries stop immediately and the signing secret is gone for
-              good. The delivery log is deleted with it.
+              Deliveries stop immediately and the secret stops working. The
+              delivery log is deleted with it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

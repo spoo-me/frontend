@@ -140,32 +140,16 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
             </span>
           )}
         </div>
-        <div className="truncate font-mono text-muted-foreground text-xs">
-          {endpoint.signing_secret_prefix}…{" "}
-          <span className="font-sans">
-            · {hostOf(endpoint.url)} · created {formatWhen(endpoint.created_at)}{" "}
-            ·{" "}
-            {endpoint.last_delivery_at
-              ? `last delivery ${formatWhen(endpoint.last_delivery_at)}`
-              : "no deliveries yet"}
-            {endpoint.flavor !== "raw" && <> · {endpoint.flavor}</>}
-          </span>
+        <div className="truncate text-muted-foreground text-xs">
+          {hostOf(endpoint.url)} ·{" "}
+          {endpoint.events.length === 1
+            ? "1 event"
+            : `${endpoint.events.length} events`}{" "}
+          ·{" "}
+          {endpoint.last_delivery_at
+            ? `last delivery ${formatWhen(endpoint.last_delivery_at)}`
+            : "no deliveries yet"}
         </div>
-      </div>
-      <div className="hidden items-center gap-1 md:flex">
-        {endpoint.events.slice(0, 3).map((event) => (
-          <span
-            key={event}
-            className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
-          >
-            {event}
-          </span>
-        ))}
-        {endpoint.events.length > 3 && (
-          <span className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-            +{endpoint.events.length - 3}
-          </span>
-        )}
       </div>
       {/* Row navigation must not swallow the menu. */}
       <div
@@ -257,8 +241,7 @@ export default function WebhooksPage() {
             Endpoints
           </h1>
           <p className="mt-1 text-muted-foreground text-sm">
-            Signed event deliveries for your account&apos;s events. Secrets are
-            shown once, at creation.
+            Signed event deliveries for your account&apos;s events.
           </p>
         </div>
         <Button size="sm" onClick={() => setCreateOpen(true)}>

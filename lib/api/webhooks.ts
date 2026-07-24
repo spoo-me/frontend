@@ -51,6 +51,8 @@ export type WebhookDelivery = {
   attempt_count: number
   attempts: WebhookDeliveryAttempt[]
   next_attempt_at: string | null
+  /** The exact body that was (or will be) sent; null until first render. */
+  rendered_body: string | null
   created_at: string
 }
 
@@ -103,6 +105,7 @@ type DeliveryWire = {
   attempt_count?: number
   attempts?: AttemptWire[]
   next_attempt_at?: number | null
+  rendered_body?: string | null
   created_at?: number | null
 }
 
@@ -147,6 +150,7 @@ export function normalizeDelivery(w: DeliveryWire): WebhookDelivery {
       response_body: a.response_body ?? null,
     })),
     next_attempt_at: isoOf(w.next_attempt_at),
+    rendered_body: w.rendered_body ?? null,
     created_at: isoOf(w.created_at) ?? "",
   }
 }
@@ -199,6 +203,15 @@ export function updateWebhook(id: string, input: UpdateWebhookInput) {
     `/api/v1/webhooks/${encodeURIComponent(id)}`,
     jsonInit("PATCH", input)
   ).then(async (r) => normalizeEndpoint(await parse<EndpointWire>(r)))
+}
+
+/** The full signing secret, readable on demand by the owner. */
+export function getWebhookSecret(id: string) {
+  return authedFetch(`/api/v1/webhooks/${encodeURIComponent(id)}/secret`, {
+    method: "GET",
+  }).then(
+    async (r) => (await parse<{ signing_secret: string }>(r)).signing_secret
+  )
 }
 
 export async function deleteWebhook(id: string) {

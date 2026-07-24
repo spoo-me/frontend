@@ -765,6 +765,8 @@ export type MockWebhook = {
     | "admin"
     | null
   signing_secret_prefix: string
+  /** Full secret, for the reveal endpoint (mock keeps it in memory). */
+  signing_secret: string
   consecutive_failures: number
   total_deliveries: number
   total_successes: number
@@ -791,6 +793,7 @@ export type MockDelivery = {
   status: "pending" | "success" | "failed"
   attempt_count: number
   attempts: MockDeliveryAttempt[]
+  rendered_body: string | null
   next_attempt_at: string | null
   created_at: string
 }
@@ -810,6 +813,7 @@ export function buildWebhooks(): MockWebhook[] {
       status: "active",
       disabled_reason: null,
       signing_secret_prefix: "whsec_Kf3mQ9",
+      signing_secret: "whsec_Kf3mQ9vTn4Lp8RwXs2Ye6Ub0Cd",
       consecutive_failures: 0,
       total_deliveries: 412,
       total_successes: 409,
@@ -828,6 +832,7 @@ export function buildWebhooks(): MockWebhook[] {
       status: "paused",
       disabled_reason: null,
       signing_secret_prefix: "whsec_p2Xw7L",
+      signing_secret: "whsec_p2Xw7Lq9Mv3Ta6Hj1Zk5Ng8Es",
       consecutive_failures: 0,
       total_deliveries: 96,
       total_successes: 96,
@@ -846,6 +851,7 @@ export function buildWebhooks(): MockWebhook[] {
       status: "disabled",
       disabled_reason: "consecutive_failures",
       signing_secret_prefix: "whsec_Zr8dN4",
+      signing_secret: "whsec_Zr8dN4Fb7Kc2Qm5Vx9Jw3Ph6Ry",
       consecutive_failures: 10,
       total_deliveries: 58,
       total_successes: 31,
@@ -910,6 +916,12 @@ export function buildWebhookDeliveries(): MockDelivery[] {
             },
           ],
       next_attempt_at: failed ? hoursAgo(-2) : null,
+      rendered_body: JSON.stringify({
+        id: `evt_mock${i}`,
+        type: events[i % events.length],
+        timestamp: created,
+        data: { alias: "launch", country: "IN", total_clicks: 1200 + i },
+      }),
       created_at: created,
     })
   }
@@ -931,6 +943,12 @@ export function buildWebhookDeliveries(): MockDelivery[] {
       },
     ],
     next_attempt_at: null,
+    rendered_body: JSON.stringify({
+      id: "evt_mocktest",
+      type: "webhook.test",
+      timestamp: hoursAgo(72),
+      data: { message: "If you can read this, your endpoint works." },
+    }),
     created_at: hoursAgo(72),
   })
   return rows

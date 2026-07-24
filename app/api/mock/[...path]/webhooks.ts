@@ -53,6 +53,7 @@ const deliveryToWire = (d: MockDelivery) => ({
     response_body: a.response_body,
   })),
   next_attempt_at: unix(d.next_attempt_at),
+  rendered_body: d.rendered_body,
   created_at: unix(d.created_at) ?? 0,
 })
 
@@ -156,6 +157,7 @@ export function handleWebhooks(
       status: "active",
       disabled_reason: null,
       signing_secret_prefix: secret.slice(0, 13),
+      signing_secret: secret,
       consecutive_failures: 0,
       total_deliveries: 0,
       total_successes: 0,
@@ -176,6 +178,11 @@ export function handleWebhooks(
   if (rest.length === 1 && req.method === "GET") {
     if (!endpoint) return fail(404, "not_found", "No such endpoint")
     return json(endpointToWire(endpoint))
+  }
+
+  if (rest[1] === "secret" && req.method === "GET") {
+    if (!endpoint) return fail(404, "not_found", "No such endpoint")
+    return json({ signing_secret: endpoint.signing_secret })
   }
 
   if (rest.length === 1 && req.method === "PATCH") {
@@ -248,6 +255,12 @@ export function handleWebhooks(
         },
       ],
       next_attempt_at: null,
+      rendered_body: JSON.stringify({
+        id: `evt_${rand()}`,
+        type: eventType,
+        timestamp: now,
+        data: { message: "If you can read this, your endpoint works." },
+      }),
       created_at: now,
     }
     s.webhookDeliveries.unshift(delivery)
