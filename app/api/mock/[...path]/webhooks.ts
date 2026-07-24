@@ -264,12 +264,6 @@ export function handleWebhooks(
       created_at: now,
     }
     s.webhookDeliveries.unshift(delivery)
-    endpoint.total_deliveries += 1
-    endpoint.last_delivery_at = now
-    if (!failDelivery) {
-      endpoint.total_successes += 1
-      endpoint.last_success_at = now
-    }
     return json(deliveryToWire(delivery))
   }
 
@@ -318,11 +312,10 @@ export function handleWebhooks(
     delivery.attempt_count = delivery.attempts.length
     delivery.status = failDelivery ? "failed" : "success"
     delivery.next_attempt_at = null
-    endpoint.total_deliveries += 1
-    endpoint.last_delivery_at = now
-    if (!failDelivery) {
+    if (!failDelivery && !delivery.is_test) {
       endpoint.total_successes += 1
       endpoint.last_success_at = now
+      endpoint.last_delivery_at = now
     }
     return json(deliveryToWire(delivery))
   }
