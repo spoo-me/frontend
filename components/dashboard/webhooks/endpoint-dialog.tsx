@@ -12,7 +12,6 @@ import {
   type WebhookEndpoint,
   type WebhookFlavor,
 } from "@/lib/api"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -28,33 +27,37 @@ import { Label } from "@/components/ui/label"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { LinkScopePicker } from "./link-scope-picker"
 
-const FLAVOR_OPTIONS: Array<{
-  token: WebhookFlavor
-  label: string
-  placeholder: string
-  helper: string
-}> = [
-  {
-    token: "raw",
-    label: "Raw",
-    placeholder: "https://example.com/hooks/spoo",
-    helper: "The documented JSON contract, signed.",
-  },
-  {
-    token: "discord",
-    label: "Discord",
-    placeholder: "https://discord.com/api/webhooks/…",
-    helper: "Rendered as a Discord message. Point it at a channel webhook.",
-  },
-  {
-    token: "slack",
-    label: "Slack",
-    placeholder: "https://hooks.slack.com/services/…",
-    helper: "Rendered as Slack blocks. Point it at an incoming webhook.",
-  },
-]
+/** UI copy for the event list — the catalog's `description` is API
+    documentation prose, not interface copy. */
+const EVENT_COPY: Record<string, string> = {
+  "link.created": "a link was created",
+  "link.updated": "a link was edited",
+  "link.deleted": "a link was deleted",
+  "link.clicked": "a tracked click happened",
+  "link.expired": "a link hit its expiry or click limit",
+}
 
-type ScopeMode = "all" | "specific"
+/** Flavor is auto-configured from the URL, never a user decision: a
+    Discord or Slack webhook URL gets the rendered message, everything
+    else gets the raw signed contract. */
+export function detectFlavor(url: string): WebhookFlavor {
+  try {
+    const u = new URL(url)
+    const host = u.host.toLowerCase()
+    if (
+      (host === "discord.com" ||
+        host === "discordapp.com" ||
+        host === "ptb.discord.com" ||
+        host === "canary.discord.com") &&
+      u.pathname.startsWith("/api/webhooks/")
+    )
+      return "discord"
+    if (host === "hooks.slack.com") return "slack"
+  } catch {
+    /* not a URL yet */
+  }
+  return "raw"
+}
 
 export function EndpointDialog({
   mode,
@@ -70,8 +73,6 @@ export function EndpointDialog({
   const queryClient = useQueryClient()
   const [url, setUrl] = React.useState("")
   const [events, setEvents] = React.useState<string[]>([])
-  const [flavor, setFlavor] = React.useState<WebhookFlavor>("raw")
-  const [scopeMode, setScopeMode] = React.useState<ScopeMode>("all")
   const [scopeLinks, setScopeLinks] = React.useState<string[]>([])
   const [description, setDescription] = React.useState("")
   const [newSecret, setNewSecret] = React.useState<string | null>(null)
@@ -82,8 +83,6 @@ export function EndpointDialog({
     if (mode === "edit" && endpoint) {
       setUrl(endpoint.url)
       setEvents(endpoint.events)
-      setFlavor(endpoint.flavor)
-      setScopeMode(endpoint.scope_links ? "specific" : "all")
       setScopeLinks(endpoint.scope_links ?? [])
       setDescription(endpoint.description ?? "")
     }
@@ -100,32 +99,31 @@ export function EndpointDialog({
     (e) => e.type !== "webhook.test"
   )
 
+  const flavor = detectFlavor(url.trim())
+
   const reset = () => {
     setUrl("")
     setEvents([])
-    setFlavor("raw")
-    setScopeMode("all")
     setScopeLinks([])
     setDescription("")
   }
 
   const save = useMutation({
     mutationFn: () => {
-      const scope = scopeMode === "specific" ? { scope_links: scopeLinks } : {}
       if (mode === "create")
         return createWebhook({
           url: url.trim(),
           events,
           flavor,
           ...(description.trim() ? { description: description.trim() } : {}),
-          ...scope,
+          ...(scopeLinks.length ? { scope_links: scopeLinks } : {}),
         })
       return updateWebhook(endpoint!.id, {
         url: url.trim(),
         events,
         flavor,
         description: description.trim() || null,
-        scope_links: scopeMode === "specific" ? scopeLinks : null,
+        scope_links: scopeLinks.length ? scopeLinks : null,
       })
     },
     onSuccess: (saved) => {
@@ -144,12 +142,7 @@ export function EndpointDialog({
       ),
   })
 
-  const flavorInfo =
-    FLAVOR_OPTIONS.find((f) => f.token === flavor) ?? FLAVOR_OPTIONS[0]
-  const valid =
-    /^https:\/\/.+/.test(url.trim()) &&
-    events.length > 0 &&
-    (scopeMode === "all" || scopeLinks.length > 0)
+  const valid = /^https:\/\/.+/.test(url.trim()) && events.length > 0
 
   return (
     <Dialog
@@ -162,7 +155,7 @@ export function EndpointDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         {newSecret ? (
           <>
             <DialogHeader>
@@ -195,21 +188,26 @@ export function EndpointDialog({
               <DialogTitle>
                 {mode === "create" ? "New endpoint" : "Edit endpoint"}
               </DialogTitle>
-              <DialogDescription>
-                Point it at an HTTPS endpoint and pick the events it should
-                receive.
-              </DialogDescription>
             </DialogHeader>
             <div className="space-y-5">
               <div className="space-y-1.5">
-                <Label className="font-medium text-foreground text-xs">
-                  URL
-                </Label>
+                <div className="flex h-4 items-center justify-between">
+                  <Label className="font-medium text-foreground text-xs">
+                    URL
+                  </Label>
+                  {/* Auto-configured presentation: Discord and Slack URLs
+                      get a rendered message instead of the raw contract. */}
+                  {flavor !== "raw" && (
+                    <span className="font-mono text-[10px] text-muted-foreground/60">
+                      {flavor}
+                    </span>
+                  )}
+                </div>
                 <Input
                   autoFocus={mode === "create"}
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder={flavorInfo.placeholder}
+                  placeholder="https://example.com/hooks/spoo"
                   spellCheck={false}
                   className="h-9 font-mono text-xs"
                 />
@@ -222,13 +220,13 @@ export function EndpointDialog({
                 <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
                   {catalog.isPending ? (
                     <div className="px-3 py-2 text-muted-foreground text-xs">
-                      Loading event types…
+                      Loading…
                     </div>
                   ) : (
                     subscribable.map((spec) => (
                       <label
                         key={spec.type}
-                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2"
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5"
                       >
                         <Checkbox
                           checked={events.includes(spec.type)}
@@ -243,8 +241,8 @@ export function EndpointDialog({
                         <span className="w-28 shrink-0 font-mono text-foreground text-xs">
                           {spec.type}
                         </span>
-                        <span className="truncate text-muted-foreground text-xs">
-                          {spec.description}
+                        <span className="truncate text-[11px] text-muted-foreground/70">
+                          {EVENT_COPY[spec.type] ?? ""}
                         </span>
                       </label>
                     ))
@@ -254,66 +252,9 @@ export function EndpointDialog({
 
               <div className="space-y-1.5">
                 <Label className="font-medium text-foreground text-xs">
-                  Flavor
-                </Label>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {FLAVOR_OPTIONS.map((f) => (
-                    <button
-                      key={f.token}
-                      type="button"
-                      onClick={() => setFlavor(f.token)}
-                      className={cn(
-                        "h-8 rounded-lg border px-2.5 text-xs transition-colors duration-150",
-                        flavor === f.token
-                          ? "border-border bg-accent/70 text-foreground"
-                          : "border-border/60 text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                      )}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-muted-foreground/70 text-xs">
-                  {flavorInfo.helper}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="font-medium text-foreground text-xs">
                   Links
                 </Label>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {(
-                    [
-                      { token: "all", label: "All links" },
-                      { token: "specific", label: "Specific links" },
-                    ] as const
-                  ).map((s) => (
-                    <button
-                      key={s.token}
-                      type="button"
-                      onClick={() => setScopeMode(s.token)}
-                      className={cn(
-                        "h-8 rounded-lg border px-2.5 text-xs transition-colors duration-150",
-                        scopeMode === s.token
-                          ? "border-border bg-accent/70 text-foreground"
-                          : "border-border/60 text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                      )}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-                {scopeMode === "specific" ? (
-                  <LinkScopePicker
-                    value={scopeLinks}
-                    onChange={setScopeLinks}
-                  />
-                ) : (
-                  <p className="text-muted-foreground/70 text-xs">
-                    Applies to every link, including ones created later.
-                  </p>
-                )}
+                <LinkScopePicker value={scopeLinks} onChange={setScopeLinks} />
               </div>
 
               <div className="space-y-1.5">
