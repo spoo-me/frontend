@@ -251,11 +251,15 @@ export default function LinkDetailPage() {
       </div>
 
       {/* Settings — the same form the sheet renders */}
-      <div className="mt-8 max-w-2xl pb-8">
+      <div className="mt-8 pb-8">
         <SectionHeader icon={Settings2} title="Settings" />
         <Panel className="mt-2 p-5">
           {link ? (
-            <LinkSettingsForm link={link} domains={domainOptions} />
+            <LinkSettingsForm
+              link={link}
+              domains={domainOptions}
+              layout="wide"
+            />
           ) : (
             <Skeleton className="h-64 w-full" />
           )}
