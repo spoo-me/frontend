@@ -171,7 +171,7 @@ function CopyCell({ value }: { value: string }) {
 function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
   return (
     <Panel>
-      <div className="hidden h-8 grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 border-border/60 border-b px-3 sm:grid">
+      <div className="hidden h-9 grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-4 border-border/60 border-b px-4 sm:grid">
         <span className="label-mono text-muted-foreground/60">Type</span>
         <span className="label-mono text-muted-foreground/60">Name</span>
         <span className="flex items-center justify-between gap-1.5">
@@ -185,7 +185,7 @@ function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
         {records.map((rec) => (
           <div
             key={rec.type + rec.name}
-            className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1.5 px-3 py-2.5 sm:grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] sm:items-center"
+            className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-4 gap-y-1.5 px-4 py-3.5 sm:grid-cols-[64px_minmax(0,1fr)_minmax(0,1fr)] sm:items-center"
           >
             <span className="self-center font-mono text-[11px] text-muted-foreground">
               {rec.type}
