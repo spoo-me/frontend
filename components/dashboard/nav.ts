@@ -15,7 +15,7 @@ export type DashboardNavItem = {
   href: string
   icon: LucideIcon
   /** Feature-flagged items render only when their flag is on. */
-  flag?: "webhooks" | "billing"
+  flag?: "billing"
   /** Backend-gated items render only when /me/features says enabled. */
   feature?: FeatureName
   /** Match nested routes (e.g. /dashboard/links/spoo.me/abc) for the active state. */
@@ -29,7 +29,6 @@ export type DashboardNavGroup = {
 
 /** Flags for surfaces whose backend does not exist yet (SPEC.md §2). */
 export const dashboardFlags = {
-  webhooks: false,
   billing: false,
 } as const
 
@@ -72,7 +71,7 @@ export const dashboardNav: DashboardNavGroup[] = [
         title: "Webhooks",
         href: "/dashboard/webhooks",
         icon: Webhook,
-        flag: "webhooks",
+        feature: "webhooks",
         matchPrefix: true,
       },
     ],

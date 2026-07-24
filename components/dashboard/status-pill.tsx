@@ -37,6 +37,12 @@ const DOMAIN_STATUS: Record<string, { tone: Tone; label: string }> = {
   REVOKED: { tone: "red", label: "Revoked" },
 }
 
+const WEBHOOK_STATUS: Record<string, { tone: Tone; label: string }> = {
+  active: { tone: "emerald", label: "Active" },
+  paused: { tone: "neutral", label: "Paused" },
+  disabled: { tone: "red", label: "Disabled" },
+}
+
 /** What a status MEANS for serving behavior — the pill's tooltip copy. */
 const DOMAIN_MEANING: Record<string, string> = {
   PENDING: "Registered; DNS records not added yet.",
@@ -46,11 +52,19 @@ const DOMAIN_MEANING: Record<string, string> = {
   REVOKED: "Permanently stopped; can only be re-registered from scratch.",
 }
 
+const WEBHOOK_MEANING: Record<string, string> = {
+  active: "Delivering events.",
+  paused: "Paused by you; events are skipped, not queued.",
+  disabled: "Stopped by the system after failures; resume to re-enable.",
+}
+
 export function statusMeaning(
   status: string | null | undefined,
-  kind: "link" | "domain"
+  kind: "link" | "domain" | "webhook"
 ): string | undefined {
-  return kind === "domain" ? DOMAIN_MEANING[status ?? ""] : undefined
+  if (kind === "domain") return DOMAIN_MEANING[status ?? ""]
+  if (kind === "webhook") return WEBHOOK_MEANING[status ?? ""]
+  return undefined
 }
 
 export function StatusPill({
@@ -60,12 +74,17 @@ export function StatusPill({
   className,
 }: {
   status: string | null | undefined
-  kind?: "link" | "domain"
-  /** Hover the pill for what the status means (domain pills only, so far). */
+  kind?: "link" | "domain" | "webhook"
+  /** Hover the pill for what the status means (domain/webhook pills). */
   explain?: boolean
   className?: string
 }) {
-  const map = kind === "domain" ? DOMAIN_STATUS : LINK_STATUS
+  const map =
+    kind === "domain"
+      ? DOMAIN_STATUS
+      : kind === "webhook"
+        ? WEBHOOK_STATUS
+        : LINK_STATUS
   const s = map[status ?? ""] ?? {
     tone: "neutral" as Tone,
     label: status ?? "–",

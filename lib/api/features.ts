@@ -18,6 +18,7 @@ export type FeatureName =
   | "geo_targeting"
   | "custom_meta_tags"
   | "ab_testing"
+  | "webhooks"
 
 export type FeatureMap = Partial<Record<FeatureName, FeatureState>> &
   Record<string, FeatureState>
