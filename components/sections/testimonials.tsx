@@ -61,15 +61,13 @@ export function Testimonials() {
           Using spoo in production?
         </span>
         <div className="flex items-center gap-5">
-          {testimonials.length > 1 && (
-            <Link
-              href="/testimonials"
-              className="group inline-flex items-center gap-1.5 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
-            >
-              Read all stories
-              <ArrowUpRight className="size-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-          )}
+          <Link
+            href="/testimonials"
+            className="group inline-flex items-center gap-1.5 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
+          >
+            Read all stories
+            <ArrowUpRight className="size-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
           <a
             href="mailto:hi@spoo.me?subject=spoo.me%20testimonial"
             className="group inline-flex items-center gap-1.5 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
