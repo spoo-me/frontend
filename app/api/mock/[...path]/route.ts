@@ -90,7 +90,7 @@ function writeLayoutsFile(layouts: Record<string, unknown>) {
 
 const initial = (): MockState => ({
   email: "you@example.com",
-  userName: "Aditya",
+  userName: "zingzy",
   verified: true,
   passwordSet: true,
   providers: [
