@@ -76,6 +76,11 @@ export const testimonials: Testimonial[] = [
   },
 ]
 
+/* The landing band, nav entry, and command-menu entry appear only once
+   the roster can carry them; a lone voice on a stage built for many
+   reads as scarcity. Story pages stay reachable by URL regardless. */
+export const TESTIMONIALS_LIVE = testimonials.length >= 2
+
 export function getTestimonial(slug: string): Testimonial | undefined {
   return testimonials.find((t) => t.slug === slug)
 }

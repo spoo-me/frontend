@@ -1,4 +1,5 @@
 import { PRICING_ENABLED } from "@/lib/flags"
+import { TESTIMONIALS_LIVE } from "@/lib/testimonials"
 
 export const siteConfig = {
   name: "spoo.me",
@@ -203,12 +204,16 @@ export const companyAboutLinks: NavLink[] = [
     description: "The story behind spoo.me",
     iconKey: "users",
   },
-  {
-    title: "Customer stories",
-    href: "/testimonials",
-    description: "Teams shipping with spoo in production",
-    iconKey: "star",
-  },
+  ...(TESTIMONIALS_LIVE
+    ? [
+        {
+          title: "Customer stories",
+          href: "/testimonials",
+          description: "Teams shipping with spoo in production",
+          iconKey: "star",
+        } satisfies NavLink,
+      ]
+    : []),
 ]
 
 export const companyLegalLinks: NavLink[] = [
