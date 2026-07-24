@@ -30,17 +30,19 @@ ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY} \
 
 # Source-map upload runs during `next build` only when these are present
 # (CI). Unset → the Sentry bundler plugin is inert and the build still
-# succeeds; org/project are public identifiers, the token is the secret.
+# succeeds. Org/project are public identifiers, so they ride as ARG/ENV;
+# the auth token is secret, so it is mounted only for the build RUN via
+# a BuildKit secret — never an ARG/ENV, which would bake it into builder
+# layer metadata and leak through the exported build cache.
 ARG SENTRY_ORG=""
 ARG SENTRY_PROJECT=""
-ARG SENTRY_AUTH_TOKEN=""
 ENV SENTRY_ORG=${SENTRY_ORG} \
-    SENTRY_PROJECT=${SENTRY_PROJECT} \
-    SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+    SENTRY_PROJECT=${SENTRY_PROJECT}
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
+    npm run build
 
 
 # ── Runtime: standalone output only, no node_modules, non-root ───────────
