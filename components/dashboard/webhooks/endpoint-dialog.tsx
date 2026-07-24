@@ -98,6 +98,9 @@ export function EndpointDialog({
   )
 
   const flavor = detectFlavor(url.trim())
+  // The wildcard subscribes to everything, current and future — picking
+  // it stands in for the whole list (the admin:all pattern).
+  const allEvents = events.includes("*")
 
   const reset = () => {
     setUrl("")
@@ -128,8 +131,8 @@ export function EndpointDialog({
       queryClient.invalidateQueries({ queryKey: ["webhooks"] })
       onOpenChange(false)
       if (mode === "create") {
-        // The endpoint page has everything, secret included — no
-        // interstitial.
+        // Straight to the endpoint page; the secret is one reveal away
+        // there (session-gated fetch), so no interstitial.
         toast.success("Endpoint created")
         router.push(`/dashboard/webhooks/${saved.id}`)
       } else {
@@ -193,29 +196,49 @@ export function EndpointDialog({
                     Loading…
                   </div>
                 ) : (
-                  subscribable.map((spec) => (
-                    <label
-                      key={spec.type}
-                      className="flex cursor-pointer items-center gap-3 px-3.5 py-2.5 transition-colors duration-150 hover:bg-accent/30"
-                    >
+                  <>
+                    <label className="flex cursor-pointer items-center gap-3 px-3.5 py-2.5 transition-colors duration-150 hover:bg-accent/30">
                       <Checkbox
-                        checked={events.includes(spec.type)}
+                        checked={allEvents}
                         onCheckedChange={(v) =>
-                          setEvents(
-                            v === true
-                              ? [...events, spec.type]
-                              : events.filter((e) => e !== spec.type)
-                          )
+                          setEvents(v === true ? ["*"] : [])
                         }
                       />
                       <span className="w-32 shrink-0 font-mono text-foreground text-xs">
-                        {spec.type}
+                        *
                       </span>
                       <span className="truncate text-muted-foreground/70 text-xs">
-                        {EVENT_COPY[spec.type] ?? ""}
+                        every event, including ones added later
                       </span>
                     </label>
-                  ))
+                    {subscribable.map((spec) => (
+                      <label
+                        key={spec.type}
+                        className={
+                          "flex cursor-pointer items-center gap-3 px-3.5 py-2.5 transition-colors duration-150 hover:bg-accent/30" +
+                          (allEvents ? "pointer-events-none opacity-45" : "")
+                        }
+                      >
+                        <Checkbox
+                          checked={allEvents || events.includes(spec.type)}
+                          disabled={allEvents}
+                          onCheckedChange={(v) =>
+                            setEvents(
+                              v === true
+                                ? [...events, spec.type]
+                                : events.filter((e) => e !== spec.type)
+                            )
+                          }
+                        />
+                        <span className="w-32 shrink-0 font-mono text-foreground text-xs">
+                          {spec.type}
+                        </span>
+                        <span className="truncate text-muted-foreground/70 text-xs">
+                          {EVENT_COPY[spec.type] ?? ""}
+                        </span>
+                      </label>
+                    ))}
+                  </>
                 )}
               </div>
             </div>

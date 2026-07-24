@@ -337,6 +337,12 @@ export default function WebhookDetailPage() {
     queryFn: () =>
       listWebhookDeliveries(params.id, { page, pageSize: PAGE_SIZE }),
     enabled: webhooksEnabled,
+    // The retry ladder resolves pending rows minutes later on its own
+    // schedule; keep the log honest while any are in flight.
+    refetchInterval: (query) =>
+      query.state.data?.items.some((d) => d.status === "pending")
+        ? 5_000
+        : false,
   })
 
   const invalidate = () => {

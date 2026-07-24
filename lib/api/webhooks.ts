@@ -1,4 +1,4 @@
-import { authedFetch, jsonInit, parse } from "./client"
+import { apiFetch, authedFetch, jsonInit, parse } from "./client"
 
 export type WebhookFlavor = "raw" | "discord" | "slack"
 export type WebhookStatus = "active" | "paused" | "disabled"
@@ -278,7 +278,7 @@ export function retryWebhookDelivery(id: string, deliveryId: string) {
 
 /** Public catalog — no auth, safe to fetch before the page is gated. */
 export function listWebhookEventTypes() {
-  return fetch("/api/v1/webhooks/event-types", { method: "GET" }).then(
+  return apiFetch("/api/v1/webhooks/event-types", { method: "GET" }).then(
     async (r): Promise<WebhookEventType[]> => {
       const wire = await parse<{ event_types: WebhookEventType[] }>(r)
       return wire.event_types ?? []

@@ -926,6 +926,32 @@ export function buildWebhookDeliveries(): MockDelivery[] {
     })
   }
   rows.push({
+    id: "whd_ops_pending",
+    endpoint_id: "wh_ops",
+    webhook_id: "msg_pendingmock1",
+    event_type: "link.clicked",
+    is_test: false,
+    status: "pending",
+    attempt_count: 1,
+    attempts: [
+      {
+        attempted_at: hoursAgo(0.4),
+        status_code: 503,
+        duration_ms: 220,
+        error: "status 503",
+        response_body: '{"error":"maintenance"}',
+      },
+    ],
+    next_attempt_at: hoursAgo(-0.5),
+    rendered_body: JSON.stringify({
+      id: "evt_mockpending",
+      type: "link.clicked",
+      timestamp: hoursAgo(0.4),
+      data: { alias: "launch", country: "DE", total_clicks: 1233 },
+    }),
+    created_at: hoursAgo(0.4),
+  })
+  rows.push({
     id: "whd_launch_test",
     endpoint_id: "wh_launch",
     webhook_id: "msg_testmock1",
