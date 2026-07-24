@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -17,14 +17,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CopyButton } from "@/components/dashboard/copy-button"
 import { LinkScopePicker } from "./link-scope-picker"
 
 /** UI copy for the event list — the catalog's `description` is API
@@ -70,12 +68,12 @@ export function EndpointDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const router = useRouter()
   const queryClient = useQueryClient()
   const [url, setUrl] = React.useState("")
   const [events, setEvents] = React.useState<string[]>([])
   const [scopeLinks, setScopeLinks] = React.useState<string[]>([])
   const [description, setDescription] = React.useState("")
-  const [newSecret, setNewSecret] = React.useState<string | null>(null)
 
   // Seed from the endpoint whenever the dialog opens in edit mode.
   React.useEffect(() => {
@@ -128,11 +126,13 @@ export function EndpointDialog({
     },
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] })
-      if (mode === "create" && "signing_secret" in saved) {
-        setNewSecret(saved.signing_secret as string)
-        reset()
+      onOpenChange(false)
+      if (mode === "create") {
+        // The endpoint page has everything, secret included — no
+        // interstitial.
+        toast.success("Endpoint created")
+        router.push(`/dashboard/webhooks/${saved.id}`)
       } else {
-        onOpenChange(false)
         toast.success("Endpoint updated")
       }
     },
@@ -149,145 +149,114 @@ export function EndpointDialog({
       open={open}
       onOpenChange={(v) => {
         onOpenChange(v)
-        if (!v) {
-          setNewSecret(null)
-          reset()
-        }
+        if (!v) reset()
       }}
     >
       <DialogContent className="sm:max-w-xl">
-        {newSecret ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Your secret</DialogTitle>
-              <DialogDescription>
-                Use it to verify delivery signatures. You can reveal it again
-                from the endpoint page.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">
-              <code className="ph-no-capture min-w-0 flex-1 truncate font-mono text-foreground text-xs">
-                {newSecret}
-              </code>
-              <CopyButton value={newSecret} trackAs="copy_webhook_secret" />
-            </div>
-            <div className="flex items-start gap-2 text-muted-foreground text-xs">
-              <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-              Anyone with this secret can forge signed deliveries. Delete the
-              endpoint if it leaks.
-            </div>
-            <DialogFooter>
-              <Button size="sm" onClick={() => onOpenChange(false)}>
-                Done
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>
-                {mode === "create" ? "New endpoint" : "Edit endpoint"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-5">
-              <div className="space-y-1.5">
-                <div className="flex h-4 items-center justify-between">
-                  <Label className="font-medium text-foreground text-xs">
-                    URL
-                  </Label>
-                  {/* Auto-configured presentation: Discord and Slack URLs
+        <>
+          <DialogHeader>
+            <DialogTitle>
+              {mode === "create" ? "New endpoint" : "Edit endpoint"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5">
+            <div className="space-y-1.5">
+              <div className="flex h-4 items-center justify-between">
+                <Label className="font-medium text-foreground text-xs">
+                  URL
+                </Label>
+                {/* Auto-configured presentation: Discord and Slack URLs
                       get a rendered message instead of the raw contract. */}
-                  {flavor !== "raw" && (
-                    <span className="font-mono text-[10px] text-muted-foreground/60">
-                      {flavor}
-                    </span>
-                  )}
-                </div>
-                <Input
-                  autoFocus={mode === "create"}
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://example.com/hooks/spoo"
-                  spellCheck={false}
-                  className="h-9 font-mono text-xs"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="font-medium text-foreground text-xs">
-                  Events
-                </Label>
-                <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
-                  {catalog.isPending ? (
-                    <div className="px-3 py-2 text-muted-foreground text-xs">
-                      Loading…
-                    </div>
-                  ) : (
-                    subscribable.map((spec) => (
-                      <label
-                        key={spec.type}
-                        className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5"
-                      >
-                        <Checkbox
-                          checked={events.includes(spec.type)}
-                          onCheckedChange={(v) =>
-                            setEvents(
-                              v === true
-                                ? [...events, spec.type]
-                                : events.filter((e) => e !== spec.type)
-                            )
-                          }
-                        />
-                        <span className="w-28 shrink-0 font-mono text-foreground text-xs">
-                          {spec.type}
-                        </span>
-                        <span className="truncate text-[11px] text-muted-foreground/70">
-                          {EVENT_COPY[spec.type] ?? ""}
-                        </span>
-                      </label>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="font-medium text-foreground text-xs">
-                  Links
-                </Label>
-                <LinkScopePicker value={scopeLinks} onChange={setScopeLinks} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="font-medium text-foreground text-xs">
-                  Description{" "}
-                  <span className="font-normal text-muted-foreground/60">
-                    (optional)
+                {flavor !== "raw" && (
+                  <span className="font-mono text-[10px] text-muted-foreground/60">
+                    {flavor}
                   </span>
-                </Label>
-                <Input
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. clicks to #launch-channel"
-                  maxLength={256}
-                  className="h-9 text-sm"
-                />
+                )}
+              </div>
+              <Input
+                autoFocus={mode === "create"}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com/hooks/spoo"
+                spellCheck={false}
+                className="h-9 font-mono text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="font-medium text-foreground text-xs">
+                Events
+              </Label>
+              <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
+                {catalog.isPending ? (
+                  <div className="px-3 py-2 text-muted-foreground text-xs">
+                    Loading…
+                  </div>
+                ) : (
+                  subscribable.map((spec) => (
+                    <label
+                      key={spec.type}
+                      className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5"
+                    >
+                      <Checkbox
+                        checked={events.includes(spec.type)}
+                        onCheckedChange={(v) =>
+                          setEvents(
+                            v === true
+                              ? [...events, spec.type]
+                              : events.filter((e) => e !== spec.type)
+                          )
+                        }
+                      />
+                      <span className="w-28 shrink-0 font-mono text-foreground text-xs">
+                        {spec.type}
+                      </span>
+                      <span className="truncate text-[11px] text-muted-foreground/70">
+                        {EVENT_COPY[spec.type] ?? ""}
+                      </span>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                size="sm"
-                disabled={!valid || save.isPending}
-                onClick={() => save.mutate()}
-              >
-                {save.isPending
-                  ? "Saving…"
-                  : mode === "create"
-                    ? "Create endpoint"
-                    : "Save changes"}
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+
+            <div className="space-y-1.5">
+              <Label className="font-medium text-foreground text-xs">
+                Links
+              </Label>
+              <LinkScopePicker value={scopeLinks} onChange={setScopeLinks} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="font-medium text-foreground text-xs">
+                Description{" "}
+                <span className="font-normal text-muted-foreground/60">
+                  (optional)
+                </span>
+              </Label>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. clicks to #launch-channel"
+                maxLength={256}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              size="sm"
+              disabled={!valid || save.isPending}
+              onClick={() => save.mutate()}
+            >
+              {save.isPending
+                ? "Saving…"
+                : mode === "create"
+                  ? "Create endpoint"
+                  : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </>
       </DialogContent>
     </Dialog>
   )
