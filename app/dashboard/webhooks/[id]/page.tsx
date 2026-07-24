@@ -484,14 +484,9 @@ export default function WebhookDetailPage() {
             )}
           </div>
         </div>
-        <p className="mt-1.5 flex items-center gap-2 font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-          <span>created {formatWhen(ep.created_at)}</span>
-          {ep.last_delivery_at && (
-            <>
-              <span aria-hidden>·</span>
-              <span>last delivery {formatWhen(ep.last_delivery_at)}</span>
-            </>
-          )}
+        {/* The Deliveries list below already timestamps the latest one. */}
+        <p className="mt-1.5 font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+          created {formatWhen(ep.created_at)}
         </p>
       </div>
 

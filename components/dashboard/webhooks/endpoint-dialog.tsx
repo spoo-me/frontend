@@ -152,7 +152,7 @@ export function EndpointDialog({
         if (!v) reset()
       }}
     >
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-2xl">
         <>
           <DialogHeader>
             <DialogTitle>
@@ -196,7 +196,7 @@ export function EndpointDialog({
                   subscribable.map((spec) => (
                     <label
                       key={spec.type}
-                      className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5"
+                      className="flex cursor-pointer items-center gap-3 px-3.5 py-2.5 transition-colors duration-150 hover:bg-accent/30"
                     >
                       <Checkbox
                         checked={events.includes(spec.type)}
@@ -208,10 +208,10 @@ export function EndpointDialog({
                           )
                         }
                       />
-                      <span className="w-28 shrink-0 font-mono text-foreground text-xs">
+                      <span className="w-32 shrink-0 font-mono text-foreground text-xs">
                         {spec.type}
                       </span>
-                      <span className="truncate text-[11px] text-muted-foreground/70">
+                      <span className="truncate text-muted-foreground/70 text-xs">
                         {EVENT_COPY[spec.type] ?? ""}
                       </span>
                     </label>

@@ -99,7 +99,7 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
             </span>
           )}
         </div>
-        <div className="truncate font-mono text-muted-foreground text-xs">
+        <div className="mt-1 truncate font-mono text-muted-foreground text-xs">
           <Tooltip>
             <TooltipTrigger asChild>
               <span>{apiKey.token_prefix}…</span>
