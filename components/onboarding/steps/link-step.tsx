@@ -274,7 +274,7 @@ export function LinkStep({
                   optional
                 </span>
               </div>
-              <div className="flex items-center rounded-lg border border-input shadow-soft transition-[box-shadow,border-color] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+              <div className="flex items-center rounded-lg border border-input transition-[box-shadow,border-color] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
                 <span className="border-border/60 border-r px-3 font-mono text-muted-foreground text-sm">
                   spoo.me/
                 </span>

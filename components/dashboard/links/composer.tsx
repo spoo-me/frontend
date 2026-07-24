@@ -619,7 +619,7 @@ export function LinkComposer() {
                           <button
                             type="button"
                             aria-label="Choose a domain"
-                            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 font-mono text-foreground text-xs shadow-soft transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                           >
                             {domain}
                             <ChevronDown className="size-3.5 text-muted-foreground" />
