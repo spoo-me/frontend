@@ -458,9 +458,9 @@ export function WidgetComposer({
             The preview is live: exactly what lands on the board.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid items-center gap-8 sm:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid items-start gap-8 sm:grid-cols-[minmax(0,1fr)_340px]">
           {/* ── live preview ──────────────────────────────────────────── */}
-          <div className="pattern-dots flex items-center justify-center rounded-xl p-6">
+          <div className="pattern-dots flex items-center justify-center self-stretch rounded-xl p-6">
             <div
               className="pointer-events-none w-full select-none"
               style={{ height: kind === "stat" ? 220 : 400, maxWidth: 620 }}
@@ -480,7 +480,7 @@ export function WidgetComposer({
           </div>
 
           {/* ── form ──────────────────────────────────────────────────── */}
-          <div>
+          <div className="pt-6">
             <ComposerForm state={state} onChange={onChange} range={range} />
           </div>
         </div>
