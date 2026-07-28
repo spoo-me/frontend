@@ -43,7 +43,15 @@ next-env.d.ts
 # agent artifacts, never pushed
 /.claude/
 /.claude-screens/
+/.playwright-mcp/
 /*.png
+
+# design-system docs + tooling, local for now
+/CLAUDE.md
+/DESIGN.md
+/PRODUCT.md
+/.impeccable/
+/.github/hooks/
 
 # generated demo takes (npm run record:demos)
 public/demos/
