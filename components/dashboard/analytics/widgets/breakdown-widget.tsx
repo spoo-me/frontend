@@ -76,6 +76,7 @@ export function BreakdownWidget({
   w,
   h,
   narrow,
+  preview,
   rows,
   loading,
   disjoint,
@@ -92,6 +93,7 @@ export function BreakdownWidget({
   /** Rendered at phone width (mobile stack): the header icon yields its
       room to the title. Control folding is measured, not flagged. */
   narrow?: boolean
+  preview?: boolean
   rows: DimensionRow[]
   loading: boolean
   /** Scope and board filters exclude each other — nothing to show. */
@@ -146,39 +148,41 @@ export function BreakdownWidget({
         expanded ? "h-[calc(100dvh-15rem)] min-h-[420px] flex-none" : undefined
       }
       quickControls={
-        <HeaderControls>
-          <MetricControl
-            value={metric}
-            onChange={(m) => onConfigChange({ metric: m })}
-          />
-          <Segmented
-            value={mode}
-            onChange={setMode}
-            options={[
-              {
-                value: "chart",
-                icon: BD_CHART_ICONS[configuredChart],
-                ariaLabel: "chart view",
-              },
-              { value: "table", icon: Table2, ariaLabel: "table view" },
-            ]}
-          />
-          {onExpandedChange && (
-            <button
-              type="button"
-              aria-label={
-                expanded ? `Collapse ${meta.title}` : `Expand ${meta.title}`
-              }
-              onClick={() => onExpandedChange(!expanded)}
-              className={cn(
-                "flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
-                expanded && "text-foreground"
-              )}
-            >
-              <ExpandIcon className="size-3.5" strokeWidth={1.75} />
-            </button>
-          )}
-        </HeaderControls>
+        preview ? undefined : (
+          <HeaderControls>
+            <MetricControl
+              value={metric}
+              onChange={(m) => onConfigChange({ metric: m })}
+            />
+            <Segmented
+              value={mode}
+              onChange={setMode}
+              options={[
+                {
+                  value: "chart",
+                  icon: BD_CHART_ICONS[configuredChart],
+                  ariaLabel: "chart view",
+                },
+                { value: "table", icon: Table2, ariaLabel: "table view" },
+              ]}
+            />
+            {onExpandedChange && (
+              <button
+                type="button"
+                aria-label={
+                  expanded ? `Collapse ${meta.title}` : `Expand ${meta.title}`
+                }
+                onClick={() => onExpandedChange(!expanded)}
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
+                  expanded && "text-foreground"
+                )}
+              >
+                <ExpandIcon className="size-3.5" strokeWidth={1.75} />
+              </button>
+            )}
+          </HeaderControls>
+        )
       }
     >
       {loading ? (

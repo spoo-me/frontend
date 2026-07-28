@@ -44,6 +44,7 @@ const TS_CHART_ICONS = {
 export function TimeseriesWidget({
   config,
   narrow,
+  preview,
   loading,
   stats,
   prevStats,
@@ -59,6 +60,7 @@ export function TimeseriesWidget({
   /** Rendered at phone width (mobile stack): the header icon yields its
       room to the title. Control folding is measured, not flagged. */
   narrow?: boolean
+  preview?: boolean
   loading: boolean
   stats?: StatsResponse
   /** Previous equal-length window; drawn as a ghost when compare is on. */
@@ -134,41 +136,43 @@ export function TimeseriesWidget({
         expanded ? "h-[calc(100dvh-15rem)] min-h-[420px] flex-none" : undefined
       }
       quickControls={
-        <HeaderControls>
-          <MetricControl
-            value={metric}
-            onChange={(m) => onConfigChange({ metric: m })}
-          />
-          <Segmented
-            value={mode}
-            onChange={setMode}
-            options={[
-              {
-                value: "chart",
-                icon: TS_CHART_ICONS[chartViz],
-                ariaLabel: "chart view",
-              },
-              { value: "table", icon: Table2, ariaLabel: "table view" },
-            ]}
-          />
-          {onExpandedChange && (
-            <button
-              type="button"
-              aria-label={
-                expanded
-                  ? "Collapse Clicks over time"
-                  : "Expand Clicks over time"
-              }
-              onClick={() => onExpandedChange(!expanded)}
-              className={cn(
-                "flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
-                expanded && "text-foreground"
-              )}
-            >
-              <ExpandIcon className="size-3.5" strokeWidth={1.75} />
-            </button>
-          )}
-        </HeaderControls>
+        preview ? undefined : (
+          <HeaderControls>
+            <MetricControl
+              value={metric}
+              onChange={(m) => onConfigChange({ metric: m })}
+            />
+            <Segmented
+              value={mode}
+              onChange={setMode}
+              options={[
+                {
+                  value: "chart",
+                  icon: TS_CHART_ICONS[chartViz],
+                  ariaLabel: "chart view",
+                },
+                { value: "table", icon: Table2, ariaLabel: "table view" },
+              ]}
+            />
+            {onExpandedChange && (
+              <button
+                type="button"
+                aria-label={
+                  expanded
+                    ? "Collapse Clicks over time"
+                    : "Expand Clicks over time"
+                }
+                onClick={() => onExpandedChange(!expanded)}
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
+                  expanded && "text-foreground"
+                )}
+              >
+                <ExpandIcon className="size-3.5" strokeWidth={1.75} />
+              </button>
+            )}
+          </HeaderControls>
+        )
       }
     >
       {loading ? (

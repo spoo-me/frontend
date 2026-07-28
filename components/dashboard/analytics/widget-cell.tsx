@@ -27,6 +27,7 @@ export function WidgetCell({
   editing,
   expanded,
   narrow,
+  preview,
   rangeLabel,
   deltaLabel,
   onExpandedChange,
@@ -42,6 +43,8 @@ export function WidgetCell({
   /** Mobile stack: the cell renders at phone width no matter what the
       stored grid.w says, so header controls must take their compact form. */
   narrow?: boolean
+  /** Composer preview: the widget is an exhibit — no header controls. */
+  preview?: boolean
   rangeLabel: string
   deltaLabel: string
   /** Absent while editing (focus mode and edit mode are exclusive). */
@@ -83,6 +86,7 @@ export function WidgetCell({
             key={`view:${w.config.viz}`}
             config={w.config}
             narrow={narrow}
+            preview={preview}
             loading={loading}
             stats={stats}
             prevStats={prev}
@@ -104,6 +108,7 @@ export function WidgetCell({
             w={w.grid.w}
             h={w.grid.h}
             narrow={narrow}
+            preview={preview}
             rows={stats ? dimensionRowsOf(stats, w.config.dimension) : []}
             loading={loading}
             disjoint={disjoint}
