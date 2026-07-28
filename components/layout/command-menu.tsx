@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/command"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
 import { PRICING_ENABLED } from "@/lib/flags"
+import { TESTIMONIALS_LIVE } from "@/lib/testimonials"
 import {
   appsFeaturedLinks,
   appsRowLinks,
@@ -86,12 +87,16 @@ const pages: Entry[] = [
       ]
     : []),
   { title: "All apps", href: "/apps", iconKey: "boxes", icon: Boxes },
-  {
-    title: "Customer stories",
-    href: "/testimonials",
-    iconKey: "star",
-    icon: Star,
-  },
+  ...(TESTIMONIALS_LIVE
+    ? [
+        {
+          title: "Customer stories",
+          href: "/testimonials",
+          iconKey: "star",
+          icon: Star,
+        },
+      ]
+    : []),
 ]
 
 const productEntries = productLinks.map(resolve)

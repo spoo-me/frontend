@@ -1,4 +1,4 @@
-import { authedFetch, jsonInit, parse } from "./client"
+import { apiFetch, authedFetch, jsonInit, parse } from "./client"
 
 export type ShortUrl = {
   alias: string
@@ -148,7 +148,7 @@ export type CheckAliasReason =
 export function checkAlias(alias: string, domain?: string) {
   const q = new URLSearchParams({ alias })
   if (domain) q.set("domain", domain)
-  return fetch(`/api/v1/shorten/check-alias?${q}`).then((r) =>
+  return apiFetch(`/api/v1/shorten/check-alias?${q}`).then((r) =>
     parse<{ available: boolean; reason: CheckAliasReason | null }>(r)
   )
 }
@@ -187,7 +187,7 @@ export type EmojiSet = {
 let emojiSetPromise: Promise<EmojiSet> | null = null
 export function getEmojiSet(): Promise<EmojiSet> {
   if (!emojiSetPromise) {
-    emojiSetPromise = fetch("/api/v1/emoji-set")
+    emojiSetPromise = apiFetch("/api/v1/emoji-set")
       .then((r) => parse<EmojiSet>(r))
       .catch((e) => {
         emojiSetPromise = null

@@ -321,7 +321,7 @@ export default async function TestimonialDetailPage({
               </span>
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-balance text-base text-muted-foreground sm:text-lg">
-              Free, open source, and built to grow with you.
+              Open source, analytics-first, and built to grow with you.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg" className="h-11 px-5">

@@ -7,15 +7,20 @@ import { LONG_URL_MAX_LENGTH, validDestinationUrl } from "@/lib/validation"
 import { handlePublicStats } from "./public"
 import { handlePublicPreview } from "./public-preview"
 import { handleContact, handleReports } from "./reports"
+import { handleWebhooks } from "./webhooks"
 import {
   buildDomains,
   buildGrants,
   buildKeys,
   buildLinks,
+  buildWebhookDeliveries,
+  buildWebhooks,
   generateStats,
   type MockDomain,
   type MockKey,
+  type MockDelivery,
   type MockLink,
+  type MockWebhook,
   type StatsDimension,
 } from "./seed"
 
@@ -57,6 +62,8 @@ type MockState = {
   links: MockLink[]
   domains: MockDomain[]
   keys: MockKey[]
+  webhooks: MockWebhook[]
+  webhookDeliveries: MockDelivery[]
   grants: ReturnType<typeof buildGrants>
   /** Per-page dashboard layout overrides, stored opaquely (client owns schema). */
   layouts: Record<string, unknown>
@@ -83,7 +90,7 @@ function writeLayoutsFile(layouts: Record<string, unknown>) {
 
 const initial = (): MockState => ({
   email: "you@example.com",
-  userName: "Aditya",
+  userName: "zingzy",
   verified: true,
   passwordSet: true,
   providers: [
@@ -108,6 +115,8 @@ const initial = (): MockState => ({
   links: buildLinks(),
   domains: buildDomains(),
   keys: buildKeys(),
+  webhooks: buildWebhooks(),
+  webhookDeliveries: buildWebhookDeliveries(),
   grants: buildGrants(),
   layouts: readLayoutsFile(),
 })
@@ -923,6 +932,11 @@ async function handle(req: NextRequest, path: string[]) {
 
   const s = state()
 
+  if (path[0] === "v1" && path[1] === "webhooks") {
+    const res = handleWebhooks(req, path, body, params, s)
+    if (res) return res
+  }
+
   switch (route) {
     /* ---------- anonymous shorten (legacy POST / on the backend) ---------- */
     case "POST /shorten": {
@@ -954,6 +968,8 @@ async function handle(req: NextRequest, path: string[]) {
             links: [],
             domains: [],
             keys: [],
+            webhooks: [],
+            webhookDeliveries: [],
             grants: [],
             providers: [],
             pfp: null,
@@ -1660,7 +1676,8 @@ async function handle(req: NextRequest, path: string[]) {
 
   /* ---------- api keys ----------
      Wire shape mirrors the REAL backend's ApiKeyResponse exactly: envelope
-     key `keys`, Unix-second timestamps, NO last_used_at (not served yet).
+     key `keys`, Unix-second timestamps, last_used_at nullable (null until
+     the key first authenticates; server debounces updates to ~hourly).
      The frontend normalizes; keeping the mock honest prevents drift. */
   const keyToWire = (k: MockKey) => ({
     id: k.id,
@@ -1672,6 +1689,9 @@ async function handle(req: NextRequest, path: string[]) {
       : null,
     expires_at: k.expires_at
       ? Math.floor(new Date(k.expires_at).getTime() / 1000)
+      : null,
+    last_used_at: k.last_used_at
+      ? Math.floor(new Date(k.last_used_at).getTime() / 1000)
       : null,
     revoked: k.revoked,
     token_prefix: k.token_prefix,
@@ -1834,6 +1854,7 @@ async function handle(req: NextRequest, path: string[]) {
         geo_targeting: "enabled",
         custom_meta_tags: "enabled",
         ab_testing: "enabled",
+        webhooks: "enabled",
       },
     })
   }

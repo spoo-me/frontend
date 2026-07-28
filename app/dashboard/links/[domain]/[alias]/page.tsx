@@ -224,9 +224,9 @@ export default function LinkDetailPage() {
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           <SectionHeader icon={Globe2} title="Referrers" />
-          <Panel className="mt-2 p-2">
+          <Panel className="mt-2 min-h-[21rem] p-2">
             {stats.isPending ? (
-              <Skeleton className="h-56 w-full" />
+              <Skeleton className="h-80 w-full" />
             ) : (
               <BreakdownList
                 dimension="referrer"
@@ -237,9 +237,9 @@ export default function LinkDetailPage() {
         </div>
         <div>
           <SectionHeader icon={Globe2} title="Countries" />
-          <Panel className="mt-2 p-2">
+          <Panel className="mt-2 min-h-[21rem] p-2">
             {stats.isPending ? (
-              <Skeleton className="h-56 w-full" />
+              <Skeleton className="h-80 w-full" />
             ) : (
               <BreakdownList
                 dimension="country"
@@ -251,11 +251,15 @@ export default function LinkDetailPage() {
       </div>
 
       {/* Settings — the same form the sheet renders */}
-      <div className="mt-8 max-w-2xl pb-8">
+      <div className="mt-8 pb-8">
         <SectionHeader icon={Settings2} title="Settings" />
         <Panel className="mt-2 p-5">
           {link ? (
-            <LinkSettingsForm link={link} domains={domainOptions} />
+            <LinkSettingsForm
+              link={link}
+              domains={domainOptions}
+              layout="wide"
+            />
           ) : (
             <Skeleton className="h-64 w-full" />
           )}

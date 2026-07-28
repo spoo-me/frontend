@@ -56,11 +56,38 @@ export function jsonInit(method: string, body?: unknown): RequestInit {
   }
 }
 
+/**
+ * Which app surface this request originates from, for the X-Spoo-Client
+ * attribution header. Browser-side it's inferred from the current route:
+ * /dashboard and /onboarding are the signed-in app, everything else is the
+ * public landing surface. Server-side callers are the public pages
+ * (/stats/{code}, /{code}+), so no window means "landing".
+ */
+function clientTag(): "dashboard" | "landing" {
+  if (typeof window === "undefined") return "landing"
+  const path = window.location.pathname
+  return /^\/(dashboard|onboarding)(\/|$)/.test(path) ? "dashboard" : "landing"
+}
+
+/**
+ * fetch with the X-Spoo-Client attribution header stamped on. Every call to
+ * the spoo.me backend goes through here (directly or via authedFetch) —
+ * never use it for third-party hosts, the header is ours alone.
+ */
+export function apiFetch(
+  path: string,
+  init: RequestInit = {}
+): Promise<Response> {
+  const headers = new Headers(init.headers)
+  headers.set("X-Spoo-Client", clientTag())
+  return fetch(path, { ...init, headers })
+}
+
 /** Single-flight refresh: all concurrent 401 handlers share one attempt. */
 let refreshInFlight: Promise<boolean> | null = null
 
 function refreshSession(): Promise<boolean> {
-  refreshInFlight ??= fetch("/auth/refresh", { method: "POST" })
+  refreshInFlight ??= apiFetch("/auth/refresh", { method: "POST" })
     .then((r) => r.ok)
     .catch(() => false)
     .finally(() => {
@@ -74,9 +101,9 @@ export async function authedFetch(
   path: string,
   init: RequestInit
 ): Promise<Response> {
-  const res = await fetch(path, init)
+  const res = await apiFetch(path, init)
   if (res.status !== 401) return res
   const refreshed = await refreshSession()
   if (!refreshed) return res
-  return fetch(path, init)
+  return apiFetch(path, init)
 }

@@ -22,8 +22,12 @@ import {
   trackLinkCreatedAnonymous,
   trackManagePitchClicked,
   trackResultCardViewed,
+  trackUiAction,
+  type CreateOption,
 } from "@/lib/analytics"
 import { addRecentLink } from "@/lib/recent-links"
+import { apiFetch } from "@/lib/api/client"
+import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 
 /* The legacy API reports field errors as { AliasError: "..." } etc.
    Map them to fields (so a hidden options fold can open itself) and to
@@ -102,10 +106,14 @@ export function InstantShortener({
   const [copied, setCopied] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const cardRef = React.useRef<HTMLDivElement>(null)
+  // Deliberate option use (set <-> cleared edges only) — server logs can't
+  // tell a chosen option from a frontend default.
+  const optionUse = useCreateOptionTracker("hero")
 
   /* Editing anything retires a stale error. */
-  function edit(set: (v: string) => void) {
+  function edit(set: (v: string) => void, option?: CreateOption) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (option) optionUse.note(option, e.target.value.trim() !== "")
       set(e.target.value)
       setState((st) => (st.kind === "error" ? { kind: "idle" } : st))
     }
@@ -155,7 +163,7 @@ export function InstantShortener({
     try {
       // Same-origin proxy (next.config.mjs): dev -> the local backend,
       // mock -> the in-repo handler, prod -> spoo.me. No CORS anywhere.
-      const res = await fetch("/shorten", {
+      const res = await apiFetch("/shorten", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -244,6 +252,7 @@ export function InstantShortener({
     setPassword("")
     setMaxClicks("")
     setShowOptions(false)
+    optionUse.reset()
   }
 
   return (
@@ -347,7 +356,11 @@ export function InstantShortener({
               />
               <button
                 type="button"
-                onClick={() => setShowOptions((v) => !v)}
+                onClick={() => {
+                  // Exploration signal, same idea as composer_tab_opened.
+                  if (!showOptions) trackUiAction("shortener_options_opened")
+                  setShowOptions((v) => !v)
+                }}
                 aria-expanded={showOptions}
                 className="flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-muted-foreground text-xs transition-colors hover:text-foreground"
               >
@@ -398,7 +411,7 @@ export function InstantShortener({
                       </span>
                       <Input
                         value={alias}
-                        onChange={edit(setAlias)}
+                        onChange={edit(setAlias, "alias")}
                         placeholder="alias"
                         aria-label="Custom alias"
                         autoComplete="off"
@@ -408,7 +421,7 @@ export function InstantShortener({
                     <div className="flex items-center rounded-lg bg-input/30 pr-2">
                       <Input
                         value={password}
-                        onChange={edit(setPassword)}
+                        onChange={edit(setPassword, "password")}
                         type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         aria-label="Link password"
@@ -432,7 +445,7 @@ export function InstantShortener({
                     </div>
                     <Input
                       value={maxClicks}
-                      onChange={edit(setMaxClicks)}
+                      onChange={edit(setMaxClicks, "max_clicks")}
                       type="number"
                       min={1}
                       placeholder="Max clicks"
