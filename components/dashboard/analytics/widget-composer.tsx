@@ -212,14 +212,11 @@ export function ComposerForm({
   onChange,
   range,
   fieldRef,
-  openField,
 }: {
   state: ComposerState
   onChange: (patch: Partial<ComposerState>) => void
   range: TimeRange
   fieldRef?: (field: string) => React.Ref<HTMLDivElement> | undefined
-  /** Demo control: hold one select's menu open (scripted scenes). */
-  openField?: "x" | "y" | "chart" | "ink"
 }) {
   const kind = composerKind(state.x)
 
@@ -262,11 +259,7 @@ export function ComposerForm({
           >
             X axis
           </FieldLabel>
-          <Select
-            value={state.x}
-            onValueChange={(v) => handleX(v as XAxis)}
-            open={openField ? openField === "x" : undefined}
-          >
+          <Select value={state.x} onValueChange={(v) => handleX(v as XAxis)}>
             <SelectTrigger className="w-full text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -368,7 +361,6 @@ export function ComposerForm({
             Chart
           </FieldLabel>
           <Select
-            open={openField ? openField === "chart" : undefined}
             value={
               kind === "stat"
                 ? state.statViz
@@ -402,7 +394,6 @@ export function ComposerForm({
           <Select
             value={state.accent}
             onValueChange={(v) => onChange({ accent: v as Accent })}
-            open={openField ? openField === "ink" : undefined}
           >
             <SelectTrigger className="w-full text-xs">
               <SelectValue />
