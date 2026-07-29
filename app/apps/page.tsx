@@ -32,8 +32,8 @@ const groups: {
   {
     id: "native",
     title: "Native apps",
-    description: "First-class desktop and mobile clients.",
-    categories: ["desktop", "mobile"],
+    description: "First-class desktop, terminal, and mobile clients.",
+    categories: ["desktop", "cli", "mobile"],
   },
   {
     id: "bots",
@@ -45,7 +45,7 @@ const groups: {
     id: "sdks",
     title: "Official SDKs",
     description: "Type-safe clients in every language we ship in.",
-    categories: ["sdk", "cli"],
+    categories: ["sdk"],
   },
 ]
 
