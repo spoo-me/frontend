@@ -265,7 +265,9 @@
   text-transform: uppercase;
 }
 
-/* Dot grid — single systematized size; callers control opacity + mask */
+/* Dot grid — single systematized size; callers control opacity + mask.
+   Centered so the tiling remainder splits across all four edges instead
+   of piling up as a blank strip at the right and bottom. */
 @utility pattern-dots {
   background-image: radial-gradient(
     circle at 1px 1px,
@@ -273,6 +275,7 @@
     transparent 0
   );
   background-size: 24px 24px;
+  background-position: center;
 }
 
 /* Diagonal hatch — engineering-drawing gutter texture */

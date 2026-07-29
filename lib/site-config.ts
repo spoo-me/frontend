@@ -28,10 +28,10 @@ export const siteConfig = {
   },
 } as const
 
-/* Refreshed 2026-07-21: `links` from prod collStats (urls + urlsV2 +
+/* Refreshed 2026-07-29: `links` from prod collStats (urls + urlsV2 +
    emojis, rounded down), `stars` from the GitHub API. */
 export const stats = {
-  clicks: 100_000_000,
+  clicks: 135_000_000,
   links: 9_600_000,
   contributors: 12,
   stars: 235,
@@ -69,10 +69,10 @@ export const productLinks: NavLink[] = [
     iconKey: "lineChart",
   },
   {
-    title: "QR codes",
+    title: "Geo routing",
     href: "/#features",
-    description: "Branded QR codes with logo and colors",
-    iconKey: "qr",
+    description: "One link, routed by country",
+    iconKey: "route",
   },
   {
     title: "Custom domains",
@@ -124,7 +124,7 @@ export const appsRowLinks: NavLink[] = [
   },
   {
     title: "iOS",
-    href: "/apps/ios",
+    href: "/apps/apple",
     description: "Coming soon to iPhone & iPad",
     iconKey: "apple",
   },
@@ -177,9 +177,10 @@ export const developerDocLinks: NavLink[] = [
 export const developerResourceLinks: NavLink[] = [
   {
     title: "Changelog",
-    href: "/changelog",
+    href: `${siteConfig.links.github}/releases`,
     description: "What shipped recently",
     iconKey: "fileText",
+    external: true,
   },
   {
     title: "GitHub",
@@ -228,12 +229,6 @@ export const companyLegalLinks: NavLink[] = [
     href: "/terms",
     description: "Rules of using spoo",
     iconKey: "fileText",
-  },
-  {
-    title: "Brand assets",
-    href: "/brand",
-    description: "Logos, colors, guidelines",
-    iconKey: "palette",
   },
   {
     title: "Contact",

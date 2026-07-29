@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { AppGallery } from "@/components/sections/app-gallery"
 import { InstallSteps } from "@/components/sections/install-steps"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
+import { IMAGE_ICONS } from "@/components/icons/image-icons"
 import { connectedApps } from "@/lib/apps-data"
 import { cn } from "@/lib/utils"
 
@@ -40,6 +41,7 @@ export default async function AppDetailPage({
   if (!app) return notFound()
 
   const Icon = BrandIcons[app.iconKey as BrandIconKey] ?? null
+  const image = IMAGE_ICONS[app.iconKey]
 
   return (
     <>
@@ -61,7 +63,12 @@ export default async function AppDetailPage({
                   className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-card shadow-card dark:shadow-none dark:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.05)]"
                   style={{ color: app.color }}
                 >
-                  {Icon ? <Icon className="size-8" /> : null}
+                  {image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={image} alt="" className="size-8" loading="lazy" />
+                  ) : Icon ? (
+                    <Icon className="size-8" />
+                  ) : null}
                 </span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2.5">
@@ -97,15 +104,17 @@ export default async function AppDetailPage({
                       </a>
                     </Button>
                   )}
-                  <Button asChild size="default">
-                    <a href={app.url} target="_blank" rel="noreferrer">
-                      Open
-                      <ArrowUpRight
-                        className="size-3.5"
-                        data-icon="inline-end"
-                      />
-                    </a>
-                  </Button>
+                  {app.status !== "soon" && (
+                    <Button asChild size="default">
+                      <a href={app.url} target="_blank" rel="noreferrer">
+                        Open
+                        <ArrowUpRight
+                          className="size-3.5"
+                          data-icon="inline-end"
+                        />
+                      </a>
+                    </Button>
+                  )}
                 </div>
               </header>
 

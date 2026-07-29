@@ -100,7 +100,15 @@ export function Footer() {
 
         <div className="mt-12 flex items-center justify-between border-border/40 border-t border-dashed pt-5">
           <p className="text-muted-foreground/70 text-xs">
-            © {new Date().getFullYear()} spoo.me, open source under AGPL-3.0
+            © {new Date().getFullYear()} spoo.me, open source under{" "}
+            <a
+              href={`${siteConfig.links.github}/blob/main/LICENSE`}
+              target="_blank"
+              rel="noreferrer"
+              className="transition-colors hover:text-foreground"
+            >
+              AGPL-3.0
+            </a>
           </p>
           <ThemeToggle />
         </div>
