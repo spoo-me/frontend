@@ -3,7 +3,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  ArrowUpRight,
   FlaskConical,
   Globe2,
   Lock,
@@ -30,7 +29,6 @@ import {
   MarkPlay,
   MarkVenn,
 } from "@/components/shared/brand-marks"
-import { siteConfig } from "@/lib/site-config"
 
 const WorldMap = lazy(() => import("@/components/ui/world-map"))
 
@@ -337,15 +335,6 @@ const GeoDemo = () => {
           )
         })}
       </div>
-
-      {/* The catch-all, spelled out without a box */}
-      <div className="absolute inset-x-0 bottom-5 flex justify-center">
-        <span className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
-          <Globe2 className="size-3" strokeWidth={1.75} />
-          everywhere else {"→"}{" "}
-          <span className="text-foreground/80">/shop</span>
-        </span>
-      </div>
     </div>
   )
 }
@@ -366,17 +355,13 @@ function ProofBand({
 }) {
   return (
     <Band rule>
-      {/* One hover scope for the whole band: the artifact swells a touch
-          and the learn-more affordance fades in. Space is reserved, so
-          nothing shifts. */}
+      {/* One hover scope for the whole band: the artifact swells a touch. */}
       <div className="group grid gap-px bg-border lg:grid-cols-2">
         {/* Phones read the artifact first, the claim second; desktop keeps
             the alternating flip. */}
         <div
           className={cn(
-            /* The pb reserve holds the hover Learn-more's floor at sm+;
-               phones have no hover, so it collapses. */
-            "relative order-2 flex flex-col justify-center bg-background p-7 sm:p-9 sm:pb-24",
+            "relative order-2 flex flex-col justify-center bg-background p-7 sm:p-9",
             flip ? "lg:order-2" : "lg:order-1"
           )}
         >
@@ -386,17 +371,6 @@ function ProofBand({
           <p className="mt-3 max-w-md text-balance text-base text-muted-foreground">
             {body}
           </p>
-          {/* Pinned to the cell floor; fades in with the band, border firms
-              up under the cursor. Absolute, so nothing reflows. */}
-          <a
-            href={siteConfig.links.docs}
-            target="_blank"
-            rel="noreferrer"
-            className="absolute bottom-4 left-7 hidden h-6 items-center gap-1 rounded-md border border-border/50 px-2 font-medium text-[11px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100 sm:bottom-5 sm:left-9 sm:inline-flex"
-          >
-            Learn more
-            <ArrowUpRight className="size-2.5" data-icon="inline-end" />
-          </a>
         </div>
         <div
           className={cn(
@@ -479,27 +453,16 @@ export function Features() {
         <div className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
           {MANIFEST.map((f) => (
             <div key={f.name} className="bg-background">
-              <a
-                href={siteConfig.links.docs}
-                target="_blank"
-                rel="noreferrer"
-                className="group relative flex h-full flex-col p-6 pb-10 transition-colors duration-200 hover:bg-foreground/[0.02] sm:py-8"
-              >
+              <div className="flex h-full flex-col p-6 sm:py-8">
                 <f.icon
-                  className="size-4 text-muted-foreground transition-colors duration-200 group-hover:text-foreground"
+                  className="size-4 text-muted-foreground"
                   strokeWidth={1.75}
                 />
                 <div className="label-mono mt-3 text-foreground">{f.name}</div>
                 <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
                   {f.text}
                 </p>
-                {/* Overlay in the bottom-right corner, which every cell
-                    leaves empty: no reflow, no text collision */}
-                <span className="absolute right-3 bottom-2.5 inline-flex h-[22px] items-center gap-1 rounded-md border border-border/50 px-1.5 font-medium text-[10px] text-muted-foreground opacity-0 transition-all duration-200 hover:border-border hover:text-foreground group-hover:opacity-100">
-                  Learn more
-                  <ArrowUpRight className="size-2.5" />
-                </span>
-              </a>
+              </div>
             </div>
           ))}
         </div>
