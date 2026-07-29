@@ -24,6 +24,7 @@ import { formatWhen } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { scopeMeaning } from "@/components/dashboard/scopes"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
+import { IMAGE_ICONS } from "@/components/icons/image-icons"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -64,14 +65,6 @@ const availableFirst = (list: ConnectedApp[]) => [
   ...list.filter((a) => a.status !== "soon"),
   ...list.filter((a) => a.status === "soon"),
 ]
-
-/** Multicolor official logos where a single-hue glyph reads wrong. */
-const IMAGE_ICONS: Record<string, string> = {
-  chrome:
-    "https://cdn.jsdelivr.net/gh/alrra/browser-logos/src/chrome/chrome_64x64.png",
-  python:
-    "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
-}
 
 /** Brand icon in its color on a chrome tile tinted from the same hue. */
 function AppIconTile({

@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
+import { IMAGE_ICONS } from "@/components/icons/image-icons"
 import { connectedApps, type ConnectedApp } from "@/lib/apps-data"
 import { cn } from "@/lib/utils"
 
@@ -109,6 +110,7 @@ export default function AppsPage() {
 
 function AppCard({ app }: { app: ConnectedApp }) {
   const Icon = BrandIcons[app.iconKey as BrandIconKey] ?? null
+  const image = IMAGE_ICONS[app.iconKey]
   return (
     <Link
       href={`/apps/${app.slug}`}
@@ -118,7 +120,12 @@ function AppCard({ app }: { app: ConnectedApp }) {
         className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background"
         style={{ color: app.color }}
       >
-        {Icon ? <Icon className="size-5" /> : null}
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt="" className="size-5" loading="lazy" />
+        ) : Icon ? (
+          <Icon className="size-5" />
+        ) : null}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
