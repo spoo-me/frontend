@@ -7,45 +7,13 @@ import { PageFrame } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { Button } from "@/components/ui/button"
 import { BrandIcons } from "@/components/icons/brand-icons"
-import { siteConfig } from "@/lib/site-config"
+import { siteConfig, stats } from "@/lib/site-config"
 
 export const metadata: Metadata = {
   title: "About: the link platform that proves every click",
   description:
     "spoo.me is an open-source link management platform: analytics-led, API-first, self-hostable, and free of dark patterns.",
 }
-
-type Person = { name: string; role: string; avatar: number }
-
-const team: { label: string; people: Person[] }[] = [
-  {
-    label: "Leadership",
-    people: [
-      { name: "Zingzy", role: "Founder", avatar: 12 },
-      { name: "Maya Chen", role: "Product Lead", avatar: 47 },
-      { name: "Daniel Reyes", role: "Engineering Lead", avatar: 33 },
-      { name: "Priya Rao", role: "Operations", avatar: 16 },
-    ],
-  },
-  {
-    label: "Engineering",
-    people: [
-      { name: "Theo Park", role: "Backend", avatar: 11 },
-      { name: "Lin Cooper", role: "Frontend", avatar: 5 },
-      { name: "Ben Hoffman", role: "Infrastructure", avatar: 60 },
-      { name: "Sara Iyer", role: "Mobile", avatar: 25 },
-    ],
-  },
-  {
-    label: "Community & Support",
-    people: [
-      { name: "Jules Martin", role: "DevRel", avatar: 13 },
-      { name: "Noor Patel", role: "Community", avatar: 49 },
-      { name: "Kai Watanabe", role: "Support", avatar: 14 },
-      { name: "Lara Brooks", role: "Docs", avatar: 9 },
-    ],
-  },
-]
 
 const pillars = [
   {
@@ -174,34 +142,52 @@ export default function AboutPage() {
             </div>
           </section>
 
-          {/* Our team */}
+          {/* Who builds it */}
           <section className="py-20 sm:py-24">
-            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-4xl px-4 sm:px-6">
               <h2 className="font-semibold text-3xl text-foreground tracking-tight sm:text-4xl md:text-5xl">
-                Our team
+                Built by{" "}
+                <span className="font-normal font-serif text-muted-foreground italic">
+                  one person.
+                </span>
               </h2>
 
-              <div className="mt-14 flex flex-col gap-16">
-                {team.map((group) => (
-                  <div key={group.label}>
-                    <div className="font-medium text-base text-foreground">
-                      {group.label}
-                    </div>
-                    <div className="mt-3 border-border/60 border-t pt-8">
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 md:grid-cols-4">
-                        {group.people.map((p) => (
-                          <PersonCard key={p.name} person={p} />
-                        ))}
-                      </div>
-                    </div>
+              <div className="mt-12 flex items-center gap-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://github.com/zingzy.png?size=200"
+                  alt="Zingzy"
+                  className="size-16 rounded-full border border-border/60 object-cover"
+                />
+                <div>
+                  <div className="font-semibold text-foreground text-sm leading-tight">
+                    Zingzy
                   </div>
-                ))}
+                  <div className="mt-1 text-muted-foreground text-xs">
+                    Founder &amp; maintainer
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-16 flex flex-wrap items-center gap-3">
+              <div className="mt-8 flex flex-col gap-6 text-base text-muted-foreground leading-relaxed">
+                <p>
+                  spoo is not a company with departments. Every service in the
+                  ecosystem (the redirect core, the dashboard, the SDKs, the
+                  native apps, and this site) is designed, built, and operated
+                  by one developer.
+                </p>
+                <p>
+                  It is not built alone, though. {stats.contributors}{" "}
+                  contributors have landed fixes and features across the
+                  open-source repos, and the community on Discord shapes what
+                  ships next.
+                </p>
+              </div>
+
+              <div className="mt-12 flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" variant="outline" className="h-10">
                   <a
-                    href={`${siteConfig.links.github}/blob/main/CONTRIBUTING.md`}
+                    href={siteConfig.links.github}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -215,7 +201,7 @@ export default function AboutPage() {
                 </Button>
                 <Button asChild size="lg" variant="ghost" className="h-10">
                   <a
-                    href={`${siteConfig.links.github}/sponsors`}
+                    href="https://github.com/sponsors/spoo-me"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -230,24 +216,5 @@ export default function AboutPage() {
       </main>
       <Footer />
     </>
-  )
-}
-
-function PersonCard({ person }: { person: Person }) {
-  return (
-    <div className="flex flex-col items-start gap-3">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`https://i.pravatar.cc/200?img=${person.avatar}`}
-        alt={person.name}
-        className="size-16 rounded-full border border-border/60 object-cover"
-      />
-      <div>
-        <div className="font-semibold text-foreground text-sm leading-tight">
-          {person.name}
-        </div>
-        <div className="mt-1 text-muted-foreground text-xs">{person.role}</div>
-      </div>
-    </div>
   )
 }
