@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google"
 import "./globals.css"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 
+import { Clarity } from "@/components/analytics/clarity"
 import { AuthProvider } from "@/components/auth/auth-context"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -87,6 +88,7 @@ export default function RootLayout({
             <AuthProvider>
               <NuqsAdapter>{children}</NuqsAdapter>
             </AuthProvider>
+            <Clarity />
           </QueryProvider>
         </ThemeProvider>
       </body>

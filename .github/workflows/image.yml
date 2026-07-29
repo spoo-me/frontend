@@ -78,6 +78,7 @@ jobs:
             NEXT_PUBLIC_PRICING=${{ vars.NEXT_PUBLIC_PRICING }}
             NEXT_PUBLIC_HCAPTCHA_SITEKEY=${{ vars.NEXT_PUBLIC_HCAPTCHA_SITEKEY }}
             NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+            NEXT_PUBLIC_CLARITY_ID=${{ vars.NEXT_PUBLIC_CLARITY_ID }}
             SENTRY_ORG=${{ vars.SENTRY_ORG }}
             SENTRY_PROJECT=${{ vars.SENTRY_PROJECT }}
           # The token is secret: a BuildKit secret mount keeps it out of

@@ -33,6 +33,15 @@ export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING === "1"
 export const HCAPTCHA_SITEKEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY
 
 /**
+ * Microsoft Clarity project id, carried over from the old frontend so the
+ * year of scroll-depth and heatmap baseline stays continuous through the
+ * redesign. Site-wide like the old app, but the <Clarity> component only
+ * loads on spoo.me itself, so beta and self-hosted deploys never pollute
+ * the project. No-op unset.
+ */
+export const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID
+
+/**
  * Browser-side Sentry DSN. Distinct from the server DSN (SENTRY_DSN, a
  * runtime env read only in the server/edge init) so the two runtimes send
  * to separate projects with independent PII posture: the browser client
