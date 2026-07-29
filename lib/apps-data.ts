@@ -311,12 +311,13 @@ export const connectedApps: ConnectedApp[] = [
     ],
     status: "live",
     gallery: [
+      "/apps/cli/spoo-7.png",
       "/apps/cli/spoo-1.png",
       "/apps/cli/spoo-2.png",
+      "/apps/cli/spoo-6.png",
       "/apps/cli/spoo-3.png",
       "/apps/cli/spoo-4.png",
       "/apps/cli/spoo-5.png",
-      "/apps/cli/spoo-6.png",
     ],
   },
   {
