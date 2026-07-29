@@ -28,8 +28,9 @@ const supporting: Item[] = [
     sub: "and counting",
   },
   {
-    value: stats.stars,
-    suffix: "",
+    /* Floored to the hundred so the display stays true as stars accrue */
+    value: Math.floor(stats.stars / 100) * 100,
+    suffix: "+",
     label: "github stars",
     sub: "open source, forever",
     href: siteConfig.links.github,
