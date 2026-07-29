@@ -62,7 +62,7 @@ export function RecapStep({
       cta:
         stash.artifact?.kind === "key"
           ? undefined
-          : { label: "Generate", href: "/dashboard/keys" },
+          : { label: "Generate", href: "/dashboard/developer" },
     },
     ...(showDomains
       ? [

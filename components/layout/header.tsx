@@ -15,9 +15,8 @@ import {
   LineChart,
   Link2,
   Mail,
-  Palette,
-  QrCode,
   Rocket,
+  Route,
   Server,
   Shield,
   Star,
@@ -58,7 +57,7 @@ import {
 const lucideMap: Record<string, LucideIcon> = {
   link: Link2,
   lineChart: LineChart,
-  qr: QrCode,
+  route: Route,
   globe: Globe,
   server: Server,
   code: Code,
@@ -68,7 +67,6 @@ const lucideMap: Record<string, LucideIcon> = {
   users: Users,
   star: Star,
   shield: Shield,
-  palette: Palette,
   mail: Mail,
 }
 
