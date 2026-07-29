@@ -215,8 +215,7 @@ export const connectedApps: ConnectedApp[] = [
       "Zero-dep, fully typed TypeScript client. Tree-shakeable. Works in browser, Node, Bun, Deno, Cloudflare Workers.",
     iconKey: "typescript",
     color: "#3178C6",
-    url: "https://www.npmjs.com/package/spoo-me",
-    github: "https://github.com/spoo-me/spoo-ts",
+    url: "https://github.com/spoo-me",
     install: [
       { label: "npm", command: "npm i spoo-me" },
       { label: "bun", command: "bun add spoo-me" },
@@ -233,14 +232,19 @@ export const connectedApps: ConnectedApp[] = [
     slug: "sdk-rust",
     name: "Rust SDK",
     category: "sdk",
-    tagline: "Blazingly fast crate on crates.io",
+    tagline: "Async-first Rust client for the spoo API",
     description:
       "Async-first Rust SDK built on tokio + reqwest. Used in production by self-hosters.",
     iconKey: "rust",
     color: "#DEA584",
-    url: "https://crates.io/crates/spoo",
+    url: "https://github.com/spoo-me/spoo-rust",
     github: "https://github.com/spoo-me/spoo-rust",
-    install: [{ label: "cargo", command: "cargo add spoo" }],
+    install: [
+      {
+        label: "cargo",
+        command: "cargo add spoo --git https://github.com/spoo-me/spoo-rust",
+      },
+    ],
     features: [
       "Tokio async",
       "Builder pattern",
@@ -258,8 +262,7 @@ export const connectedApps: ConnectedApp[] = [
       "Idiomatic Go client with context cancellation. Perfect for serverless and cloud-native apps.",
     iconKey: "go",
     color: "#00ADD8",
-    url: "https://pkg.go.dev",
-    github: "https://github.com/spoo-me/spoo-go",
+    url: "https://github.com/spoo-me",
     install: [
       { label: "go get", command: "go get github.com/spoo-me/spoo-go" },
     ],
@@ -280,8 +283,7 @@ export const connectedApps: ConnectedApp[] = [
       "Header-only C++20 client. Built on libcurl. For native apps, games, embedded.",
     iconKey: "cpp",
     color: "#00599C",
-    url: "https://github.com/spoo-me/spoo-cpp",
-    github: "https://github.com/spoo-me/spoo-cpp",
+    url: "https://github.com/spoo-me",
     install: [{ label: "vcpkg", command: "vcpkg install spoo" }],
     features: ["Header-only", "C++20", "libcurl-based", "CMake first-class"],
     status: "soon",
@@ -292,14 +294,14 @@ export const connectedApps: ConnectedApp[] = [
     category: "cli",
     tagline: "One-command terminal shortener",
     description:
-      "Cross-platform CLI built in Rust. Pipe-friendly, JSON output, scriptable.",
+      "Cross-platform CLI built in Go. Pipe-friendly, JSON output, scriptable.",
     iconKey: "terminal",
     color: "#a3a3a3",
     url: "https://github.com/spoo-me/spoo-cli",
     github: "https://github.com/spoo-me/spoo-cli",
     install: [
       { label: "brew", command: "brew install spoo-me/tap/spoo" },
-      { label: "cargo", command: "cargo install spoo-cli" },
+      { label: "binaries", command: "Latest release on GitHub" },
     ],
     features: [
       "Pipe-friendly",

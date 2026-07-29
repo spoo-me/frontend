@@ -97,15 +97,17 @@ export default async function AppDetailPage({
                       </a>
                     </Button>
                   )}
-                  <Button asChild size="default">
-                    <a href={app.url} target="_blank" rel="noreferrer">
-                      Open
-                      <ArrowUpRight
-                        className="size-3.5"
-                        data-icon="inline-end"
-                      />
-                    </a>
-                  </Button>
+                  {app.status !== "soon" && (
+                    <Button asChild size="default">
+                      <a href={app.url} target="_blank" rel="noreferrer">
+                        Open
+                        <ArrowUpRight
+                          className="size-3.5"
+                          data-icon="inline-end"
+                        />
+                      </a>
+                    </Button>
+                  )}
                 </div>
               </header>
 
