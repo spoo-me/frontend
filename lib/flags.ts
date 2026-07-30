@@ -33,11 +33,11 @@ export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING === "1"
 export const HCAPTCHA_SITEKEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY
 
 /**
- * Microsoft Clarity project id, carried over from the old frontend so the
- * year of scroll-depth and heatmap baseline stays continuous through the
- * redesign. Site-wide like the old app, but the <Clarity> component only
- * loads on spoo.me itself, so beta and self-hosted deploys never pollute
- * the project. No-op unset.
+ * Microsoft Clarity project id (same project as the old frontend, so the
+ * scroll-depth and heatmap baseline stays continuous). Injected site-wide
+ * by instrumentation-client.ts on the production host only: beta and
+ * self-hosted deploys share the image and must not pollute the baseline.
+ * No-op unset.
  */
 export const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID
 

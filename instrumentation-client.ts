@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs"
 
 import { initAnalytics } from "@/lib/analytics"
-import { SENTRY_BROWSER_DSN } from "@/lib/flags"
+import { CLARITY_ID, SENTRY_BROWSER_DSN } from "@/lib/flags"
 
 // Deployment environment, resolved from the host at runtime. Build-time
 // NODE_ENV can't tell beta from prod — they run the SAME image — so a
@@ -36,6 +36,25 @@ if (SENTRY_BROWSER_DSN) {
 // PostHog product analytics — runs once before hydration, no-op without a
 // key. Untouched by the Sentry wiring above.
 initAnalytics()
+
+// Microsoft Clarity — production host only: beta and self-hosted deploys
+// share this image and must not pollute the baseline. Content masking is
+// governed by the Clarity project's masking mode, not here.
+if (CLARITY_ID && browserEnvironment() === "production") {
+  type ClarityFn = ((...args: unknown[]) => void) & { q?: unknown[][] }
+  const w = window as Window & { clarity?: ClarityFn }
+  if (!w.clarity) {
+    const queued: ClarityFn = (...args) => {
+      queued.q = queued.q ?? []
+      queued.q.push(args)
+    }
+    w.clarity = queued
+    const tag = document.createElement("script")
+    tag.async = true
+    tag.src = `https://www.clarity.ms/tag/${CLARITY_ID}`
+    document.head.appendChild(tag)
+  }
+}
 
 // Instruments client-side router navigations for performance traces.
 // A no-op until Sentry.init has run with a DSN.
