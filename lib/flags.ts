@@ -33,6 +33,15 @@ export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING === "1"
 export const HCAPTCHA_SITEKEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY
 
 /**
+ * Microsoft Clarity project id (same project as the old frontend, so the
+ * scroll-depth and heatmap baseline stays continuous). Injected site-wide
+ * by instrumentation-client.ts on the production host only: beta and
+ * self-hosted deploys share the image and must not pollute the baseline.
+ * No-op unset.
+ */
+export const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID
+
+/**
  * Browser-side Sentry DSN. Distinct from the server DSN (SENTRY_DSN, a
  * runtime env read only in the server/edge init) so the two runtimes send
  * to separate projects with independent PII posture: the browser client
