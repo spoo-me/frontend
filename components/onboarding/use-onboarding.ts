@@ -15,6 +15,7 @@ import {
   type OnboardingStep,
 } from "@/lib/onboarding"
 import { completeOnboarding, putOnboardingState } from "@/lib/api"
+import { useAuth } from "@/components/auth/auth-context"
 
 /**
  * Step navigation for the route-per-step flow: pushes the next route and
@@ -28,6 +29,7 @@ import { completeOnboarding, putOnboardingState } from "@/lib/api"
 export function useOnboarding() {
   const router = useRouter()
   const pathname = usePathname()
+  const { refresh } = useAuth()
 
   const advance = React.useCallback(
     (step: OnboardingStep, path?: OnboardingPath | null) => {
@@ -42,18 +44,28 @@ export function useOnboarding() {
     [router, pathname]
   )
 
-  const complete = React.useCallback(() => {
+  const complete = React.useCallback(async (): Promise<boolean> => {
     // The stash already carries what the flow produced (done page saves
     // heardFrom right before calling this) — the HDYHAU answer finally
     // leaves localStorage.
     const stash = loadStash()
+    // A swallowed failure here would leave onboarded_at null and the
+    // dashboard gate would bounce straight back into the wizard — a
+    // silent loop. Report it so the recap can offer a retry.
+    try {
+      await completeOnboarding(stash.heardFrom)
+    } catch {
+      return false
+    }
     trackOnboardingCompleted({
       heardFrom: stash.heardFrom,
       artifactKind: stash.artifact?.kind ?? null,
     })
-    completeOnboarding(stash.heardFrom).catch(() => {})
+    // The session must learn onboarded_at BEFORE the dashboard renders.
+    await refresh().catch(() => {})
     router.push("/dashboard")
-  }, [router])
+    return true
+  }, [router, refresh])
 
   return { advance, complete }
 }

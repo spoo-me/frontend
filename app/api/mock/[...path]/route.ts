@@ -1171,6 +1171,33 @@ async function handle(req: NextRequest, path: string[]) {
         { headers: { "cache-control": "public, max-age=31536000, immutable" } }
       )
     }
+    case "POST /v1/urls/claim": {
+      if (!req.cookies.has("access_token") && !req.cookies.has("refresh_token"))
+        return fail(401, "unauthorized", "Authentication required")
+      const claims = Array.isArray(body.claims) ? body.claims : []
+      if (claims.length === 0 || claims.length > 16)
+        return fail(
+          422,
+          "validation_error",
+          "claims must contain 1 to 16 items"
+        )
+      // Mock semantics: well-formed pairs claim; a token ending in "burned"
+      // simulates the invalid path for UI testing.
+      const results = claims.map((c) => {
+        const item = c as { url_id?: unknown; token?: unknown }
+        const urlId = String(item.url_id ?? "")
+        const token = String(item.token ?? "")
+        return {
+          url_id: urlId,
+          status: token.endsWith("burned") ? "invalid" : "claimed",
+        }
+      })
+      return json({
+        results,
+        claimed: results.filter((r) => r.status === "claimed").length,
+      })
+    }
+
     case "POST /v1/shorten": {
       // The DTO accepts `url` as an alias for `long_url` (first alias wins).
       const rawLong = body.long_url !== undefined ? body.long_url : body.url
@@ -1235,11 +1262,17 @@ async function handle(req: NextRequest, path: string[]) {
         weight: 1,
       }
       s.links.unshift(link)
+      // Anonymous creates mint a one-time claim token (mirrors the real
+      // backend); signed-in creates own the link outright.
+      const anonCreate =
+        !req.cookies.has("access_token") && !req.cookies.has("refresh_token")
       return json({
+        id: link.id,
         alias,
         short_url: `https://${domain ?? "spoo.me"}/${alias}`,
         long_url: longUrl,
-        owner_id: "usr_mock_1",
+        owner_id: anonCreate ? null : "usr_mock_1",
+        claim_token: anonCreate ? `mock_claim_${slug()}` : null,
         created_at: Math.floor(Date.now() / 1000),
         status: "active",
         private_stats: link.private_stats,

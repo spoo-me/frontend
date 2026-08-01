@@ -15,6 +15,7 @@ export type OnboardingStep =
   | "link"
   | "api"
   | "domain"
+  | "claim"
   | "apps"
   | "recap"
 
@@ -24,6 +25,7 @@ export const STEP_ROUTES: Record<OnboardingStep, string> = {
   link: "/onboarding/link",
   api: "/onboarding/api",
   domain: "/onboarding/domain",
+  claim: "/onboarding/claim",
   apps: "/onboarding/apps",
   recap: "/onboarding/recap",
 }

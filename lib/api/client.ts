@@ -96,13 +96,28 @@ function refreshSession(): Promise<boolean> {
   return refreshInFlight
 }
 
-/** Fetch that transparently refreshes the access token once on 401. */
+/** Fetch that transparently refreshes the access token once on 401 — and
+    once on a stale email_verified claim (verification can land out of band:
+    another tab, support, an admin flip; the refreshed token re-reads the
+    database). */
 export async function authedFetch(
   path: string,
   init: RequestInit
 ): Promise<Response> {
   const res = await apiFetch(path, init)
-  if (res.status !== 401) return res
+  const claimStale =
+    res.status === 403 &&
+    (await res
+      .clone()
+      .json()
+      .then(
+        (b: { code?: string }) =>
+          // The wire code is uppercase on this path; SpooApiError's
+          // lowercase normalization doesn't run on a raw body read.
+          String(b?.code ?? "").toLowerCase() === "email_not_verified"
+      )
+      .catch(() => false))
+  if (res.status !== 401 && !claimStale) return res
   const refreshed = await refreshSession()
   if (!refreshed) return res
   return apiFetch(path, init)

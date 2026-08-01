@@ -11,11 +11,22 @@ export type RecentLink = {
   short: string
   original: string
   createdAt: number
+  /** v2 creations carry the backend id + one-time claim token — the
+      bearer proof that makes the link claimable at signup. Absent on
+      links made before token issuance shipped. */
+  urlId?: string
+  claimToken?: string
 }
 
 const KEY = "spoo.recent_links"
-const CAP = 8
+// Storage cap doubles as the claim ceiling: entries beyond it are deleted
+// at write time, deeds included. 16 matches the claim endpoint's batch
+// cap, so one signup batch can always adopt everything the device holds.
+const CAP = 16
 const CHANGED = "spoo:recent-links-changed"
+/** Only offer recent creations for claiming — bounds the shared-computer
+    window. Server tokens never expire; older links stay claimable via API. */
+const CLAIM_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
 export function readRecentLinks(): RecentLink[] {
   if (typeof window === "undefined") return []
@@ -49,6 +60,47 @@ export function addRecentLink(link: RecentLink) {
     window.dispatchEvent(new Event(CHANGED))
   } catch {
     /* storage full or blocked — the shelf is a nicety, never an error */
+  }
+}
+
+/** Links the signup wizard can offer to claim: token-bearing and fresh. */
+export function claimableLinks(now = Date.now()): RecentLink[] {
+  return readRecentLinks().filter(
+    (l) =>
+      typeof l.urlId === "string" &&
+      typeof l.claimToken === "string" &&
+      now - l.createdAt < CLAIM_WINDOW_MS
+  )
+}
+
+/** Drop stored claim tokens (burned or declined). The links themselves
+    stay on the shelf: still anonymous, still working. */
+export function stripClaimTokens(codes?: string[]) {
+  if (typeof window === "undefined") return
+  try {
+    const next = readRecentLinks().map((l) =>
+      codes === undefined || codes.includes(l.code)
+        ? { ...l, claimToken: undefined }
+        : l
+    )
+    window.localStorage.setItem(KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(CHANGED))
+  } catch {
+    /* storage blocked — worst case the wizard re-offers, claim is idempotent */
+  }
+}
+
+/** Remove entries outright — for links that joined an account. They live
+    in the dashboard now; the anonymous shelf showing them again (to
+    whoever is signed out on this device) would be wrong twice over. */
+export function removeRecentLinks(codes: string[]) {
+  if (typeof window === "undefined") return
+  try {
+    const next = readRecentLinks().filter((l) => !codes.includes(l.code))
+    window.localStorage.setItem(KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(CHANGED))
+  } catch {
+    /* storage blocked — the shelf is a nicety, never an error */
   }
 }
 

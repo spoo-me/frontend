@@ -45,6 +45,14 @@ export default function DashboardLayout({
     if (!loading && !user) router.replace("/login?next=/dashboard")
   }, [loading, user, router])
 
+  // Deep links can't skip the funnel: unverified or un-onboarded accounts
+  // belong in the wizard (its layout resolves which surface). Existing
+  // accounts must be backfilled with onboarded_at before this ships.
+  React.useEffect(() => {
+    if (!loading && user && (!user.email_verified || !user.onboarded_at))
+      router.replace("/onboarding")
+  }, [loading, user, router])
+
   if ((loading && !wasAuthed) || (!loading && !user)) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background">
