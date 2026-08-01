@@ -29,6 +29,7 @@ import { LinkScopePicker } from "./link-scope-picker"
     documentation prose, not interface copy. */
 const EVENT_COPY: Record<string, string> = {
   "link.created": "a link was created",
+  "link.claimed": "an anonymous link joined an account",
   "link.updated": "a link was edited",
   "link.deleted": "a link was deleted",
   "link.clicked": "a tracked click happened",
