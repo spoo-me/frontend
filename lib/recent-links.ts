@@ -70,8 +70,8 @@ export function claimableLinks(now = Date.now()): RecentLink[] {
   )
 }
 
-/** Drop stored claim tokens (after a claim burns them, or on explicit
-    decline). The links themselves stay on the shelf. */
+/** Drop stored claim tokens (burned or declined). The links themselves
+    stay on the shelf: still anonymous, still working. */
 export function stripClaimTokens(codes?: string[]) {
   if (typeof window === "undefined") return
   try {
@@ -84,6 +84,20 @@ export function stripClaimTokens(codes?: string[]) {
     window.dispatchEvent(new Event(CHANGED))
   } catch {
     /* storage blocked — worst case the wizard re-offers, claim is idempotent */
+  }
+}
+
+/** Remove entries outright — for links that joined an account. They live
+    in the dashboard now; the anonymous shelf showing them again (to
+    whoever is signed out on this device) would be wrong twice over. */
+export function removeRecentLinks(codes: string[]) {
+  if (typeof window === "undefined") return
+  try {
+    const next = readRecentLinks().filter((l) => !codes.includes(l.code))
+    window.localStorage.setItem(KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(CHANGED))
+  } catch {
+    /* storage blocked — the shelf is a nicety, never an error */
   }
 }
 

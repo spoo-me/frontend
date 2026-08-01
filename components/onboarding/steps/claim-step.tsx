@@ -11,6 +11,7 @@ import { celebrate } from "@/lib/confetti"
 import { claimLinks, SpooApiError, type ClaimStatus } from "@/lib/api"
 import {
   claimableLinks,
+  removeRecentLinks,
   stripClaimTokens,
   type RecentLink,
 } from "@/lib/recent-links"
@@ -116,7 +117,12 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
         const link = selected.find((l) => l.urlId === r.url_id)
         if (link) outcomes.set(link.code, r.status)
       }
-      // Every answered token is spent: burned on success, junk on invalid.
+      // Claimed links leave the anonymous shelf (they live in the
+      // dashboard now); invalid ones stay, minus their spent tokens.
+      const claimedCodes = [...outcomes.entries()]
+        .filter(([, status]) => status !== "invalid")
+        .map(([code]) => code)
+      removeRecentLinks(claimedCodes)
       stripClaimTokens(selected.map((l) => l.code))
       setPhase({ kind: "done", outcomes })
     } catch (err) {
