@@ -11,11 +11,19 @@ export type RecentLink = {
   short: string
   original: string
   createdAt: number
+  /** v2 creations carry the backend id + one-time claim token — the
+      bearer proof that makes the link claimable at signup. Absent on
+      links made before token issuance shipped. */
+  urlId?: string
+  claimToken?: string
 }
 
 const KEY = "spoo.recent_links"
 const CAP = 8
 const CHANGED = "spoo:recent-links-changed"
+/** Only offer recent creations for claiming — bounds the shared-computer
+    window. Server tokens never expire; older links stay claimable via API. */
+const CLAIM_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
 export function readRecentLinks(): RecentLink[] {
   if (typeof window === "undefined") return []
@@ -49,6 +57,33 @@ export function addRecentLink(link: RecentLink) {
     window.dispatchEvent(new Event(CHANGED))
   } catch {
     /* storage full or blocked — the shelf is a nicety, never an error */
+  }
+}
+
+/** Links the signup wizard can offer to claim: token-bearing and fresh. */
+export function claimableLinks(now = Date.now()): RecentLink[] {
+  return readRecentLinks().filter(
+    (l) =>
+      typeof l.urlId === "string" &&
+      typeof l.claimToken === "string" &&
+      now - l.createdAt < CLAIM_WINDOW_MS
+  )
+}
+
+/** Drop stored claim tokens (after a claim burns them, or on explicit
+    decline). The links themselves stay on the shelf. */
+export function stripClaimTokens(codes?: string[]) {
+  if (typeof window === "undefined") return
+  try {
+    const next = readRecentLinks().map((l) =>
+      codes === undefined || codes.includes(l.code)
+        ? { ...l, claimToken: undefined }
+        : l
+    )
+    window.localStorage.setItem(KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(CHANGED))
+  } catch {
+    /* storage blocked — worst case the wizard re-offers, claim is idempotent */
   }
 }
 

@@ -26,61 +26,35 @@ import {
   type CreateOption,
 } from "@/lib/analytics"
 import { addRecentLink } from "@/lib/recent-links"
-import { apiFetch } from "@/lib/api/client"
+import {
+  shorten,
+  SpooApiError,
+  type ShortenInput,
+  type ShortUrl,
+} from "@/lib/api"
 import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 
-/* The legacy API reports field errors as { AliasError: "..." } etc.
-   Map them to fields (so a hidden options fold can open itself) and to
-   copy that fits a hero. Unknown messages pass through untouched: blocked
-   -URL texts and future cases stay honest. */
-const FIELD_BY_KEY: Record<string, "alias" | "password" | "maxClicks" | "url"> =
-  {
-    AliasError: "alias",
-    PasswordError: "password",
-    MaxClicksError: "maxClicks",
-    UrlError: "url",
-  }
+/* v1 field names -> the options fold's fields, so a server rejection on a
+   folded-away input can open the fold before showing its message. */
+const FOLD_FIELDS = new Set(["alias", "password", "max_clicks"])
 
-function friendlyError(
-  data: Record<string, unknown>,
-  status: number
-): { field: string | null; message: string } {
-  if (status === 429)
-    return {
-      field: null,
-      message: "You're creating links quickly. Give it a minute and retry.",
-    }
-  const key = Object.keys(data).find(
-    (k) => k in FIELD_BY_KEY && typeof data[k] === "string"
-  )
-  const raw = key
-    ? String(data[key])
-    : Object.values(data).find((v): v is string => typeof v === "string")
-  const field = key ? FIELD_BY_KEY[key] : null
-  if (key === "AliasError")
-    return {
-      field,
-      message:
-        raw === "Alias already exists"
-          ? "That alias is taken. Try another."
-          : "Aliases can only use letters, numbers, and dashes.",
-    }
-  if (key === "PasswordError")
-    return {
-      field,
-      message:
-        "Passwords need 8+ characters with a letter, a number, and @ or . included.",
-    }
-  if (key === "MaxClicksError")
-    return { field, message: "Max clicks must be a positive number." }
-  if (key === "UrlError" && raw?.startsWith("Invalid URL"))
-    return {
-      field,
-      message: "That URL doesn't look valid. Include the https:// part.",
-    }
+function friendlyError(err: unknown): {
+  field: string | null
+  message: string
+} {
+  if (err instanceof SpooApiError) {
+    if (err.isRateLimit)
+      return {
+        field: null,
+        message: "You're creating links quickly. Give it a minute and retry.",
+      }
+    if (err.status === 409)
+      return { field: "alias", message: "That alias is taken. Try another." }
+    return { field: err.field ?? null, message: err.message }
+  }
   return {
-    field,
-    message: raw ?? "Couldn't shorten that URL. Try again.",
+    field: null,
+    message: "Couldn't reach spoo.me. Check your connection and retry.",
   }
 }
 
@@ -152,55 +126,47 @@ export function InstantShortener({
 
     setState({ kind: "loading" })
 
-    const body = new URLSearchParams({ url: trimmed })
     const aliasTrim = alias.trim()
     const passwordTrim = password.trim()
-    const maxTrim = maxClicks.trim()
-    if (aliasTrim) body.set("alias", aliasTrim)
-    if (passwordTrim) body.set("password", passwordTrim)
-    if (maxTrim) body.set("max-clicks", maxTrim)
+    const maxNum = Number(maxClicks.trim())
 
+    // v2 create: anonymous responses carry the one-time claim token that
+    // lets signup adopt this link later; signed-in visitors get an owned
+    // link instead of an orphan. Cookies ride the same-origin proxy.
+    const input: ShortenInput = {
+      long_url: trimmed,
+      ...(aliasTrim ? { alias: aliasTrim } : {}),
+      ...(passwordTrim ? { password: passwordTrim } : {}),
+      ...(Number.isFinite(maxNum) && maxNum > 0 ? { max_clicks: maxNum } : {}),
+    }
     try {
-      // Same-origin proxy (next.config.mjs): dev -> the local backend,
-      // mock -> the in-repo handler, prod -> spoo.me. No CORS anywhere.
-      const res = await apiFetch("/shorten", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: body.toString(),
-      })
-      const data = (await res.json().catch(() => ({}))) as {
-        short_url?: string
-        [k: string]: unknown
-      }
-      if (res.ok && data.short_url) {
-        succeed(data.short_url, trimmed, !!aliasTrim, !!passwordTrim, !!maxTrim)
-        return
-      }
-      const { field, message } = friendlyError(data, res.status)
-      if (field && field !== "url") setShowOptions(true)
+      const link = await shorten(input)
+      succeed(link, trimmed, !!aliasTrim, !!passwordTrim, !!input.max_clicks)
+    } catch (err) {
+      const { field, message } = friendlyError(err)
+      if (field && FOLD_FIELDS.has(field)) setShowOptions(true)
       setState({ kind: "error", message })
-    } catch {
-      setState({
-        kind: "error",
-        message: "Couldn't reach spoo.me. Check your connection and retry.",
-      })
     }
   }
 
   function succeed(
-    short: string,
+    link: ShortUrl,
     original: string,
     hasAlias: boolean,
     hasPassword: boolean,
     hasMaxClicks: boolean
   ) {
-    const code = short.replace(/^https?:\/\/[^/]+\//, "").replace(/\/$/, "")
+    const { alias: code, short_url: short } = link
     setState({ kind: "success", short, code, original })
     onSuccessChange?.(true)
-    addRecentLink({ code, short, original, createdAt: Date.now() })
+    addRecentLink({
+      code,
+      short,
+      original,
+      createdAt: Date.now(),
+      urlId: link.id,
+      claimToken: link.claim_token ?? undefined,
+    })
     trackLinkCreatedAnonymous({
       usedOptions: hasAlias || hasPassword || hasMaxClicks,
       hasAlias,

@@ -1,6 +1,7 @@
 import { apiFetch, authedFetch, jsonInit, parse } from "./client"
 
 export type ShortUrl = {
+  id: string
   alias: string
   short_url: string
   long_url: string
@@ -10,6 +11,9 @@ export type ShortUrl = {
   private_stats: boolean | null
   geo_rules?: GeoRules | null
   meta_tags?: MetaTags | null
+  /** One-time bearer proof of creation, anonymous creates only. Shown
+      exactly once; store it or lose the ability to claim the link. */
+  claim_token?: string | null
 }
 
 export type UrlStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "BLOCKED"
@@ -225,6 +229,21 @@ export type ShortenInput = {
 export function shorten(input: ShortenInput) {
   return authedFetch("/api/v1/shorten", jsonInit("POST", input)).then((r) =>
     parse<ShortUrl>(r)
+  )
+}
+
+export type ClaimStatus = "claimed" | "already_yours" | "invalid"
+
+export type ClaimOutcome = {
+  results: { url_id: string; status: ClaimStatus }[]
+  claimed: number
+}
+
+/** Attach anonymously-created links to the signed-in account. Per-item
+    results, never a batch failure; tokens burn on success. */
+export function claimLinks(claims: { url_id: string; token: string }[]) {
+  return authedFetch("/api/v1/urls/claim", jsonInit("POST", { claims })).then(
+    (r) => parse<ClaimOutcome>(r)
   )
 }
 

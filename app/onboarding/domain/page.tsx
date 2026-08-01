@@ -18,9 +18,9 @@ export default function DomainPage() {
   // router.replace (not advance): a skip is neither a step completion for
   // the funnel nor progress worth writing to the server cache.
   React.useEffect(() => {
-    if (settled && !enabled) router.replace(STEP_ROUTES.apps)
+    if (settled && !enabled) router.replace(STEP_ROUTES.claim)
   }, [settled, enabled, router])
 
   if (!enabled) return null
-  return <DomainStep onDone={() => advance("apps")} />
+  return <DomainStep onDone={() => advance("claim")} />
 }
