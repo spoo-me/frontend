@@ -157,8 +157,8 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
               ? `${claimedCount} added. ${failedCount} couldn't be verified and stayed anonymous.`
               : "None of them could be verified, so they stayed anonymous. They keep working, they just won't appear in your dashboard."
           : links.length === 1
-            ? "A link was shortened in this browser before you signed up. Add it to your account if it's yours, stats and all."
-            : `${links.length} links were shortened in this browser before you signed up. Add the ones that are yours to your account, stats and all.`}
+            ? "Shortened here before you signed up, still collecting clicks. Bring it along if it's yours."
+            : "Shortened here before you signed up, still collecting clicks. Bring the ones that are yours."}
       </p>
 
       <ul
