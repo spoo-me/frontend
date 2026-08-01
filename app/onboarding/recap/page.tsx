@@ -18,7 +18,7 @@ export default function RecapPage() {
       stash={stash}
       onFinish={(heardFrom) => {
         if (heardFrom) saveStash({ heardFrom })
-        complete()
+        void complete()
       }}
     />
   )
