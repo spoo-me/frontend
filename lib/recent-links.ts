@@ -19,7 +19,10 @@ export type RecentLink = {
 }
 
 const KEY = "spoo.recent_links"
-const CAP = 8
+// Storage cap doubles as the claim ceiling: entries beyond it are deleted
+// at write time, deeds included. 16 matches the claim endpoint's batch
+// cap, so one signup batch can always adopt everything the device holds.
+const CAP = 16
 const CHANGED = "spoo:recent-links-changed"
 /** Only offer recent creations for claiming — bounds the shared-computer
     window. Server tokens never expire; older links stay claimable via API. */
