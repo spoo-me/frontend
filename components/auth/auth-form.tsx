@@ -92,7 +92,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
         const next = safeNext(
           new URLSearchParams(window.location.search).get("next")
         )
-        router.push(next ?? "/dashboard")
+        // Unfinished accounts resume where they left off: the onboarding
+        // layout owns the verify gate and the step cache, so one push
+        // covers unverified, mid-wizard, and fresh states alike.
+        if (!user.email_verified || !user.onboarded_at) {
+          router.push("/onboarding")
+        } else {
+          router.push(next ?? "/dashboard")
+        }
       } else {
         const { user } = await register({ email, password })
         trackSignedUp("password")
