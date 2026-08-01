@@ -145,20 +145,20 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
       <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
         {done
           ? claimedCount > 0
-            ? "They're yours now"
-            : "Those couldn't be claimed"
+            ? "They're in your dashboard"
+            : "Those couldn't be added"
           : "Your links are already here"}
       </h1>
       <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         {done
           ? failedCount === 0
-            ? "Claimed links live in your dashboard like any other, every click they've collected included."
+            ? "They live in your account now like any other link, every click they've collected included."
             : claimedCount > 0
-              ? `${claimedCount} claimed. ${failedCount} couldn't be verified and stayed anonymous.`
+              ? `${claimedCount} added. ${failedCount} couldn't be verified and stayed anonymous.`
               : "None of them could be verified, so they stayed anonymous. They keep working, they just won't appear in your dashboard."
           : links.length === 1
-            ? "A link was shortened in this browser before you signed up. Claim it if it's yours, stats and all."
-            : `${links.length} links were shortened in this browser before you signed up. Claim the ones that are yours, stats and all.`}
+            ? "A link was shortened in this browser before you signed up. Add it to your account if it's yours, stats and all."
+            : `${links.length} links were shortened in this browser before you signed up. Add the ones that are yours to your account, stats and all.`}
       </p>
 
       <ul
@@ -190,7 +190,7 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
                   <Checkbox
                     checked={checked.has(link.code)}
                     onCheckedChange={() => toggle(link.code)}
-                    aria-label={`Claim ${link.short}`}
+                    aria-label={`Add ${link.short} to your account`}
                   />
                 )}
                 {host && (
@@ -210,7 +210,7 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
                 <span className="shrink-0 font-mono text-[11px] text-muted-foreground/60">
                   {done
                     ? outcome && outcome !== "invalid"
-                      ? "claimed"
+                      ? "added"
                       : "not verified"
                     : age(link.createdAt)}
                 </span>
@@ -252,12 +252,12 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
               className="mt-10 h-10 min-w-44"
             >
               {phase.kind === "claiming"
-                ? "Claiming…"
+                ? "Adding…"
                 : selected.length === 0
-                  ? "Claim links"
+                  ? "Add links"
                   : selected.length === 1
-                    ? "Claim this link"
-                    : `Claim ${selected.length} links`}
+                    ? "Add this link"
+                    : `Add ${selected.length} links`}
               {phase.kind !== "claiming" && (
                 <ArrowRight className="size-4" data-icon="inline-end" />
               )}
