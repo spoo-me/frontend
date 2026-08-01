@@ -65,10 +65,18 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
   }, [router])
 
   const done = phase.kind === "done"
+  const claimedCount = done
+    ? [...phase.outcomes.values()].filter((s) => s !== "invalid").length
+    : 0
+  const failedCount = done ? phase.outcomes.size - claimedCount : 0
 
   React.useEffect(() => {
     if (!done) return
-    const t = setTimeout(() => celebrate(listRef.current), 120)
+    // Zero adoptions is not a celebration.
+    const t =
+      claimedCount > 0
+        ? setTimeout(() => celebrate(listRef.current), 120)
+        : undefined
     function onKey(e: KeyboardEvent) {
       if (e.key === "Enter") {
         e.preventDefault()
@@ -77,10 +85,10 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
     }
     window.addEventListener("keydown", onKey)
     return () => {
-      clearTimeout(t)
+      if (t !== undefined) clearTimeout(t)
       window.removeEventListener("keydown", onKey)
     }
-  }, [done, onDone])
+  }, [done, claimedCount, onDone])
 
   if (!links) return null
 
@@ -126,22 +134,25 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
     onDone()
   }
 
-  const claimedCount = done
-    ? [...phase.outcomes.values()].filter((s) => s !== "invalid").length
-    : 0
-  const failedCount = done ? phase.outcomes.size - claimedCount : 0
-
   return (
     <div className="flex w-full flex-col items-center text-center">
       <h1 className="text-balance font-semibold text-3xl text-foreground tracking-tight sm:text-4xl">
-        {done ? "They're yours now" : "Your links are already here"}
+        {done
+          ? claimedCount > 0
+            ? "They're yours now"
+            : "Those couldn't be claimed"
+          : "Your links are already here"}
       </h1>
       <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         {done
           ? failedCount === 0
             ? "Claimed links live in your dashboard like any other, every click they've collected included."
-            : `${claimedCount} claimed. ${failedCount} couldn't be verified and stayed anonymous.`
-          : `${links.length === 1 ? "A link was" : `${links.length} links were`} shortened in this browser before you signed up. Claim the ones that are yours, stats and all.`}
+            : claimedCount > 0
+              ? `${claimedCount} claimed. ${failedCount} couldn't be verified and stayed anonymous.`
+              : "None of them could be verified, so they stayed anonymous. They keep working, they just won't appear in your dashboard."
+          : links.length === 1
+            ? "A link was shortened in this browser before you signed up. Claim it if it's yours, stats and all."
+            : `${links.length} links were shortened in this browser before you signed up. Claim the ones that are yours, stats and all.`}
       </p>
 
       <ul

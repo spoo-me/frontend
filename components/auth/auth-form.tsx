@@ -59,7 +59,7 @@ const providers = [
 export function AuthForm({ mode }: { mode: Mode }) {
   const c = copy[mode]
   const router = useRouter()
-  const { setUser, signOut } = useAuth()
+  const { user, loading, setUser, signOut } = useAuth()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [pending, setPending] = React.useState(false)
@@ -68,6 +68,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
   // Dub-style: the OTP panel swaps into this pane right after signup —
   // verification gates entry instead of being an onboarding step.
   const [verifying, setVerifying] = React.useState(false)
+
+  // An active session has no business on the auth forms: route it by
+  // account state. Suspended while the OTP panel owns the pane (a fresh
+  // registration IS a session) and while a submit is settling.
+  React.useEffect(() => {
+    if (loading || !user || verifying || pending) return
+    if (!user.email_verified || !user.onboarded_at) {
+      router.replace("/onboarding")
+    } else {
+      router.replace("/dashboard")
+    }
+  }, [loading, user, verifying, pending, router])
 
   // Dub-style progressive reveal: the password field appears once the
   // email reads as one — the form starts as a single calm field.
