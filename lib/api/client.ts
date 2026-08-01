@@ -110,7 +110,12 @@ export async function authedFetch(
     (await res
       .clone()
       .json()
-      .then((b: { code?: string }) => b?.code === "email_not_verified")
+      .then(
+        (b: { code?: string }) =>
+          // The wire code is uppercase on this path; SpooApiError's
+          // lowercase normalization doesn't run on a raw body read.
+          String(b?.code ?? "").toLowerCase() === "email_not_verified"
+      )
       .catch(() => false))
   if (res.status !== 401 && !claimStale) return res
   const refreshed = await refreshSession()

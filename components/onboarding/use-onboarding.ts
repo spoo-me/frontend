@@ -44,21 +44,27 @@ export function useOnboarding() {
     [router, pathname]
   )
 
-  const complete = React.useCallback(async () => {
+  const complete = React.useCallback(async (): Promise<boolean> => {
     // The stash already carries what the flow produced (done page saves
     // heardFrom right before calling this) — the HDYHAU answer finally
     // leaves localStorage.
     const stash = loadStash()
+    // A swallowed failure here would leave onboarded_at null and the
+    // dashboard gate would bounce straight back into the wizard — a
+    // silent loop. Report it so the recap can offer a retry.
+    try {
+      await completeOnboarding(stash.heardFrom)
+    } catch {
+      return false
+    }
     trackOnboardingCompleted({
       heardFrom: stash.heardFrom,
       artifactKind: stash.artifact?.kind ?? null,
     })
-    // The session must learn onboarded_at BEFORE the dashboard renders,
-    // or its onboarding gate reads the stale user and bounces right back
-    // into the wizard.
-    await completeOnboarding(stash.heardFrom).catch(() => {})
+    // The session must learn onboarded_at BEFORE the dashboard renders.
     await refresh().catch(() => {})
     router.push("/dashboard")
+    return true
   }, [router, refresh])
 
   return { advance, complete }

@@ -128,7 +128,19 @@ export function InstantShortener({
 
     const aliasTrim = alias.trim()
     const passwordTrim = password.trim()
-    const maxNum = Number(maxClicks.trim())
+    const maxTrim = maxClicks.trim()
+    const maxNum = Number(maxTrim)
+    // A filled field must cap the link or block the submit — silently
+    // creating an uncapped link while the field shows a value is worse
+    // than either.
+    if (maxTrim && (!Number.isFinite(maxNum) || maxNum < 1)) {
+      setShowOptions(true)
+      setState({
+        kind: "error",
+        message: "Max clicks must be a positive number.",
+      })
+      return
+    }
 
     // v2 create: anonymous responses carry the one-time claim token that
     // lets signup adopt this link later; signed-in visitors get an owned
@@ -137,7 +149,7 @@ export function InstantShortener({
       long_url: trimmed,
       ...(aliasTrim ? { alias: aliasTrim } : {}),
       ...(passwordTrim ? { password: passwordTrim } : {}),
-      ...(Number.isFinite(maxNum) && maxNum > 0 ? { max_clicks: maxNum } : {}),
+      ...(maxTrim ? { max_clicks: maxNum } : {}),
     }
     try {
       const link = await shorten(input)

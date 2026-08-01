@@ -42,8 +42,12 @@ type Phase =
 /**
  * The signup adoption moment: links shortened in this browser before the
  * account existed, offered once with explicit consent. The list is the
- * proof — no token appears anywhere in the UI. Skipping strips the stored
- * tokens; the links stay on the device shelf, just permanently anonymous.
+ * proof — no token appears anywhere in the UI.
+ *
+ * Unchecking and declining both mean "not now", never "destroy": on a
+ * shared computer an unchecked link may belong to the NEXT person to
+ * sign up here, so unclaimed tokens survive (bounded by the 30-day
+ * offer window). Only an answered claim spends a token.
  */
 export function ClaimStep({ onDone }: { onDone: () => void }) {
   const router = useRouter()
@@ -136,7 +140,6 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
   }
 
   function decline() {
-    stripClaimTokens()
     onDone()
   }
 
@@ -209,9 +212,11 @@ export function ClaimStep({ onDone }: { onDone: () => void }) {
                 </span>
                 <span className="shrink-0 font-mono text-[11px] text-muted-foreground/60">
                   {done
-                    ? outcome && outcome !== "invalid"
-                      ? "added"
-                      : "not verified"
+                    ? outcome === "already_yours"
+                      ? "already added"
+                      : outcome === "claimed"
+                        ? "added"
+                        : "not verified"
                     : age(link.createdAt)}
                 </span>
               </label>

@@ -15,9 +15,13 @@ import { useFeature } from "@/hooks/use-features"
 export function RecapStep({
   stash,
   onFinish,
+  error = null,
 }: {
   stash: OnboardingStash
   onFinish: (heardFrom?: string) => void
+  /** A failed completion needs a visible retry — the dashboard gate
+      would otherwise bounce a half-finished account back here silently. */
+  error?: string | null
 }) {
   const { user } = useAuth()
   const showDomains = useFeature("custom_domains") === "enabled"
@@ -121,9 +125,14 @@ export function RecapStep({
         onClick={() => onFinish(heardFrom ?? undefined)}
         className="mt-8 h-10 min-w-56"
       >
-        Go to your dashboard
+        {error ? "Retry" : "Go to your dashboard"}
         <ArrowRight className="size-4" data-icon="inline-end" />
       </Button>
+      {error && (
+        <p role="alert" className="mt-3 text-destructive text-sm">
+          {error}
+        </p>
+      )}
 
       {/* Complete setup — Dub-style launchpad rows with per-row CTAs */}
       <div className="mt-10 w-full max-w-md text-left">
