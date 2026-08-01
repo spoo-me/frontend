@@ -77,32 +77,39 @@ export function DashboardHero() {
         />
       </Band>
 
-      {/* Preview band — the app pours under the next rule, hard-cropped */}
-      <Band rule className="overflow-hidden px-5 pt-10 sm:px-12 sm:pt-14">
-        <GutterHatch />
-        <div className="relative mx-auto -mb-24 max-w-6xl sm:-mb-32">
-          {/* KpiCard's info hints are Radix tooltips; the marketing layout
-              has no provider (the dashboard layout owns one). */}
-          <TooltipProvider delayDuration={0}>
-            <AppFrame />
-          </TooltipProvider>
-        </div>
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background to-transparent"
-        />
-        <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2">
-          <Button asChild variant="outline" size="sm">
-            <a href={siteConfig.app.dashboard} target="_blank" rel="noreferrer">
-              See live demo
-              <ArrowUpRight className="size-3.5" data-icon="inline-end" />
-            </a>
-          </Button>
-        </div>
-      </Band>
+      <DashboardPreview />
 
       <Callouts />
     </>
+  )
+}
+
+/** The preview band alone — composed by the analytics product page too. */
+export function DashboardPreview() {
+  return (
+    /* Preview band — the app pours under the next rule, hard-cropped */
+    <Band rule className="overflow-hidden px-5 pt-10 sm:px-12 sm:pt-14">
+      <GutterHatch />
+      <div className="relative mx-auto -mb-24 max-w-6xl sm:-mb-32">
+        {/* KpiCard's info hints are Radix tooltips; the marketing layout
+            has no provider (the dashboard layout owns one). */}
+        <TooltipProvider delayDuration={0}>
+          <AppFrame />
+        </TooltipProvider>
+      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background to-transparent"
+      />
+      <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2">
+        <Button asChild variant="outline" size="sm">
+          <a href={siteConfig.app.dashboard} target="_blank" rel="noreferrer">
+            See live demo
+            <ArrowUpRight className="size-3.5" data-icon="inline-end" />
+          </a>
+        </Button>
+      </div>
+    </Band>
   )
 }
 
@@ -110,7 +117,7 @@ export function DashboardHero() {
 /* The app frame: glass border › topbar + board                        */
 /* ------------------------------------------------------------------ */
 
-function AppFrame() {
+export function AppFrame() {
   return (
     <div className="relative">
       {/* Thin padded glass frame around the whole app — the panels' own
@@ -135,7 +142,7 @@ function AppFrame() {
   )
 }
 
-function Topbar() {
+export function Topbar() {
   return (
     <div className="flex h-[52px] items-center justify-between border-border/60 border-b px-4">
       <span className="flex items-center gap-1.5 text-sm">
@@ -162,7 +169,7 @@ function Chip({
   )
 }
 
-function ChipsRow() {
+export function ChipsRow() {
   return (
     <div className="flex items-center gap-2 overflow-hidden">
       <Chip icon={CalendarDays}>Last 30 days</Chip>
@@ -179,7 +186,7 @@ function ChipsRow() {
 }
 
 /** Widget-header control cluster: viz toggle + expand. */
-function HeaderControls({ table = false }: { table?: boolean }) {
+export function HeaderControls({ table = false }: { table?: boolean }) {
   return (
     <span className="flex items-center gap-2">
       <span className="hidden h-7 items-center rounded-lg border border-border/60 bg-shell sm:inline-flex">
@@ -288,7 +295,7 @@ function CountriesPanel() {
 /* Claim cells                                                         */
 /* ------------------------------------------------------------------ */
 
-function Callouts() {
+export function Callouts() {
   const callouts = [
     {
       icon: LineChart,

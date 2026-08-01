@@ -31,6 +31,8 @@ const POSTHOG_REWRITES = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keeps the dev badge out of recorded demo takes (scripts/record-demos.mjs).
+  devIndicators: false,
   // Self-contained server bundle for the Docker image — runtime needs only
   // .next/standalone + .next/static + public, no node_modules install.
   output: "standalone",
