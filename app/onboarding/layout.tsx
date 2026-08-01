@@ -40,6 +40,16 @@ export default function OnboardingLayout({
     }
   }, [loading, user, router, onVerify, step])
 
+  // The effect above replaces the route AFTER the target step has painted,
+  // which flashes the wrong screen for a frame. Mirror its conditions at
+  // render time and withhold the step content whenever a redirect is
+  // already decided.
+  const redirecting =
+    !loading &&
+    user !== null &&
+    (Boolean(user.onboarded_at) ||
+      (!user.email_verified && !onVerify && step !== "welcome" && step !== ""))
+
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-background">
       {/* Faint brand presence, same register as the auth pages */}
@@ -54,7 +64,7 @@ export default function OnboardingLayout({
       </header>
 
       <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-14">
-        {!user ? (
+        {!user || redirecting ? (
           <span className="label-mono animate-pulse text-[10px] text-muted-foreground/60">
             loading…
           </span>
