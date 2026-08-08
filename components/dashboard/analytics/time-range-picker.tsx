@@ -129,7 +129,7 @@ export function TimeRangePicker({
         align="start"
         className="w-auto max-w-[calc(100vw-2rem)] p-0"
       >
-        {/* Parse box — borderless, directly on the surface (ref 27); the
+        {/* Parse box — borderless, directly on the surface; the
             resolved-range hint rides inline so the row never changes height */}
         <div className="flex items-center gap-3 border-border/60 border-b px-4">
           <input

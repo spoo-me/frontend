@@ -65,7 +65,7 @@ export default function DashboardLayout({
 
   return (
     <TooltipProvider delayDuration={200}>
-      {/* Floating-sheet architecture (ref 10): chrome sits on the canvas,
+      {/* Floating-sheet architecture: chrome sits on the canvas,
         content is an elevated rounded sheet with its own scroll. */}
       <div className="flex h-dvh overflow-hidden bg-canvas">
         <DashboardSidebar />

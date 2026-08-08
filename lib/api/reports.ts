@@ -1,10 +1,9 @@
 import { apiFetch, jsonInit, parse, SpooApiError } from "./client"
 
 /**
- * Abuse-report intake + contact — the frozen wire contract from
- * thoughts/report-contact-intake-trd.md (POST /api/v1/reports and
- * POST /api/v1/contact). The backend implements the same document; the
- * mock in app/api/mock mirrors it byte-for-byte.
+ * Abuse-report intake + contact — the frozen wire contract behind
+ * POST /api/v1/reports and POST /api/v1/contact. The backend implements
+ * the same contract; the mock in app/api/mock mirrors it byte-for-byte.
  *
  * Report semantics the UI relies on:
  *  - items are judged PER ITEM: bad codes don't sink the batch. The 200
@@ -12,7 +11,7 @@ import { apiFetch, jsonInit, parse, SpooApiError } from "./client"
  *  - request-level failures stay whole-request, code "validation_error"
  *    either way: DTO-shape errors (bad enum, bad email, missing fields)
  *    are 422 like the rest of the API; semantic gates (empty items,
- *    over the item cap, missing captcha token) are 400 per the TRD.
+ *    over the item cap, missing captcha token) are 400.
  *    Failed captcha (anonymous only) → 403.
  *  - caps are submission-wide: 25 items anonymous, 100 authenticated.
  *  - captcha_token is required for anonymous submissions only when the

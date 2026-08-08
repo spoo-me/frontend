@@ -6,7 +6,8 @@ import { Check, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { trackUiAction, type UiAction } from "@/lib/analytics"
 
-/** Copy affordance for aliases/keys/DNS values (DIRECTION §6 floor). */
+/** Copy affordance for aliases/keys/DNS values — anything worth copying
+    gets one, no exceptions. */
 export function CopyButton({
   value,
   label = "Copy",

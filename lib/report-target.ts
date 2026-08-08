@@ -2,8 +2,8 @@
  * Report-target parsing — pure client-side logic, no wire coupling
  * (transport and wire types live in lib/api/reports.ts).
  *
- * BEST-EFFORT MIRROR of the backend's normalize_report_target (TRD §2),
- * here for preview UX only (the bulk table's parse states, and the
+ * BEST-EFFORT MIRROR of the backend's normalize_report_target, here for
+ * preview UX only (the bulk table's parse states, and the
  * walkthrough mock) — the backend is authoritative on the wire, and the
  * raw input always travels so its verdict wins. The happy paths agree:
  * `abc123`, `spoo.me/abc123`, `https://spoo.me/abc123?x=1` and

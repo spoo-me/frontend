@@ -27,7 +27,7 @@ export type DashboardNavGroup = {
   items: DashboardNavItem[]
 }
 
-/** Flags for surfaces whose backend does not exist yet (SPEC.md §2). */
+/** Flags for surfaces whose backend does not exist yet. */
 export const dashboardFlags = {
   billing: false,
 } as const

@@ -10,7 +10,7 @@ import {
 
 /**
  * Mock for the proposed public stats endpoint
- * (GET|POST /api/v1/public/stats/{code} — thoughts/public-stats-page.md §6).
+ * (GET|POST /api/v1/public/stats/{code}).
  *
  * The real endpoint resolves BOTH url generations plus emoji aliases; the
  * seeded workspace is all v2, so the shared PUBLIC_EXTRAS carry the v1,

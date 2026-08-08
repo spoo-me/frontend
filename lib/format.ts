@@ -1,4 +1,4 @@
-/** Formatting rules from DIRECTION.md — one implementation, used everywhere. */
+/** Shared number/date formatting — one implementation, used everywhere. */
 
 const compact = new Intl.NumberFormat("en", {
   notation: "compact",

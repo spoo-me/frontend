@@ -13,9 +13,8 @@ import { buildLinks } from "./seed"
 
 /**
  * Mock for the report-intake + contact endpoints
- * (POST /api/v1/reports, POST /api/v1/contact —
- * thoughts/report-contact-intake-trd.md, the frozen contract the real
- * backend implements in parallel). Wire shapes byte-exact:
+ * (POST /api/v1/reports, POST /api/v1/contact) — the frozen wire contract
+ * the real backend implements in parallel. Wire shapes byte-exact:
  *  - per-item accepted/rejected breakdown; bad codes don't sink the batch
  *  - status split mirrors the backend (spoo#242): DTO-shape errors (bad
  *    email, bad reason/vector enum, missing fields) are 422; semantic
@@ -99,7 +98,7 @@ export function handleReports(
   authed: boolean
 ): NextResponse {
   // Anonymous submissions are captcha-gated; authenticated ones skip the
-  // check entirely (TRD §2). Same mock semantics as contact: only the
+  // check entirely. Same mock semantics as contact: only the
   // literal "fail" fails.
   if (!authed && body.captcha_token === "fail")
     return fail(403, "forbidden", "Invalid captcha, please try again")

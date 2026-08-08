@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils"
 
 /**
- * Section grammar (DIRECTION §4): icon + label-mono title left, quiet action
- * right — everywhere, no exceptions. Cards are for actions; prose headings sit
- * directly on the canvas (ref 12).
+ * Section grammar: icon + label-mono title left, quiet action right —
+ * everywhere, no exceptions. Cards are for actions; prose headings sit
+ * directly on the canvas.
  */
 export function SectionHeader({
   icon: Icon,

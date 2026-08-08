@@ -141,7 +141,7 @@ export function ReportForm({ initialCode }: { initialCode?: string }) {
   }
 
   async function submit(items: ReportItemInput[]) {
-    // Authenticated submissions skip the captcha entirely (TRD §2); the
+    // Authenticated submissions skip the captcha entirely; the
     // invisible challenge runs once per submission otherwise.
     const captcha_token = user ? undefined : await captcha.challenge()
     return submitReports({
