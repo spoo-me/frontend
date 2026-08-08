@@ -70,7 +70,7 @@ function ThemeHotkey() {
       }
 
       // Android IMEs and some virtual keyboards fire keydown with no
-      // `key` at all, which threw here on every mobile page.
+      // `key` at all.
       if (event.key?.toLowerCase() !== "d") {
         return
       }
