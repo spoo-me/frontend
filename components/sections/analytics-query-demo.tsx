@@ -225,8 +225,8 @@ const QUERIES: Query[] = [
 ]
 
 /* The question lands, the pills follow, the widget answers, next. */
-const ANSWER_MS = 450
-const CYCLE_MS = 5200
+const ANSWER_MS = 320
+const CYCLE_MS = 3200
 
 export function AnalyticsQueryDemo() {
   const stageRef = React.useRef<HTMLDivElement>(null)
