@@ -335,9 +335,11 @@ export function LinkSettingsForm({
     Boolean(link.meta_tags)
   )
 
-  // Destination-tag mirror (GET /api/v1/metadata): only for uncustomized
-  // links, debounced against destination edits; retry off and staleTime
-  // generous — the endpoint is 20/min rate-limited.
+  // Destination-tag mirror (GET /api/v1/metadata): only for accounts with
+  // the feature (nothing below renders without it, so the fetch would be
+  // pure waste) and only for uncustomized links, debounced against
+  // destination edits; retry off and staleTime generous — the endpoint is
+  // 20/min rate-limited and it fetches the destination server-side.
   const [debouncedUrl, setDebouncedUrl] = React.useState(normalizeUrl(longUrl))
   React.useEffect(() => {
     const t = setTimeout(() => setDebouncedUrl(normalizeUrl(longUrl)), 600)
@@ -350,7 +352,7 @@ export function LinkSettingsForm({
   const destMeta = useQuery({
     queryKey: ["url-metadata", metaFetchUrl],
     queryFn: () => fetchUrlMetadata(metaFetchUrl!),
-    enabled: !metaCustomized && Boolean(metaFetchUrl),
+    enabled: showMeta && !metaCustomized && Boolean(metaFetchUrl),
     staleTime: 10 * 60_000,
     retry: false,
     refetchOnWindowFocus: false,

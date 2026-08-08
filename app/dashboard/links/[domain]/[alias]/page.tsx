@@ -15,6 +15,7 @@ import {
 } from "@/lib/api"
 import { SpooApiError } from "@/lib/api/client"
 import { displayUrl, formatCount, formatPercent } from "@/lib/format"
+import { useFeature } from "@/hooks/use-features"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { StatusPill } from "@/components/dashboard/status-pill"
@@ -79,9 +80,13 @@ export default function LinkDetailPage() {
     enabled: !!link,
   })
 
+  // Only the settings form's domain picker consumes this, and that picker
+  // exists only for accounts with custom domains — so does the fetch.
+  const showDomains = useFeature("custom_domains") === "enabled"
   const domains = useQuery({
     queryKey: ["domains"],
     queryFn: listCustomDomains,
+    enabled: showDomains,
     staleTime: 60_000,
   })
   const domainOptions = [
