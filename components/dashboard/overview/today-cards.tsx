@@ -47,12 +47,12 @@ export function TodayCards({ linksTotal }: { linksTotal?: number }) {
     refetchInterval: 5 * MINUTE,
   })
 
-  /* All-time most recent click. The today window answers "no clicks
-     since midnight", which renders as never — wrong for a card that
-     claims most-recent-activity. The stored per-link last_click has no
-     window, so the newest one is the workspace's true last click. */
+  /* All-time, not today: this card claims most-recent-activity, and
+     the stored per-link last_click carries no window. Mongo sorts null
+     below Date, so a desc sort puts never-clicked links last and
+     items[0] is null only when nothing has ever been clicked. */
   const lastClick = useQuery({
-    queryKey: ["links", "last-click"],
+    queryKey: ["urls", "last-click"],
     queryFn: () =>
       listUrls({ pageSize: 1, sortBy: "last_click", sortOrder: "desc" }),
     refetchInterval: 5 * MINUTE,
