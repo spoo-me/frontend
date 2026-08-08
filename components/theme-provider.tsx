@@ -69,7 +69,9 @@ function ThemeHotkey() {
         return
       }
 
-      if (event.key.toLowerCase() !== "d") {
+      // Android IMEs and some virtual keyboards fire keydown with no
+      // `key` at all, which threw here on every mobile page.
+      if (event.key?.toLowerCase() !== "d") {
         return
       }
 
