@@ -283,7 +283,7 @@ export function SidebarContent({
         })}
       </nav>
 
-      {/* Breathing zone — the sidebar stays unfilled by design (ref 13). */}
+      {/* Breathing zone — the sidebar stays unfilled by design. */}
       <div className="min-h-[90px] flex-1" />
 
       <div

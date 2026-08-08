@@ -2,7 +2,7 @@ import { apiFetch, parse } from "./client"
 
 /**
  * Public link preview — the contract behind /{code}+
- * (GET /api/v1/public/preview/{code}, thoughts/link-preview-page.md §6).
+ * (GET /api/v1/public/preview/{code}).
  *
  * Safety semantics the UI relies on:
  *  - status-agnostic resolution: expired/blocked/inactive links still

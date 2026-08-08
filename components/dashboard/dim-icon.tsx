@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils"
 import { faviconUrl } from "@/lib/favicon"
 
 /**
- * Identity icons for dimension values (SPEC §7): favicons for referrers,
- * flags for countries, neutral glyph fallbacks elsewhere. The icon carries
- * identity color, so surrounding chrome stays neutral (ref 17).
+ * Identity icons for dimension values: favicons for referrers, flags for
+ * countries, neutral glyph fallbacks elsewhere. The icon carries identity
+ * color, so surrounding chrome stays neutral.
  */
 
 const COUNTRY_NAMES = new Intl.DisplayNames(["en"], { type: "region" })

@@ -5,7 +5,7 @@ import { buildLinks, type MockLink } from "./seed"
 
 /**
  * Mock for the proposed public preview endpoint
- * (GET /api/v1/public/preview/{code} — thoughts/link-preview-page.md §6).
+ * (GET /api/v1/public/preview/{code}).
  *
  * Status-agnostic resolution like the legacy Jinja preview — blocked/
  * expired/inactive links still answer (seed's `legacy`/`webinar`/`survey`

@@ -1,0 +1,86 @@
+name: Bug report
+description: Something in the spoo.me web app is broken
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This repo is the spoo.me **frontend**. If the problem is with the API, a redirect, or the database, open it in [spoo-me/spoo](https://github.com/spoo-me/spoo/issues) instead.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What went wrong, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to /dashboard/analytics
+        2. Change the range to Last 7 days
+        3. The world map stays empty
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: Page
+      description: The URL or route where it happens.
+      placeholder: https://spoo.me/dashboard/links
+    validations:
+      required: false
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did you see it
+      options:
+        - spoo.me (production)
+        - Local dev with the mock backend (npm run dev:mock)
+        - Local dev against a real backend (npm run dev)
+        - Self-hosted deployment
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Browser and OS
+      placeholder: Chrome 141 on macOS 15, or Safari on iOS 18
+    validations:
+      required: true
+
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme
+      options:
+        - Dark
+        - Light
+        - Both
+        - Not theme related
+    validations:
+      required: false
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Any errors from the browser console or the dev-server terminal.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or anything else
+      description: Screenshots and short clips help a lot for visual bugs.
+    validations:
+      required: false

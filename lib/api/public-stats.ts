@@ -3,7 +3,7 @@ import { adaptStats, type StatsResponse, type StatsWire } from "./stats"
 
 /**
  * Public per-link stats — the contract behind /stats/{code}
- * (GET|POST /api/v1/public/stats/{code}, thoughts/public-stats-page.md §6).
+ * (GET|POST /api/v1/public/stats/{code}).
  *
  * Privacy semantics the UI relies on:
  *  - missing codes and private_stats links answer with the SAME 404 (no

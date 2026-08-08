@@ -10,8 +10,8 @@ import {
 } from "@/components/errors/bodies"
 
 /**
- * Edge-composed error pages (thoughts/error-pages-system.md): Caddy
- * intercepts FastAPI's error statuses and rewrites here as
+ * Edge-composed error pages: Caddy intercepts FastAPI's error statuses
+ * and rewrites here as
  * /_error/{status}?from={uri}&code={X-Error-Code slug}. Routing keys on
  * the slug first, then the status family, then fully generic — an unknown
  * slug from a future backend must never break the error page itself.

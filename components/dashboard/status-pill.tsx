@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip"
 
 /**
- * Status tint map (DIRECTION §3): dot + text in a soft tint, same hue both
+ * Status tint map: dot + text in a soft tint, same hue both
  * themes — only the alpha math differs. Never solid fills.
  */
 const TONES = {

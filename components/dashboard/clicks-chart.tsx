@@ -20,9 +20,9 @@ import type { TimeBucket } from "@/lib/api"
 import { EmptyRange } from "@/components/dashboard/analytics/widgets/empty-range"
 
 /**
- * Structural chart (DIRECTION §3): quiet neutral ink, dashed hairline grid,
- * soft gradient fill, no dots — one violet moment budgeted for the active
- * point. Tooltip is a data card with computed rows (ref 26).
+ * Structural chart: quiet neutral ink, dashed hairline grid, soft gradient
+ * fill, no dots — one violet moment budgeted for the active point. Tooltip
+ * is a data card with computed rows.
  */
 
 const hourFmt = new Intl.DateTimeFormat("en", { hour: "numeric" })
