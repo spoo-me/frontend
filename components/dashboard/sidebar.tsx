@@ -391,7 +391,7 @@ export function DashboardSidebar() {
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (
-        e.key.toLowerCase() === "b" &&
+        e.key?.toLowerCase() === "b" &&
         (e.metaKey || e.ctrlKey) &&
         !e.altKey &&
         !e.shiftKey

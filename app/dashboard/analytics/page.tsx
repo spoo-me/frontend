@@ -266,7 +266,7 @@ export default function AnalyticsPage() {
         removeWidget(selectedId)
         return
       }
-      if (!e.key.startsWith("Arrow")) return
+      if (!e.key?.startsWith("Arrow")) return
       e.preventDefault()
       const dx = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0
       const dy = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0

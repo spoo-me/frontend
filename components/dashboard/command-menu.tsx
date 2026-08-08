@@ -213,7 +213,7 @@ export function DashboardCommandMenu() {
       }
       if (chordArmed.current && now - chordArmed.current < 800) {
         const hit = Object.entries(CHORDS).find(
-          ([, key]) => key.toLowerCase() === e.key.toLowerCase()
+          ([, key]) => key.toLowerCase() === e.key?.toLowerCase()
         )
         if (hit) {
           e.preventDefault()
