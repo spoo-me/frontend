@@ -12,9 +12,8 @@ import { PreviewMissing, PreviewUnavailable } from "@/components/preview/states"
 /**
  * Link preview — the Next replacement for the Jinja /{code}+ page. The
  * public URL stays exactly /{code}+; next.config rewrites it here.
- * Safety surface first: one SSR fetch,
- * status-agnostic (expired/blocked links still preview), destination
- * withheld for password-protected links.
+ * Safety surface first: one SSR fetch, status-agnostic (expired/blocked
+ * links still preview), destination withheld for password-protected links.
  */
 
 type Params = { params: Promise<{ code: string }> }

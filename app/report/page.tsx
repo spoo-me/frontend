@@ -7,10 +7,10 @@ import { PageFrame, Section } from "@/components/shared/section-shell"
 import { ReportForm } from "@/components/report/report-form"
 
 /**
- * Abuse-report intake. Reports are the #1 reputation lever: every
- * minute of reporting friction is added
- * report-to-resolution latency, so the single form stays minimal and the
- * bulk mode exists for the researchers arriving with a whole campaign.
+ * Abuse-report intake. Reports are the #1 reputation lever: every minute of
+ * reporting friction is added report-to-resolution latency, so the single
+ * form stays minimal and the bulk mode exists for the researchers arriving
+ * with a whole campaign.
  */
 
 export const metadata: Metadata = {

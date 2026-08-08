@@ -15,9 +15,9 @@ import {
 
 /**
  * Public per-link stats — the Next replacement for the Jinja /stats/{code}
- * page. SSR-first: the default-range payload is one fetch, resolved
- * here; range changes and the password flow happen
- * client-side against the same endpoint. Bare /stats stays on FastAPI.
+ * page. SSR-first: the default-range payload is one fetch, resolved here;
+ * range changes and the password flow happen client-side against the same
+ * endpoint. Bare /stats stays on FastAPI.
  */
 
 type Params = { params: Promise<{ code: string }> }
