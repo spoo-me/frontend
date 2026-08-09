@@ -962,8 +962,8 @@ async function handle(req: NextRequest, path: string[]) {
       // ?mode=fresh = a brand-new account with zero data everywhere, but
       // onboarding done so the dashboard renders (empty-state testing).
       // ?mode=unverified = onboarded_at set but the email never verified.
-      // 564 legacy prod accounts sit in this state; it used to bounce the
-      // onboarding and dashboard gates off each other forever.
+      // Exercises the gate ordering in app/onboarding/layout.tsx: this state
+      // must land on /onboarding/verify, not bounce between the gates.
       const mode = params.get("mode")
       const fresh = mode === "fresh"
       g.__spooMock = fresh

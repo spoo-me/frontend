@@ -27,9 +27,7 @@ export default function OnboardingLayout({
     // Verification is checked BEFORE onboarded_at, and the order is load
     // bearing. The dashboard gate turns away any unverified account, so
     // forwarding one there on the strength of onboarded_at alone bounces it
-    // straight back here and the two gates alternate forever. 564 legacy
-    // accounts carry onboarded_at with an unverified email and were locked
-    // out of the product entirely by exactly that loop.
+    // straight back here and the two gates alternate forever.
     if (!user.email_verified) {
       // Email-password stragglers who closed the signup tab before entering
       // the OTP get to see the welcome beat first; anything past it, and any

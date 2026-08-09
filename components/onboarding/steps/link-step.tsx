@@ -95,8 +95,7 @@ export function LinkStep({
 
   // Bare domains are normalized, never rejected: the composer already accepts
   // "example.com" and saves it as https, so first-run must not be stricter
-  // than the dashboard. A missing scheme used to disable the button with
-  // nothing on screen to explain why, which read as a broken app.
+  // than the dashboard.
   const normalizedUrl = normalizeUrl(url)
   const liveUrlProblem = url.trim() ? urlProblem(url) : null
   const urlLooksValid = Boolean(url.trim()) && !liveUrlProblem
@@ -224,7 +223,7 @@ export function LinkStep({
                   translator replaces the label's text node with its own,
                   and React's next removal of that node throws
                   NotFoundError, which trips the error boundary and blanks
-                  the page. Confirmed in prod on a translated session. */}
+                  the page. */}
               <Button
                 translate="no"
                 onClick={() => void copy()}

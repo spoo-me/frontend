@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest"
 
 import { normalizeUrl, urlProblem } from "./validation"
 
-/* Regression cover for the first-run destination field, which used to gate
-   submit on a bare /^https?:\/\// regex. A pasted "google.com" left the
-   button disabled with nothing on screen explaining why, so people skipped
-   the step. Onboarding now normalizes exactly like the composer does. */
+/* Regression cover for the first-run destination field: onboarding must
+   accept anything the composer accepts, normalizing bare domains instead of
+   silently disabling submit. */
 
 describe("normalizeUrl", () => {
   it("adds https to a bare domain", () => {
