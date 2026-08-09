@@ -13,7 +13,11 @@ export default function GlobalError({
   error: Error & { digest?: string }
 }) {
   useEffect(() => {
+    // This boundary replaces the whole document, and most people who land
+    // here close the tab. Sentry batches, so without an explicit flush the
+    // report leaves with them and the crash never shows up at all.
     Sentry.captureException(error)
+    void Sentry.flush(2000)
   }, [error])
 
   return (
