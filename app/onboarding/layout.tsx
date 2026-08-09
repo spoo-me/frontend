@@ -24,19 +24,24 @@ export default function OnboardingLayout({
       router.replace("/login?next=/onboarding")
       return
     }
+    // Verification is checked BEFORE onboarded_at, and the order is load
+    // bearing. The dashboard gate turns away any unverified account, so
+    // forwarding one there on the strength of onboarded_at alone bounces it
+    // straight back here and the two gates alternate forever. 564 legacy
+    // accounts carry onboarded_at with an unverified email and were locked
+    // out of the product entirely by exactly that loop.
+    if (!user.email_verified) {
+      // Email-password stragglers who closed the signup tab before entering
+      // the OTP get to see the welcome beat first; anything past it, and any
+      // already-onboarded account, needs the OTP now.
+      const needsOtpNow =
+        Boolean(user.onboarded_at) || (step !== "welcome" && step !== "")
+      if (!onVerify && needsOtpNow) router.replace("/onboarding/verify")
+      return
+    }
     if (user.onboarded_at) {
       router.replace("/dashboard")
       return
-    }
-    // Email-password stragglers who closed the signup tab before entering
-    // the OTP — everything past the welcome screen needs a verified email.
-    if (
-      !user.email_verified &&
-      !onVerify &&
-      step !== "welcome" &&
-      step !== ""
-    ) {
-      router.replace("/onboarding/verify")
     }
   }, [loading, user, router, onVerify, step])
 
@@ -47,8 +52,10 @@ export default function OnboardingLayout({
   const redirecting =
     !loading &&
     user !== null &&
-    (Boolean(user.onboarded_at) ||
-      (!user.email_verified && !onVerify && step !== "welcome" && step !== ""))
+    (!user.email_verified
+      ? !onVerify &&
+        (Boolean(user.onboarded_at) || (step !== "welcome" && step !== ""))
+      : Boolean(user.onboarded_at))
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-background">
