@@ -961,7 +961,11 @@ async function handle(req: NextRequest, path: string[]) {
       }
       // ?mode=fresh = a brand-new account with zero data everywhere, but
       // onboarding done so the dashboard renders (empty-state testing).
-      const fresh = params.get("mode") === "fresh"
+      // ?mode=unverified = onboarded_at set but the email never verified.
+      // Exercises the gate ordering in app/onboarding/layout.tsx: this state
+      // must land on /onboarding/verify, not bounce between the gates.
+      const mode = params.get("mode")
+      const fresh = mode === "fresh"
       g.__spooMock = fresh
         ? {
             ...initial(),
@@ -974,10 +978,20 @@ async function handle(req: NextRequest, path: string[]) {
             providers: [],
             pfp: null,
           }
-        : initial()
+        : mode === "unverified"
+          ? {
+              ...initial(),
+              verified: false,
+              onboardedAt: "2026-05-14T00:12:18+00:00",
+            }
+          : initial()
       return json({
         success: true,
-        note: fresh ? "mock reset (fresh account)" : "mock state reset",
+        note: fresh
+          ? "mock reset (fresh account)"
+          : mode === "unverified"
+            ? "mock reset (onboarded but unverified email)"
+            : "mock state reset",
       })
     }
 

@@ -32,6 +32,7 @@ import {
   type ShortUrl,
 } from "@/lib/api"
 import { findUnsupportedGraphemes, isEmojiCandidate } from "@/lib/emoji-alias"
+import { normalizeUrl, urlProblem } from "@/lib/validation"
 import { useAliasCheck } from "@/hooks/use-alias-check"
 import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
 import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
@@ -92,7 +93,21 @@ export function LinkStep({
   // one create option this step offers.
   const optionUse = useCreateOptionTracker("onboarding")
 
-  const urlLooksValid = /^https?:\/\/\S+\.\S+/.test(url.trim())
+  // Bare domains are normalized, never rejected: the composer already accepts
+  // "example.com" and saves it as https, so first-run must not be stricter
+  // than the dashboard.
+  const normalizedUrl = normalizeUrl(url)
+  const liveUrlProblem = url.trim() ? urlProblem(url) : null
+  const urlLooksValid = Boolean(url.trim()) && !liveUrlProblem
+  const [settledUrl, setSettledUrl] = React.useState("")
+  React.useEffect(() => {
+    const t = setTimeout(() => setSettledUrl(url.trim()), 350)
+    return () => clearTimeout(t)
+  }, [url])
+  // Same debounce as the composer's mirror: half-typed URLs aren't scolded.
+  const shownUrlProblem = settledUrl === url.trim() ? liveUrlProblem : null
+  const showNormalization =
+    url.trim().length > 3 && normalizedUrl !== url.trim() && !liveUrlProblem
 
   // Live alias availability via the shared hook (letters/numbers OR emoji);
   // the terse first-run badge maps the reason. A create-time collision is
@@ -126,7 +141,7 @@ export function LinkStep({
     setError(null)
     try {
       const input: ShortenInput = {
-        long_url: url.trim(),
+        long_url: normalizedUrl,
         ...(alias ? { alias } : {}),
       }
       const link = await shorten(input)
@@ -170,7 +185,13 @@ export function LinkStep({
 
   async function copy() {
     if (!created) return
-    await navigator.clipboard.writeText(created.short_url)
+    // A denied clipboard permission rejects; without this the rejection is
+    // unhandled and the button silently stays on "Copy link".
+    try {
+      await navigator.clipboard.writeText(created.short_url)
+    } catch {
+      return
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 1600)
   }
@@ -198,7 +219,17 @@ export function LinkStep({
             <LinkResult created={created} linkRef={linkRef} />
 
             <div className="mt-7 flex items-center justify-center gap-2">
-              <Button onClick={() => void copy()} size="sm" variant="outline">
+              {/* translate="no" on a control whose label swaps: a page
+                  translator replaces the label's text node with its own,
+                  and React's next removal of that node throws
+                  NotFoundError, which trips the error boundary and blanks
+                  the page. */}
+              <Button
+                translate="no"
+                onClick={() => void copy()}
+                size="sm"
+                variant="outline"
+              >
                 {copied ? (
                   <>
                     <Check className="size-3.5 text-live" />
@@ -250,16 +281,36 @@ export function LinkStep({
               >
                 Destination URL
               </label>
+              {/* type="text", not "url": the browser's own validation rejects
+                  a bare domain and blocks submit with a native bubble, which
+                  would defeat the normalization below. */}
               <Input
                 id="ob-url"
-                type="url"
+                type="text"
+                inputMode="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/very/long/path?with=params"
                 autoFocus
-                required
+                autoComplete="off"
+                spellCheck={false}
+                aria-invalid={shownUrlProblem ? true : undefined}
+                aria-describedby="ob-url-help"
                 className="h-10"
               />
+              <p
+                id="ob-url-help"
+                className={cn(
+                  "text-xs",
+                  shownUrlProblem
+                    ? "text-destructive"
+                    : "text-muted-foreground/70"
+                )}
+                {...(shownUrlProblem ? { role: "alert" } : {})}
+              >
+                {shownUrlProblem ??
+                  (showNormalization ? `Saved as ${normalizedUrl}` : "")}
+              </p>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -303,6 +354,7 @@ export function LinkStep({
 
             <Button
               type="submit"
+              translate="no"
               className="mt-2 h-10 w-full"
               disabled={
                 pending ||
@@ -360,7 +412,13 @@ function LinkResult({
 
   return (
     <div ref={linkRef} className="flex flex-col items-center gap-3">
-      <div className="font-mono font-semibold text-3xl tracking-tight sm:text-4xl">
+      {/* translate="no": a link address is never prose, and letting a page
+          translator rewrite these text nodes both corrupts the URL and breaks
+          React's next removal of them. */}
+      <div
+        translate="no"
+        className="font-mono font-semibold text-3xl tracking-tight sm:text-4xl"
+      >
         <span className="text-muted-foreground/45">{host}</span>
         <span className="text-foreground">{slug}</span>
       </div>

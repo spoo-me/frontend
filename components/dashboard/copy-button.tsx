@@ -26,7 +26,14 @@ export function CopyButton({
   const copy = async (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    await navigator.clipboard.writeText(value)
+    // Clipboard writes reject on a denied permission or a non-secure context,
+    // and an unhandled rejection here would leave the button stuck on its
+    // pre-copy face with no explanation. Swallow and skip the confirmation.
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      return
+    }
     if (trackAs) trackUiAction(trackAs)
     setCopied(true)
     if (timer.current) clearTimeout(timer.current)
@@ -36,6 +43,9 @@ export function CopyButton({
   return (
     <button
       type="button"
+      // The icon swaps on copy; a page translator that rewrote this subtree
+      // would make React's removal of the old child throw. See link-step.
+      translate="no"
       onClick={copy}
       aria-label={copied ? "Copied" : label}
       className={cn(
