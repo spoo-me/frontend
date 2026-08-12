@@ -36,6 +36,7 @@ import {
   shortUrlOf,
 } from "@/components/dashboard/links/link-actions"
 import { LinkSettingsForm } from "@/components/dashboard/links/link-settings-form"
+import { linkDetailPath } from "@/lib/link-detail"
 
 const RANGES = [
   { label: "24h", days: 1 },
@@ -264,6 +265,13 @@ export default function LinkDetailPage() {
               link={link}
               domains={domainOptions}
               layout="wide"
+              // The route IS the link's address, so a rename strands this
+              // page on a 404 and leaves the settings panel on a skeleton.
+              // replace(), not push(), so Back doesn't return to a dead URL.
+              onSaved={(next) => {
+                const path = linkDetailPath(next)
+                if (path !== window.location.pathname) router.replace(path)
+              }}
             />
           ) : (
             <Skeleton className="h-64 w-full" />

@@ -27,10 +27,15 @@ export function LinkSheet({
   link,
   open,
   onOpenChange,
+  onSaved,
 }: {
   link: UrlListItem | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** The saved link. The page re-addresses ?link= with it: a rename moves
+      the link out from under the old param, which otherwise resolves to a
+      404 and leaves the sheet stuck on "loading…" forever. */
+  onSaved?: (next: UrlListItem) => void
 }) {
   const showDomains = useFeature("custom_domains") === "enabled"
   const domains = useQuery({
@@ -142,7 +147,11 @@ export function LinkSheet({
               }}
               className="px-5 py-5"
             >
-              <LinkSettingsForm link={link} domains={domainOptions} />
+              <LinkSettingsForm
+                link={link}
+                domains={domainOptions}
+                onSaved={onSaved}
+              />
             </motion.div>
           </>
         )}

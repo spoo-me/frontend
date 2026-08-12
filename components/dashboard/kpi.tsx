@@ -37,15 +37,25 @@ export function KpiCard({
   return (
     <Panel className={cn("flex flex-col bg-shell", className)}>
       <div className="px-4 pt-3.5 pb-3">
-        <div className="label-mono flex min-w-0 items-center gap-1.5 text-muted-foreground">
-          <span className="truncate">{label}</span>
+        {/* Below sm the label wraps to a second line rather than truncating
+            away its scope; the grid row stretches both cards to match, so
+            nothing needs a reserved height. */}
+        <div className="label-mono flex min-w-0 items-start gap-1.5 text-muted-foreground sm:items-center">
+          <span className="line-clamp-2 sm:truncate">{label}</span>
           {badge}
         </div>
-        <div className="mt-2 flex items-baseline gap-1.5">
-          <span className="font-mono font-semibold text-[26px] text-foreground tabular-nums leading-none tracking-tight">
+        {/* min-w-0 so a big number or a wordy value (a "Last click" phrase,
+            a seven-figure count) wraps inside the card instead of pushing
+            past its edge on a half-width phone tile. */}
+        <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
+          <span className="min-w-0 break-words font-mono font-semibold text-[26px] text-foreground tabular-nums leading-none tracking-tight">
             {value}
           </span>
-          {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
+          {sub && (
+            <span className="truncate text-muted-foreground text-xs">
+              {sub}
+            </span>
+          )}
         </div>
       </div>
       <div className="min-h-0 flex-1">{chart}</div>
@@ -54,8 +64,11 @@ export function KpiCard({
           {delta != null ? (
             <>
               <DeltaText value={delta} />
-              <span className="flex items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground/70">
+              <span className="flex min-w-0 items-center gap-1.5">
+                {/* The strip is a fixed h-8 and this wraps on a narrow card,
+                    so it stays hidden below sm; the delta and the hint carry
+                    the meaning without it. */}
+                <span className="hidden truncate whitespace-nowrap text-[11px] text-muted-foreground/70 sm:inline">
                   {deltaLabel}
                 </span>
                 <InfoHint label="How the delta is computed" className="-mr-1">
@@ -64,7 +77,7 @@ export function KpiCard({
               </span>
             </>
           ) : (
-            <span className="text-[11px] text-muted-foreground/70">
+            <span className="truncate whitespace-nowrap text-[11px] text-muted-foreground/70">
               {footer}
             </span>
           )}

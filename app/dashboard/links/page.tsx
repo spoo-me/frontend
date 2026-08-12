@@ -932,38 +932,44 @@ export default function LinksPage() {
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="pointer-events-none sticky bottom-8 z-20 mt-auto flex justify-center pt-4"
           >
-            <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border/60 bg-popover/95 p-1.5 pl-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]">
-              <span className="mr-1 font-mono text-foreground text-xs tabular-nums">
+            {/* max-w keeps the pill inside the viewport; below sm the action
+                labels collapse to their icons so it fits a phone. */}
+            <div className="pointer-events-auto flex min-w-0 max-w-[calc(100vw-1.5rem)] items-center gap-1 overflow-x-auto rounded-full border border-border/60 bg-popover/95 p-1.5 pl-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]">
+              <span className="mr-1 shrink-0 font-mono text-foreground text-xs tabular-nums">
                 {selectedIds.size} selected
               </span>
               <Button
                 variant="outline"
                 size="sm"
+                className="shrink-0 max-sm:px-2.5"
+                aria-label="Activate selected"
                 disabled={bulk.isPending}
                 onClick={() =>
                   bulk.mutate({ ids: [...selectedIds], action: "ACTIVE" })
                 }
               >
                 <Play data-icon="inline-start" />
-                Activate
+                <span className="max-sm:hidden">Activate</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
+                className="shrink-0 max-sm:px-2.5"
+                aria-label="Deactivate selected"
                 disabled={bulk.isPending}
                 onClick={() =>
                   bulk.mutate({ ids: [...selectedIds], action: "INACTIVE" })
                 }
               >
                 <Pause data-icon="inline-start" />
-                Deactivate
+                <span className="max-sm:hidden">Deactivate</span>
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="px-2.5"
+                    className="shrink-0 px-2.5"
                     aria-label="More bulk actions"
                     disabled={bulk.isPending}
                   >
@@ -996,11 +1002,13 @@ export default function LinksPage() {
               <Button
                 variant="destructive"
                 size="sm"
+                className="shrink-0 max-sm:px-2.5"
+                aria-label="Delete selected"
                 disabled={bulk.isPending}
                 onClick={() => setBulkConfirm(true)}
               >
                 <Trash2 data-icon="inline-start" />
-                Delete
+                <span className="max-sm:hidden">Delete</span>
               </Button>
               <span
                 aria-hidden
@@ -1189,6 +1197,10 @@ export default function LinksPage() {
         link={selectedLink}
         open={selected !== null}
         onOpenChange={(open) => setSelected(open ? selected : null)}
+        // Re-address the sheet at whatever the link is now: an alias or
+        // domain change moves it out from under the old ?link= value, which
+        // then resolves to a 404 and wedges the sheet on "loading…".
+        onSaved={(next) => setSelected(linkSheetParam(next))}
       />
     </div>
   )
