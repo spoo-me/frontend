@@ -150,13 +150,37 @@ function urlFormatProblem(url: string): string | null {
   return null
 }
 
+/** Host of a URL, lowercased with userinfo, port and trailing dot removed —
+    null when the string has no parseable authority. Mirrors Python's
+    urlparse().hostname, which is what the backend checks against. */
+function hostOf(url: string): string | null {
+  const m = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]*)/i.exec(url)
+  if (!m) return null
+  const netloc = m[1]
+  const at = netloc.lastIndexOf("@")
+  let host = at >= 0 ? netloc.slice(at + 1) : netloc
+  // A colon after the last "]" is a port; inside brackets it's an IPv6 literal.
+  const colon = host.lastIndexOf(":")
+  if (colon > host.lastIndexOf("]")) host = host.slice(0, colon)
+  return host.toLowerCase().replace(/\.$/, "") || null
+}
+
+/** Mirror of shared/validators.py is_self_referential(). Host-scoped: a
+    destination is only a redirect loop when the request would come back to
+    us. A foreign URL that merely mentions the name in its path or query
+    (an analytics dashboard filtered on spoo.me, say) is somebody else's. */
+function selfReferential(url: string): boolean {
+  const host = hostOf(url)
+  if (!host) return false
+  return SELF_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`))
+}
+
 /** Boolean mirror of shared/validators.py validate_url() — what the wire
     value must pass to avoid a 400 "URL is not allowed or invalid". The
     mock API enforces exactly this. */
 export function validDestinationUrl(url: string): boolean {
   if (!url || /\s/.test(url)) return false
-  const lower = url.toLowerCase()
-  if (SELF_DOMAINS.some((d) => lower.includes(d))) return false
+  if (selfReferential(url)) return false
   return urlFormatProblem(url) === null
 }
 
@@ -170,8 +194,6 @@ export function urlProblem(value: string): string | null {
   if (v.length > LONG_URL_MAX_LENGTH)
     return `That URL is too long (${LONG_URL_MAX_LENGTH.toLocaleString()} characters max).`
   if (/\s/.test(v)) return "URLs can't contain spaces. Encode them as %20."
-  const lower = v.toLowerCase()
-  if (SELF_DOMAINS.some((d) => lower.includes(d)))
-    return "Short links can't point back at spoo.me."
+  if (selfReferential(v)) return "Short links can't point back at spoo.me."
   return urlFormatProblem(v)
 }

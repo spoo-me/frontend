@@ -43,4 +43,30 @@ describe("urlProblem", () => {
   it("rejects short links pointing back at spoo.me", () => {
     expect(urlProblem("spoo.me/abc")).toBeTruthy()
   })
+
+  it("rejects a subdomain of spoo.me", () => {
+    expect(urlProblem("https://www.spoo.me/abc")).toBeTruthy()
+  })
+
+  /* The self-link guard is host-scoped, mirroring shared/validators.py.
+     A foreign destination that merely mentions the name in its path or
+     query is not a redirect loop — the substring check used to reject
+     analytics dashboard URLs filtered on spoo.me. */
+  it("accepts a foreign host that mentions spoo.me in the query", () => {
+    expect(
+      urlProblem("https://eu.posthog.com/project/220993/web?filter=spoo.me")
+    ).toBeNull()
+  })
+
+  it("accepts a foreign host that mentions spoo.me in the path", () => {
+    expect(urlProblem("https://example.com/spoo.me/guide")).toBeNull()
+  })
+
+  it("does not treat a lookalike host as self-referential", () => {
+    expect(urlProblem("https://notspoo.me/abc")).toBeNull()
+  })
+
+  it("blocks spoo.me as the real host even behind userinfo", () => {
+    expect(urlProblem("https://example.com@spoo.me/")).toBeTruthy()
+  })
 })

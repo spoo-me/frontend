@@ -402,8 +402,15 @@ export function LinkSettingsForm({
   if (normalizeUrl(longUrl) !== (link.long_url ?? ""))
     patch.long_url = normalizeUrl(longUrl)
   if (aliasChanged && alias) patch.alias = alias
-  if ((domain === "spoo.me" ? null : domain) !== link.domain)
-    patch.domain = domain === "spoo.me" ? null : domain
+  // Both sides normalize to the wire shape (null == system default) before
+  // comparing. The stored link always carries a real fqdn — the backend's
+  // UrlV2Doc.domain is non-nullable — so comparing the wire value against
+  // link.domain directly made every default-domain save look like a domain
+  // change and put a "spoo.me -> spoo.me" row in the confirm dialog.
+  const wireDomain = domain === defaultDomain ? null : domain
+  const linkWireDomain =
+    !link.domain || link.domain === defaultDomain ? null : link.domain
+  if (wireDomain !== linkWireDomain) patch.domain = wireDomain
   if (passwordMode === "set" && newPassword) patch.password = newPassword
   if (passwordMode === "remove") patch.password = null
   const expiryUnix = expiry
