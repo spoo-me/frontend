@@ -690,10 +690,14 @@ export function LinkSettingsForm({
                 // Typing IS the intent to set one. Only Suggest used to move
                 // the mode, so a typed password left it on "keep", the patch
                 // never carried `password`, and the form read as unchanged.
-                // Clearing the field returns to "keep", matching the X below.
+                // Emptying only relaxes back to "keep" when no password is
+                // stored, where both modes render this same field. On a link
+                // that has one, "keep" is the summary row, so relaxing would
+                // yank the input out from under the cursor mid-edit.
                 onChange={(v) => {
                   setNewPassword(v)
-                  setPasswordMode(v ? "set" : "keep")
+                  if (v) setPasswordMode("set")
+                  else if (!link.password_set) setPasswordMode("keep")
                 }}
                 visible={passwordVisible}
                 onVisibleChange={setPasswordVisible}
