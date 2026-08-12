@@ -687,7 +687,14 @@ export function LinkSettingsForm({
             <div className="flex items-center gap-1.5">
               <PasswordInput
                 value={newPassword}
-                onChange={setNewPassword}
+                // Typing IS the intent to set one. Only Suggest used to move
+                // the mode, so a typed password left it on "keep", the patch
+                // never carried `password`, and the form read as unchanged.
+                // Clearing the field returns to "keep", matching the X below.
+                onChange={(v) => {
+                  setNewPassword(v)
+                  setPasswordMode(v ? "set" : "keep")
+                }}
                 visible={passwordVisible}
                 onVisibleChange={setPasswordVisible}
                 placeholder={
