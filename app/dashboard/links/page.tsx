@@ -933,9 +933,8 @@ export default function LinksPage() {
             className="pointer-events-none sticky bottom-8 z-20 mt-auto flex justify-center pt-4"
           >
             {/* max-w keeps the pill inside the viewport; below sm the action
-                labels collapse to their icons so it never outgrows a phone
-                (at full width it clipped "N selected" off the left edge). */}
-            <div className="pointer-events-auto flex max-w-[calc(100vw-1.5rem)] items-center gap-1 rounded-full border border-border/60 bg-popover/95 p-1.5 pl-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]">
+                labels collapse to their icons so it fits a phone. */}
+            <div className="pointer-events-auto flex min-w-0 max-w-[calc(100vw-1.5rem)] items-center gap-1 overflow-x-auto rounded-full border border-border/60 bg-popover/95 p-1.5 pl-3.5 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_18px_45px_-10px_rgba(0,0,0,0.22)] backdrop-blur-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.3),0_18px_45px_-10px_rgba(0,0,0,0.65)]">
               <span className="mr-1 shrink-0 font-mono text-foreground text-xs tabular-nums">
                 {selectedIds.size} selected
               </span>

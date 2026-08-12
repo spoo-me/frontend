@@ -37,10 +37,9 @@ export function KpiCard({
   return (
     <Panel className={cn("flex flex-col bg-shell", className)}>
       <div className="px-4 pt-3.5 pb-3">
-        {/* Two cards per row on a narrow phone truncated "Clicks · today" to
-            "CLICKS · TOD…". Below sm the label wraps to a second line instead
-            of losing its scope; the grid row stretches both cards to match,
-            so nothing needs a reserved height. */}
+        {/* Below sm the label wraps to a second line rather than truncating
+            away its scope; the grid row stretches both cards to match, so
+            nothing needs a reserved height. */}
         <div className="label-mono flex min-w-0 items-start gap-1.5 text-muted-foreground sm:items-center">
           <span className="line-clamp-2 sm:truncate">{label}</span>
           {badge}
@@ -66,9 +65,9 @@ export function KpiCard({
             <>
               <DeltaText value={delta} />
               <span className="flex min-w-0 items-center gap-1.5">
-                {/* The strip is a fixed h-8; letting this wrap broke out of
-                    it on narrow cards. It stays hidden below sm — the delta
-                    and the hint carry the meaning without it. */}
+                {/* The strip is a fixed h-8 and this wraps on a narrow card,
+                    so it stays hidden below sm; the delta and the hint carry
+                    the meaning without it. */}
                 <span className="hidden truncate whitespace-nowrap text-[11px] text-muted-foreground/70 sm:inline">
                   {deltaLabel}
                 </span>

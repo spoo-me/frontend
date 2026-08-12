@@ -403,10 +403,8 @@ export function LinkSettingsForm({
     patch.long_url = normalizeUrl(longUrl)
   if (aliasChanged && alias) patch.alias = alias
   // Both sides normalize to the wire shape (null == system default) before
-  // comparing. The stored link always carries a real fqdn — the backend's
-  // UrlV2Doc.domain is non-nullable — so comparing the wire value against
-  // link.domain directly made every default-domain save look like a domain
-  // change and put a "spoo.me -> spoo.me" row in the confirm dialog.
+  // comparing: the stored link always carries a real fqdn, since the
+  // backend's UrlV2Doc.domain is non-nullable.
   const wireDomain = domain === defaultDomain ? null : domain
   const linkWireDomain =
     !link.domain || link.domain === defaultDomain ? null : link.domain
@@ -469,6 +467,10 @@ export function LinkSettingsForm({
     onSuccess: (next) => {
       trackLinkUpdated(patch)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
+      // Single-resource reads live under a separate ["url", domain, alias]
+      // prefix, and the detail header and off-page sheet both render from
+      // one. Without this they keep showing pre-save values.
+      queryClient.invalidateQueries({ queryKey: ["url"] })
       setPasswordMode("keep")
       setNewPassword("")
       // A data-URI upload echoes back as a rehosted CDN https URL — adopt

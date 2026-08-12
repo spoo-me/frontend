@@ -36,7 +36,7 @@ export function safeNext(raw: string | null): string | null {
  *      `validators` package's URL grammar (registered domain hosts only:
  *      no IPs, no single-label hosts, TLD ends in a letter, port 1-65535,
  *      strict query fields, RFC 3986 path/fragment charsets), and the
- *      self-link substring guard (400 "URL is not allowed or invalid")
+ *      self-link host guard (400 "URL is not allowed or invalid")
  *
  * The DB regex blocklist (400 "URL is blocked") stays server-side; forms
  * render that rejection inline when it comes back.
@@ -44,8 +44,8 @@ export function safeNext(raw: string | null): string | null {
 
 export const LONG_URL_MAX_LENGTH = 8192
 
-/** settings.blocked_self_domains — matched as a substring of the whole
-    lowercased URL (redirect-loop prevention), not just the hostname. */
+/** settings.blocked_self_domains — matched against the destination's host,
+    or a subdomain of it (redirect-loop prevention). */
 const SELF_DOMAINS = ["spoo.me"]
 
 /** Forgiving URL normalization, same as the links editors: trim, then
