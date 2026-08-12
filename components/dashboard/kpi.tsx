@@ -45,11 +45,18 @@ export function KpiCard({
           <span className="line-clamp-2 sm:truncate">{label}</span>
           {badge}
         </div>
-        <div className="mt-2 flex items-baseline gap-1.5">
-          <span className="font-mono font-semibold text-[26px] text-foreground tabular-nums leading-none tracking-tight">
+        {/* min-w-0 so a big number or a wordy value (a "Last click" phrase,
+            a seven-figure count) wraps inside the card instead of pushing
+            past its edge on a half-width phone tile. */}
+        <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
+          <span className="min-w-0 break-words font-mono font-semibold text-[26px] text-foreground tabular-nums leading-none tracking-tight">
             {value}
           </span>
-          {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
+          {sub && (
+            <span className="truncate text-muted-foreground text-xs">
+              {sub}
+            </span>
+          )}
         </div>
       </div>
       <div className="min-h-0 flex-1">{chart}</div>

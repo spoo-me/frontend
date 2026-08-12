@@ -53,6 +53,12 @@ export function VerifyPanel({
   const succeed = React.useCallback(() => {
     setStatus("success")
     setError(null)
+    // Drop focus before painting the success state. The slot holding the
+    // caret keeps data-active, whose focus-ring utilities sit in the same
+    // cascade layer as the success ones, so leaving it focused rendered five
+    // slots green and the sixth on the neutral focus ring. Blurring means no
+    // slot is active and all six agree.
+    ;(document.activeElement as HTMLElement | null)?.blur()
     // Hold the success state long enough to register, then advance.
     setTimeout(onDone, 900)
   }, [onDone])
@@ -125,7 +131,7 @@ export function VerifyPanel({
       </h1>
       <p className="mt-3 max-w-sm text-muted-foreground text-sm leading-relaxed">
         Enter the 6-digit code sent to{" "}
-        <span className="break-all font-medium text-foreground">
+        <span className="ph-no-capture break-all font-medium text-foreground">
           {user?.email}
         </span>
       </p>
@@ -140,11 +146,13 @@ export function VerifyPanel({
         Wrong email? Start over
       </button>
 
+      {/* ph-no-capture: the slots render the code as text, so without this a
+          session replay records a live verification code in the clear. */}
       <motion.div
         key={status === "error" ? `err-${error}` : "ok"}
         animate={status === "error" ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }}
         transition={{ duration: 0.3 }}
-        className="mt-9"
+        className="ph-no-capture mt-9"
       >
         <InputOTP
           maxLength={6}
