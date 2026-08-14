@@ -90,8 +90,14 @@ export const SCOPE_DIMENSIONS = [
 ] as const
 export type ScopeDimension = (typeof SCOPE_DIMENSIONS)[number]
 /** A widget's own lens: values OR within a dimension, AND across dimensions,
-    AND with the board's global filters. */
-export type WidgetScope = Partial<Record<ScopeDimension, string[]>>
+    AND with the board's global filters.
+
+    CONSTRAINT (one-release dual-read): stored layouts may carry the link
+    scope under `url_id` (link ids, the target key) or the legacy
+    `short_code` (aliases). Read both, prefer `url_id`; legacy `short_code`
+    keeps riding the server's plain short_code filter so old /me/layouts
+    docs keep rendering. Drop the legacy key one release after this ships. */
+export type WidgetScope = Partial<Record<ScopeDimension | "url_id", string[]>>
 
 type WidgetExtras = {
   /** Custom display name; absent = the catalog title. */
@@ -351,11 +357,15 @@ function pick<T extends string>(
   return allowed.includes(v as T) ? (v as T) : fallback
 }
 
+/** Every key a stored scope may carry — the six pickable dimensions plus
+    `url_id` (see the WidgetScope dual-read constraint). */
+const SCOPE_KEYS = [...SCOPE_DIMENSIONS, "url_id"] as const
+
 /** Clamp anything scope-shaped into a valid WidgetScope, or drop it. */
 function normalizeScope(raw: unknown): WidgetScope | undefined {
   if (!isRecord(raw)) return undefined
   const scope: WidgetScope = {}
-  for (const dim of SCOPE_DIMENSIONS) {
+  for (const dim of SCOPE_KEYS) {
     const values = raw[dim]
     if (!Array.isArray(values)) continue
     const clean = [
@@ -611,7 +621,11 @@ export function mergeScope(
   >,
   scope: WidgetScope | undefined
 ):
-  | { links: string[] | undefined; filters: Record<string, string[]> }
+  | {
+      links: string[] | undefined
+      urlIds: string[] | undefined
+      filters: Record<string, string[]>
+    }
   | "disjoint" {
   const both = (a?: string[], b?: string[]): string[] | undefined => {
     if (a?.length && b?.length) {
@@ -620,7 +634,12 @@ export function mergeScope(
     }
     return a?.length ? a : b?.length ? b : undefined
   }
-  const links = both(globalLinks, scope?.short_code)
+  // Dual-read (see WidgetScope): a scope carrying url_id wins over its own
+  // legacy short_code. The board's global link lens is alias-vocabulary, so
+  // it can't intersect with ids client-side — both go on the wire and the
+  // server ANDs the two filters.
+  const urlIds = scope?.url_id?.length ? scope.url_id : undefined
+  const links = both(globalLinks, urlIds ? undefined : scope?.short_code)
   if (links !== undefined && links.length === 0) return "disjoint"
   const filters: Record<string, string[]> = {}
   for (const dim of SCOPE_DIMENSIONS) {
@@ -629,5 +648,5 @@ export function mergeScope(
     if (merged !== undefined && merged.length === 0) return "disjoint"
     if (merged) filters[dim] = merged
   }
-  return { links, filters }
+  return { links, urlIds, filters }
 }

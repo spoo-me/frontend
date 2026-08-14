@@ -58,6 +58,9 @@ export function useWidgetStats(
   const toMs = ctx.range.to.getTime()
   const span = toMs - fromMs
 
+  // Link lens rides two filters during the scope dual-read (analytics-layout):
+  // lens.urlIds is the url_id filter (new scopes), lens.links the legacy
+  // alias-vocabulary short_code filter (old /me/layouts docs + board chips).
   const scopedQ = useQuery({
     queryKey: [
       "stats",
@@ -65,6 +68,7 @@ export function useWidgetStats(
       groupBy,
       fromMs,
       toMs,
+      lens?.urlIds ?? null,
       lens?.links ?? null,
       lens?.filters ?? null,
     ],
@@ -73,6 +77,7 @@ export function useWidgetStats(
         startDate: ctx.range.from,
         endDate: ctx.range.to,
         groupBy,
+        urlIds: lens?.urlIds,
         shortCodes: lens?.links,
         filters: lens?.filters,
       }),
@@ -89,6 +94,7 @@ export function useWidgetStats(
       "widget-prev",
       fromMs,
       toMs,
+      lens?.urlIds ?? null,
       lens?.links ?? null,
       lens?.filters ?? null,
     ],
@@ -97,6 +103,7 @@ export function useWidgetStats(
         startDate: new Date(fromMs - span),
         endDate: ctx.range.from,
         groupBy: ["time"],
+        urlIds: lens?.urlIds,
         shortCodes: lens?.links,
         filters: lens?.filters,
       }),

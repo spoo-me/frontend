@@ -1679,7 +1679,15 @@ async function handle(req: NextRequest, path: string[]) {
   }
 
   /* ---------- stats + export ---------- */
-  if (route === "GET /v1/stats") {
+  // Shared query parsing for the account and per-link stats endpoints.
+  const parseStatsQuery = ():
+    | {
+        startMs: number
+        endMs: number
+        groupBy: StatsDimension[]
+        filters: Partial<Record<string, string[]>> | undefined
+      }
+    | NextResponse => {
     const endMs = params.get("end_date")
       ? Date.parse(params.get("end_date")!)
       : Date.now()
@@ -1693,19 +1701,11 @@ async function handle(req: NextRequest, path: string[]) {
     const rawFilters = params.get("filters")
     if (rawFilters) {
       try {
-        const parsed = JSON.parse(rawFilters) as Record<string, string[]>
-        filters = parsed
+        filters = JSON.parse(rawFilters) as Record<string, string[]>
       } catch {
         return fail(422, "invalid_filters", "filters must be JSON", "filters")
       }
     }
-    // Link scoping arrives via filters.short_code (real-API semantics);
-    // the bare short_code param is single-value anon scope there.
-    const shortCodes =
-      (filters?.short_code as string[] | undefined) ??
-      params.get("short_code")?.split(",").filter(Boolean) ??
-      null
-    if (filters?.short_code) delete filters.short_code
     for (const dim of [
       "browser",
       "os",
@@ -1716,9 +1716,59 @@ async function handle(req: NextRequest, path: string[]) {
       const v = params.get(dim)
       if (v) filters = { ...filters, [dim]: v.split(",") }
     }
+    return { startMs, endMs, groupBy, filters }
+  }
+
+  if (route === "GET /v1/stats") {
+    const q = parseStatsQuery()
+    if (q instanceof NextResponse) return q
+    const { startMs, endMs, groupBy, filters } = q
+    // Link scoping arrives via the filters JSON — url_id and short_code are
+    // plain multi-value filters on the account aggregate (AND semantics).
+    let shortCodes = (filters?.short_code as string[] | undefined) ?? null
+    delete filters?.short_code
+    const urlIds = filters?.url_id as string[] | undefined
+    delete filters?.url_id
+    if (urlIds?.length) {
+      const byId = s.links
+        .filter((l) => urlIds.includes(l.id))
+        .map((l) => l.alias)
+      shortCodes = shortCodes
+        ? shortCodes.filter((c) => byId.includes(c))
+        : byId
+      // Foreign/unknown ids slice the aggregate to nothing, not everything.
+      if (!shortCodes.length) shortCodes = ["__no_match__"]
+    }
     return json(
       generateStats(s.links, { startMs, endMs, shortCodes, filters, groupBy })
     )
+  }
+
+  if (
+    path[0] === "v1" &&
+    path[1] === "stats" &&
+    path[2] === "links" &&
+    path[3] &&
+    req.method === "GET"
+  ) {
+    // Resolve-first like the real endpoint: unknown or foreign id is a 404,
+    // not a silently-empty aggregate.
+    const link = s.links.find((l) => l.id === path[3])
+    if (!link) return fail(404, "not_found", "No such link")
+    const q = parseStatsQuery()
+    if (q instanceof NextResponse) return q
+    const { startMs, endMs, groupBy, filters } = q
+    return json({
+      ...generateStats(s.links, {
+        startMs,
+        endMs,
+        shortCodes: [link.alias],
+        filters,
+        groupBy,
+      }),
+      url_id: link.id,
+      alias: link.alias,
+    })
   }
 
   /* ---------- api keys ----------
