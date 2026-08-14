@@ -393,16 +393,24 @@ export function LinkComposer() {
       setOpen(false)
       reset()
       const short = created.short_url
-      toast.success("Link created", {
-        // Machine text reads mono, same as every short link in the app.
-        description: (
-          <span className="font-mono">{short.replace(/^https?:\/\//, "")}</span>
-        ),
-        action: {
-          label: "Copy",
-          onClick: () => navigator.clipboard.writeText(short),
-        },
-      })
+      // Machine text reads mono, same as every short link in the app.
+      const description = (
+        <span className="font-mono">{short.replace(/^https?:\/\//, "")}</span>
+      )
+      // Auto-copy on create. Safari denies clipboard writes once the network
+      // await has burned the user gesture, so the rejected branch keeps the
+      // manual Copy action as the fallback.
+      navigator.clipboard.writeText(short).then(
+        () => toast.success("Link created and copied", { description }),
+        () =>
+          toast.success("Link created", {
+            description,
+            action: {
+              label: "Copy",
+              onClick: () => navigator.clipboard.writeText(short),
+            },
+          })
+      )
     },
     onError: (err) => {
       if (err instanceof SpooApiError && err.field === "alias") {
