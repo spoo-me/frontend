@@ -161,6 +161,41 @@ function ToastConfetti() {
   return <span ref={ref} aria-hidden className="absolute" />
 }
 
+/** Action chip for the create toast. Copy feedback lives here, not in the
+    toast title: the chip starts as "Copied" when the auto-copy landed,
+    relaxes back to "Copy", and every press copies again. data-button opts
+    into sonner's own action-chip layout; the fixed width keeps the flip
+    from resizing the chip. */
+function CopyToastAction({
+  short,
+  autoCopied,
+}: {
+  short: string
+  autoCopied: boolean
+}) {
+  const [copied, setCopied] = React.useState(autoCopied)
+  React.useEffect(() => {
+    if (!copied) return
+    const t = setTimeout(() => setCopied(false), 1600)
+    return () => clearTimeout(t)
+  }, [copied])
+  return (
+    <button
+      type="button"
+      data-button
+      onClick={() =>
+        navigator.clipboard.writeText(short).then(
+          () => setCopied(true),
+          () => {}
+        )
+      }
+      className="!w-16 !justify-center !bg-primary !text-primary-foreground whitespace-nowrap"
+    >
+      {copied ? "Copied" : "Copy"}
+    </button>
+  )
+}
+
 /** Same field anatomy as the link settings form — create and edit are
     siblings and should read as one product. */
 function Field({
@@ -437,19 +472,17 @@ export function LinkComposer() {
           <ToastConfetti />
         </span>
       )
-      // Auto-copy on create. Safari denies clipboard writes once the network
-      // await has burned the user gesture, so the rejected branch keeps the
-      // manual Copy action as the fallback.
+      // Auto-copy on create; the chip's initial state says whether it landed
+      // (Safari denies clipboard writes once the network await has burned the
+      // user gesture, so the chip simply starts as "Copy" there).
+      const notify = (autoCopied: boolean) =>
+        toast.success("Link created", {
+          description,
+          action: <CopyToastAction short={short} autoCopied={autoCopied} />,
+        })
       navigator.clipboard.writeText(short).then(
-        () => toast.success("Link created and copied", { description }),
-        () =>
-          toast.success("Link created", {
-            description,
-            action: {
-              label: "Copy",
-              onClick: () => navigator.clipboard.writeText(short),
-            },
-          })
+        () => notify(true),
+        () => notify(false)
       )
     },
     onError: (err) => {
