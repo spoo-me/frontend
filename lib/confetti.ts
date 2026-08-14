@@ -1,4 +1,15 @@
-import confetti from "canvas-confetti"
+import type { Options as ConfettiOptions } from "canvas-confetti"
+
+/** Lazy-loaded so importing this seam never grows a chunk: canvas-confetti
+    only ships once a burst actually fires. A failed chunk load (offline,
+    ad-blocked) just skips the celebration. */
+async function loadConfetti() {
+  try {
+    return (await import("canvas-confetti")).default
+  } catch {
+    return null
+  }
+}
 
 /**
  * One tasteful burst for "you just made a thing" moments (first link, first
@@ -17,8 +28,10 @@ function originFor(el: HTMLElement | null): { x: number; y: number } {
   }
 }
 
-export function celebrate(from?: HTMLElement | null) {
+export async function celebrate(from?: HTMLElement | null) {
   const origin = originFor(from ?? null)
+  const confetti = await loadConfetti()
+  if (!confetti) return
   confetti({
     particleCount: 64,
     spread: 72,
@@ -30,5 +43,38 @@ export function celebrate(from?: HTMLElement | null) {
     colors: COLORS,
     origin,
     disableForReducedMotion: true,
+  })
+}
+
+/** celebrate's restrained sibling for small in-place wins (the create toast,
+    the hero shortener's result card): few brand-and-zinc particles, quick
+    decay. Deliberately quieter than a milestone. */
+const SMALL_COLORS = ["#8B5CF6", "#A78BFA", "#D4D4D8", "#71717A"]
+
+/** Burst from the top edge of an element (yOffset px below it). The rect is
+    measured up front so the burst starts where the element stood; if it left
+    the DOM while the chunk loaded, nothing fires. */
+export async function smallBurst(
+  el: HTMLElement,
+  { yOffset = 8, ...opts }: ConfettiOptions & { yOffset?: number } = {}
+) {
+  if (typeof window === "undefined") return
+  const r = el.getBoundingClientRect()
+  const confetti = await loadConfetti()
+  if (!confetti || !el.isConnected) return
+  confetti({
+    particleCount: 18,
+    spread: 55,
+    startVelocity: 14,
+    gravity: 1.2,
+    ticks: 80,
+    scalar: 0.6,
+    colors: SMALL_COLORS,
+    disableForReducedMotion: true,
+    origin: {
+      x: (r.left + r.width / 2) / window.innerWidth,
+      y: (r.top + yOffset) / window.innerHeight,
+    },
+    ...opts,
   })
 }

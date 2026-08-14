@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner"
 
 import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
+import { smallBurst } from "@/lib/confetti"
 import {
   fetchUrlMetadata,
   listCustomDomains,
@@ -124,36 +125,21 @@ function toLocalInputValue(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-/** One small brand-toned burst from the success toast, kin to the hero
-    shortener's: few particles, quick decay, honors prefers-reduced-motion.
-    Zero-size marker inside the toast; it waits out sonner's slide-in, then
-    measures the toast (its closest li) so the burst tracks wherever the
-    toast actually landed. */
+/** One smallBurst from the success toast. Zero-size marker inside the toast;
+    it waits out sonner's slide-in, then bursts from the toast (the marker's
+    closest li) so the origin tracks wherever the toast actually landed. */
 function ToastConfetti() {
   const ref = React.useRef<HTMLSpanElement>(null)
   React.useEffect(() => {
-    const t = setTimeout(async () => {
+    const t = setTimeout(() => {
       const el = ref.current
       if (!el) return
-      const r = (el.closest("li") ?? el).getBoundingClientRect()
-      const confetti = (await import("canvas-confetti")).default
-      confetti({
+      smallBurst(el.closest("li") ?? el, {
+        // Tilted toward the viewport: the toast sits in the corner.
+        angle: 100,
         // Above sonner's 999999999 toaster, else the burst hides behind
         // the very toast it comes from (canvas-confetti defaults to 100).
         zIndex: 2147483647,
-        particleCount: 18,
-        angle: 100,
-        spread: 55,
-        startVelocity: 14,
-        gravity: 1.2,
-        ticks: 80,
-        scalar: 0.6,
-        origin: {
-          x: (r.left + r.width / 2) / window.innerWidth,
-          y: (r.top + 8) / window.innerHeight,
-        },
-        colors: ["#8B5CF6", "#A78BFA", "#D4D4D8", "#71717A"],
-        disableForReducedMotion: true,
       })
     }, 350)
     return () => clearTimeout(t)
@@ -474,16 +460,21 @@ export function LinkComposer() {
       )
       // Auto-copy on create; the chip's initial state says whether it landed
       // (Safari denies clipboard writes once the network await has burned the
-      // user gesture, so the chip simply starts as "Copy" there).
+      // user gesture, so the chip simply starts as "Copy" there). The
+      // Promise.resolve hop matters: on plain-HTTP origins the clipboard API
+      // is absent and writeText throws synchronously — without it neither
+      // branch runs and the toast never fires.
       const notify = (autoCopied: boolean) =>
         toast.success("Link created", {
           description,
           action: <CopyToastAction short={short} autoCopied={autoCopied} />,
         })
-      navigator.clipboard.writeText(short).then(
-        () => notify(true),
-        () => notify(false)
-      )
+      Promise.resolve()
+        .then(() => navigator.clipboard.writeText(short))
+        .then(
+          () => notify(true),
+          () => notify(false)
+        )
     },
     onError: (err) => {
       if (err instanceof SpooApiError && err.field === "alias") {
