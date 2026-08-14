@@ -25,6 +25,7 @@ import {
   trackUiAction,
   type CreateOption,
 } from "@/lib/analytics"
+import { smallBurst } from "@/lib/confetti"
 import { addRecentLink } from "@/lib/recent-links"
 import {
   shorten,
@@ -187,26 +188,18 @@ export function InstantShortener({
     })
     trackResultCardViewed()
 
-    // One small brand-toned burst from the card. Deliberately restrained:
-    // ~2 dozen particles, quick decay, honors prefers-reduced-motion.
-    setTimeout(async () => {
+    // One smallBurst from the card, a touch fuller than the seam's default
+    // (the hero card is the page's payoff moment).
+    setTimeout(() => {
       const el = cardRef.current
-      if (!el || typeof window === "undefined") return
-      const r = el.getBoundingClientRect()
-      const confetti = (await import("canvas-confetti")).default
-      confetti({
+      if (!el) return
+      smallBurst(el, {
         particleCount: 26,
         spread: 70,
         startVelocity: 18,
-        gravity: 1.2,
         ticks: 90,
         scalar: 0.7,
-        origin: {
-          x: (r.left + r.width / 2) / window.innerWidth,
-          y: (r.top + 16) / window.innerHeight,
-        },
-        colors: ["#8B5CF6", "#A78BFA", "#D4D4D8", "#71717A"],
-        disableForReducedMotion: true,
+        yOffset: 16,
       })
     }, 180)
   }
