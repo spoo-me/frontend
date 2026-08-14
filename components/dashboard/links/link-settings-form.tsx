@@ -411,11 +411,16 @@ export function LinkSettingsForm({
   if (wireDomain !== linkWireDomain) patch.domain = wireDomain
   if (passwordMode === "set" && newPassword) patch.password = newPassword
   if (passwordMode === "remove") patch.password = null
-  const expiryUnix = expiry
-    ? Math.floor(new Date(expiry).getTime() / 1000)
-    : null
-  if (expiryUnix !== (link.expire_after ?? null))
-    patch.expire_after = expiryUnix
+  // Compare in the input's own minute precision: expire_after can carry
+  // seconds the datetime-local field can't express, and comparing raw
+  // seconds made such links open already-dirty.
+  const linkExpiryLocal = link.expire_after
+    ? toLocalInputValue(new Date(link.expire_after * 1000))
+    : ""
+  if (expiry !== linkExpiryLocal)
+    patch.expire_after = expiry
+      ? Math.floor(new Date(expiry).getTime() / 1000)
+      : null
   const maxClicksVal = maxClicks === "" ? null : Number(maxClicks)
   if (maxClicksVal !== (link.max_clicks ?? null))
     patch.max_clicks = maxClicksVal
@@ -516,8 +521,28 @@ export function LinkSettingsForm({
       aliasVerdict.state === "available" ||
       // Indeterminate check must not hard-block; the backend re-validates.
       aliasVerdict.state === "unknown" ||
-      alias === "") &&
-    (passwordMode !== "set" || newPassword.length > 0)
+      alias === "")
+
+  // The one line that answers "why is Save greyed out". Every canSave veto
+  // surfaces here — including validators whose editors are feature-gated out
+  // of the DOM (geo/variants/meta on flagless accounts), which otherwise
+  // block the button with their explanation rendered nowhere.
+  const saveBlocker = (() => {
+    if (!dirty || save.isPending) return null
+    if (
+      patch.long_url !== undefined &&
+      (longUrl.trim() === "" || urlProblem(longUrl))
+    )
+      return "Fix the destination to save."
+    if (aliasChanged && alias !== "") {
+      if (aliasVerdict.state === "checking") return "Checking the alias…"
+      if (aliasVerdict.state === "problem") return "Fix the short link to save."
+    }
+    if (variantTotal(variants) > 100) return "A/B split exceeds 100%."
+    if (geoRulesProblem(geoRules)) return "Fix the geo rules to save."
+    if (metaProblem) return "Fix the link preview to save."
+    return null
+  })()
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const changes = describeChanges(link, patch)
@@ -553,15 +578,21 @@ export function LinkSettingsForm({
               and multi-person combos are out.
             </InfoHint>
           }
-          error={aliasServerMsg}
+          error={
+            // Client verdicts that block saving speak in the error voice;
+            // as a muted hint they read as advisory and the greyed Save
+            // button goes unexplained.
+            aliasServerMsg ??
+            (aliasChanged && alias !== "" && aliasVerdict.state === "problem"
+              ? aliasVerdict.reason === "emoji_policy"
+                ? emojiPolicyHint(alias, acceptedEmoji)
+                : aliasVerdict.message
+              : null)
+          }
           hint={
             aliasVerdict.state === "available"
               ? `${domain}/${alias} is available.`
-              : aliasVerdict.state === "problem"
-                ? aliasVerdict.reason === "emoji_policy"
-                  ? emojiPolicyHint(alias, acceptedEmoji)
-                  : aliasVerdict.message
-                : "Changing the alias breaks the old address."
+              : "Changing the alias breaks the old address."
           }
         >
           <div className="flex items-center gap-1.5">
@@ -738,7 +769,6 @@ export function LinkSettingsForm({
               )}
             </div>
           )}
-          {passwordMode !== "remove" && !link.password_set && null}
         </Field>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -894,7 +924,7 @@ export function LinkSettingsForm({
         )}
       >
         <span className="mr-auto text-muted-foreground/70 text-xs">
-          {save.isPending ? "Saving…" : "Unsaved changes"}
+          {save.isPending ? "Saving…" : (saveBlocker ?? "Unsaved changes")}
         </span>
         <Button
           size="sm"
@@ -943,7 +973,10 @@ export function LinkSettingsForm({
           )}
           <AlertDialogFooter>
             <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction onClick={() => save.mutate()}>
+            <AlertDialogAction
+              disabled={save.isPending}
+              onClick={() => save.mutate()}
+            >
               Save changes
             </AlertDialogAction>
           </AlertDialogFooter>
