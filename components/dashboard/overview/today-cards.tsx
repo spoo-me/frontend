@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 
-import { getStats, timeSeriesOf } from "@/lib/api"
+import { getStats, listUrls, timeSeriesOf } from "@/lib/api"
 import { formatCount, formatWhen, pctChange } from "@/lib/format"
 import { KpiCard } from "@/components/dashboard/kpi"
 import { Sparkline } from "@/components/dashboard/analytics/widgets/sparkline"
@@ -47,6 +47,17 @@ export function TodayCards({ linksTotal }: { linksTotal?: number }) {
     refetchInterval: 5 * MINUTE,
   })
 
+  /* All-time, not today: this card claims most-recent-activity, and
+     the stored per-link last_click carries no window. Mongo sorts null
+     below Date, so a desc sort puts never-clicked links last and
+     items[0] is null only when nothing has ever been clicked. */
+  const lastClick = useQuery({
+    queryKey: ["urls", "last-click"],
+    queryFn: () =>
+      listUrls({ pageSize: 1, sortBy: "last_click", sortOrder: "desc" }),
+    refetchInterval: 5 * MINUTE,
+  })
+
   const t = today.data
   const y = yesterday.data
   const clicksDelta =
@@ -81,7 +92,9 @@ export function TodayCards({ linksTotal }: { linksTotal?: number }) {
         label="Last click"
         value={
           <span className="text-lg leading-tight">
-            {t ? formatWhen(t.summary.last_click) : "–"}
+            {lastClick.data
+              ? formatWhen(lastClick.data.items[0]?.last_click)
+              : "–"}
           </span>
         }
         footer="most recent activity"
