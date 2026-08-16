@@ -588,6 +588,7 @@ export default function LinksPage() {
           <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
           <Input
             data-page-search
+            aria-label="Search links"
             value={searchDraft}
             onChange={(e) => setSearchDraft(e.target.value)}
             placeholder="Search links…"
@@ -1046,11 +1047,15 @@ export default function LinksPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1.5">
-            <p className="text-muted-foreground text-xs">
+            <p
+              id="bulk-delete-confirm-hint"
+              className="text-muted-foreground text-xs"
+            >
               Type <span className="font-mono text-foreground">delete</span> to
               confirm.
             </p>
             <Input
+              aria-labelledby="bulk-delete-confirm-hint"
               value={bulkConfirmText}
               onChange={(e) => setBulkConfirmText(e.target.value)}
               placeholder="delete"

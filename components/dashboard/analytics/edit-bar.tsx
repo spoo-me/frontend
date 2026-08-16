@@ -690,6 +690,7 @@ export function EditBar({
           </DialogHeader>
           <div className="space-y-1.5">
             <Textarea
+              aria-label="Layout JSON"
               value={importText}
               onChange={(e) => {
                 setImportText(e.target.value)
