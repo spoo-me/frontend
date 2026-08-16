@@ -509,31 +509,18 @@ export function LinkSettingsForm({
     },
   })
 
-  const canSave =
-    dirty &&
-    !save.isPending &&
-    (patch.long_url === undefined ||
-      (longUrl.trim() !== "" && !urlProblem(longUrl))) &&
-    variantTotal(variants) <= 100 &&
-    !geoRulesProblem(geoRules) &&
-    !metaProblem &&
-    (!aliasChanged ||
-      aliasVerdict.state === "available" ||
-      // Indeterminate check must not hard-block; the backend re-validates.
-      aliasVerdict.state === "unknown" ||
-      alias === "")
-
-  // The one line that answers "why is Save greyed out". Every canSave veto
-  // surfaces here — including validators whose editors are feature-gated out
-  // of the DOM (geo/variants/meta on flagless accounts), which otherwise
-  // block the button with their explanation rendered nowhere.
+  // canSave derives from this, so every veto ships with its explanation —
+  // including validators whose editors are feature-gated out of the DOM.
   const saveBlocker = (() => {
     if (!dirty || save.isPending) return null
     if (
       patch.long_url !== undefined &&
-      (longUrl.trim() === "" || urlProblem(longUrl))
+      (longUrl.trim() === "" ||
+        urlProblem(longUrl) ||
+        (serverUrlError && serverUrlError.url === normalizeUrl(longUrl)))
     )
       return "Fix the destination to save."
+    if (aliasServerMsg) return "Fix the short link to save."
     if (aliasChanged && alias !== "") {
       if (aliasVerdict.state === "checking") return "Checking the alias…"
       if (aliasVerdict.state === "problem") return "Fix the short link to save."
@@ -543,6 +530,8 @@ export function LinkSettingsForm({
     if (metaProblem) return "Fix the link preview to save."
     return null
   })()
+
+  const canSave = dirty && !save.isPending && saveBlocker === null
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const changes = describeChanges(link, patch)
@@ -923,7 +912,12 @@ export function LinkSettingsForm({
           dirty ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       >
-        <span className="mr-auto text-muted-foreground/70 text-xs">
+        <span
+          className={cn(
+            "mr-auto text-xs",
+            saveBlocker ? "text-foreground" : "text-muted-foreground/70"
+          )}
+        >
           {save.isPending ? "Saving…" : (saveBlocker ?? "Unsaved changes")}
         </span>
         <Button
