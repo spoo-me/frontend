@@ -332,6 +332,7 @@ function AvatarRow({ user }: { user: AuthUser }) {
         )}
         <input
           ref={fileRef}
+          aria-label="Profile picture file"
           type="file"
           accept="image/png,image/jpeg,image/webp"
           onChange={onFile}

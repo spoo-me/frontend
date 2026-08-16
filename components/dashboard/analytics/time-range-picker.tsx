@@ -131,9 +131,10 @@ export function TimeRangePicker({
       >
         {/* Parse box — borderless, directly on the surface; the
             resolved-range hint rides inline so the row never changes height */}
-        <div className="flex items-center gap-3 border-border/60 border-b px-4">
+        <div className="flex items-center gap-3 border-border/60 border-b px-4 transition-colors focus-within:border-ring/60">
           <input
             autoFocus
+            aria-label="Custom time range"
             value={expr}
             onChange={(e) => setExpr(e.target.value)}
             onKeyDown={(e) => {
