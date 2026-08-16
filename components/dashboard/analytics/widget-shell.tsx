@@ -5,8 +5,8 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
-  SCOPE_DIMENSIONS,
-  type ScopeDimension,
+  SCOPE_KEYS,
+  type ScopeKey,
   type WidgetScope,
 } from "@/lib/analytics-layout"
 import { InfoHint } from "@/components/dashboard/info-hint"
@@ -82,7 +82,10 @@ export function WidgetShell({
     value, "+n" for the rest, everything in the title attr. The bar owns
     editing. */
 export function ScopeChip({ scope }: { scope: WidgetScope }) {
-  const entries = SCOPE_DIMENSIONS.flatMap((dim) => {
+  // Iterate the same SCOPE_KEYS list mergeScope filters by, so any key the
+  // merge honors also surfaces here — a scoped widget can never render
+  // chipless (which would silently present it as unscoped).
+  const entries = SCOPE_KEYS.flatMap((dim) => {
     const values = scope[dim]
     return values?.length ? ([[dim, values]] as const) : []
   })
@@ -91,7 +94,13 @@ export function ScopeChip({ scope }: { scope: WidgetScope }) {
   const [dim, values] = entries[0]
   const first = values[0]
   const full = entries
-    .map(([d, v]) => v.map((x) => scopeLabel(d, x)).join(", "))
+    .map(([d, v]) =>
+      // url_id values are opaque link ids with no client-side alias lookup;
+      // a count is the honest summary — raw hex would read as noise.
+      d === "url_id"
+        ? `${v.length} link${v.length === 1 ? "" : "s"}`
+        : v.map((x) => scopeLabel(d, x)).join(", ")
+    )
     .join(" · ")
   return (
     <span
@@ -111,8 +120,12 @@ export function ScopeChip({ scope }: { scope: WidgetScope }) {
   )
 }
 
-function scopeLabel(dim: ScopeDimension, value: string) {
-  return dim === "short_code" ? `/${value}` : dimensionLabel(dim, value)
+function scopeLabel(dim: ScopeKey, value: string) {
+  if (dim === "short_code") return `/${value}`
+  // A url_id can't be resolved to its alias here (no link directory in the
+  // chip); a generic label beats surfacing a raw ObjectId hex.
+  if (dim === "url_id") return "Link"
+  return dimensionLabel(dim, value)
 }
 
 /** The edit-mode delete affordance; also used by shell-less widgets (stats). */

@@ -59,8 +59,10 @@ export function useWidgetStats(
   const span = toMs - fromMs
 
   // Link lens rides two filters during the scope dual-read (analytics-layout):
-  // lens.urlIds is the url_id filter (new scopes), lens.links the legacy
-  // alias-vocabulary short_code filter (old /me/layouts docs + board chips).
+  // lens.links is the alias-vocabulary short_code filter — the board's
+  // working vocabulary (toolbar chips + every scope the app authors today);
+  // lens.urlIds is the url_id filter, accepted for forward compatibility
+  // but not yet authored anywhere in the app.
   const scopedQ = useQuery({
     queryKey: [
       "stats",
