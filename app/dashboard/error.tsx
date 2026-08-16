@@ -17,6 +17,8 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
+    // Unlike global-error, no Sentry.flush: the shell survives, the user
+    // usually retries or navigates, so normal batching gets the event out.
     Sentry.captureException(error)
   }, [error])
 

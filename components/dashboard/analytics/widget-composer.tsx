@@ -182,22 +182,32 @@ function FieldLabel({
   children,
   hint,
   hintLabel,
+  id,
 }: {
   children: React.ReactNode
   hint?: string
   hintLabel?: string
+  // Anchor for aria-labelledby: Radix triggers render as buttons, so
+  // htmlFor can't associate the visible label with the control.
+  id?: string
 }) {
   if (hint)
     return (
       <span className="flex items-center gap-1.5">
-        <span className="label-mono block text-[10px] text-muted-foreground/70">
+        <span
+          id={id}
+          className="label-mono block text-[10px] text-muted-foreground/70"
+        >
           {children}
         </span>
         <InfoHint label={hintLabel ?? "More info"}>{hint}</InfoHint>
       </span>
     )
   return (
-    <span className="label-mono block text-[10px] text-muted-foreground/70">
+    <span
+      id={id}
+      className="label-mono block text-[10px] text-muted-foreground/70"
+    >
       {children}
     </span>
   )
@@ -254,13 +264,17 @@ export function ComposerForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2" ref={fieldRef?.("x")}>
           <FieldLabel
+            id="composer-x-label"
             hintLabel="How the X axis works"
             hint="What each point or row represents: time buckets for a series, or a dimension's values for a breakdown."
           >
             X axis
           </FieldLabel>
           <Select value={state.x} onValueChange={(v) => handleX(v as XAxis)}>
-            <SelectTrigger aria-label="X axis" className="w-full text-xs">
+            <SelectTrigger
+              aria-labelledby="composer-x-label"
+              className="w-full text-xs"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -275,6 +289,7 @@ export function ComposerForm({
         </div>
         <div className="space-y-2" ref={fieldRef?.("y")}>
           <FieldLabel
+            id="composer-y-label"
             hintLabel="How the Y axis works"
             hint="The measure being counted: total clicks, unique visitors, or both."
           >
@@ -294,7 +309,10 @@ export function ComposerForm({
                 })
               }}
             >
-              <SelectTrigger aria-label="Y axis" className="w-full text-xs">
+              <SelectTrigger
+                aria-labelledby="composer-y-label"
+                className="w-full text-xs"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -312,7 +330,10 @@ export function ComposerForm({
                 onChange({ seriesMetric: v as SeriesMetric })
               }
             >
-              <SelectTrigger aria-label="Y axis" className="w-full text-xs">
+              <SelectTrigger
+                aria-labelledby="composer-y-label"
+                className="w-full text-xs"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -355,6 +376,7 @@ export function ComposerForm({
       <div className="grid grid-cols-2 items-end gap-3 border-border/60 border-t pt-5">
         <div className="space-y-2" ref={fieldRef?.("chart")}>
           <FieldLabel
+            id="composer-chart-label"
             hintLabel="Choosing a chart"
             hint="How the data draws. Some charts need a minimum number of categories to read well."
           >
@@ -376,7 +398,10 @@ export function ComposerForm({
                   : onChange({ bdViz: v as BreakdownViz })
             }
           >
-            <SelectTrigger aria-label="Chart" className="w-full text-xs">
+            <SelectTrigger
+              aria-labelledby="composer-chart-label"
+              className="w-full text-xs"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -390,12 +415,15 @@ export function ComposerForm({
           </Select>
         </div>
         <div className="space-y-2" ref={fieldRef?.("ink")}>
-          <FieldLabel>Chart accent</FieldLabel>
+          <FieldLabel id="composer-accent-label">Chart accent</FieldLabel>
           <Select
             value={state.accent}
             onValueChange={(v) => onChange({ accent: v as Accent })}
           >
-            <SelectTrigger aria-label="Chart accent" className="w-full text-xs">
+            <SelectTrigger
+              aria-labelledby="composer-accent-label"
+              className="w-full text-xs"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
