@@ -257,10 +257,15 @@ export function ForgotPasswordForm() {
                 autoFocus
                 required
                 aria-invalid={!!error || undefined}
+                aria-describedby={error ? "reset-email-error" : undefined}
                 className="h-10"
               />
               {error && (
-                <p role="alert" className="text-destructive text-xs">
+                <p
+                  id="reset-email-error"
+                  role="alert"
+                  className="text-destructive text-xs"
+                >
                   {error}
                 </p>
               )}

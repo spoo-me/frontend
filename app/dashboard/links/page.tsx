@@ -1220,8 +1220,18 @@ function LinkRow({
   return (
     <tr
       onClick={onOpen}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        // Only the row itself: Space on the checkbox or Enter on the copy
+        // button must keep their native behavior, not open the sheet.
+        if (e.target !== e.currentTarget) return
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
       className={cn(
-        "group cursor-pointer transition-colors duration-150",
+        "group cursor-pointer outline-none transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring/60",
         rowSelected
           ? "bg-brand/8 hover:bg-brand/10"
           : "even:bg-muted/40 hover:bg-accent/40 dark:even:bg-transparent"
@@ -1238,7 +1248,9 @@ function LinkRow({
             <span
               className={cn(
                 "absolute inset-0 transition-opacity duration-150",
-                rowSelected ? "opacity-0" : "group-hover:opacity-0"
+                rowSelected
+                  ? "opacity-0"
+                  : "group-hover:opacity-0 group-focus-within:opacity-0"
               )}
             >
               <Favicon url={link.long_url} />
@@ -1248,7 +1260,7 @@ function LinkRow({
                 "absolute inset-0 flex items-center justify-center transition-opacity duration-150",
                 rowSelected
                   ? "opacity-100"
-                  : "opacity-0 group-hover:opacity-100"
+                  : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
               )}
             >
               <Checkbox
@@ -1266,7 +1278,7 @@ function LinkRow({
               <CopyButton
                 value={shortUrlOf(link)}
                 trackAs="copy_short_link"
-                className="opacity-0 transition-opacity duration-150 [tr:hover_&]:opacity-100"
+                className="opacity-0 transition-opacity duration-150 [tr:hover_&]:opacity-100 [tr:focus-within_&]:opacity-100"
               />
             </div>
             <div className="ph-no-capture truncate text-muted-foreground text-xs">

@@ -489,10 +489,14 @@ export default function DomainDetailPage() {
                 <div className="space-y-5 p-5">
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="mb-2.5 block font-medium text-foreground text-xs">
+                      <label
+                        htmlFor="domain-root-redirect"
+                        className="mb-2.5 block font-medium text-foreground text-xs"
+                      >
                         Root redirect
                       </label>
                       <Input
+                        id="domain-root-redirect"
                         value={rootRedirect ?? dom.root_redirect ?? ""}
                         onChange={(e) => setRootRedirect(e.target.value)}
                         placeholder={`Where ${dom.fqdn}/ goes`}
@@ -505,10 +509,14 @@ export default function DomainDetailPage() {
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <label className="mb-2.5 block font-medium text-foreground text-xs">
+                      <label
+                        htmlFor="domain-not-found-redirect"
+                        className="mb-2.5 block font-medium text-foreground text-xs"
+                      >
                         Not-found redirect
                       </label>
                       <Input
+                        id="domain-not-found-redirect"
                         value={notFound ?? dom.not_found_redirect ?? ""}
                         onChange={(e) => setNotFound(e.target.value)}
                         placeholder="Where unknown aliases go"
@@ -523,7 +531,10 @@ export default function DomainDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <div className="mb-2.5 flex items-center justify-between">
-                      <label className="font-medium text-foreground text-xs">
+                      <label
+                        htmlFor="domain-robots-txt"
+                        className="font-medium text-foreground text-xs"
+                      >
                         Custom robots.txt
                       </label>
                       <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
@@ -531,6 +542,7 @@ export default function DomainDetailPage() {
                       </span>
                     </div>
                     <Textarea
+                      id="domain-robots-txt"
                       value={robots ?? dom.custom_robots_txt ?? ""}
                       onChange={(e) => setRobots(e.target.value)}
                       placeholder={"User-agent: *\nDisallow: /"}

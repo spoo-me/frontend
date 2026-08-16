@@ -384,10 +384,14 @@ export default function DeveloperPage() {
               </DialogHeader>
               <div className="space-y-5">
                 <div className="space-y-1.5">
-                  <Label className="font-medium text-foreground text-xs">
+                  <Label
+                    htmlFor="api-key-name"
+                    className="font-medium text-foreground text-xs"
+                  >
                     Name
                   </Label>
                   <Input
+                    id="api-key-name"
                     autoFocus
                     value={name}
                     onChange={(e) => setName(e.target.value)}

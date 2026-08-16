@@ -262,6 +262,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   }
                   required
                   aria-invalid={!!error || undefined}
+                  aria-describedby={error ? "auth-error" : undefined}
                   className="h-10"
                 />
                 {mode === "signup" && password.length > 0 && (
@@ -298,7 +299,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         </AnimatePresence>
 
         {error && (
-          <p role="alert" className="text-destructive text-sm">
+          <p id="auth-error" role="alert" className="text-destructive text-sm">
             {error}
             {conflict && (
               <>
