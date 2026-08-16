@@ -8,7 +8,7 @@ import { ArrowLeft, ChartLine, Globe2, Settings2 } from "lucide-react"
 
 import {
   dimensionRowsOf,
-  getStats,
+  getLinkStats,
   getUrl,
   listCustomDomains,
   timeSeriesOf,
@@ -69,13 +69,14 @@ export default function LinkDetailPage() {
     return { start: new Date(end.getTime() - rangeDays * 86_400_000), end }
   }, [rangeDays])
 
+  // Stats by id, not by an alias filter: the id is unambiguous across
+  // domains, and the per-link endpoint 404s instead of silently emptying.
   const stats = useQuery({
-    queryKey: ["stats", { domain, alias, rangeDays }],
+    queryKey: ["stats", "link", link?.id, rangeDays],
     queryFn: () =>
-      getStats({
+      getLinkStats(link!.id, {
         startDate: range.start,
         endDate: range.end,
-        shortCodes: [alias],
         groupBy: ["time", "referrer", "country"],
       }),
     enabled: !!link,

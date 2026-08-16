@@ -158,6 +158,10 @@ export default function AnalyticsPage() {
           "os",
           "city",
         ],
+        // The board's link lens speaks aliases — its values come from the
+        // clicks_by_short_code dimension (and row-click toggles), which
+        // carry no ids — so it rides the plain short_code filter. Per-link
+        // surfaces with an id in hand use getLinkStats/url_id instead.
         shortCodes: links.length ? links : undefined,
         filters,
       }),

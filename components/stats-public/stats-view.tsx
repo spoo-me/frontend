@@ -295,14 +295,17 @@ export function PublicStatsView({
         </div>
       </div>
 
-      {/* Exports + the visitor-shaped CTA */}
+      {/* Exports (legacy links only) + the visitor-shaped CTA */}
       <div className="mt-12 flex flex-col gap-5 border-border/60 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <ExportRow
-          alias={link.alias}
-          generation={generation}
-          password={password || null}
-          passwordProtected={link.password_protected}
-        />
+        {generation === "v1" ? (
+          <ExportRow
+            alias={link.alias}
+            password={password || null}
+            passwordProtected={link.password_protected}
+          />
+        ) : (
+          <span />
+        )}
         <Button asChild variant="outline" size="sm">
           <Link href="/">Make your own short link</Link>
         </Button>
@@ -312,55 +315,42 @@ export function PublicStatsView({
 }
 
 /**
- * Export stays on the backend; this row only links to it. Legacy exports
- * accept the password as a form POST — never as a query param. v2 exports
- * ride the public scope=anon API; password-gated v2 links skip the row
- * until the backend grows password support there (thoughts doc §6).
+ * Export stays on the backend; this row only links to it, and only for
+ * legacy-generation links — export on the modern API is an owner affordance
+ * (authed, per link), not a public one. Legacy exports accept the password
+ * as a form POST — never as a query param.
  */
 function ExportRow({
   alias,
-  generation,
   password,
   passwordProtected,
 }: {
   alias: string
-  generation: PublicStats["generation"]
   password: string | null
   passwordProtected: boolean
 }) {
-  if (generation === "v2" && passwordProtected) return <span />
   const linkClass =
     "font-mono text-muted-foreground text-xs uppercase underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <span className="label-mono text-muted-foreground/70">export</span>
       {EXPORT_FORMATS.map((fmt) =>
-        generation === "v1" ? (
-          passwordProtected ? (
-            <form
-              key={fmt}
-              method="POST"
-              action={`/export/${encodeURIComponent(alias)}/${fmt}`}
-              className="contents"
-            >
-              <input type="hidden" name="password" value={password ?? ""} />
-              <button type="submit" className={linkClass}>
-                {fmt}
-              </button>
-            </form>
-          ) : (
-            <a
-              key={fmt}
-              href={`/export/${encodeURIComponent(alias)}/${fmt}`}
-              className={linkClass}
-            >
+        passwordProtected ? (
+          <form
+            key={fmt}
+            method="POST"
+            action={`/export/${encodeURIComponent(alias)}/${fmt}`}
+            className="contents"
+          >
+            <input type="hidden" name="password" value={password ?? ""} />
+            <button type="submit" className={linkClass}>
               {fmt}
-            </a>
-          )
+            </button>
+          </form>
         ) : (
           <a
             key={fmt}
-            href={`/api/v1/export?scope=anon&short_code=${encodeURIComponent(alias)}&format=${fmt}`}
+            href={`/export/${encodeURIComponent(alias)}/${fmt}`}
             className={linkClass}
           >
             {fmt}

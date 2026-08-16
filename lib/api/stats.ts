@@ -49,11 +49,20 @@ export type StatsParams = {
   startDate?: Date
   endDate?: Date
   groupBy: StatsDimension[]
+  /** Slice the account aggregate to these links (filters JSON key url_id). */
+  urlIds?: string[]
+  /** Alias-based slice (filters JSON key short_code). Still needed: the
+      analytics board's link vocabulary is aliases — its values come from the
+      clicks_by_short_code dimension, which carries no ids. */
   shortCodes?: string[]
   /** Per-dimension value filters, e.g. { country: ["US","IN"] }. */
   filters?: Partial<Record<Exclude<StatsDimension, "time">, string[]>>
   timezone?: string
 }
+
+/** Per-link stats: the link is selected by the path, so link filters are
+    meaningless here — everything else matches StatsParams. */
+export type LinkStatsParams = Omit<StatsParams, "urlIds" | "shortCodes">
 
 /* ---------- the wire shape (real backend) ----------
    GET /api/v1/stats returns one array PER metric PER dimension
@@ -225,24 +234,46 @@ export function adaptStats(wire: StatsWire): StatsResponse {
   }
 }
 
-export function getStats(params: StatsParams) {
+function statsSearch(
+  params: LinkStatsParams,
+  linkFilters?: Record<string, string[]>
+) {
   const q = new URLSearchParams()
   q.set("group_by", params.groupBy.join(","))
   q.set("metrics", "clicks,unique_clicks")
   if (params.startDate) q.set("start_date", params.startDate.toISOString())
   if (params.endDate) q.set("end_date", params.endDate.toISOString())
-  // Multi-link scoping goes through the filters JSON: the bare short_code
-  // param is single-value (anon scope) on the real API.
-  const filters: Record<string, string[]> = { ...params.filters }
-  if (params.shortCodes?.length) filters.short_code = params.shortCodes
+  const filters: Record<string, string[]> = {
+    ...params.filters,
+    ...linkFilters,
+  }
   if (Object.keys(filters).length) q.set("filters", JSON.stringify(filters))
   q.set(
     "timezone",
     params.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   )
+  return q
+}
+
+export function getStats(params: StatsParams) {
+  // Link scoping goes through the filters JSON — url_id and short_code are
+  // plain multi-value filters on the account aggregate.
+  const linkFilters: Record<string, string[]> = {}
+  if (params.urlIds?.length) linkFilters.url_id = params.urlIds
+  if (params.shortCodes?.length) linkFilters.short_code = params.shortCodes
+  const q = statsSearch(params, linkFilters)
   return authedFetch(`/api/v1/stats?${q}`, { method: "GET" }).then(async (r) =>
     adaptStats(await parse<StatsWire>(r))
   )
+}
+
+/** One owned link's stats — resolve-first, so an unknown or foreign id is a
+    real 404 (unlike a filter, which is just silently empty). */
+export function getLinkStats(urlId: string, params: LinkStatsParams) {
+  const q = statsSearch(params)
+  return authedFetch(`/api/v1/stats/links/${encodeURIComponent(urlId)}?${q}`, {
+    method: "GET",
+  }).then(async (r) => adaptStats(await parse<StatsWire>(r)))
 }
 
 export const timeSeriesOf = (stats: StatsResponse) =>
