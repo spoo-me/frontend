@@ -157,6 +157,7 @@ export default function DomainsPage() {
           <div className="space-y-1.5">
             <Input
               autoFocus
+              aria-label="Domain"
               value={fqdn}
               onChange={(e) => {
                 setFqdn(e.target.value)
