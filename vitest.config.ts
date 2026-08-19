@@ -6,7 +6,12 @@ const root = fileURLToPath(new URL(".", import.meta.url)).replace(/\/$/, "")
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["lib/**/*.test.ts", "hooks/**/*.test.ts", "proxy.test.ts"],
+    include: [
+      "lib/**/*.test.ts",
+      "hooks/**/*.test.ts",
+      "proxy.test.ts",
+      "sentry.application-key.test.ts",
+    ],
   },
   resolve: {
     alias: { "@": root },

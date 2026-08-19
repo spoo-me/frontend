@@ -1,10 +1,15 @@
 /**
- * Marker the build stamps onto every module that comes from this repo.
+ * Marker the build stamps onto every module in our bundle.
  *
  * `withSentryConfig` passes it to the Turbopack loader, which attaches it as
- * module metadata to each first-party module; the browser SDK then reads it
- * back off stack frames to tell our code apart from scripts that merely run
- * inside our pages (extensions, WebView bridges, injected analytics).
+ * module metadata; the browser SDK then reads it back off stack frames to
+ * tell code we ship apart from scripts that merely run inside our pages
+ * (extensions, WebView bridges, injected analytics).
+ *
+ * "In our bundle" is literal, and includes node_modules: the loader rule
+ * carries no `not: "foreign"` condition, so a bundled dependency is stamped
+ * too. That is the behaviour we want, since we ship those bytes. Only
+ * scripts we never bundled can lack the key.
  *
  * Both sides must agree on the string, so it lives here rather than being
  * written out twice: a silent mismatch would make every frame look

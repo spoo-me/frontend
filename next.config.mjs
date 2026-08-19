@@ -143,9 +143,10 @@ export default withSentryConfig(nextConfig, {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-  // Stamps first-party modules so the browser SDK can drop errors thrown
-  // entirely by other people's scripts (see instrumentation-client.ts).
+  // Stamps the modules we bundle so the browser SDK can tell errors thrown
+  // by other people's scripts apart from ours (see instrumentation-client.ts).
   // Turbopack does the injection through a loader, which needs Next 16+.
+  // sentry.application-key.test.ts fails if this line goes missing.
   applicationKey: SENTRY_APPLICATION_KEY,
   // Anti-adblock event tunnel is intentionally not enabled here: it needs
   // a Caddy route to survive the reverse proxy and is tracked separately.
