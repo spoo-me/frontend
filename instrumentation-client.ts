@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs"
 
 import { initAnalytics } from "@/lib/analytics"
 import { CLARITY_ID, SENTRY_BROWSER_DSN } from "@/lib/flags"
+import { SENTRY_APPLICATION_KEY } from "./sentry.application-key.mjs"
 
 // Deployment environment, resolved from the host at runtime. Build-time
 // NODE_ENV can't tell beta from prod — they run the SAME image — so a
@@ -26,6 +27,31 @@ if (SENTRY_BROWSER_DSN) {
     dsn: SENTRY_BROWSER_DSN,
     environment,
     tracesSampleRate: environment === "development" ? 1.0 : 0.1,
+    // Browser extensions, in-app WebView bridges and Cloudflare's analytics
+    // beacon all throw inside our pages, and the SDK rewrites their origin
+    // to app:/// so they arrive looking like our own frames. The build
+    // stamps every module in our bundle with the application key; an error
+    // whose frames carry none of it came from a script we do not ship.
+    // "exclusively" spares anything with even one of our frames, so a real
+    // error that merely runs through third-party code still reports.
+    //
+    // Tag first, drop later. Dropping fails silently: a mis-wired key makes
+    // every frame look foreign and takes all browser errors with it, and
+    // nothing alerts on an absence of events. So tag third_party_code, and
+    // once it is confirmed to land on the WebView, extension and beacon
+    // issues and on nothing of ours, swap this one string for
+    // "drop-error-if-exclusively-contains-third-party-frames".
+    //
+    // Tagging also sidesteps an edge in the integration: an event whose
+    // frames are all discarded for lacking a filename or a position leaves
+    // an empty key list, and [].every() is vacuously true, so drop mode
+    // treats "we learned nothing" as "third-party". Only zero frames bail.
+    integrations: [
+      Sentry.thirdPartyErrorFilterIntegration({
+        filterKeys: [SENTRY_APPLICATION_KEY],
+        behaviour: "apply-tag-if-exclusively-contains-third-party-frames",
+      }),
+    ],
     // Strip IPs and request bodies from browser events (see the server
     // DSN split): product analytics is PostHog's job, not Sentry's.
     sendDefaultPii: false,
