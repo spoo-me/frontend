@@ -205,6 +205,7 @@ export const connectedApps: ConnectedApp[] = [
       "Type-hinted",
     ],
     status: "live",
+    gallery: ["/apps/python/spoo-1.png"],
   },
   {
     slug: "sdk-typescript",
@@ -212,21 +213,23 @@ export const connectedApps: ConnectedApp[] = [
     category: "sdk",
     tagline: "Type-safe API for Node, Bun, Deno, edge runtimes",
     description:
-      "Zero-dep, fully typed TypeScript client. Tree-shakeable. Works in browser, Node, Bun, Deno, Cloudflare Workers.",
+      "Zero-dep, fully typed TypeScript client. Works in browser, Node, Bun, Deno, Cloudflare Workers.",
     iconKey: "typescript",
     color: "#3178C6",
-    url: "https://github.com/spoo-me",
+    url: "https://www.npmjs.com/package/spoo.me",
+    github: "https://github.com/spoo-me/spoo-ts",
     install: [
-      { label: "npm", command: "npm i spoo-me" },
-      { label: "bun", command: "bun add spoo-me" },
+      { label: "npm", command: "npm i spoo.me" },
+      { label: "bun", command: "bun add spoo.me" },
     ],
     features: [
       "Edge-runtime ready",
       "Zero deps",
       "Fully typed",
-      "Tree-shakeable",
+      "Automatic retries",
     ],
-    status: "soon",
+    status: "live",
+    gallery: ["/apps/typescript/spoo-1.png"],
   },
   {
     slug: "sdk-rust",
@@ -252,6 +255,7 @@ export const connectedApps: ConnectedApp[] = [
       "no_std-friendly core",
     ],
     status: "live",
+    gallery: ["/apps/rust/spoo-1.png"],
   },
   {
     slug: "sdk-go",
@@ -273,6 +277,7 @@ export const connectedApps: ConnectedApp[] = [
       "Streaming analytics",
     ],
     status: "soon",
+    gallery: ["/apps/go/spoo-1.png"],
   },
   {
     slug: "sdk-cpp",

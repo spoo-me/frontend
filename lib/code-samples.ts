@@ -39,18 +39,18 @@ print(link.short_url)`,
     label: "TypeScript",
     lang: "typescript",
     iconKey: "typescript",
-    code: `import { Spoo } from "spoo-me"
+    code: `import { Spoo } from "spoo.me"
 
 const spoo = new Spoo({ apiKey: process.env.SPOO_KEY! })
 
-const link = await spoo.shorten({
-  url: "https://example.com/very/long/path",
+const link = await spoo.links.create({
+  long_url: "https://example.com/very/long/path",
   alias: "launch",
-  maxClicks: 100,
-  expiresIn: "7d",
+  max_clicks: 100,
+  expire_after: new Date(Date.now() + 7 * 864e5),
 })
 
-console.log(link.shortUrl)`,
+console.log(link.short_url)`,
   },
   {
     id: "rust",
