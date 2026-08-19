@@ -20,6 +20,7 @@ const topics = [
   "Bug report",
   "Feature idea",
   "Billing",
+  "Account & privacy",
   "Partnership",
   "Security",
 ] as const
