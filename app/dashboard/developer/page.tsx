@@ -277,7 +277,7 @@ export default function DeveloperPage() {
           action={
             <Button asChild variant="outline" size="sm" className="h-7">
               <a
-                href="https://docs.spoo.me/api-reference/authentication"
+                href="https://docs.spoo.me/introduction"
                 target="_blank"
                 rel="noreferrer"
               >
