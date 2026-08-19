@@ -43,6 +43,7 @@ const placements: Placement[] = [
   { slug: "sdk-go", x: 6, y: 36, size: "md", rot: 12 },
   { slug: "apple", x: 18, y: 50, size: "xl", variant: "dark", rot: -5 },
   { slug: "spoo-telegram", x: 8, y: 64, size: "md", rot: 8 },
+  { slug: "sdk-kotlin", x: 6, y: 80, size: "sm", rot: -7 },
   // right edge
   { slug: "android", x: 82, y: 50, size: "xl", rot: 7 },
   { slug: "sdk-cpp", x: 94, y: 62, size: "sm", rot: -10 },

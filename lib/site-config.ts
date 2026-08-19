@@ -155,6 +155,12 @@ export const sdkLinks: NavLink[] = [
     description: "Idiomatic Go bindings",
     iconKey: "go",
   },
+  {
+    title: "Kotlin",
+    href: "/apps/sdk-kotlin",
+    description: "Multiplatform Android & JVM client",
+    iconKey: "kotlin",
+  },
 ]
 
 export const developerDocLinks: NavLink[] = [

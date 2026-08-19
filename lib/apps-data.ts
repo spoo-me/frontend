@@ -279,6 +279,29 @@ export const connectedApps: ConnectedApp[] = [
     gallery: ["/apps/go/spoo-1.png"],
   },
   {
+    slug: "sdk-kotlin",
+    name: "Kotlin SDK",
+    category: "sdk",
+    tagline: "Coroutines-first Kotlin for Android and JVM",
+    description:
+      "Kotlin Multiplatform client for Android and JVM. Suspend functions, Flow pagination, consumer R8 rules in the artifact. Published on Maven Central.",
+    iconKey: "kotlin",
+    color: "#7F52FF",
+    url: "https://central.sonatype.com/artifact/me.spoo/spoo",
+    github: "https://github.com/spoo-me/spoo-kotlin",
+    install: [
+      { label: "gradle", command: 'implementation("me.spoo:spoo:0.1.0")' },
+    ],
+    features: [
+      "Coroutines + Flow",
+      "Android + JVM",
+      "Sealed typed errors",
+      "Sign in with Spoo",
+    ],
+    status: "live",
+    gallery: ["/apps/kotlin/spoo-1.png"],
+  },
+  {
     slug: "sdk-cpp",
     name: "C++ SDK",
     category: "sdk",
