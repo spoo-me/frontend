@@ -57,18 +57,18 @@ console.log(link.short_url)`,
     label: "Rust",
     lang: "rust",
     iconKey: "rust",
-    code: `use spoo::Spoo;
+    code: `use spoo_me::client::UrlShortenerClient;
+use spoo_me::requests::ShortenRequest;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let spoo = Spoo::new(std::env::var("SPOO_KEY")?);
-    let link = spoo
-        .shorten("https://example.com/very/long/path")
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = UrlShortenerClient::new();
+
+    let request = ShortenRequest::new("https://example.com/very/long/path")
         .alias("launch")
-        .max_clicks(100)
-        .expires_in("7d")
-        .send()
-        .await?;
+        .max_clicks(100);
+
+    let link = client.shorten(request).await?;
     println!("{}", link.short_url);
     Ok(())
 }`,
