@@ -84,16 +84,23 @@ import (
     "context"
     "fmt"
     "os"
+    "time"
 
-    "github.com/spoo-me/spoo-go"
+    spoo "github.com/spoo-me/spoo-go"
 )
 
 func main() {
-    s := spoo.New(os.Getenv("SPOO_KEY"))
-    link, _ := s.Shorten(context.Background(), &spoo.Req{
-        URL: "https://example.com/very/long/path",
-        Alias: "launch", MaxClicks: 100, ExpiresIn: "7d",
+    client := spoo.NewClient(spoo.WithAPIKey(os.Getenv("SPOO_API_KEY")))
+
+    link, err := client.Shorten(context.Background(), spoo.ShortenRequest{
+        LongURL:     "https://example.com/very/long/path",
+        Alias:       "launch",
+        MaxClicks:   100,
+        ExpireAfter: time.Now().Add(7 * 24 * time.Hour),
     })
+    if err != nil {
+        panic(err)
+    }
     fmt.Println(link.ShortURL)
 }`,
   },

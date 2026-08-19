@@ -266,7 +266,8 @@ export const connectedApps: ConnectedApp[] = [
       "Idiomatic Go client with context cancellation. Perfect for serverless and cloud-native apps.",
     iconKey: "go",
     color: "#00ADD8",
-    url: "https://github.com/spoo-me",
+    url: "https://pkg.go.dev/github.com/spoo-me/spoo-go",
+    github: "https://github.com/spoo-me/spoo-go",
     install: [
       { label: "go get", command: "go get github.com/spoo-me/spoo-go" },
     ],
@@ -274,9 +275,9 @@ export const connectedApps: ConnectedApp[] = [
       "context.Context",
       "Zero deps",
       "Idiomatic errors",
-      "Streaming analytics",
+      "Automatic retries",
     ],
-    status: "soon",
+    status: "live",
     gallery: ["/apps/go/spoo-1.png"],
   },
   {
