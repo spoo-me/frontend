@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs"
 
 import { initAnalytics } from "@/lib/analytics"
 import { CLARITY_ID, SENTRY_BROWSER_DSN } from "@/lib/flags"
+import { SENTRY_APPLICATION_KEY } from "./sentry.application-key.mjs"
 
 // Deployment environment, resolved from the host at runtime. Build-time
 // NODE_ENV can't tell beta from prod — they run the SAME image — so a
@@ -26,6 +27,19 @@ if (SENTRY_BROWSER_DSN) {
     dsn: SENTRY_BROWSER_DSN,
     environment,
     tracesSampleRate: environment === "development" ? 1.0 : 0.1,
+    // Browser extensions, in-app WebView bridges and Cloudflare's analytics
+    // beacon all throw inside our pages, and the SDK rewrites their origin
+    // to app:/// so they arrive looking like our own frames. The build
+    // stamps every first-party module with the application key; an error whose
+    // frames carry none of it did not come from our bundle. "exclusively"
+    // keeps anything with even one of our frames, so a genuine error that
+    // merely passes through third-party code still reports.
+    integrations: [
+      Sentry.thirdPartyErrorFilterIntegration({
+        filterKeys: [SENTRY_APPLICATION_KEY],
+        behaviour: "drop-error-if-exclusively-contains-third-party-frames",
+      }),
+    ],
     // Strip IPs and request bodies from browser events (see the server
     // DSN split): product analytics is PostHog's job, not Sentry's.
     sendDefaultPii: false,

@@ -1,5 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs"
 
+import { SENTRY_APPLICATION_KEY } from "./sentry.application-key.mjs"
+
 // Backend origin the auth/API proxy points at. Local dev = the compose
 // server on :8000; override with SPOO_API_URL (e.g. in prod deploys).
 const SPOO_API_URL =
@@ -141,6 +143,10 @@ export default withSentryConfig(nextConfig, {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
+  // Stamps first-party modules so the browser SDK can drop errors thrown
+  // entirely by other people's scripts (see instrumentation-client.ts).
+  // Turbopack does the injection through a loader, which needs Next 16+.
+  applicationKey: SENTRY_APPLICATION_KEY,
   // Anti-adblock event tunnel is intentionally not enabled here: it needs
   // a Caddy route to survive the reverse proxy and is tracked separately.
 })
