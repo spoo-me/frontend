@@ -18,6 +18,24 @@ import { PASSWORD_RULES, passwordSatisfies, safeNext } from "@/lib/validation"
 
 type Mode = "login" | "signup"
 
+// Sign in with Spoo parks users here mid-handshake with an external app;
+// a ?next= into the consent page must survive every post-auth route.
+const CONSENT_PATH = "/auth/device/login"
+
+function consentNext(): string | null {
+  const next = safeNext(new URLSearchParams(window.location.search).get("next"))
+  return next?.startsWith(CONSENT_PATH) ? next : null
+}
+
+// The URL's ?next= never changes within a page view — subscribe to nothing,
+// snapshot once (strings are value-compared, so re-reads are stable).
+const subscribeNever = () => () => {}
+
+function readNextQS(): string {
+  const next = safeNext(new URLSearchParams(window.location.search).get("next"))
+  return next ? `?next=${encodeURIComponent(next)}` : ""
+}
+
 const copy: Record<
   Mode,
   {
@@ -68,12 +86,28 @@ export function AuthForm({ mode }: { mode: Mode }) {
   // Dub-style: the OTP panel swaps into this pane right after signup —
   // verification gates entry instead of being an onboarding step.
   const [verifying, setVerifying] = React.useState(false)
+  // ?next= must survive the login↔signup cross-link and the OAuth 302
+  // chain (the backend threads it through OAuth state and resumes it).
+  // useSyncExternalStore: statically rendered page, window is client-only.
+  const nextQS = React.useSyncExternalStore(
+    subscribeNever,
+    readNextQS,
+    () => ""
+  )
 
   // An active session has no business on the auth forms: route it by
   // account state. Suspended while the OTP panel owns the pane (a fresh
   // registration IS a session) and while a submit is settling.
   React.useEffect(() => {
     if (loading || !user || verifying || pending) return
+    // A device-auth consent resume outranks account-state routing: the
+    // user is mid-handshake with an external app — close that loop first,
+    // onboarding waits for their first organic dashboard visit.
+    const consent = consentNext()
+    if (consent) {
+      router.replace(consent)
+      return
+    }
     if (!user.email_verified || !user.onboarded_at) {
       router.replace("/onboarding")
     } else {
@@ -106,8 +140,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
         )
         // Unfinished accounts resume where they left off: the onboarding
         // layout owns the verify gate and the step cache, so one push
-        // covers unverified, mid-wizard, and fresh states alike.
-        if (!user.email_verified || !user.onboarded_at) {
+        // covers unverified, mid-wizard, and fresh states alike. The one
+        // exception is a device-auth consent resume — see the effect above.
+        if (next?.startsWith(CONSENT_PATH)) {
+          router.push(next)
+        } else if (!user.email_verified || !user.onboarded_at) {
           router.push("/onboarding")
         } else {
           router.push(next ?? "/dashboard")
@@ -146,7 +183,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
         <VerifyPanel
-          onDone={() => router.push("/onboarding/welcome")}
+          onDone={() => router.push(consentNext() ?? "/onboarding/welcome")}
           onRestart={() => {
             void signOut().then(() => {
               setVerifying(false)
@@ -177,9 +214,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <Button key={id} asChild variant="outline" className="h-10 w-full">
             {/* Full-page navigation through the same-origin proxy — the
                 OAuth flow needs the backend session cookie + 302 chain.
-                No `next` param: the backend routes brand-new accounts to
-                /onboarding and existing ones to /dashboard. */}
-            <a href={`/oauth/${id}`} aria-label={`Continue with ${label}`}>
+                Without a next the backend routes new accounts to
+                /onboarding and existing ones to /dashboard; with one it
+                resumes it (device-consent links must not be hijacked). */}
+            <a
+              href={`/oauth/${id}${nextQS}`}
+              aria-label={`Continue with ${label}`}
+            >
               <Icon className="size-4" data-icon="inline-start" />
               {label}
             </a>
@@ -328,7 +369,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <p className="text-center text-muted-foreground text-sm">
         {c.alt}{" "}
         <Link
-          href={c.altHref}
+          href={`${c.altHref}${nextQS}`}
           className="font-medium text-foreground underline-offset-4 hover:underline"
         >
           {c.altLink}
