@@ -23,7 +23,32 @@ export function Footer() {
       <div className="relative z-10 mx-auto max-w-6xl px-4 pt-20 pb-0 sm:px-6 sm:pt-24">
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div className="space-y-5">
-            <Logo />
+            <div className="flex items-center gap-3">
+              <Logo />
+              <a
+                href="https://verifieddr.com/website/spoo-me"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Verified Domain Rating for spoo.me"
+                className="inline-block opacity-80 transition hover:opacity-100"
+              >
+                {/* Remote SVG; next/image has no remotePatterns configured */}
+                <img
+                  src="https://verifieddr.com/badge/spoo-me.svg?style=ring"
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://verifieddr.com/badge/spoo-me-dark.svg?style=ring"
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="hidden dark:block"
+                />
+              </a>
+            </div>
             <p className="max-w-xs text-muted-foreground text-sm leading-relaxed">
               Open-source link management with advanced analytics and an
               API-first core. Built in the open.
