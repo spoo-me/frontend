@@ -76,29 +76,6 @@ export function Footer() {
               })}
             </div>
             <StatusBadge />
-            <a
-              href="https://verifieddr.com/website/spoo-me"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Verified Domain Rating for spoo.me"
-              className="inline-block opacity-90 transition hover:opacity-100"
-            >
-              {/* Remote SVG; next/image has no remotePatterns configured */}
-              <img
-                src="https://verifieddr.com/badge/spoo-me.svg?style=ring"
-                alt=""
-                width={56}
-                height={56}
-                className="block dark:hidden"
-              />
-              <img
-                src="https://verifieddr.com/badge/spoo-me-dark.svg?style=ring"
-                alt=""
-                width={56}
-                height={56}
-                className="hidden dark:block"
-              />
-            </a>
           </div>
           {sections.map((section) => (
             <div key={section.title} className="space-y-3">
@@ -133,7 +110,32 @@ export function Footer() {
               AGPL-3.0
             </a>
           </p>
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <a
+              href="https://verifieddr.com/website/spoo-me"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Verified Domain Rating for spoo.me"
+              className="inline-block opacity-80 transition hover:opacity-100"
+            >
+              {/* Remote SVG; next/image has no remotePatterns configured */}
+              <img
+                src="https://verifieddr.com/badge/spoo-me.svg?style=ring"
+                alt=""
+                width={32}
+                height={32}
+                className="block dark:hidden"
+              />
+              <img
+                src="https://verifieddr.com/badge/spoo-me-dark.svg?style=ring"
+                alt=""
+                width={32}
+                height={32}
+                className="hidden dark:block"
+              />
+            </a>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
 
