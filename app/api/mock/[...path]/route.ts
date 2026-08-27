@@ -966,9 +966,11 @@ async function handle(req: NextRequest, path: string[]) {
       // must land on /onboarding/verify, not bounce between the gates.
       const mode = params.get("mode")
       const fresh = mode === "fresh"
+      const ONBOARDED_AT = "2026-05-14T00:12:18+00:00"
       g.__spooMock = fresh
         ? {
             ...initial(),
+            onboardedAt: ONBOARDED_AT,
             links: [],
             domains: [],
             keys: [],
@@ -982,7 +984,7 @@ async function handle(req: NextRequest, path: string[]) {
           ? {
               ...initial(),
               verified: false,
-              onboardedAt: "2026-05-14T00:12:18+00:00",
+              onboardedAt: ONBOARDED_AT,
             }
           : initial()
       return json({
@@ -1018,10 +1020,9 @@ async function handle(req: NextRequest, path: string[]) {
       )
     }
     case "POST /auth/login": {
-      g.__spooMock = {
-        ...initial(),
-        email: String(body.email ?? "you@example.com"),
-      }
+      // Adopt the email but keep the workspace: re-seeding here would undo
+      // whatever /reset?mode=... just set up. Signup owns the new-account state.
+      s.email = String(body.email ?? "you@example.com")
       return withSession(json({ access_token: "mock_access", user: user() }))
     }
     case "POST /auth/logout":
