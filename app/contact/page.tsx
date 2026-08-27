@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   title: "Contact, talk to a human",
   description:
     "Questions, bug reports, feedback, partnerships. Every message is read by someone who can actually do something about it.",
+  openGraph: { images: [{ url: "/og/company/contact.jpg", width: 2400, height: 1260, alt: "Talk to a human at spoo.me" }] },
+  twitter: { card: "summary_large_image", images: ["/og/company/contact.jpg"] },
 }
 
 const promises = [
@@ -47,7 +49,7 @@ const channels = [
   },
   {
     label: "Docs",
-    value: "docs.spoo.me",
+    value: "spoo.me/docs",
     href: siteConfig.links.docs,
     external: true,
   },

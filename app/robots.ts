@@ -11,6 +11,10 @@ export default function robots(): MetadataRoute.Robots {
       // not here — the code namespace can't be expressed as path rules.
       disallow: ["/dashboard", "/onboarding", "/api/", "/relay/", "/_error/"],
     },
-    sitemap: `${siteConfig.url}/sitemap.xml`,
+    sitemap: [
+      `${siteConfig.url}/sitemap.xml`,
+      // Mintlify generates the docs sitemap; it is only discoverable from here.
+      `${siteConfig.url}/docs/sitemap.xml`,
+    ],
   }
 }

@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   title: "Customer stories",
   description:
     "Operators, founders, and engineers share how spoo.me fits into their stack, from quick links to production link infrastructure.",
+  openGraph: { images: [{ url: "/og/company/testimonials.jpg", width: 2400, height: 1260, alt: "spoo.me customer stories" }] },
+  twitter: { card: "summary_large_image", images: ["/og/company/testimonials.jpg"] },
 }
 
 export default function TestimonialsIndexPage() {

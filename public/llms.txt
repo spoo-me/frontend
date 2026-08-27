@@ -1,0 +1,22 @@
+# spoo.me
+
+> Open-source link management platform with advanced analytics and an API-first core. Self-hostable in one command. Free short links, QR codes, password protection, expiry, and click analytics.
+
+## Product
+
+- [Homepage](https://spoo.me): shorten links, no account required
+- [About](https://spoo.me/about): what spoo.me is and how it is run
+- [Apps & SDKs](https://spoo.me/apps): official clients for Raycast, Chrome, Discord, Telegram, Slack, Windows, Android, iOS, plus SDKs for Python, TypeScript, Rust, Go, Kotlin, and C++
+- [Link stats lookup](https://spoo.me/stats): public click analytics for any spoo.me short link
+
+## Developers
+
+- [Documentation](https://spoo.me/docs/introduction): API reference, self-hosting guides, SDK quickstarts
+- [Docs index for LLMs](https://spoo.me/docs/llms.txt)
+- [GitHub](https://github.com/spoo-me): AGPL-licensed source for the platform and every client
+
+## Policies
+
+- [Privacy](https://spoo.me/privacy)
+- [Terms](https://spoo.me/terms)
+- [Report abuse](https://spoo.me/report)

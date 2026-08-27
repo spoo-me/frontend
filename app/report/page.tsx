@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   title: "Report a malicious link",
   description:
     "Report spoo.me short links used for phishing, malware, spam or illegal content. No account needed, and bulk reporting for researchers working a campaign.",
+  openGraph: { images: [{ url: "/og/pages/report.jpg", width: 2400, height: 1260, alt: "Report a malicious spoo.me link" }] },
+  twitter: { card: "summary_large_image", images: ["/og/pages/report.jpg"] },
 }
 
 const promises = [

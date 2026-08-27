@@ -11,6 +11,8 @@ import { upcomingPolicies } from "@/lib/legal-meta"
 export const metadata: Metadata = {
   title: "Legal",
   description: "spoo.me legal documents and policies.",
+  openGraph: { images: [{ url: "/og/legal/legal.jpg", width: 2400, height: 1260, alt: "spoo.me legal documents" }] },
+  twitter: { card: "summary_large_image", images: ["/og/legal/legal.jpg"] },
 }
 
 const live = legalDocs.map((d) => ({

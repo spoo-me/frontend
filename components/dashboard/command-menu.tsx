@@ -402,7 +402,7 @@ export function DashboardCommandMenu() {
                     onSelect={() => {
                       setOpen(false)
                       window.open(
-                        "https://docs.spoo.me/introduction",
+                        "https://spoo.me/docs/introduction",
                         "_blank",
                         "noreferrer"
                       )

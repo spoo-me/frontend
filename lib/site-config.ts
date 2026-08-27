@@ -6,11 +6,10 @@ export const siteConfig = {
   url: "https://spoo.me",
   description:
     "Open-source link management platform with advanced analytics and an API-first core. Self-hostable in one command.",
-  ogImage: "/brand/logo-text-dark.png",
   links: {
     github: "https://github.com/spoo-me/spoo",
     githubOrg: "https://github.com/spoo-me",
-    docs: "https://docs.spoo.me",
+    docs: "https://spoo.me/docs",
     api: "https://spoo.me/api",
     discord: "https://spoo.me/discord",
     twitter: "https://twitter.com/spoo_me",

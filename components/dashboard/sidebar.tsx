@@ -294,7 +294,7 @@ export function SidebarContent({
       >
         <div className="mb-3 space-y-0.5">
           <ResourceRow
-            href="https://docs.spoo.me"
+            href="https://spoo.me/docs"
             icon={BookOpen}
             label="Docs"
             collapsed={collapsed}

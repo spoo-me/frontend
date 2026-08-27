@@ -12,6 +12,7 @@ import { InstallSteps } from "@/components/sections/install-steps"
 import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
 import { IMAGE_ICONS } from "@/components/icons/image-icons"
 import { connectedApps } from "@/lib/apps-data"
+import { appsSeo } from "@/lib/apps-seo"
 import { cn } from "@/lib/utils"
 
 type Params = { slug: string }
@@ -28,7 +29,19 @@ export async function generateMetadata({
   const { slug } = await params
   const app = connectedApps.find((a) => a.slug === slug)
   if (!app) return {}
-  return { title: app.name, description: app.tagline }
+  const seo = appsSeo[slug]
+  const card = {
+    url: `/og/apps/${slug}.jpg`,
+    width: 2400,
+    height: 1260,
+    alt: `spoo.me and ${app.name}`,
+  }
+  return {
+    title: seo?.title ?? app.name,
+    description: seo?.description ?? app.tagline,
+    openGraph: { images: [card] },
+    twitter: { card: "summary_large_image", images: [card] },
+  }
 }
 
 export default async function AppDetailPage({
@@ -43,8 +56,25 @@ export default async function AppDetailPage({
   const Icon = BrandIcons[app.iconKey as BrandIconKey] ?? null
   const image = IMAGE_ICONS[app.iconKey]
 
+  const appJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: `spoo.me for ${app.name}`,
+    url: `https://spoo.me/apps/${app.slug}`,
+    applicationCategory:
+      app.category === "sdk" || app.category === "cli"
+        ? "DeveloperApplication"
+        : "UtilitiesApplication",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    ...(app.github ? { sameAs: [app.github] } : {}),
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(appJsonLd) }}
+      />
       <Header />
       <main className="overflow-hidden pt-20">
         <PageFrame>

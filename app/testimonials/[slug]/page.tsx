@@ -13,6 +13,8 @@ import { QuoteText } from "../_components/quote-text"
 
 type Params = { slug: string }
 
+const TESTIMONIAL_CARDS = new Set(["pearl-lemon-group"])
+
 export function generateStaticParams() {
   return testimonials.map((t) => ({ slug: t.slug }))
 }
@@ -25,9 +27,22 @@ export async function generateMetadata({
   const { slug } = await params
   const t = getTestimonial(slug)
   if (!t) return {}
+  // Cards are pre-rendered per slug from design/og-cards (field tinted with
+  // the testimonial's accent); fall back to the section card until one exists.
+  const cardUrl = TESTIMONIAL_CARDS.has(slug)
+    ? `/og/testimonials/${slug}.jpg`
+    : "/og/company/testimonials.jpg"
+  const card = {
+    url: cardUrl,
+    width: 2400,
+    height: 1260,
+    alt: `${t.company.name} on spoo.me`,
+  }
   return {
     title: `${t.person.name}, ${t.company.name} · customer story`,
     description: flattenQuote(t.shortQuote),
+    openGraph: { images: [card] },
+    twitter: { card: "summary_large_image", images: [card.url] },
   }
 }
 
