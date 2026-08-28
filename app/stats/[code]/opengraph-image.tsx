@@ -24,19 +24,27 @@ const asset = (rel: string) =>
       b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer
   )
 
+// The four assets never vary per request; load once per process.
+let assetsOnce: Promise<
+  [string, ArrayBuffer, ArrayBuffer, ArrayBuffer]
+> | null = null
+const loadAssets = () =>
+  (assetsOnce ??= Promise.all([
+    asset("assets/stats-bg.png").then(
+      (bg) => `data:image/png;base64,${Buffer.from(bg).toString("base64")}`
+    ),
+    asset("fonts/geist-600.ttf"),
+    asset("fonts/instrument-serif-italic.ttf"),
+    asset("fonts/geist-mono-500.ttf"),
+  ]))
+
 export default async function Image({
   params,
 }: {
   params: Promise<{ code: string }>
 }) {
   const { code } = await params
-  const [bg, geist, serif, mono] = await Promise.all([
-    asset("assets/stats-bg.png"),
-    asset("fonts/geist-600.ttf"),
-    asset("fonts/instrument-serif-italic.ttf"),
-    asset("fonts/geist-mono-500.ttf"),
-  ])
-  const bgSrc = `data:image/png;base64,${Buffer.from(bg).toString("base64")}`
+  const [bgSrc, geist, serif, mono] = await loadAssets()
 
   return new ImageResponse(
     <div style={{ display: "flex", width: 1200, height: 630 }}>
@@ -99,6 +107,12 @@ export default async function Image({
     </div>,
     {
       ...size,
+      // Cards depend only on the alias string; let the edge hold them for a
+      // day and serve stale while revalidating.
+      headers: {
+        "Cache-Control":
+          "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      },
       emoji: "twemoji",
       fonts: [
         { name: "Geist", data: geist, weight: 600 },
