@@ -277,7 +277,7 @@ export default function DeveloperPage() {
           action={
             <Button asChild variant="outline" size="sm" className="h-7">
               <a
-                href="https://docs.spoo.me/introduction"
+                href="https://spoo.me/docs/introduction"
                 target="_blank"
                 rel="noreferrer"
               >

@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     template: `%s · ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  // "./" resolves per route against metadataBase, so every page self-canonicals
+  // (kills www/trailing-slash/query duplicates; skipTrailingSlashRedirect stays).
+  alternates: { canonical: "./" },
   keywords: [
     "link management",
     "URL shortener",
@@ -48,6 +51,28 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
   },
+}
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: siteConfig.name,
+  url: siteConfig.url,
+  logo: `${siteConfig.url}/favicon.png`,
+  sameAs: [
+    siteConfig.links.githubOrg,
+    siteConfig.links.x,
+    siteConfig.links.linkedin,
+    siteConfig.links.instagram,
+    siteConfig.links.producthunt,
+  ],
+}
+
+const webSiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteConfig.name,
+  url: siteConfig.url,
 }
 
 export const viewport: Viewport = {
@@ -74,6 +99,12 @@ export default function RootLayout({
       )}
     >
       <body className="bg-background font-sans text-foreground">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([organizationJsonLd, webSiteJsonLd]),
+          }}
+        />
         {/* Pre-hydration auth hint (same trick as theme scripts): returning
             sessions mark <html> so the SSR'd dashboard gate never paints
             its text; sign-out clears the flag. */}

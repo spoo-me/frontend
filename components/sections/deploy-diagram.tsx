@@ -22,7 +22,7 @@ type DeployNode = {
 }
 
 /* Nodes link to their docs walkthroughs, never raw deploy URLs. */
-const SELF_HOST_DOCS = "https://docs.spoo.me/self-hosting"
+const SELF_HOST_DOCS = "https://spoo.me/docs/self-hosting"
 
 const deps: DeployNode[] = [
   {

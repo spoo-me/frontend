@@ -7,10 +7,20 @@ import { PageFrame, Section } from "@/components/shared/section-shell"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { legalDocs } from "@/lib/legal-content"
 import { upcomingPolicies } from "@/lib/legal-meta"
+import { socialCard } from "@/lib/og"
+
+const title = "Legal"
+const description = "spoo.me legal documents and policies."
 
 export const metadata: Metadata = {
-  title: "Legal",
-  description: "spoo.me legal documents and policies.",
+  title,
+  description,
+  ...socialCard({
+    title,
+    description,
+    image: "/og/legal/legal.jpg",
+    alt: "spoo.me legal documents",
+  }),
 }
 
 const live = legalDocs.map((d) => ({

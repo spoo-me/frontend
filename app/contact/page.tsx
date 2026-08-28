@@ -6,11 +6,21 @@ import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { ContactForm } from "@/components/sections/contact-form"
 import { siteConfig } from "@/lib/site-config"
+import { socialCard } from "@/lib/og"
+
+const title = "Contact, talk to a human"
+const description =
+  "Questions, bug reports, feedback, partnerships. Every message is read by someone who can actually do something about it."
 
 export const metadata: Metadata = {
-  title: "Contact, talk to a human",
-  description:
-    "Questions, bug reports, feedback, partnerships. Every message is read by someone who can actually do something about it.",
+  title,
+  description,
+  ...socialCard({
+    title,
+    description,
+    image: "/og/company/contact.jpg",
+    alt: "Talk to a human at spoo.me",
+  }),
 }
 
 const promises = [
@@ -47,7 +57,7 @@ const channels = [
   },
   {
     label: "Docs",
-    value: "docs.spoo.me",
+    value: "spoo.me/docs",
     href: siteConfig.links.docs,
     external: true,
   },

@@ -36,6 +36,13 @@ const nextConfig = {
   // Self-contained server bundle for the Docker image — runtime needs only
   // .next/standalone + .next/static + public, no node_modules install.
   output: "standalone",
+  // The stats OG route reads these off disk at render time.
+  outputFileTracingIncludes: {
+    "/stats/[code]/opengraph-image": [
+      "./design/og-cards/fonts/*",
+      "./design/og-cards/assets/stats-bg.png",
+    ],
+  },
   turbopack: {
     root: import.meta.dirname,
   },

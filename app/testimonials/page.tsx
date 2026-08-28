@@ -9,11 +9,21 @@ import { SectionHeading } from "@/components/shared/section-heading"
 import { testimonials } from "@/lib/testimonials"
 import { TestimonialAvatar } from "./_components/avatar"
 import { QuoteText } from "./_components/quote-text"
+import { socialCard } from "@/lib/og"
+
+const title = "Customer stories"
+const description =
+  "Operators, founders, and engineers share how spoo.me fits into their stack, from quick links to production link infrastructure."
 
 export const metadata: Metadata = {
-  title: "Customer stories",
-  description:
-    "Operators, founders, and engineers share how spoo.me fits into their stack, from quick links to production link infrastructure.",
+  title,
+  description,
+  ...socialCard({
+    title,
+    description,
+    image: "/og/company/testimonials.jpg",
+    alt: "spoo.me customer stories",
+  }),
 }
 
 export default function TestimonialsIndexPage() {

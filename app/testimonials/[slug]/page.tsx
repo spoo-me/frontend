@@ -8,10 +8,13 @@ import { Footer } from "@/components/layout/footer"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/lib/site-config"
 import { flattenQuote, getTestimonial, testimonials } from "@/lib/testimonials"
+import { socialCard } from "@/lib/og"
 import { TestimonialAvatar } from "../_components/avatar"
 import { QuoteText } from "../_components/quote-text"
 
 type Params = { slug: string }
+
+const TESTIMONIAL_CARDS = new Set(["pearl-lemon-group"])
 
 export function generateStaticParams() {
   return testimonials.map((t) => ({ slug: t.slug }))
@@ -25,9 +28,22 @@ export async function generateMetadata({
   const { slug } = await params
   const t = getTestimonial(slug)
   if (!t) return {}
+  // Cards are pre-rendered per slug from design/og-cards (field tinted with
+  // the testimonial's accent); fall back to the section card until one exists.
+  const cardUrl = TESTIMONIAL_CARDS.has(slug)
+    ? `/og/testimonials/${slug}.jpg`
+    : "/og/company/testimonials.jpg"
+  const title = `${t.person.name}, ${t.company.name} · customer story`
+  const description = flattenQuote(t.shortQuote)
   return {
-    title: `${t.person.name}, ${t.company.name} · customer story`,
-    description: flattenQuote(t.shortQuote),
+    title,
+    description,
+    ...socialCard({
+      title,
+      description,
+      image: cardUrl,
+      alt: `${t.company.name} on spoo.me`,
+    }),
   }
 }
 

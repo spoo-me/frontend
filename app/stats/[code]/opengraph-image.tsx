@@ -1,0 +1,129 @@
+import { readFile } from "node:fs/promises"
+import path from "node:path"
+
+import { ImageResponse } from "next/og"
+
+export const size = { width: 1200, height: 630 }
+export const contentType = "image/png"
+export const alt = "spoo.me link statistics"
+
+/* Aliases are user content: emoji and word codes render; anything longer
+   than the frame allows is clamped so the card never overflows. Metadata
+   image routes get params already percent-decoded, so no decode here. */
+const graphemes = new Intl.Segmenter()
+function displayCode(code: string): string {
+  const parts = [...graphemes.segment(code)].map((s) => s.segment)
+  return parts.length > 14 ? `${parts.slice(0, 14).join("")}…` : code
+}
+
+// node:fs read + outputFileTracingIncludes (next.config) so the assets
+// travel into the standalone build; bundler asset URLs don't cover them.
+const asset = (rel: string) =>
+  readFile(path.join(process.cwd(), "design/og-cards", rel)).then(
+    (b) =>
+      b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer
+  )
+
+// The four assets never vary per request; load once per process.
+let assetsOnce: Promise<
+  [string, ArrayBuffer, ArrayBuffer, ArrayBuffer]
+> | null = null
+const loadAssets = () =>
+  (assetsOnce ??= Promise.all([
+    asset("assets/stats-bg.png").then(
+      (bg) => `data:image/png;base64,${Buffer.from(bg).toString("base64")}`
+    ),
+    asset("fonts/geist-600.ttf"),
+    asset("fonts/instrument-serif-italic.ttf"),
+    asset("fonts/geist-mono-500.ttf"),
+  ]))
+
+export default async function Image({
+  params,
+}: {
+  params: Promise<{ code: string }>
+}) {
+  const { code } = await params
+  const [bgSrc, geist, serif, mono] = await loadAssets()
+
+  return new ImageResponse(
+    <div style={{ display: "flex", width: 1200, height: 630 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={bgSrc}
+        alt=""
+        width={1200}
+        height={630}
+        style={{ position: "absolute", top: 0, left: 0 }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: 84,
+          bottom: 84,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 24,
+            fontFamily: "Geist",
+            fontSize: 72,
+            letterSpacing: "-0.028em",
+            color: "#fafafa",
+          }}
+        >
+          <span>Link stats for</span>
+          <span
+            style={{
+              display: "flex",
+              fontFamily: "GeistMono",
+              fontSize: 58,
+              color: "#fafafa",
+              background: "rgba(255,255,255,.06)",
+              border: "1px solid rgba(255,255,255,.14)",
+              borderRadius: 14,
+              padding: "2px 20px 8px",
+            }}
+          >
+            /{displayCode(code)}
+          </span>
+        </div>
+        <div
+          style={{
+            marginTop: 10,
+            fontFamily: "InstrumentSerif",
+            fontStyle: "italic",
+            fontSize: 72,
+            color: "rgba(255,255,255,.62)",
+          }}
+        >
+          clicks, countries, referrers, devices.
+        </div>
+      </div>
+    </div>,
+    {
+      ...size,
+      // Cards depend only on the alias string; let the edge hold them for a
+      // day and serve stale while revalidating.
+      headers: {
+        "Cache-Control":
+          "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      },
+      emoji: "twemoji",
+      fonts: [
+        { name: "Geist", data: geist, weight: 600 },
+        { name: "GeistMono", data: mono, weight: 500 },
+        {
+          name: "InstrumentSerif",
+          data: serif,
+          weight: 400,
+          style: "italic",
+        },
+      ],
+    }
+  )
+}
