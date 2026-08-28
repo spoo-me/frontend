@@ -18,7 +18,8 @@ function displayCode(raw: string): string {
 // travel into the standalone build; bundler asset URLs don't cover them.
 const asset = (rel: string) =>
   readFile(path.join(process.cwd(), "design/og-cards", rel)).then(
-    (b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer
+    (b) =>
+      b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer
   )
 
 export default async function Image({
@@ -36,66 +37,64 @@ export default async function Image({
   const bgSrc = `data:image/png;base64,${Buffer.from(bg).toString("base64")}`
 
   return new ImageResponse(
-    (
-      <div style={{ display: "flex", width: 1200, height: 630 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={bgSrc}
-          alt=""
-          width={1200}
-          height={630}
-          style={{ position: "absolute", top: 0, left: 0 }}
-        />
+    <div style={{ display: "flex", width: 1200, height: 630 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={bgSrc}
+        alt=""
+        width={1200}
+        height={630}
+        style={{ position: "absolute", top: 0, left: 0 }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: 84,
+          bottom: 84,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <div
           style={{
-            position: "absolute",
-            left: 84,
-            bottom: 84,
             display: "flex",
-            flexDirection: "column",
+            alignItems: "center",
+            gap: 24,
+            fontFamily: "Geist",
+            fontSize: 72,
+            letterSpacing: "-0.028em",
+            color: "#fafafa",
           }}
         >
-          <div
+          <span>Link stats for</span>
+          <span
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: 24,
-              fontFamily: "Geist",
-              fontSize: 72,
-              letterSpacing: "-0.028em",
+              fontFamily: "GeistMono",
+              fontSize: 58,
               color: "#fafafa",
+              background: "rgba(255,255,255,.06)",
+              border: "1px solid rgba(255,255,255,.14)",
+              borderRadius: 14,
+              padding: "2px 20px 8px",
             }}
           >
-            <span>Link stats for</span>
-            <span
-              style={{
-                display: "flex",
-                fontFamily: "GeistMono",
-                fontSize: 58,
-                color: "#fafafa",
-                background: "rgba(255,255,255,.06)",
-                border: "1px solid rgba(255,255,255,.14)",
-                borderRadius: 14,
-                padding: "2px 20px 8px",
-              }}
-            >
-              /{displayCode(code)}
-            </span>
-          </div>
-          <div
-            style={{
-              marginTop: 10,
-              fontFamily: "InstrumentSerif",
-              fontStyle: "italic",
-              fontSize: 72,
-              color: "rgba(255,255,255,.62)",
-            }}
-          >
-            clicks, countries, referrers, devices.
-          </div>
+            /{displayCode(code)}
+          </span>
+        </div>
+        <div
+          style={{
+            marginTop: 10,
+            fontFamily: "InstrumentSerif",
+            fontStyle: "italic",
+            fontSize: 72,
+            color: "rgba(255,255,255,.62)",
+          }}
+        >
+          clicks, countries, referrers, devices.
         </div>
       </div>
-    ),
+    </div>,
     {
       ...size,
       emoji: "twemoji",
