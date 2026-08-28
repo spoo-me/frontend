@@ -76,10 +76,10 @@ const webSiteJsonLd = {
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  // Single brand color: Discord and other embed scrapers ignore media-scoped
+  // theme-color entries, so the pair meant no embed accent at all. Product
+  // surfaces (dashboard, onboarding) override back to the neutral pair.
+  themeColor: "#8B5CF6",
 }
 
 export default function RootLayout({
