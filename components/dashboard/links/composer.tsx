@@ -96,7 +96,7 @@ export function openLinkComposer(opts?: { domain?: string }) {
 
 /** Suggesters: memorable words, no lookalike characters. */
 const WORDS =
-  "amber basil cedar delta ember fable garnet hazel indigo juniper koala lumen maple nectar onyx pixel quartz raven sable tundra umber velvet willow zephyr".split(
+  "amber anchor basil beacon birch bishop bramble bronze cedar cinder cobalt comet copper coral cypress delta dune ember fable falcon fennel fjord garnet gossamer granite harbor hazel heron indigo ivory juniper kelp koala lantern larch lichen lumen maple marble meadow nectar nimbus onyx opal orchid otter pebble pewter pixel quartz quill raven reef rowan sable saffron slate sorrel spruce thistle topaz tundra umber velvet willow zephyr zinc".split(
     " "
   )
 /** Unbiased crypto-random integer in [0, bound). */
@@ -111,7 +111,10 @@ const randInt = (bound: number) => {
 const pickWord = () => WORDS[randInt(WORDS.length)]
 // "." separators: backend URL-password rule requires a letter, a digit and
 // an "@" or "." with no two consecutive specials (shared/validators.py).
-const suggestPassword = () => `${pickWord()}.${pickWord()}.${10 + randInt(89)}`
+// Three words and three digits from a 64-word list: about 28 bits, where
+// two words and two digits was under 16, small enough to walk online.
+const suggestPassword = () =>
+  `${pickWord()}.${pickWord()}.${pickWord()}.${100 + randInt(900)}`
 const suggestAlias = () => `${pickWord()}-${10 + randInt(89)}`
 
 const EXPIRY_PRESETS: Array<[label: string, hours: number]> = [
