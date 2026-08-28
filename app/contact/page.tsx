@@ -6,22 +6,21 @@ import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { ContactForm } from "@/components/sections/contact-form"
 import { siteConfig } from "@/lib/site-config"
+import { socialCard } from "@/lib/og"
+
+const title = "Contact, talk to a human"
+const description =
+  "Questions, bug reports, feedback, partnerships. Every message is read by someone who can actually do something about it."
 
 export const metadata: Metadata = {
-  title: "Contact, talk to a human",
-  description:
-    "Questions, bug reports, feedback, partnerships. Every message is read by someone who can actually do something about it.",
-  openGraph: {
-    images: [
-      {
-        url: "/og/company/contact.jpg",
-        width: 2400,
-        height: 1260,
-        alt: "Talk to a human at spoo.me",
-      },
-    ],
-  },
-  twitter: { card: "summary_large_image", images: ["/og/company/contact.jpg"] },
+  title,
+  description,
+  ...socialCard({
+    title,
+    description,
+    image: "/og/company/contact.jpg",
+    alt: "Talk to a human at spoo.me",
+  }),
 }
 
 const promises = [

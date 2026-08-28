@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { PageFrame, Section } from "@/components/shared/section-shell"
 import { ReportForm } from "@/components/report/report-form"
+import { socialCard } from "@/lib/og"
 
 /**
  * Abuse-report intake. Reports are the #1 reputation lever: every minute of
@@ -13,21 +14,19 @@ import { ReportForm } from "@/components/report/report-form"
  * with a whole campaign.
  */
 
+const title = "Report a malicious link"
+const description =
+  "Report spoo.me short links used for phishing, malware, spam or illegal content. No account needed, and bulk reporting for researchers working a campaign."
+
 export const metadata: Metadata = {
-  title: "Report a malicious link",
-  description:
-    "Report spoo.me short links used for phishing, malware, spam or illegal content. No account needed, and bulk reporting for researchers working a campaign.",
-  openGraph: {
-    images: [
-      {
-        url: "/og/pages/report.jpg",
-        width: 2400,
-        height: 1260,
-        alt: "Report a malicious spoo.me link",
-      },
-    ],
-  },
-  twitter: { card: "summary_large_image", images: ["/og/pages/report.jpg"] },
+  title,
+  description,
+  ...socialCard({
+    title,
+    description,
+    image: "/og/pages/report.jpg",
+    alt: "Report a malicious spoo.me link",
+  }),
 }
 
 const promises = [

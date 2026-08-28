@@ -13,6 +13,7 @@ import { BrandIcons, type BrandIconKey } from "@/components/icons/brand-icons"
 import { IMAGE_ICONS } from "@/components/icons/image-icons"
 import { connectedApps } from "@/lib/apps-data"
 import { appsSeo } from "@/lib/apps-seo"
+import { socialCard } from "@/lib/og"
 import { cn } from "@/lib/utils"
 
 type Params = { slug: string }
@@ -30,17 +31,17 @@ export async function generateMetadata({
   const app = connectedApps.find((a) => a.slug === slug)
   if (!app) return {}
   const seo = appsSeo[slug]
-  const card = {
-    url: `/og/apps/${slug}.jpg`,
-    width: 2400,
-    height: 1260,
-    alt: `spoo.me and ${app.name}`,
-  }
+  const title = seo?.title ?? app.name
+  const description = seo?.description ?? app.tagline
   return {
-    title: seo?.title ?? app.name,
-    description: seo?.description ?? app.tagline,
-    openGraph: { images: [card] },
-    twitter: { card: "summary_large_image", images: [card] },
+    title,
+    description,
+    ...socialCard({
+      title,
+      description,
+      image: `/og/apps/${slug}.jpg`,
+      alt: `spoo.me and ${app.name}`,
+    }),
   }
 }
 

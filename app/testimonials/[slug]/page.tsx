@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/lib/site-config"
 import { flattenQuote, getTestimonial, testimonials } from "@/lib/testimonials"
+import { socialCard } from "@/lib/og"
 import { TestimonialAvatar } from "../_components/avatar"
 import { QuoteText } from "../_components/quote-text"
 
@@ -32,17 +33,17 @@ export async function generateMetadata({
   const cardUrl = TESTIMONIAL_CARDS.has(slug)
     ? `/og/testimonials/${slug}.jpg`
     : "/og/company/testimonials.jpg"
-  const card = {
-    url: cardUrl,
-    width: 2400,
-    height: 1260,
-    alt: `${t.company.name} on spoo.me`,
-  }
+  const title = `${t.person.name}, ${t.company.name} · customer story`
+  const description = flattenQuote(t.shortQuote)
   return {
-    title: `${t.person.name}, ${t.company.name} · customer story`,
-    description: flattenQuote(t.shortQuote),
-    openGraph: { images: [card] },
-    twitter: { card: "summary_large_image", images: [card.url] },
+    title,
+    description,
+    ...socialCard({
+      title,
+      description,
+      image: cardUrl,
+      alt: `${t.company.name} on spoo.me`,
+    }),
   }
 }
 

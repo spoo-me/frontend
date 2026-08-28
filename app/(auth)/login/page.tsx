@@ -2,21 +2,20 @@ import type { Metadata } from "next"
 
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { AuthForm } from "@/components/auth/auth-form"
+import { socialCard } from "@/lib/og"
+
+const title = "Sign in"
+const description = "Sign in to your spoo.me workspace"
 
 export const metadata: Metadata = {
-  title: "Sign in",
-  description: "Sign in to your spoo.me workspace",
-  openGraph: {
-    images: [
-      {
-        url: "/og/pages/login.jpg",
-        width: 2400,
-        height: 1260,
-        alt: "Log in to spoo.me",
-      },
-    ],
-  },
-  twitter: { card: "summary_large_image", images: ["/og/pages/login.jpg"] },
+  title,
+  description,
+  ...socialCard({
+    title,
+    description,
+    image: "/og/pages/login.jpg",
+    alt: "Log in to spoo.me",
+  }),
 }
 
 export default function LoginPage() {

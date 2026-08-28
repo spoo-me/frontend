@@ -8,22 +8,21 @@ import { SectionHeading } from "@/components/shared/section-heading"
 import { Button } from "@/components/ui/button"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { siteConfig, stats } from "@/lib/site-config"
+import { socialCard } from "@/lib/og"
+
+const title = "About: the link platform that proves every click"
+const description =
+  "spoo.me is an open-source link management platform: analytics-led, API-first, self-hostable, and free of dark patterns."
 
 export const metadata: Metadata = {
-  title: "About: the link platform that proves every click",
-  description:
-    "spoo.me is an open-source link management platform: analytics-led, API-first, self-hostable, and free of dark patterns.",
-  openGraph: {
-    images: [
-      {
-        url: "/og/company/about.jpg",
-        width: 2400,
-        height: 1260,
-        alt: "About spoo.me, an open-source link platform",
-      },
-    ],
-  },
-  twitter: { card: "summary_large_image", images: ["/og/company/about.jpg"] },
+  title,
+  description,
+  ...socialCard({
+    title,
+    description,
+    image: "/og/company/about.jpg",
+    alt: "About spoo.me, an open-source link platform",
+  }),
 }
 
 const pillars = [

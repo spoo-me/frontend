@@ -8,10 +8,12 @@ export const contentType = "image/png"
 export const alt = "spoo.me link statistics"
 
 /* Aliases are user content: emoji and word codes render; anything longer
-   than the frame allows is clamped so the card never overflows. */
-function displayCode(raw: string): string {
-  const code = decodeURIComponent(raw)
-  return code.length > 18 ? `${code.slice(0, 18)}…` : code
+   than the frame allows is clamped so the card never overflows. Metadata
+   image routes get params already percent-decoded, so no decode here. */
+const graphemes = new Intl.Segmenter()
+function displayCode(code: string): string {
+  const parts = [...graphemes.segment(code)].map((s) => s.segment)
+  return parts.length > 14 ? `${parts.slice(0, 14).join("")}…` : code
 }
 
 // node:fs read + outputFileTracingIncludes (next.config) so the assets
