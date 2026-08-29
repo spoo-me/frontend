@@ -461,6 +461,13 @@ export default function AppsPage() {
                       )
                     })}
                   </div>
+                  {detail.installNotes && detail.installNotes.length > 0 && (
+                    <ol className="list-decimal space-y-1 pl-4 text-muted-foreground text-xs leading-relaxed">
+                      {detail.installNotes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ol>
+                  )}
                 </div>
               )}
 

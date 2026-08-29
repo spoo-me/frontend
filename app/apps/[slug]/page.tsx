@@ -201,6 +201,13 @@ export default async function AppDetailPage({
                     <div className="mt-3">
                       <InstallSteps install={app.install} />
                     </div>
+                    {app.installNotes && app.installNotes.length > 0 && (
+                      <ol className="mt-4 list-decimal space-y-1.5 pl-4 text-muted-foreground text-xs leading-relaxed">
+                        {app.installNotes.map((note) => (
+                          <li key={note}>{note}</li>
+                        ))}
+                      </ol>
+                    )}
                   </aside>
                 )}
               </div>

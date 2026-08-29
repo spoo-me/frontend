@@ -9,6 +9,7 @@ export type ConnectedApp = {
   url: string
   github?: string
   install?: { label: string; command: string }[]
+  installNotes?: string[]
   features: string[]
   status: "live" | "beta" | "soon"
   gallery?: string[]
@@ -149,6 +150,11 @@ export const connectedApps: ConnectedApp[] = [
         label: "Obtainium",
         command: "https://github.com/spoo-me/spoo-android",
       },
+    ],
+    installNotes: [
+      "Tap Download. If Chrome warns the file might be harmful, choose Download anyway. That warning is standard for apps installed from outside the Play Store.",
+      "Open the downloaded file and allow installing from your browser when asked.",
+      "For automatic updates, add the repo link to Obtainium instead.",
     ],
     features: [
       "Material 3 Expressive",
