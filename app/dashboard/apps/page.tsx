@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowUpRight,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Plug2,
   TerminalSquare,
   Unplug,
@@ -281,18 +283,15 @@ export default function AppsPage() {
   const grants = useQuery({ queryKey: ["apps"], queryFn: listAppGrants })
   const items = grants.data?.items ?? []
   const [detail, setDetail] = React.useState<ConnectedApp | null>(null)
+  const [shot, setShot] = React.useState<number | null>(null)
+  const shots = detail?.gallery ?? []
   const openDetail = (app: ConnectedApp) => {
     trackUiAction("app_explored", app.slug)
     setDetail(app)
   }
 
-  // Connected apps leave the catalogue; what remains sorts available-first.
-  const connectedSlugs = new Set(
-    items.map((g) => grantApp(g)?.slug).filter(Boolean)
-  )
-  const catalogue = availableFirst(
-    integrations.filter((a) => !connectedSlugs.has(a.slug))
-  )
+  // Connected apps stay in the catalogue: it carries the download links.
+  const catalogue = availableFirst(integrations)
   const sdkList = availableFirst(sdks)
 
   return (
@@ -393,16 +392,23 @@ export default function AppsPage() {
               </DialogHeader>
 
               {detail.gallery && detail.gallery.length > 0 && (
-                <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1">
-                  {detail.gallery.map((src) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                <div className="flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto pb-1">
+                  {detail.gallery.map((src, i) => (
+                    <button
                       key={src}
-                      src={src}
-                      alt={`${detail.name} screenshot`}
-                      loading="lazy"
-                      className="h-36 shrink-0 snap-start rounded-lg border border-border/60 object-cover"
-                    />
+                      type="button"
+                      onClick={() => setShot(i)}
+                      className="shrink-0 cursor-zoom-in snap-start overflow-hidden rounded-lg border border-border/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label={`Expand ${detail.name} screenshot`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={`${detail.name} screenshot`}
+                        loading="lazy"
+                        className="h-36 w-auto"
+                      />
+                    </button>
                   ))}
                 </div>
               )}
@@ -429,7 +435,7 @@ export default function AppsPage() {
               </div>
 
               {detail.install && detail.install.length > 0 && (
-                <div className="space-y-3">
+                <div className="min-w-0 space-y-3">
                   <span className="label-mono block text-muted-foreground/60">
                     Setup
                   </span>
@@ -481,6 +487,56 @@ export default function AppsPage() {
                 )}
               </DialogFooter>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Expanded screenshot, stacked over the detail dialog */}
+      <Dialog open={shot !== null} onOpenChange={(v) => !v && setShot(null)}>
+        <DialogContent
+          showCloseButton
+          className="w-[95vw] max-w-5xl bg-background p-2 sm:max-w-5xl"
+        >
+          <DialogTitle className="sr-only">
+            {detail?.name} screenshot {shot !== null ? shot + 1 : ""} of{" "}
+            {shots.length}
+          </DialogTitle>
+          {shot !== null && shots[shot] && (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={shots[shot]}
+                alt={`${detail?.name} screenshot`}
+                className="h-auto max-h-[85vh] w-full rounded-lg object-contain"
+              />
+              {shots.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setShot((shot - 1 + shots.length) % shots.length)
+                    }
+                    aria-label="Previous"
+                    className="absolute top-1/2 left-2 -translate-y-1/2 bg-background/70 backdrop-blur hover:bg-background"
+                  >
+                    <ChevronLeft className="size-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShot((shot + 1) % shots.length)}
+                    aria-label="Next"
+                    className="absolute top-1/2 right-2 -translate-y-1/2 bg-background/70 backdrop-blur hover:bg-background"
+                  >
+                    <ChevronRight className="size-5" />
+                  </Button>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-background/70 px-2.5 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur">
+                    {shot + 1} / {shots.length}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
