@@ -44,10 +44,10 @@ export const tools: Tool[] = [
   {
     slug: "qr-code",
     name: "QR code generator",
-    seoTitle: "QR Code Generator: classic and gradient QR codes",
+    seoTitle: "QR Code Generator: free custom QR codes for any link",
     description:
-      "Generate classic or gradient QR codes for any link and download crisp PNGs. Powered by the free, open-source qr.spoo.me API.",
-    blurb: "QR codes for any link, gradients included.",
+      "Generate a custom QR code for any link and download it as a crisp PNG or vector SVG. Pick the ink, style the dots, and track every scan.",
+    blurb: "Custom QR codes, ready for print.",
     iconKey: "qr",
     status: "live",
   },

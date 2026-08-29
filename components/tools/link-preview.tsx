@@ -40,29 +40,16 @@ type State =
   | { kind: "done"; data: UrlMetadata; checked: string; demo?: boolean }
   | { kind: "error"; message: string; unfetchable?: boolean; domain?: string }
 
-export function LinkPreviewChecker() {
+export function LinkPreviewChecker({ demo }: { demo: UrlMetadata | null }) {
   const [url, setUrl] = React.useState("")
-  const [state, setState] = React.useState<State>({ kind: "idle" })
-
-  // The page opens already demonstrating itself: spoo.me pre-checked as
-  // an example (server-cached, so this never refetches the destination).
-  // Applied only while still idle — never over something the user did.
-  React.useEffect(() => {
-    let cancelled = false
-    fetchUrlMetadata("https://spoo.me")
-      .then((data) => {
-        if (cancelled) return
-        setState((st) =>
-          st.kind === "idle"
-            ? { kind: "done", data, checked: "https://spoo.me", demo: true }
-            : st
-        )
-      })
-      .catch(() => undefined)
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // The page opens already demonstrating itself, from tags the server
+  // fetched — so the example costs the visitor no rate-limit budget and
+  // its cards are in the HTML for crawlers.
+  const [state, setState] = React.useState<State>(
+    demo
+      ? { kind: "done", data: demo, checked: demo.url, demo: true }
+      : { kind: "idle" }
+  )
 
   async function onCheck() {
     const target = normalizeUrl(url)

@@ -10,6 +10,8 @@ import { ToolFaq } from "@/components/tools/faq"
 import { LinkPreviewChecker } from "@/components/tools/link-preview"
 import { tools } from "@/lib/tools-data"
 import { socialCard } from "@/lib/og"
+import { fetchUrlMetadataServer } from "@/lib/api/links"
+import { apiBase } from "@/lib/api/server"
 
 const tool = tools.find((t) => t.slug === "link-preview")!
 
@@ -84,7 +86,17 @@ const FAQ = [
   },
 ]
 
-export default function LinkPreviewPage() {
+/* The example is fetched here, not in the browser: it keeps the visitor's
+   anonymous rate-limit budget intact and puts the rendered cards in the
+   HTML. Hourly, matching the backend's own cache for these tags. */
+export const revalidate = 3600
+
+export default async function LinkPreviewPage() {
+  const demo = await fetchUrlMetadataServer(
+    "https://spoo.me",
+    await apiBase()
+  ).catch(() => null)
+
   return (
     <>
       <Header />
@@ -100,7 +112,7 @@ export default function LinkPreviewPage() {
                 will render, and the tags behind it.
               </p>
               <div className="mt-10 text-left">
-                <LinkPreviewChecker />
+                <LinkPreviewChecker demo={demo} />
               </div>
             </div>
           </Section>

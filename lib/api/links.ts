@@ -138,6 +138,20 @@ export function fetchUrlMetadata(url: string) {
   }).then((r) => parse<UrlMetadata>(r))
 }
 
+/** Server-component variant: `baseUrl` comes from `apiBase()`. Kept apart
+    from the browser call so a page's own fetch never spends the visitor's
+    anonymous rate-limit budget. */
+export async function fetchUrlMetadataServer(
+  url: string,
+  baseUrl: string
+): Promise<UrlMetadata> {
+  const res = await apiFetch(
+    `${baseUrl}/v1/metadata?url=${encodeURIComponent(url)}`,
+    { method: "GET" }
+  )
+  return parse<UrlMetadata>(res)
+}
+
 /**
  * GET /api/v1/expand — a URL's redirect chain, every hop in order.
  * `blocklist_match` is the only safety claim: some hop matches the abuse

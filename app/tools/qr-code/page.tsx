@@ -74,8 +74,8 @@ export default function QrCodePage() {
                 QR code generator
               </h1>
               <p className="mt-4 text-balance text-lg text-muted-foreground">
-                Classic and gradient QR codes for any link, rendered live as you
-                type.
+                Custom QR codes for any link, rendered live as you type and
+                ready for print.
               </p>
               <div className="mt-10 text-left">
                 <QrGenerator />
