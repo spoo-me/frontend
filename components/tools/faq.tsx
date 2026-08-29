@@ -9,13 +9,7 @@ export type FaqItem = { q: string; a: string }
 
 /* FAQ band: accordion plus FAQPage JSON-LD — the structured-data surface
    none of the comparable tools ship. The open item lifts onto a card. */
-export function ToolFaq({
-  items,
-  intro,
-}: {
-  items: FaqItem[]
-  intro: string
-}) {
+export function ToolFaq({ items, intro }: { items: FaqItem[]; intro: string }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -40,7 +34,7 @@ export function ToolFaq({
           <AccordionItem
             key={f.q}
             value={f.q}
-            className="-mx-6 border-transparent border-b px-6 [&:has(+[data-state=open])]:border-transparent [&:not(:has(+*))]:border-transparent data-[state=open]:my-3 data-[state=open]:rounded-2xl data-[state=open]:bg-card data-[state=open]:shadow-card data-[state=open]:ring-1 data-[state=open]:ring-foreground/10 [&[data-state=closed]]:border-border/50"
+            className="-mx-6 border-transparent border-b px-6 data-[state=open]:my-3 data-[state=open]:rounded-2xl data-[state=open]:bg-card data-[state=open]:shadow-card data-[state=open]:ring-1 data-[state=open]:ring-foreground/10 [&:has(+[data-state=open])]:border-transparent [&:not(:has(+*))]:border-transparent [&[data-state=closed]]:border-border/50"
           >
             <AccordionTrigger className="py-5 text-base text-foreground hover:no-underline data-[state=open]:pb-2">
               {f.q}

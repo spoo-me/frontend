@@ -105,9 +105,9 @@ export type UrlListResponse = {
  * `title`/`description`/`image`/`color`/`site_name` fields are normalized
  * best-picks (og → twitter → html fallbacks) ready to prefill `meta_tags`;
  * `og`/`twitter` carry the raw tag families. Every field serialized, nulls
- * explicit. Errors: 400 validation_error (non-https url), 401 unauthed,
- * 422 unfetchable, 504 upstream_timeout, 429 rate_limit_exceeded
- * (20/min, 500/day — never poll this).
+ * explicit. Errors: 400 validation_error (non-https url), 422 unfetchable,
+ * 504 upstream_timeout, 429 rate_limit_exceeded (60/min authed, 15/min
+ * anonymous — never poll this).
  */
 export type UrlMetadata = {
   url: string
@@ -119,12 +119,19 @@ export type UrlMetadata = {
   /** theme-color, normalized #RRGGBB. */
   color: string | null
   site_name: string | null
+  /** Raw <title> text, before og/twitter fallbacks. */
+  html_title: string | null
+  /** Plain <meta name=description>, unnormalized. */
+  html_description: string | null
+  /** Best declared icon (or /favicon.ico); absolute https URL. */
+  favicon: string | null
   og: Record<string, string>
   twitter: Record<string, string>
   fetched_at: string
 }
 
-/** Auth-required; the backend accepts https destinations only. */
+/** Auth optional (anonymous callers get a tighter 15/min per-IP limit);
+    the backend accepts https destinations only. */
 export function fetchUrlMetadata(url: string) {
   return authedFetch(`/api/v1/metadata?url=${encodeURIComponent(url)}`, {
     method: "GET",

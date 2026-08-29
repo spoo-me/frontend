@@ -672,6 +672,9 @@ function mockMetadata(url: string): NextResponse {
     image,
     color,
     site_name,
+    html_title: title,
+    html_description: description,
+    favicon: `https://${host}/favicon.ico`,
     og: rich
       ? {
           title: title ?? "",
@@ -687,7 +690,10 @@ function mockMetadata(url: string): NextResponse {
 }
 
 /** 20/min sliding window, shared across HMR like the rest of the state. */
-const gm = globalThis as typeof globalThis & { __spooMetaHits?: number[] }
+const gm = globalThis as typeof globalThis & {
+  __spooMetaHits?: number[]
+  __spooMetaAnonHits?: number[]
+}
 
 function aliasTaken(alias: string) {
   const a = alias.toLowerCase()
@@ -1141,20 +1147,20 @@ async function handle(req: NextRequest, path: string[]) {
       return json(s.onboarding)
     }
 
-    /* ---------- destination metadata (prefill) ---------- */
+    /* ---------- destination metadata (prefill + preview checker) ---------- */
     case "GET /v1/metadata": {
-      if (!req.cookies.has("access_token") && !req.cookies.has("refresh_token"))
-        return fail(401, "authentication_error", "Authentication required")
+      // Auth optional: signed-in callers get 60/min, anonymous 15/min per IP.
+      const authed =
+        req.cookies.has("access_token") || req.cookies.has("refresh_token")
       const url = params.get("url") ?? ""
       if (!url.startsWith("https://"))
         return fail(400, "validation_error", "url must be https", "url")
       const now = Date.now()
-      gm.__spooMetaHits = (gm.__spooMetaHits ?? []).filter(
-        (t) => now - t < 60_000
-      )
-      if (gm.__spooMetaHits.length >= 20)
+      const bucket = authed ? "__spooMetaHits" : "__spooMetaAnonHits"
+      gm[bucket] = (gm[bucket] ?? []).filter((t) => now - t < 60_000)
+      if (gm[bucket].length >= (authed ? 60 : 15))
         return fail(429, "rate_limit_exceeded", "Too many requests")
-      gm.__spooMetaHits.push(now)
+      gm[bucket].push(now)
       return mockMetadata(url)
     }
 

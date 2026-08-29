@@ -29,7 +29,7 @@ export const tools: Tool[] = [
       "See how any URL renders on X, Discord, Slack, WhatsApp, and LinkedIn, with a meta-tag audit that shows exactly what to fix.",
     blurb: "See how a URL unfurls on every platform.",
     iconKey: "preview",
-    status: "soon",
+    status: "live",
   },
   {
     slug: "url-expander",
