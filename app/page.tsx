@@ -10,6 +10,7 @@ import { Developer } from "@/components/sections/developer"
 import { Testimonials } from "@/components/sections/testimonials"
 import { SelfHost } from "@/components/sections/self-host"
 import { Stats } from "@/components/sections/stats"
+import { Faq } from "@/components/sections/faq"
 import { CTA } from "@/components/sections/cta"
 
 export default function HomePage() {
@@ -41,6 +42,9 @@ export default function HomePage() {
           </Section>
           <Section>
             <Stats />
+          </Section>
+          <Section>
+            <Faq />
           </Section>
           <Section>
             <CTA />

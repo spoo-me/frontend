@@ -243,12 +243,25 @@ export const companyLegalLinks: NavLink[] = [
   },
 ]
 
+/* Every tool, linked from every page. The footer disclosure is the only
+   place that carries the full set, so a new tool goes here and nowhere
+   else. Collapsed, but always in the HTML, which is the point. */
+export const toolLinks = [
+  { label: "All tools", href: "/tools" },
+  { label: "UTM builder", href: "/tools/utm-builder" },
+  { label: "Link preview checker", href: "/tools/link-preview" },
+  { label: "URL expander", href: "/tools/url-expander" },
+  { label: "QR code generator", href: "/tools/qr-code" },
+] as const
+
 export const footerLinks = {
   product: [
     { label: "Features", href: "/#features" },
     { label: "Analytics", href: "/#analytics" },
     ...(PRICING_ENABLED ? [{ label: "Pricing", href: "/pricing" }] : []),
     { label: "Self-host", href: "/#self-host" },
+    { label: "FAQ", href: "/#faq" },
+    { label: "Tools", href: "/tools", children: toolLinks },
   ],
   apps: [
     { label: "All apps", href: "/apps" },

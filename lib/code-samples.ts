@@ -105,27 +105,6 @@ func main() {
 }`,
   },
   {
-    id: "kotlin",
-    label: "Kotlin",
-    lang: "kotlin",
-    iconKey: "kotlin",
-    code: `import me.spoo.SpooClient
-
-suspend fun main() {
-    val spoo = SpooClient(apiKey = System.getenv("SPOO_API_KEY"))
-
-    val link = spoo.links.create {
-        longUrl = "https://example.com/very/long/path"
-        alias = "launch"
-        maxClicks = 100
-    }
-    println(link.shortUrl)
-
-    val stats = spoo.stats.forLink(link.id)
-    println("\${stats.summary.totalClicks} clicks")
-}`,
-  },
-  {
     id: "curl",
     label: "cURL",
     lang: "bash",

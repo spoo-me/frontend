@@ -2,26 +2,18 @@
 
 import * as React from "react"
 import Link from "next/link"
-import {
-  Clock,
-  Globe,
-  Globe2,
-  Lock,
-  MoveUpRight,
-  Pause,
-  ShieldAlert,
-} from "lucide-react"
+import { Clock, Globe2, Lock, Pause, ShieldAlert } from "lucide-react"
 
 import type {
   PreviewDestination,
   PublicPreview,
 } from "@/lib/api/public-preview"
-import { faviconUrl } from "@/lib/favicon"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
+import { DestinationCard } from "@/components/shared/destination-card"
 import { DimensionIcon } from "@/components/dashboard/dim-icon"
 
 /**
@@ -64,19 +56,22 @@ export function PreviewView({ data }: { data: PublicPreview }) {
   const statusMeta = data.status !== "active" ? STATUS_META[data.status] : null
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      {/* Identity */}
-      <div className="flex items-center gap-2">
-        <h1 className="truncate font-mono font-semibold text-2xl text-foreground tracking-tight">
-          {shortDisplay}
-        </h1>
-        <CopyButton value={data.short_url} label="Copy short link" />
+    <div className="mx-auto w-full max-w-xl">
+      {/* Identity strip — the input, stated quietly; the destination below
+          is the page's payoff and carries the visual weight. */}
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h1 className="truncate font-medium font-mono text-base text-foreground">
+            {shortDisplay}
+          </h1>
+          <CopyButton value={data.short_url} label="Copy short link" />
+        </div>
+        {data.created_at && (
+          <p className="shrink-0 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
+            created {formatDate(data.created_at)}
+          </p>
+        )}
       </div>
-      {data.created_at && (
-        <p className="mt-2 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
-          created {formatDate(data.created_at)}
-        </p>
-      )}
 
       {/* Safety framing: status stated plainly, before the destination */}
       {statusMeta && (
@@ -118,17 +113,27 @@ export function PreviewView({ data }: { data: PublicPreview }) {
       ) : (
         data.destination && (
           <>
-            {/* The destination — the whole point of the page */}
-            <div className="mt-8">
-              <SectionHeader
-                icon={MoveUpRight}
-                title={
-                  data.geo_destinations ? "Default destination" : "Redirects to"
-                }
-              />
-              <Panel className="mt-2 p-4">
-                <DestinationRow destination={data.destination} />
-              </Panel>
+            {/* The destination — the whole point of the page. The elbow
+                branches it off the short link above. */}
+            <div className="mt-1.5">
+              <div className="flex h-9 items-end gap-2.5">
+                <span
+                  aria-hidden
+                  className="mb-[7px] ml-2.5 h-full w-4 shrink-0 rounded-bl-lg border-border/60 border-b border-l"
+                />
+                <span className="label-mono text-muted-foreground">
+                  {data.geo_destinations
+                    ? "Default destination"
+                    : "Redirects to"}
+                </span>
+              </div>
+              <div className="mt-3 pl-9">
+                <DestinationCard
+                  url={data.destination.url}
+                  domain={data.destination.domain}
+                  isHttps={data.destination.is_https}
+                />
+              </div>
             </div>
 
             {/* Geo spread — every destination listed, nothing cloaked */}
@@ -174,7 +179,7 @@ export function PreviewView({ data }: { data: PublicPreview }) {
           does reporting — someone inspecting a LIVE link is exactly the
           person about to report one. Dead or blocked links get neither:
           nothing left to act on. */}
-      <div className="mt-10 flex flex-wrap items-center gap-3">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
         {data.status === "active" && (
           <Button asChild>
             <a href={continueHref} rel="noreferrer">
@@ -212,7 +217,6 @@ function DestinationRow({
 }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3">
-      {!compact && <Favicon domain={destination.domain} />}
       <div className="min-w-0 flex-1">
         <p
           className={cn(
@@ -230,43 +234,5 @@ function DestinationRow({
       </div>
       <CopyButton value={destination.url} label="Copy destination" />
     </div>
-  )
-}
-
-/** Marks an SSR'd <img> failed even when it errored BEFORE hydration —
-    onError alone misses that window and leaves a broken-image frame. */
-function useImgFailed() {
-  const ref = React.useRef<HTMLImageElement | null>(null)
-  const [failed, setFailed] = React.useState(false)
-  React.useEffect(() => {
-    const el = ref.current
-    if (el?.complete && el.naturalWidth === 0) setFailed(true)
-  }, [])
-  return { ref, failed, onError: () => setFailed(true) }
-}
-
-/** Same identity tile as the links page: bordered slab, favicon or a
-    crisp Globe fallback (the /api/favicon proxy 404s so onError fires). */
-function Favicon({ domain }: { domain: string }) {
-  const { ref, failed, onError } = useImgFailed()
-  return (
-    <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-muted/30">
-      {!failed ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          ref={ref}
-          src={faviconUrl(domain)}
-          alt=""
-          loading="lazy"
-          onError={onError}
-          className="size-4"
-        />
-      ) : (
-        <Globe
-          className="size-3.5 text-muted-foreground/60"
-          strokeWidth={1.75}
-        />
-      )}
-    </span>
   )
 }

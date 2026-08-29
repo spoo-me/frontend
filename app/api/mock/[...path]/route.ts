@@ -672,6 +672,9 @@ function mockMetadata(url: string): NextResponse {
     image,
     color,
     site_name,
+    html_title: title,
+    html_description: description,
+    favicon: `https://${host}/favicon.ico`,
     og: rich
       ? {
           title: title ?? "",
@@ -687,7 +690,10 @@ function mockMetadata(url: string): NextResponse {
 }
 
 /** 20/min sliding window, shared across HMR like the rest of the state. */
-const gm = globalThis as typeof globalThis & { __spooMetaHits?: number[] }
+const gm = globalThis as typeof globalThis & {
+  __spooMetaHits?: number[]
+  __spooMetaAnonHits?: number[]
+}
 
 function aliasTaken(alias: string) {
   const a = alias.toLowerCase()
@@ -1141,21 +1147,99 @@ async function handle(req: NextRequest, path: string[]) {
       return json(s.onboarding)
     }
 
-    /* ---------- destination metadata (prefill) ---------- */
+    /* ---------- destination metadata (prefill + preview checker) ---------- */
     case "GET /v1/metadata": {
-      if (!req.cookies.has("access_token") && !req.cookies.has("refresh_token"))
-        return fail(401, "authentication_error", "Authentication required")
+      // Auth optional: signed-in callers get 60/min, anonymous 15/min per IP.
+      const authed =
+        req.cookies.has("access_token") || req.cookies.has("refresh_token")
       const url = params.get("url") ?? ""
       if (!url.startsWith("https://"))
         return fail(400, "validation_error", "url must be https", "url")
       const now = Date.now()
-      gm.__spooMetaHits = (gm.__spooMetaHits ?? []).filter(
-        (t) => now - t < 60_000
-      )
-      if (gm.__spooMetaHits.length >= 20)
+      const bucket = authed ? "__spooMetaHits" : "__spooMetaAnonHits"
+      gm[bucket] = (gm[bucket] ?? []).filter((t) => now - t < 60_000)
+      if (gm[bucket].length >= (authed ? 60 : 15))
         return fail(429, "rate_limit_exceeded", "Too many requests")
-      gm.__spooMetaHits.push(now)
+      gm[bucket].push(now)
       return mockMetadata(url)
+    }
+
+    /* ---------- redirect-chain expander (/tools/url-expander) ---------- */
+    case "GET /v1/expand": {
+      const url = params.get("url") ?? ""
+      if (!/^https?:\/\//.test(url))
+        return fail(400, "validation_error", "url must be http(s)", "url")
+      let u: URL
+      try {
+        u = new URL(url)
+      } catch {
+        return fail(422, "unfetchable", "that URL can't be expanded")
+      }
+      const pathLower = u.pathname.toLowerCase()
+      if (pathLower.includes("broken"))
+        return fail(422, "unfetchable", "that URL can't be expanded")
+      if (pathLower.includes("slow"))
+        return fail(
+          504,
+          "upstream_timeout",
+          "destination did not respond in time"
+        )
+      const finalUrl = `https://github.com/spoo-me/spoo`
+      const hops = [
+        { url, status: 301, https: url.startsWith("https://") },
+        {
+          url: `http://track.example/r?to=${encodeURIComponent(finalUrl)}`,
+          status: 302,
+          https: false,
+        },
+        { url: finalUrl, status: 200, https: true },
+      ]
+      return json({
+        url,
+        final_url: finalUrl,
+        final_status: 200,
+        truncated: false,
+        hops,
+        blocklist_match: pathLower.includes("blocked"),
+        web_risk: pathLower.includes("risky")
+          ? { checked: true, threats: ["SOCIAL_ENGINEERING"] }
+          : { checked: true, threats: [] },
+        fetched_at: new Date().toISOString(),
+      })
+    }
+
+    /* ---------- domain records (/tools/url-expander panel) ---------- */
+    case "GET /v1/domain-intel": {
+      const host = (params.get("host") ?? "").toLowerCase()
+      if (!host.includes("."))
+        return fail(400, "validation_error", "not a valid hostname", "host")
+      return json({
+        host,
+        registrable_domain: host.split(".").slice(-2).join("."),
+        dns: {
+          a: ["93.184.216.34"],
+          aaaa: [],
+          mx: [`0 mail.${host}.`],
+          ns: [`ns1.${host}.`, `ns2.${host}.`],
+          txt: ["v=spf1 -all"],
+        },
+        whois: {
+          registrar: "Example Registrar LLC",
+          created: "2019-04-02T00:00:00Z",
+          updated: "2025-03-11T00:00:00Z",
+          expires: "2027-04-02T00:00:00Z",
+          age_days: 2706,
+        },
+        ssl: {
+          issuer: "Let's Encrypt",
+          subject: host,
+          valid_from: "Jul  1 00:00:00 2026 GMT",
+          valid_to: "Sep 29 23:59:59 2026 GMT",
+          days_left: 31,
+          sans: [host, `www.${host}`],
+        },
+        fetched_at: new Date().toISOString(),
+      })
     }
 
     /* ---------- shorten ---------- */

@@ -48,7 +48,7 @@ export default async function LinkPreviewPage({ params }: Params) {
       <main className="overflow-hidden pt-20">
         <PageFrame>
           <Section caption="Link preview">
-            <div className="px-5 py-24 sm:px-9 sm:py-32">
+            <div className="px-5 py-16 sm:px-9 sm:py-24">
               {state === "missing" ? (
                 <PreviewMissing code={code} />
               ) : state === "unavailable" || !data ? (

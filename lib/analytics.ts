@@ -303,6 +303,29 @@ export function trackUiAction(action: UiAction, detail?: string) {
   capture("ui_action", { action, ...(detail ? { detail } : {}) })
 }
 
+/* ---------- free tools ---------- */
+
+/** The tools are acquisition surfaces: the funnel that matters is
+    pageview → used → shortened (became a spoo link) → signed up. One
+    event, tool + action enums, so the whole matrix is one breakdown. */
+export type ToolSlug =
+  | "utm-builder"
+  | "link-preview"
+  | "url-expander"
+  | "qr-code"
+
+export type ToolAction = "used" | "copied" | "downloaded" | "shortened"
+
+/** `detail` stays low-cardinality: an artifact kind or format, never
+    user content. */
+export function trackToolAction(
+  tool: ToolSlug,
+  action: ToolAction,
+  detail?: string
+) {
+  capture("tool_action", { tool, action, ...(detail ? { detail } : {}) })
+}
+
 /* ---------- onboarding ---------- */
 
 export function trackOnboardingStepCompleted(

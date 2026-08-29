@@ -28,7 +28,6 @@ const FILE_NAMES: Record<string, string> = {
   ts: "shorten.ts",
   rust: "shorten.rs",
   go: "shorten.go",
-  kotlin: "shorten.kt",
   curl: "shorten.sh",
 }
 

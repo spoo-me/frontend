@@ -105,9 +105,9 @@ export type UrlListResponse = {
  * `title`/`description`/`image`/`color`/`site_name` fields are normalized
  * best-picks (og → twitter → html fallbacks) ready to prefill `meta_tags`;
  * `og`/`twitter` carry the raw tag families. Every field serialized, nulls
- * explicit. Errors: 400 validation_error (non-https url), 401 unauthed,
- * 422 unfetchable, 504 upstream_timeout, 429 rate_limit_exceeded
- * (20/min, 500/day — never poll this).
+ * explicit. Errors: 400 validation_error (non-https url), 422 unfetchable,
+ * 504 upstream_timeout, 429 rate_limit_exceeded (60/min authed, 15/min
+ * anonymous — never poll this).
  */
 export type UrlMetadata = {
   url: string
@@ -119,16 +119,99 @@ export type UrlMetadata = {
   /** theme-color, normalized #RRGGBB. */
   color: string | null
   site_name: string | null
+  /** Raw <title> text, before og/twitter fallbacks. */
+  html_title: string | null
+  /** Plain <meta name=description>, unnormalized. */
+  html_description: string | null
+  /** Best declared icon (or /favicon.ico); absolute https URL. */
+  favicon: string | null
   og: Record<string, string>
   twitter: Record<string, string>
   fetched_at: string
 }
 
-/** Auth-required; the backend accepts https destinations only. */
+/** Auth optional (anonymous callers get a tighter 15/min per-IP limit);
+    the backend accepts https destinations only. */
 export function fetchUrlMetadata(url: string) {
   return authedFetch(`/api/v1/metadata?url=${encodeURIComponent(url)}`, {
     method: "GET",
   }).then((r) => parse<UrlMetadata>(r))
+}
+
+/** Server-component variant: `baseUrl` comes from `apiBase()`. Kept apart
+    from the browser call so a page's own fetch never spends the visitor's
+    anonymous rate-limit budget. */
+export async function fetchUrlMetadataServer(
+  url: string,
+  baseUrl: string
+): Promise<UrlMetadata> {
+  const res = await apiFetch(
+    `${baseUrl}/v1/metadata?url=${encodeURIComponent(url)}`,
+    { method: "GET" }
+  )
+  return parse<UrlMetadata>(res)
+}
+
+/**
+ * GET /api/v1/expand — a URL's redirect chain, every hop in order.
+ * `blocklist_match` is the only safety claim: some hop matches the abuse
+ * blocklist spoo.me enforces at link creation. Errors mirror /metadata:
+ * 400 validation_error, 422 unfetchable, 504 upstream_timeout, 429.
+ */
+export type ExpandedUrl = {
+  url: string
+  final_url: string
+  final_status: number | null
+  /** Chain stopped at the redirect cap. */
+  truncated: boolean
+  hops: Array<{ url: string; status: number | null; https: boolean }>
+  blocklist_match: boolean
+  /** Google Web Risk verdict for the final URL; null when the check
+      didn't run (no key configured, API error) — absence, not a verdict. */
+  web_risk: { checked: boolean; threats: string[] } | null
+  fetched_at: string
+}
+
+/** Auth optional; accepts http and https inputs (chains bounce through
+    http trackers — the UI flags those hops). */
+export function expandUrl(url: string) {
+  return authedFetch(`/api/v1/expand?url=${encodeURIComponent(url)}`, {
+    method: "GET",
+  }).then((r) => parse<ExpandedUrl>(r))
+}
+
+/**
+ * GET /api/v1/domain-intel — public records of a destination host: DNS,
+ * RDAP registration (age_days = the phishing tell), TLS certificate.
+ * whois/ssl are null when the registry or handshake doesn't answer.
+ * Cached ~24h server-side.
+ */
+export type DomainIntel = {
+  host: string
+  registrable_domain: string
+  dns: Record<string, string[]>
+  whois: {
+    registrar: string | null
+    created: string | null
+    updated: string | null
+    expires: string | null
+    age_days: number | null
+  } | null
+  ssl: {
+    issuer: string | null
+    subject: string | null
+    valid_from: string | null
+    valid_to: string | null
+    days_left: number | null
+    sans: string[]
+  } | null
+  fetched_at: string
+}
+
+export function fetchDomainIntel(host: string) {
+  return authedFetch(`/api/v1/domain-intel?host=${encodeURIComponent(host)}`, {
+    method: "GET",
+  }).then((r) => parse<DomainIntel>(r))
 }
 
 /**
