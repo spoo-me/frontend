@@ -137,7 +137,16 @@ export default async function AppDetailPage({
                   )}
                   {app.status !== "soon" && (
                     <Button asChild size="default">
-                      <a href={app.url} target="_blank" rel="noreferrer">
+                      {/* Same-tab for mobile: an APK download in a _blank
+                          tab leaves Chrome's harmful-file prompt attached
+                          to a blank page nobody returns to, and the
+                          download silently never finishes. */}
+                      <a
+                        href={app.url}
+                        {...(app.category === "mobile"
+                          ? {}
+                          : { target: "_blank", rel: "noreferrer" })}
+                      >
                         {app.category === "mobile" ? "Download" : "Open"}
                         <ArrowUpRight
                           className="size-3.5"
