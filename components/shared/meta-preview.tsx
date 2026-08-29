@@ -47,7 +47,7 @@ export function MetaPreview({
   // Data URIs (the upload path) render as-is; URLs get the scheme fill.
   const imgSrc =
     image && brokenSrc !== image
-      ? image.startsWith("data:")
+      ? image.startsWith("data:") || image.startsWith("/")
         ? image
         : looksLikeUrl(image)
           ? normalizeUrl(image)
