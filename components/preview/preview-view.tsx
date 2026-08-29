@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { CopyButton } from "@/components/dashboard/copy-button"
-import { DestinationCard } from "@/components/preview/destination-card"
+import { DestinationCard } from "@/components/shared/destination-card"
 import { DimensionIcon } from "@/components/dashboard/dim-icon"
 
 /**
@@ -128,7 +128,11 @@ export function PreviewView({ data }: { data: PublicPreview }) {
                 </span>
               </div>
               <div className="mt-3 pl-9">
-                <DestinationCard destination={data.destination} />
+                <DestinationCard
+                  url={data.destination.url}
+                  domain={data.destination.domain}
+                  isHttps={data.destination.is_https}
+                />
               </div>
             </div>
 

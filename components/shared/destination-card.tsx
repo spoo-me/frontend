@@ -4,7 +4,6 @@ import * as React from "react"
 import { Globe } from "lucide-react"
 
 import { fetchUrlMetadata, type UrlMetadata } from "@/lib/api"
-import type { PreviewDestination } from "@/lib/api/public-preview"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CopyButton } from "@/components/dashboard/copy-button"
 
@@ -16,9 +15,13 @@ import { CopyButton } from "@/components/dashboard/copy-button"
  * quietly stays a URL row and the page loses nothing.
  */
 export function DestinationCard({
-  destination,
+  url,
+  domain,
+  isHttps,
 }: {
-  destination: PreviewDestination
+  url: string
+  domain: string
+  isHttps: boolean
 }) {
   const [meta, setMeta] = React.useState<UrlMetadata | null>(null)
   const [settled, setSettled] = React.useState(false)
@@ -27,11 +30,11 @@ export function DestinationCard({
     let cancelled = false
     // http destinations: skip — the endpoint is https-only, and the
     // unencrypted warning below is the load-bearing information anyway.
-    if (!destination.is_https) {
+    if (!isHttps) {
       setSettled(true)
       return
     }
-    fetchUrlMetadata(destination.url)
+    fetchUrlMetadata(url)
       .then((m) => {
         if (!cancelled) setMeta(m)
       })
@@ -42,7 +45,7 @@ export function DestinationCard({
     return () => {
       cancelled = true
     }
-  }, [destination.url, destination.is_https])
+  }, [url, isHttps])
 
   const hasCard = Boolean(
     meta && (meta.title || meta.description || meta.image)
@@ -83,15 +86,15 @@ export function DestinationCard({
         <FaviconThumb src={meta?.favicon ?? null} />
         <div className="min-w-0 flex-1">
           <p className="break-all font-medium font-mono text-[15px] text-foreground">
-            {destination.url}
+            {url}
           </p>
-          {!destination.is_https && (
+          {!isHttps && (
             <p className="mt-1 font-mono text-[11px] text-destructive">
               not https, the connection is unencrypted
             </p>
           )}
         </div>
-        <CopyButton value={destination.url} label="Copy destination" />
+        <CopyButton value={url} label="Copy destination" />
       </div>
     </div>
   )

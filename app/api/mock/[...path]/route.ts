@@ -1164,6 +1164,47 @@ async function handle(req: NextRequest, path: string[]) {
       return mockMetadata(url)
     }
 
+    /* ---------- redirect-chain expander (/tools/url-expander) ---------- */
+    case "GET /v1/expand": {
+      const url = params.get("url") ?? ""
+      if (!/^https?:\/\//.test(url))
+        return fail(400, "validation_error", "url must be http(s)", "url")
+      let u: URL
+      try {
+        u = new URL(url)
+      } catch {
+        return fail(422, "unfetchable", "that URL can't be expanded")
+      }
+      const pathLower = u.pathname.toLowerCase()
+      if (pathLower.includes("broken"))
+        return fail(422, "unfetchable", "that URL can't be expanded")
+      if (pathLower.includes("slow"))
+        return fail(
+          504,
+          "upstream_timeout",
+          "destination did not respond in time"
+        )
+      const finalUrl = `https://github.com/spoo-me/spoo`
+      const hops = [
+        { url, status: 301, https: url.startsWith("https://") },
+        {
+          url: `http://track.example/r?to=${encodeURIComponent(finalUrl)}`,
+          status: 302,
+          https: false,
+        },
+        { url: finalUrl, status: 200, https: true },
+      ]
+      return json({
+        url,
+        final_url: finalUrl,
+        final_status: 200,
+        truncated: false,
+        hops,
+        blocklist_match: pathLower.includes("blocked"),
+        fetched_at: new Date().toISOString(),
+      })
+    }
+
     /* ---------- shorten ---------- */
     case "GET /v1/shorten/check-alias": {
       const alias = params.get("alias") ?? ""

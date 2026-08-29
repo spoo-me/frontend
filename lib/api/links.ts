@@ -139,6 +139,31 @@ export function fetchUrlMetadata(url: string) {
 }
 
 /**
+ * GET /api/v1/expand — a URL's redirect chain, every hop in order.
+ * `blocklist_match` is the only safety claim: some hop matches the abuse
+ * blocklist spoo.me enforces at link creation. Errors mirror /metadata:
+ * 400 validation_error, 422 unfetchable, 504 upstream_timeout, 429.
+ */
+export type ExpandedUrl = {
+  url: string
+  final_url: string
+  final_status: number | null
+  /** Chain stopped at the redirect cap. */
+  truncated: boolean
+  hops: Array<{ url: string; status: number | null; https: boolean }>
+  blocklist_match: boolean
+  fetched_at: string
+}
+
+/** Auth optional; accepts http and https inputs (chains bounce through
+    http trackers — the UI flags those hops). */
+export function expandUrl(url: string) {
+  return authedFetch(`/api/v1/expand?url=${encodeURIComponent(url)}`, {
+    method: "GET",
+  }).then((r) => parse<ExpandedUrl>(r))
+}
+
+/**
  * Why an alias is unavailable (services/url_service.py). `format` and
  * `length` are DTO-shape problems; `emoji_policy` and `reserved` are service
  * policy; `taken` is a collision. `reserved` only ever applies to alnum

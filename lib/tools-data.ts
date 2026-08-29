@@ -39,7 +39,7 @@ export const tools: Tool[] = [
       "Paste a short link from any shortener and see the full redirect chain, the final destination, and a safety verdict before you click.",
     blurb: "Reveal a short link's destination before clicking.",
     iconKey: "expander",
-    status: "soon",
+    status: "live",
   },
   {
     slug: "qr-code",
