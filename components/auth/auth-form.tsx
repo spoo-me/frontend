@@ -13,7 +13,7 @@ import { BrandIcons } from "@/components/icons/brand-icons"
 import { useAuth } from "@/components/auth/auth-context"
 import { VerifyPanel } from "@/components/auth/verify-panel"
 import { trackLoggedIn, trackSignedUp } from "@/lib/analytics"
-import { login, register, SpooApiError } from "@/lib/api"
+import { login, register, restoreAccount, SpooApiError } from "@/lib/api"
 import { PASSWORD_RULES, passwordSatisfies, safeNext } from "@/lib/validation"
 
 type Mode = "login" | "signup"
@@ -98,6 +98,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [conflict, setConflict] = React.useState(false)
+  // A pending-deletion 403 turns the same credentials into a restore proof.
+  const [restorable, setRestorable] = React.useState(false)
   // Dub-style: the OTP panel swaps into this pane right after signup —
   // verification gates entry instead of being an onboarding step.
   const [verifying, setVerifying] = React.useState(false)
@@ -137,33 +139,54 @@ export function AuthForm({ mode }: { mode: Mode }) {
     emailLooksValid &&
     (mode === "login" ? password.length > 0 : passwordSatisfies(password))
 
+  async function finishLogin() {
+    const { user } = await login({ email, password })
+    trackLoggedIn("password")
+    setUser(user)
+    // Read ?next= at submit time — avoids the useSearchParams Suspense
+    // requirement on an otherwise static page.
+    const next = safeNext(
+      new URLSearchParams(window.location.search).get("next")
+    )
+    // Unfinished accounts resume where they left off: the onboarding
+    // layout owns the verify gate and the step cache, so one push
+    // covers unverified, mid-wizard, and fresh states alike. The one
+    // exception is a device-auth consent resume — see the effect above.
+    if (isConsentPath(next)) {
+      leaveForConsent(next)
+    } else if (!user.email_verified || !user.onboarded_at) {
+      router.push("/onboarding")
+    } else {
+      router.push(next ?? "/dashboard")
+    }
+  }
+
+  async function onRestore() {
+    if (pending) return
+    setPending(true)
+    setError(null)
+    try {
+      await restoreAccount({ email, password })
+      setRestorable(false)
+      await finishLogin()
+    } catch {
+      setPending(false)
+      setError(
+        "Couldn't restore the account. Use the link from the deletion email, or contact support@spoo.me."
+      )
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSubmit || pending) return
     setPending(true)
     setError(null)
     setConflict(false)
+    setRestorable(false)
     try {
       if (mode === "login") {
-        const { user } = await login({ email, password })
-        trackLoggedIn("password")
-        setUser(user)
-        // Read ?next= at submit time — avoids the useSearchParams Suspense
-        // requirement on an otherwise static page.
-        const next = safeNext(
-          new URLSearchParams(window.location.search).get("next")
-        )
-        // Unfinished accounts resume where they left off: the onboarding
-        // layout owns the verify gate and the step cache, so one push
-        // covers unverified, mid-wizard, and fresh states alike. The one
-        // exception is a device-auth consent resume — see the effect above.
-        if (isConsentPath(next)) {
-          leaveForConsent(next)
-        } else if (!user.email_verified || !user.onboarded_at) {
-          router.push("/onboarding")
-        } else {
-          router.push(next ?? "/dashboard")
-        }
+        await finishLogin()
       } else {
         const { user } = await register({ email, password })
         trackSignedUp("password")
@@ -181,6 +204,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
           setError("Too many attempts. Wait a minute and try again.")
         } else if (err.code === "authentication_error") {
           setError("Invalid email or password.")
+        } else if (err.code === "account_pending_deletion") {
+          setRestorable(true)
+          setError("This account is scheduled for deletion.")
         } else {
           setError(err.message)
         }
@@ -370,6 +396,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 >
                   Sign in instead
                 </Link>
+              </>
+            )}
+            {restorable && (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  onClick={() => void onRestore()}
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  Restore it
+                </button>
               </>
             )}
           </p>

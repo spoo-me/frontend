@@ -156,3 +156,33 @@ export function resetPassword(input: {
     parse<{ success: boolean }>(r)
   )
 }
+
+/**
+ * DELETE /api/v1/me — schedule permanent account erasure. Re-auth rides in
+ * the body: password accounts send `password` (the only proof accepted for
+ * them), OAuth-only accounts type their exact email as `confirm_email`.
+ * Grace period applies; the response carries the purge deadline.
+ * Session-JWT only: API keys cannot reach this.
+ */
+export function deleteAccount(input: {
+  password?: string
+  confirm_email?: string
+}) {
+  return authedFetch("/api/v1/me", jsonInit("DELETE", input)).then((r) =>
+    parse<{ purge_after: string }>(r)
+  )
+}
+
+/**
+ * POST /auth/restore — cancel a pending deletion. Two mutually exclusive
+ * proofs: account credentials, or the one-shot token from the deletion
+ * notice email (the only path for OAuth-only accounts). Public endpoint;
+ * every failure shape is a uniform 403.
+ */
+export function restoreAccount(
+  input: { email: string; password: string } | { restore_token: string }
+) {
+  return apiFetch("/auth/restore", jsonInit("POST", input)).then((r) =>
+    parse<{ message: string }>(r)
+  )
+}

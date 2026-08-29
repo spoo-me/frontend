@@ -59,6 +59,8 @@ type MockState = {
     path: "links" | "api" | null
   }
   onboardedAt: string | null
+  /** ISO purge deadline while a deletion is scheduled; null = active. */
+  pendingDeletion: string | null
   links: MockLink[]
   domains: MockDomain[]
   keys: MockKey[]
@@ -93,6 +95,7 @@ const initial = (): MockState => ({
   userName: "zingzy",
   verified: true,
   passwordSet: true,
+  pendingDeletion: null,
   providers: [
     {
       provider: "github",
@@ -919,8 +922,12 @@ async function handle(req: NextRequest, path: string[]) {
     return fail(404, "mock_disabled", "Mock API is disabled (set SPOO_MOCK=1)")
 
   const route = `${req.method} /${path.join("/")}`
+  // DELETE /v1/me carries the re-auth proof in its body, so DELETE parses too.
   const hasBody =
-    req.method === "POST" || req.method === "PUT" || req.method === "PATCH"
+    req.method === "POST" ||
+    req.method === "PUT" ||
+    req.method === "PATCH" ||
+    req.method === "DELETE"
   // Most of the backend speaks JSON; /auth/device/revoke also accepts a
   // legacy Form-encoded body (app_id only).
   const isForm = (req.headers.get("content-type") ?? "").includes(
@@ -1026,6 +1033,13 @@ async function handle(req: NextRequest, path: string[]) {
       )
     }
     case "POST /auth/login": {
+      // Mirrors the real gate: a pending-deletion account cannot mint tokens.
+      if (s.pendingDeletion)
+        return fail(
+          403,
+          "account_pending_deletion",
+          "This account is scheduled for deletion"
+        )
       // Adopt the email but keep the workspace: re-seeding here would undo
       // whatever /reset?mode=... just set up. Signup owns the new-account state.
       s.email = String(body.email ?? "you@example.com")
@@ -1104,6 +1118,38 @@ async function handle(req: NextRequest, path: string[]) {
       return json({ success: true })
     case "POST /auth/reset-password":
       return json({ success: true })
+    case "DELETE /v1/me": {
+      if (!req.cookies.has("access_token") && !req.cookies.has("refresh_token"))
+        return fail(401, "not_authenticated", "Not signed in")
+      if (s.pendingDeletion)
+        return fail(409, "conflict", "Deletion is already scheduled")
+      // Re-auth: password accounts prove with the password (literal "wrong"
+      // rehearses the failure path), OAuth-only accounts type their email.
+      if (s.passwordSet) {
+        const pw = String(body.password ?? "")
+        if (!pw || pw === "wrong")
+          return fail(403, "forbidden", "re-authentication failed")
+      } else if (String(body.confirm_email ?? "") !== s.email) {
+        return fail(403, "forbidden", "re-authentication failed")
+      }
+      s.pendingDeletion = new Date(
+        Date.now() + 7 * 86_400_000
+      ).toISOString()
+      return json({ purge_after: s.pendingDeletion })
+    }
+    case "POST /auth/restore": {
+      // One-shot token path ("restore-me" is the rehearsal token) or the
+      // credential path; both collapse to one uniform 403 on any failure.
+      const ok =
+        s.pendingDeletion &&
+        (String(body.restore_token ?? "") === "restore-me" ||
+          (String(body.email ?? "") === s.email &&
+            String(body.password ?? "").length > 0 &&
+            String(body.password ?? "") !== "wrong"))
+      if (!ok) return fail(403, "forbidden", "unable to restore account")
+      s.pendingDeletion = null
+      return json({ message: "account restored" })
+    }
     case "POST /auth/device/revoke": {
       // Real wire (routes/auth/device.py): JSON {grant_id} and/or {app_id}
       // (Form-encoded app_id still accepted for the legacy dashboard),

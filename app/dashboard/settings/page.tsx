@@ -2,23 +2,27 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowUpRight,
   BadgeCheck,
   Plus,
   ShieldCheck,
+  TriangleAlert,
   UserRound,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import {
+  deleteAccount,
   listProfilePictures,
   oauthLinkHref,
   OAUTH_PROVIDERS,
   PROFILE_PICTURE_MAX_BYTES,
   removeProfilePicture,
   setProfilePicture,
+  SpooApiError,
   unlinkProvider,
   updateProfile,
   uploadProfilePicture,
@@ -43,6 +47,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
 import {
   Popover,
   PopoverContent,
@@ -459,6 +464,164 @@ function LinkProviderRow({ unlinked }: { unlinked: OAuthProviderName[] }) {
   )
 }
 
+/**
+ * Deletion with the grace-period contract made visible: one proof input
+ * (password, or the typed email for provider-only accounts), then the
+ * dialog flips to the scheduled state carrying the purge date and the
+ * cancel-link pointer. The account is signed out from there.
+ */
+function DeleteAccountRow({ user }: { user: AuthUser }) {
+  const router = useRouter()
+  const { signOut } = useAuth()
+  const [open, setOpen] = React.useState(false)
+  const [proof, setProof] = React.useState("")
+  const [error, setError] = React.useState<string | null>(null)
+  const [purgeAfter, setPurgeAfter] = React.useState<string | null>(null)
+
+  const request = useMutation({
+    mutationFn: () =>
+      deleteAccount(
+        user.password_set
+          ? { password: proof }
+          : { confirm_email: proof.trim() }
+      ),
+    onSuccess: ({ purge_after }) => setPurgeAfter(purge_after),
+    onError: (e) => {
+      if (e instanceof SpooApiError && e.status === 403)
+        setError(
+          user.password_set ? "wrong password" : "that email doesn't match"
+        )
+      else if (e instanceof SpooApiError && e.status === 409)
+        setError("deletion is already scheduled")
+      else
+        setError(e instanceof Error ? e.message : "something went wrong")
+    },
+  })
+
+  const canConfirm = user.password_set
+    ? proof.length > 0
+    : proof.trim() === user.email
+
+  const reset = (next: boolean) => {
+    // The scheduled state is a point of no return in this pane: leaving the
+    // dialog then means leaving the session too.
+    if (!next && purgeAfter) {
+      void signOut().then(() => router.push("/"))
+      return
+    }
+    setOpen(next)
+    if (!next) {
+      setProof("")
+      setError(null)
+    }
+  }
+
+  return (
+    <Row label="Delete account">
+      <span className="hidden text-muted-foreground text-xs sm:block">
+        erases your links, analytics and profile
+      </span>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-destructive/80 text-xs underline underline-offset-4 transition-colors duration-150 hover:text-destructive"
+      >
+        Delete…
+      </button>
+
+      <AlertDialog open={open} onOpenChange={reset}>
+        <AlertDialogContent>
+          {purgeAfter ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Deletion scheduled</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your account and everything in it will be erased on{" "}
+                  <span className="font-mono text-foreground">
+                    {formatDate(purgeAfter)}
+                  </span>
+                  . We sent a cancel link to{" "}
+                  <span className="ph-no-capture font-mono text-foreground">
+                    {user.email}
+                  </span>
+                  ; it restores the account any time before then.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction
+                  onClick={() => void signOut().then(() => router.push("/"))}
+                >
+                  Sign out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your links, click analytics, API keys and connected apps are
+                  erased for good. Deletion runs after a 7 day grace period;
+                  signing in is blocked while it waits, and the email we send
+                  you contains a link that cancels it.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="delete-proof"
+                  className="font-medium text-foreground text-sm"
+                >
+                  {user.password_set ? (
+                    "Confirm with your password"
+                  ) : (
+                    <>
+                      Type{" "}
+                      <span className="ph-no-capture font-mono text-[13px]">
+                        {user.email}
+                      </span>{" "}
+                      to confirm
+                    </>
+                  )}
+                </label>
+                <Input
+                  id="delete-proof"
+                  type={user.password_set ? "password" : "email"}
+                  value={proof}
+                  onChange={(e) => {
+                    setProof(e.target.value)
+                    setError(null)
+                  }}
+                  autoComplete={user.password_set ? "current-password" : "off"}
+                  className={cn(!user.password_set && "font-mono text-[13px]")}
+                  aria-invalid={!!error || undefined}
+                />
+                {error && (
+                  <span className="font-mono text-[11px] text-destructive">
+                    {error}
+                  </span>
+                )}
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={!canConfirm || request.isPending}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    request.mutate()
+                  }}
+                >
+                  {request.isPending ? "Scheduling…" : "Delete account"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
+    </Row>
+  )
+}
+
 export default function SettingsPage() {
   const { user } = useAuth()
   if (!user) return null
@@ -543,6 +706,13 @@ export default function SettingsPage() {
               <ArrowUpRight className="size-3" />
             </Link>
           </Row>
+        </Panel>
+      </div>
+
+      <div className="mt-8">
+        <SectionHeader icon={TriangleAlert} title="Danger zone" />
+        <Panel className="mt-2">
+          <DeleteAccountRow user={user} />
         </Panel>
       </div>
     </div>
