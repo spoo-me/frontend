@@ -269,7 +269,6 @@ export function trackRecentLinkClicked(kind: "open" | "copy" | "stats") {
     whole discovery matrix is a single breakdown-by-action chart — and the
     union keeps the action list from sprawling into free-text. */
 export type UiAction =
-  | "tool_used"
   | "copy_short_link"
   | "copy_api_key"
   | "copy_dns_record"
@@ -302,6 +301,29 @@ export type UiAction =
     a command target) — never free text or user content. */
 export function trackUiAction(action: UiAction, detail?: string) {
   capture("ui_action", { action, ...(detail ? { detail } : {}) })
+}
+
+/* ---------- free tools ---------- */
+
+/** The tools are acquisition surfaces: the funnel that matters is
+    pageview → used → shortened (became a spoo link) → signed up. One
+    event, tool + action enums, so the whole matrix is one breakdown. */
+export type ToolSlug =
+  | "utm-builder"
+  | "link-preview"
+  | "url-expander"
+  | "qr-code"
+
+export type ToolAction = "used" | "copied" | "downloaded" | "shortened"
+
+/** `detail` stays low-cardinality: an artifact kind or format, never
+    user content. */
+export function trackToolAction(
+  tool: ToolSlug,
+  action: ToolAction,
+  detail?: string
+) {
+  capture("tool_action", { tool, action, ...(detail ? { detail } : {}) })
 }
 
 /* ---------- onboarding ---------- */

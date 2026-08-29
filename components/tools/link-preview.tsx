@@ -18,7 +18,7 @@ import {
   MetaPreview,
   type MetaPlatform,
 } from "@/components/shared/meta-preview"
-import { trackUiAction } from "@/lib/analytics"
+import { trackToolAction } from "@/lib/analytics"
 import { fetchUrlMetadata, SpooApiError, type UrlMetadata } from "@/lib/api"
 import { normalizeUrl } from "@/lib/validation"
 
@@ -84,7 +84,7 @@ export function LinkPreviewChecker() {
     setState({ kind: "loading" })
     try {
       const data = await fetchUrlMetadata(parsed.toString())
-      trackUiAction("tool_used", "preview_check")
+      trackToolAction("link-preview", "used")
       setState({ kind: "done", data, checked: parsed.toString() })
     } catch (err) {
       if (err instanceof SpooApiError) {

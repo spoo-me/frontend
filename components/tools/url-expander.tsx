@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DestinationCard } from "@/components/shared/destination-card"
 import { DomainRecords } from "@/components/tools/domain-records"
-import { trackUiAction } from "@/lib/analytics"
+import { trackToolAction } from "@/lib/analytics"
 import { expandUrl, SpooApiError, type ExpandedUrl } from "@/lib/api"
 import { normalizeUrl } from "@/lib/validation"
 
@@ -36,7 +36,7 @@ export function UrlExpander() {
     setState({ kind: "loading" })
     try {
       const data = await expandUrl(parsed.toString())
-      trackUiAction("tool_used", "expand")
+      trackToolAction("url-expander", "used")
       setState({ kind: "done", data, checked: parsed.toString() })
     } catch (err) {
       if (err instanceof SpooApiError) {

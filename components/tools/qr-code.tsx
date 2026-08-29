@@ -40,7 +40,7 @@ import {
 import { qrSvgString } from "@/lib/qr/render"
 import type { QrDesign, QrRenderProps } from "@/lib/qr/types"
 import { SPOO_MARK_MONO_DATA_URI } from "@/components/tools/qr-mark-mono"
-import { trackUiAction } from "@/lib/analytics"
+import { trackToolAction } from "@/lib/analytics"
 import { shorten, SpooApiError } from "@/lib/api"
 import { normalizeUrl } from "@/lib/validation"
 
@@ -180,7 +180,7 @@ export function QrGenerator() {
     } else {
       rasterizePng(exportSvg).then((blob) => saveBlob(blob, name))
     }
-    trackUiAction("tool_used", "qr_download")
+    trackToolAction("qr-code", "downloaded", format)
   }
 
   /* ClipboardItem wraps the pending blob synchronously — Safari burns the
@@ -194,7 +194,7 @@ export function QrGenerator() {
       .then(() => {
         setImgCopied(true)
         setTimeout(() => setImgCopied(false), 1600)
-        trackUiAction("tool_used", "qr_copy")
+        trackToolAction("qr-code", "copied", "image")
       })
       .catch(() => undefined)
   }
@@ -205,7 +205,7 @@ export function QrGenerator() {
     setShortError(null)
     try {
       const link = await shorten({ long_url: value })
-      trackUiAction("tool_used", "qr_shorten")
+      trackToolAction("qr-code", "shortened")
       setShort({ url: link.short_url, code: link.alias })
     } catch (err) {
       setShortError(

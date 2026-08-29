@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { trackUiAction } from "@/lib/analytics"
+import { trackToolAction } from "@/lib/analytics"
 import { shorten, SpooApiError } from "@/lib/api"
 
 type Params = {
@@ -114,7 +114,8 @@ export function UtmBuilder() {
       await navigator.clipboard.writeText(text)
       setCopied(which)
       setTimeout(() => setCopied(null), 1600)
-      if (which === "url") trackUiAction("tool_used", "utm_copy")
+      if (which === "url")
+        trackToolAction("utm-builder", "copied", "tagged_url")
     } catch {
       window.prompt("Copy:", text)
     }
@@ -125,7 +126,7 @@ export function UtmBuilder() {
     setState({ kind: "loading" })
     try {
       const link = await shorten({ long_url: built })
-      trackUiAction("tool_used", "utm_shorten")
+      trackToolAction("utm-builder", "shortened")
       setState({ kind: "success", short: link.short_url, code: link.alias })
     } catch (err) {
       let message =
