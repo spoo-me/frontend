@@ -149,7 +149,11 @@ export default async function AppDetailPage({
                 </div>
               </header>
 
-              <AppGallery gallery={app.gallery} appName={app.name} />
+              <AppGallery
+                gallery={app.gallery}
+                appName={app.name}
+                natural={app.category === "mobile"}
+              />
 
               <div className="mt-12 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
                 <div className="space-y-10">
