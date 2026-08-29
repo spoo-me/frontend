@@ -249,6 +249,7 @@ export const footerLinks = {
     { label: "Analytics", href: "/#analytics" },
     ...(PRICING_ENABLED ? [{ label: "Pricing", href: "/pricing" }] : []),
     { label: "Self-host", href: "/#self-host" },
+    { label: "FAQ", href: "/#faq" },
     { label: "UTM builder", href: "/tools/utm-builder" },
     { label: "Free tools", href: "/tools" },
   ],
