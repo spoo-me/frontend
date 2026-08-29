@@ -24,10 +24,38 @@ export const metadata: Metadata = {
   }),
 }
 
+const PARAMS = [
+  {
+    term: "utm_source",
+    lead: "Where the link lives:",
+    rest: "newsletter, google, x, a partner's site. The place, not the format.",
+  },
+  {
+    term: "utm_medium",
+    lead: "The channel type:",
+    rest: "email, social, cpc, referral. A newsletter link is source=newsletter, medium=email.",
+  },
+  {
+    term: "utm_campaign",
+    lead: "The push it belongs to:",
+    rest: "spring-launch, black-friday. Groups every link of one effort together.",
+  },
+  {
+    term: "utm_term",
+    lead: "The paid keyword,",
+    rest: "mostly for search ads. Skip it everywhere else.",
+  },
+  {
+    term: "utm_content",
+    lead: "Which variant was clicked:",
+    rest: "footer-cta versus hero-button. For telling two links in one place apart.",
+  },
+]
+
 const FAQ = [
   {
-    q: "What are UTM parameters?",
-    a: "Tags added to a URL's query string (utm_source, utm_medium, utm_campaign, utm_term, utm_content) that analytics tools read to attribute a visit to a campaign.",
+    q: "Do UTM parameters work on any website?",
+    a: "Yes. They are ordinary query parameters, so every destination accepts them, and any analytics tool on that site can read them. Sites without analytics simply ignore them; the link still works.",
   },
   {
     q: "What is the difference between source and medium?",
@@ -65,6 +93,84 @@ export default function UtmBuilderPage() {
               <div className="mt-10 text-left">
                 <UtmBuilder />
               </div>
+            </div>
+          </Section>
+
+          <Section>
+            <div className="mx-auto max-w-3xl px-5 py-20 sm:px-9 sm:py-24">
+              <h2 className="font-semibold text-3xl text-foreground tracking-tight">
+                What are UTM parameters?
+              </h2>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                When someone visits your site, your analytics can usually see
+                that they arrived but not what brought them: the newsletter, the
+                tweet, and the ad all collapse into the same anonymous click.
+                UTM parameters fix that. They are small labels added to the end
+                of a link, like utm_source=newsletter, that travel with every
+                click and tell your analytics exactly where it came from.
+              </p>
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                Why it matters
+              </h3>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                Without them, most campaign traffic files itself under direct or
+                unknown, and decisions about where to spend time and money get
+                made blind. With them, every channel's clicks are separated
+                cleanly, in any analytics tool, because the labels ride the URL
+                itself. Nothing to install, nothing platform-specific.
+              </p>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                The five parameters
+              </h3>
+              <p className="mt-3 max-w-xl text-muted-foreground">
+                UTM tags are plain query parameters your analytics tool reads to
+                attribute a visit. Five exist; most links need three.
+              </p>
+              <dl className="mt-10 grid gap-x-10 gap-y-7 sm:grid-cols-2">
+                {PARAMS.map((param) => (
+                  <div key={param.term}>
+                    <dt className="label-mono text-muted-foreground">
+                      {param.term}
+                    </dt>
+                    <dd className="mt-1.5 text-[15px] text-muted-foreground leading-relaxed">
+                      <span className="text-foreground">{param.lead}</span>{" "}
+                      {param.rest}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                Naming that keeps reports clean
+              </h3>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                Analytics tools treat google and Google as two different
+                sources, so pick lowercase once and never look back. Use hyphens
+                instead of spaces, keep a short shared vocabulary for mediums
+                (email, social, cpc), and tag only links you distribute
+                elsewhere. Tagging your own site's internal navigation
+                overwrites the real session source and quietly corrupts every
+                report downstream.
+              </p>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                Why shorten the tagged link
+              </h3>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                A tagged URL is long and reveals your campaign naming to anyone
+                who reads it. Shortening it hides the noise, keeps the tags
+                intact for your analytics, and adds a live stats page of its
+                own: clicks, countries, referrers, and devices, counted from the
+                moment you share it. No account needed, and the{" "}
+                <Link
+                  href="/tools/qr-code"
+                  className="text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+                >
+                  QR code generator
+                </Link>{" "}
+                can put the same short link on anything printed.
+              </p>
             </div>
           </Section>
 

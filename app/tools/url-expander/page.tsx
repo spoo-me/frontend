@@ -112,11 +112,38 @@ export default function UrlExpanderPage() {
           <Section>
             <div className="mx-auto max-w-3xl px-5 py-20 sm:px-9 sm:py-24">
               <h2 className="font-semibold text-3xl text-foreground tracking-tight">
-                What the expander{" "}
-                <span className="font-normal font-serif text-muted-foreground italic">
-                  shows.
-                </span>
+                What is a URL expander?
               </h2>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                A short link says nothing about where it goes. The same few
+                characters can hide an article, an affiliate wrapper, or a fake
+                login page, and that opacity is exactly why scammers like short
+                links. A URL expander follows the link for you, on our servers,
+                and shows the real destination before your browser ever touches
+                it.
+              </p>
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                Why it matters
+              </h3>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                For most people, the only check a link ever gets is clicking it,
+                and by then the page has already loaded. Short links in texts
+                and emails are the standard phishing delivery for exactly that
+                reason. Expanding the link first moves the decision to before
+                the risk: you see the destination, its age, and its records
+                while nothing has touched your device.
+              </p>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                This one goes further than unrolling the redirects: it also
+                pulls the destination's public records, who registered the
+                domain and when, its DNS, its TLS certificate, and runs the
+                safety checks below, so you can judge a link the way an abuse
+                team would, from one paste.
+              </p>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                What the expander shows
+              </h3>
               <p className="mt-3 max-w-xl text-muted-foreground">
                 One paste unrolls the link and pulls the public records of
                 wherever it lands.
@@ -127,7 +154,7 @@ export default function UrlExpanderPage() {
                     <dt className="label-mono text-muted-foreground">
                       {item.term}
                     </dt>
-                    <dd className="mt-1.5 text-muted-foreground text-sm leading-relaxed">
+                    <dd className="mt-1.5 text-[15px] text-muted-foreground leading-relaxed">
                       <span className="text-foreground">{item.lead}</span>{" "}
                       {item.rest}
                     </dd>
@@ -137,7 +164,7 @@ export default function UrlExpanderPage() {
               <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
                 How it works
               </h3>
-              <ol className="mt-4 max-w-2xl list-decimal space-y-3 pl-5 text-muted-foreground text-sm leading-relaxed">
+              <ol className="mt-4 max-w-2xl list-decimal space-y-3 pl-5 text-base text-muted-foreground leading-relaxed">
                 <li>
                   Paste any short link. Plain http is fine, and so are chains
                   that pass through several shorteners on the way.
@@ -158,7 +185,7 @@ export default function UrlExpanderPage() {
               <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
                 Unshorten a link before you click it
               </h3>
-              <p className="mt-4 max-w-2xl text-muted-foreground text-sm leading-relaxed">
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
                 A short link hides its destination by design. The same
                 bit.ly-style code can lead to an article, an affiliate wrapper,
                 or a login page that isn't your bank's. Unshortening it first
@@ -170,7 +197,7 @@ export default function UrlExpanderPage() {
               <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
                 One tool, several names
               </h3>
-              <p className="mt-4 max-w-2xl text-muted-foreground text-sm leading-relaxed">
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
                 URL expander, link unshortener, redirect checker, redirect
                 tracer: different searches, the same job. This page does all of
                 it in one pass. It expands the short URL, traces every redirect
@@ -181,7 +208,7 @@ export default function UrlExpanderPage() {
               <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
                 When to reach for it
               </h3>
-              <ul className="mt-4 max-w-2xl list-disc space-y-3 pl-5 text-muted-foreground text-sm leading-relaxed">
+              <ul className="mt-4 max-w-2xl list-disc space-y-3 pl-5 text-base text-muted-foreground leading-relaxed">
                 <li>
                   A link from an email or SMS you didn't expect, before it gets
                   a click.
@@ -200,7 +227,7 @@ export default function UrlExpanderPage() {
                 </li>
               </ul>
 
-              <p className="mt-14 max-w-2xl text-muted-foreground text-sm leading-relaxed">
+              <p className="mt-14 max-w-2xl text-base text-muted-foreground leading-relaxed">
                 Checking how your own page unfurls instead? That's the{" "}
                 <Link
                   href="/tools/link-preview"

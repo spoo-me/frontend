@@ -24,6 +24,39 @@ export const metadata: Metadata = {
   }),
 }
 
+const CHECKED = [
+  {
+    term: "Open Graph tags",
+    lead: "og:title, og:description, og:image,",
+    rest: "and og:site_name, the baseline every platform reads.",
+  },
+  {
+    term: "Twitter card tags",
+    lead: "twitter:card and friends,",
+    rest: "which X reads before falling back to Open Graph.",
+  },
+  {
+    term: "Raw HTML tags",
+    lead: "The plain title and meta description,",
+    rest: "the fallbacks when social tags are missing.",
+  },
+  {
+    term: "Favicon and theme-color",
+    lead: "The icon Slack shows",
+    rest: "and the accent Discord tints its embed with.",
+  },
+  {
+    term: "Length limits",
+    lead: "Titles clip near 60 characters,",
+    rest: "descriptions near 160. Over-length values are flagged inline.",
+  },
+  {
+    term: "Five platform renders",
+    lead: "X, Discord, Slack, WhatsApp, LinkedIn,",
+    rest: "each drawn with its own real layout and precedence rules.",
+  },
+]
+
 const FAQ = [
   {
     q: "Why is my link preview not showing?",
@@ -69,6 +102,105 @@ export default function LinkPreviewPage() {
               <div className="mt-10 text-left">
                 <LinkPreviewChecker />
               </div>
+            </div>
+          </Section>
+
+          <Section>
+            <div className="mx-auto max-w-3xl px-5 py-20 sm:px-9 sm:py-24">
+              <h2 className="font-semibold text-3xl text-foreground tracking-tight">
+                What is a link preview?
+              </h2>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                Paste a link in a chat or a post and the app draws a little card
+                for it: a picture, a title, a line of description. That card is
+                the link preview, and the page controls it through invisible
+                meta tags in its HTML. The platform never looks at what the page
+                looks like; it only reads those tags.
+              </p>
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                Why it matters
+              </h3>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                The card is the first thing people see, usually before deciding
+                whether to click at all. A link with a real card reads as
+                something worth opening; a bare gray URL gets scrolled past, and
+                a card with a broken image makes a legitimate page look sketchy.
+                This tool shows the exact cards your page produces and the tags
+                they were built from, so what people see is a choice instead of
+                an accident.
+              </p>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                What gets checked
+              </h3>
+              <p className="mt-3 max-w-xl text-muted-foreground">
+                The checker reads the page the way the platform crawlers do and
+                shows both the cards and the tags behind them.
+              </p>
+              <dl className="mt-10 grid gap-x-10 gap-y-7 sm:grid-cols-2">
+                {CHECKED.map((item) => (
+                  <div key={item.term}>
+                    <dt className="label-mono text-muted-foreground">
+                      {item.term}
+                    </dt>
+                    <dd className="mt-1.5 text-[15px] text-muted-foreground leading-relaxed">
+                      <span className="text-foreground">{item.lead}</span>{" "}
+                      {item.rest}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                How platforms build previews
+              </h3>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                When a link is posted, the platform's crawler fetches the page
+                once, reads the meta tags in the head, and caches the result,
+                often for days. Open Graph tags are the shared baseline; X
+                prefers its own twitter:* tags when both exist, Discord tints
+                its embed with theme-color, and Slack adds the favicon and site
+                name. Nothing about the visible page matters to the card: only
+                the tags do, which is why a beautiful page with missing tags
+                unfurls as a bare link.
+              </p>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                Fixing a broken card
+              </h3>
+              <ol className="mt-4 max-w-2xl list-decimal space-y-3 pl-5 text-base text-muted-foreground leading-relaxed">
+                <li>
+                  Run the page here and read the tag audit: missing rows and
+                  over-length values are marked in place.
+                </li>
+                <li>
+                  Fix the tags at the source: og:title, og:description, and a
+                  1200 by 630 og:image cover nearly every platform.
+                </li>
+                <li>
+                  Bust the platform's cache. Facebook and LinkedIn have refetch
+                  debuggers; for Discord and WhatsApp, append a throwaway query
+                  like ?v=2 to force a fresh card.
+                </li>
+              </ol>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                One tool, several names
+              </h3>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground leading-relaxed">
+                Open Graph checker, meta tag checker, social card preview,
+                Twitter card validator: the searches differ, the job is the
+                same. This page renders the cards for five platforms and audits
+                the tags they were built from, in one pass. Tracing where a
+                short link lands instead? That's the{" "}
+                <Link
+                  href="/tools/url-expander"
+                  className="text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+                >
+                  URL expander
+                </Link>
+                .
+              </p>
             </div>
           </Section>
 
