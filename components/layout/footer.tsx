@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ChevronDown } from "lucide-react"
 
 import { Logo } from "@/components/shared/logo"
 import { BrandIcons } from "@/components/icons/brand-icons"
@@ -9,7 +10,12 @@ import { ThemeToggle } from "./theme-toggle"
 export function Footer() {
   const sections: {
     title: string
-    links: readonly { label: string; href: string; external?: boolean }[]
+    links: readonly {
+      label: string
+      href: string
+      external?: boolean
+      children?: readonly { label: string; href: string }[]
+    }[]
   }[] = [
     { title: "Product", links: footerLinks.product },
     { title: "Apps & SDKs", links: footerLinks.apps },
@@ -106,18 +112,41 @@ export function Footer() {
             <div key={section.title} className="space-y-3">
               <h4 className="label-mono text-foreground/90">{section.title}</h4>
               <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      target={link.external ? "_blank" : undefined}
-                      rel={link.external ? "noreferrer" : undefined}
-                      className="text-muted-foreground text-sm transition hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                {section.links.map((link) =>
+                  link.children ? (
+                    <li key={link.label}>
+                      <details className="group">
+                        <summary className="flex cursor-pointer list-none items-center gap-1 text-muted-foreground text-sm transition hover:text-foreground [&::-webkit-details-marker]:hidden">
+                          {link.label}
+                          <ChevronDown className="size-3.5 transition-transform duration-200 group-open:rotate-180" />
+                        </summary>
+                        <ul className="mt-2 space-y-2 border-border/50 border-l pl-3">
+                          {link.children.map((child) => (
+                            <li key={child.href}>
+                              <Link
+                                href={child.href}
+                                className="text-muted-foreground text-sm transition hover:text-foreground"
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    </li>
+                  ) : (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        target={link.external ? "_blank" : undefined}
+                        rel={link.external ? "noreferrer" : undefined}
+                        className="text-muted-foreground text-sm transition hover:text-foreground"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           ))}
