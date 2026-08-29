@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DestinationCard } from "@/components/shared/destination-card"
+import { DomainRecords } from "@/components/tools/domain-records"
 import { trackUiAction } from "@/lib/analytics"
 import { expandUrl, SpooApiError, type ExpandedUrl } from "@/lib/api"
 import { normalizeUrl } from "@/lib/validation"
@@ -137,6 +138,20 @@ export function UrlExpander() {
             transition={{ duration: 0.3 }}
             className="mt-6 text-left"
           >
+            {state.data.web_risk && state.data.web_risk.threats.length > 0 && (
+              <div className="mb-4 flex gap-3 rounded-xl border border-destructive/40 p-4">
+                <ShieldAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+                <div>
+                  <p className="font-medium text-foreground text-sm">
+                    Google Web Risk flags this destination
+                  </p>
+                  <p className="mt-1 text-muted-foreground text-sm">
+                    Listed for {formatThreats(state.data.web_risk.threats)}.
+                    Don't enter credentials or download anything there.
+                  </p>
+                </div>
+              </div>
+            )}
             {state.data.blocklist_match && (
               <div className="mb-4 flex gap-3 rounded-xl border border-destructive/40 p-4">
                 <ShieldAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
@@ -205,7 +220,8 @@ export function UrlExpander() {
             </div>
             <p className="mt-2 font-mono text-[11px] text-muted-foreground/70">
               checked: redirect chain, https on every hop, spoo.me's abuse
-              blocklist
+              blocklist{state.data.web_risk?.checked && ", Google Web Risk"},
+              domain records below
             </p>
 
             <div className="mt-6">
@@ -220,11 +236,28 @@ export function UrlExpander() {
                 />
               </div>
             </div>
+
+            <DomainRecords
+              host={hostnameOf(state.data.final_url)}
+              finalUrl={state.data.final_url}
+            />
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   )
+}
+
+const THREAT_LABELS: Record<string, string> = {
+  MALWARE: "malware",
+  SOCIAL_ENGINEERING: "social engineering (phishing)",
+  UNWANTED_SOFTWARE: "unwanted software",
+}
+
+function formatThreats(threats: string[]): string {
+  return threats
+    .map((t) => THREAT_LABELS[t] ?? t.toLowerCase().replaceAll("_", " "))
+    .join(", ")
 }
 
 function hostnameOf(url: string): string {

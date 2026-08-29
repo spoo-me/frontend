@@ -152,6 +152,9 @@ export type ExpandedUrl = {
   truncated: boolean
   hops: Array<{ url: string; status: number | null; https: boolean }>
   blocklist_match: boolean
+  /** Google Web Risk verdict for the final URL; null when the check
+      didn't run (no key configured, API error) — absence, not a verdict. */
+  web_risk: { checked: boolean; threats: string[] } | null
   fetched_at: string
 }
 
@@ -161,6 +164,40 @@ export function expandUrl(url: string) {
   return authedFetch(`/api/v1/expand?url=${encodeURIComponent(url)}`, {
     method: "GET",
   }).then((r) => parse<ExpandedUrl>(r))
+}
+
+/**
+ * GET /api/v1/domain-intel — public records of a destination host: DNS,
+ * RDAP registration (age_days = the phishing tell), TLS certificate.
+ * whois/ssl are null when the registry or handshake doesn't answer.
+ * Cached ~24h server-side.
+ */
+export type DomainIntel = {
+  host: string
+  registrable_domain: string
+  dns: Record<string, string[]>
+  whois: {
+    registrar: string | null
+    created: string | null
+    updated: string | null
+    expires: string | null
+    age_days: number | null
+  } | null
+  ssl: {
+    issuer: string | null
+    subject: string | null
+    valid_from: string | null
+    valid_to: string | null
+    days_left: number | null
+    sans: string[]
+  } | null
+  fetched_at: string
+}
+
+export function fetchDomainIntel(host: string) {
+  return authedFetch(`/api/v1/domain-intel?host=${encodeURIComponent(host)}`, {
+    method: "GET",
+  }).then((r) => parse<DomainIntel>(r))
 }
 
 /**

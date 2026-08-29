@@ -24,6 +24,39 @@ export const metadata: Metadata = {
   }),
 }
 
+const ABOUT = [
+  {
+    term: "Redirect chain",
+    lead: "Every hop with its HTTP status,",
+    rest: "from the link you pasted to the last stop, including chains that bounce through several shorteners.",
+  },
+  {
+    term: "Final destination",
+    lead: "The page the chain lands on,",
+    rest: "shown with its own title, description, and preview image where the site provides them.",
+  },
+  {
+    term: "Domain age",
+    lead: "When the domain was registered,",
+    rest: "straight from the registry. Days-old domains are the classic phishing tell.",
+  },
+  {
+    term: "TLS certificate",
+    lead: "Who issued the certificate",
+    rest: "and when it expires, from the destination's own handshake.",
+  },
+  {
+    term: "DNS records",
+    lead: "The A, MX, and NS records",
+    rest: "behind the destination host, as currently served.",
+  },
+  {
+    term: "Safety checks",
+    lead: "spoo.me's abuse blocklist and Google Web Risk,",
+    rest: "with the result stated plainly, and links to VirusTotal, Safe Browsing, and the Wayback Machine for second opinions.",
+  },
+]
+
 const FAQ = [
   {
     q: "What does a URL expander do?",
@@ -40,6 +73,14 @@ const FAQ = [
   {
     q: "What does the safety check actually cover?",
     a: "Three things, stated plainly: the full redirect chain, whether every hop uses https, and whether any hop matches the abuse blocklist spoo.me enforces when links are created. It is not a full malware scan.",
+  },
+  {
+    q: "Why does domain age matter?",
+    a: "Phishing domains are usually registered days before the campaign and thrown away after. An established registration date doesn't prove a site is safe, but a domain registered last week pretending to be your bank is a strong tell. The records panel shows the age whenever the registry answers.",
+  },
+  {
+    q: "Do you store the links I expand?",
+    a: "Results are cached briefly on our servers so repeat checks of the same link are instant, and domain records for about a day. Nothing is published, and nothing is tied to you.",
   },
   {
     q: "Why did a link fail to expand?",
@@ -65,6 +106,117 @@ export default function UrlExpanderPage() {
               <div className="mt-10 text-left">
                 <UrlExpander />
               </div>
+            </div>
+          </Section>
+
+          <Section>
+            <div className="mx-auto max-w-3xl px-5 py-20 sm:px-9 sm:py-24">
+              <h2 className="font-semibold text-3xl text-foreground tracking-tight">
+                What the expander{" "}
+                <span className="font-normal font-serif text-muted-foreground italic">
+                  shows.
+                </span>
+              </h2>
+              <p className="mt-3 max-w-xl text-muted-foreground">
+                One paste unrolls the link and pulls the public records of
+                wherever it lands.
+              </p>
+              <dl className="mt-10 grid gap-x-10 gap-y-7 sm:grid-cols-2">
+                {ABOUT.map((item) => (
+                  <div key={item.term}>
+                    <dt className="label-mono text-muted-foreground">
+                      {item.term}
+                    </dt>
+                    <dd className="mt-1.5 text-muted-foreground text-sm leading-relaxed">
+                      <span className="text-foreground">{item.lead}</span>{" "}
+                      {item.rest}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                How it works
+              </h3>
+              <ol className="mt-4 max-w-2xl list-decimal space-y-3 pl-5 text-muted-foreground text-sm leading-relaxed">
+                <li>
+                  Paste any short link. Plain http is fine, and so are chains
+                  that pass through several shorteners on the way.
+                </li>
+                <li>
+                  Our server follows the redirects hop by hop, reading only
+                  status codes and Location headers. Nothing loads in your
+                  browser and no page content is fetched.
+                </li>
+                <li>
+                  You get the full chain, the destination's own preview, the
+                  domain's public records from the registry's RDAP server, the
+                  DNS, and its TLS handshake, and the safety checks, all before
+                  you decide to click.
+                </li>
+              </ol>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                Unshorten a link before you click it
+              </h3>
+              <p className="mt-4 max-w-2xl text-muted-foreground text-sm leading-relaxed">
+                A short link hides its destination by design. The same
+                bit.ly-style code can lead to an article, an affiliate wrapper,
+                or a login page that isn't your bank's. Unshortening it first
+                shows the real URL, who registered the domain, and how old it
+                is, so the decision to open it is made with the facts in hand
+                instead of after the page has already loaded.
+              </p>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                One tool, several names
+              </h3>
+              <p className="mt-4 max-w-2xl text-muted-foreground text-sm leading-relaxed">
+                URL expander, link unshortener, redirect checker, redirect
+                tracer: different searches, the same job. This page does all of
+                it in one pass. It expands the short URL, traces every redirect
+                in the chain with its status code, and pulls the destination's
+                records so a safety read is possible without visiting anything.
+              </p>
+
+              <h3 className="mt-14 font-semibold text-foreground text-xl tracking-tight">
+                When to reach for it
+              </h3>
+              <ul className="mt-4 max-w-2xl list-disc space-y-3 pl-5 text-muted-foreground text-sm leading-relaxed">
+                <li>
+                  A link from an email or SMS you didn't expect, before it gets
+                  a click.
+                </li>
+                <li>
+                  Investigating a suspicious or phishing link without ever
+                  loading it.
+                </li>
+                <li>
+                  Redirect audits during SEO work, where a stray 302 or a long
+                  chain of hops quietly leaks ranking signal.
+                </li>
+                <li>
+                  Unwrapping t.co, lnkd.in, or amzn.to wrappers to see the real
+                  article or product page.
+                </li>
+              </ul>
+
+              <p className="mt-14 max-w-2xl text-muted-foreground text-sm leading-relaxed">
+                Checking how your own page unfurls instead? That's the{" "}
+                <Link
+                  href="/tools/link-preview"
+                  className="text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+                >
+                  link preview checker
+                </Link>
+                . Putting a link on something printed? The{" "}
+                <Link
+                  href="/tools/qr-code"
+                  className="text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+                >
+                  QR code generator
+                </Link>{" "}
+                encodes any link, and a shortened one counts its scans.
+              </p>
             </div>
           </Section>
 

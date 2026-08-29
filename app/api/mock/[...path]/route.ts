@@ -1201,6 +1201,43 @@ async function handle(req: NextRequest, path: string[]) {
         truncated: false,
         hops,
         blocklist_match: pathLower.includes("blocked"),
+        web_risk: pathLower.includes("risky")
+          ? { checked: true, threats: ["SOCIAL_ENGINEERING"] }
+          : { checked: true, threats: [] },
+        fetched_at: new Date().toISOString(),
+      })
+    }
+
+    /* ---------- domain records (/tools/url-expander panel) ---------- */
+    case "GET /v1/domain-intel": {
+      const host = (params.get("host") ?? "").toLowerCase()
+      if (!host.includes("."))
+        return fail(400, "validation_error", "not a valid hostname", "host")
+      return json({
+        host,
+        registrable_domain: host.split(".").slice(-2).join("."),
+        dns: {
+          a: ["93.184.216.34"],
+          aaaa: [],
+          mx: [`0 mail.${host}.`],
+          ns: [`ns1.${host}.`, `ns2.${host}.`],
+          txt: ["v=spf1 -all"],
+        },
+        whois: {
+          registrar: "Example Registrar LLC",
+          created: "2019-04-02T00:00:00Z",
+          updated: "2025-03-11T00:00:00Z",
+          expires: "2027-04-02T00:00:00Z",
+          age_days: 2706,
+        },
+        ssl: {
+          issuer: "Let's Encrypt",
+          subject: host,
+          valid_from: "Jul  1 00:00:00 2026 GMT",
+          valid_to: "Sep 29 23:59:59 2026 GMT",
+          days_left: 31,
+          sans: [host, `www.${host}`],
+        },
         fetched_at: new Date().toISOString(),
       })
     }
