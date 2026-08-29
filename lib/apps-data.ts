@@ -142,7 +142,7 @@ export const connectedApps: ConnectedApp[] = [
     install: [
       {
         label: "Download",
-        command: "https://github.com/spoo-me/spoo-android/releases/latest",
+        command: "https://spoo.me/android",
       },
       {
         label: "Obtainium",
