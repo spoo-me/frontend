@@ -138,7 +138,8 @@ export const connectedApps: ConnectedApp[] = [
       "Fully Material 3 Expressive, with share-sheet shortening, configurable home-screen widgets, emoji aliases, and the full analytics suite.",
     iconKey: "android",
     color: "#3DDC84",
-    url: "https://github.com/spoo-me/spoo-android",
+    url: "https://spoo.me/android",
+    github: "https://github.com/spoo-me/spoo-android",
     install: [
       {
         label: "Download",

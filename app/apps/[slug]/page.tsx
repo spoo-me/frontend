@@ -138,7 +138,7 @@ export default async function AppDetailPage({
                   {app.status !== "soon" && (
                     <Button asChild size="default">
                       <a href={app.url} target="_blank" rel="noreferrer">
-                        Open
+                        {app.category === "mobile" ? "Download" : "Open"}
                         <ArrowUpRight
                           className="size-3.5"
                           data-icon="inline-end"
