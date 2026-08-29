@@ -22,9 +22,24 @@ type Mode = "login" | "signup"
 // a ?next= into the consent page must survive every post-auth route.
 const CONSENT_PATH = "/auth/device/login"
 
+function isConsentPath(next: string | null): next is string {
+  // Exact, not a prefix: startsWith would also accept /auth/device/loginfoo.
+  return (
+    next === CONSENT_PATH || (next?.startsWith(`${CONSENT_PATH}?`) ?? false)
+  )
+}
+
 function consentNext(): string | null {
   const next = safeNext(new URLSearchParams(window.location.search).get("next"))
-  return next?.startsWith(CONSENT_PATH) ? next : null
+  return isConsentPath(next) ? next : null
+}
+
+// The consent page is a backend route behind the /auth proxy, not a Next
+// one. Handing it to the client router makes it probe with an RSC fetch
+// before falling back to a real navigation, and on the auto-approve branch
+// that probe mints and delivers a device code by itself.
+function leaveForConsent(next: string) {
+  window.location.assign(next)
 }
 
 // The URL's ?next= never changes within a page view — subscribe to nothing,
@@ -105,7 +120,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
     // onboarding waits for their first organic dashboard visit.
     const consent = consentNext()
     if (consent) {
-      router.replace(consent)
+      leaveForConsent(consent)
       return
     }
     if (!user.email_verified || !user.onboarded_at) {
@@ -142,8 +157,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
         // layout owns the verify gate and the step cache, so one push
         // covers unverified, mid-wizard, and fresh states alike. The one
         // exception is a device-auth consent resume — see the effect above.
-        if (next?.startsWith(CONSENT_PATH)) {
-          router.push(next)
+        if (isConsentPath(next)) {
+          leaveForConsent(next)
         } else if (!user.email_verified || !user.onboarded_at) {
           router.push("/onboarding")
         } else {
@@ -183,7 +198,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
         <VerifyPanel
-          onDone={() => router.push(consentNext() ?? "/onboarding/welcome")}
+          onDone={() => {
+            const consent = consentNext()
+            if (consent) leaveForConsent(consent)
+            else router.push("/onboarding/welcome")
+          }}
           onRestart={() => {
             void signOut().then(() => {
               setVerifying(false)
@@ -346,7 +365,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               <>
                 {" "}
                 <Link
-                  href="/login"
+                  href={`/login${nextQS}`}
                   className="font-medium text-foreground underline-offset-4 hover:underline"
                 >
                   Sign in instead
