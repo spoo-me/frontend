@@ -14,7 +14,7 @@ export const legalDocs: LegalDoc[] = [
   {
     slug: "privacy",
     title: "Privacy Policy",
-    lastUpdated: "November 16, 2025",
+    lastUpdated: "August 30, 2026",
     description: "What we collect, why, and the rights you have over it.",
     toc: [
       {
@@ -247,7 +247,8 @@ export const legalDocs: LegalDoc[] = [
         <li><strong>Shortened URLs:</strong> Retained indefinitely unless you delete them or they expire based on your settings</li>
         <li><strong>Analytics Data:</strong> Anonymized click data is retained to provide historical statistics</li>
         <li><strong>Log Files:</strong> Server logs are typically retained for 90 days for security and debugging purposes</li>
-        <li><strong>Deleted Accounts:</strong> When you delete your account, we remove your personal information within 30 days, though some data may be retained in backups for up to 90 days</li>
+        <li><strong>Deleted Accounts:</strong> When you request account deletion, your account is scheduled for erasure with a 7-day cancellation window. After that window your account and its associated data, including link analytics, are permanently removed from our systems, and copies in our automated backups expire within roughly 15 days of erasure</li>
+        <li><strong>Blocked Links:</strong> Short links we have disabled for abuse or policy violations are retained even after the owning account is deleted, with the creator's personal data removed from them. This keeps the link address unusable and preserves our enforcement record, as permitted by Article 17(3) GDPR</li>
     </ul>
 <h2 id="your-rights-gdpr-ccpa-compliance">Your Rights (GDPR & CCPA Compliance)</h2>
 <p>Depending on your location, you may have certain rights regarding your personal information:</p>
@@ -365,7 +366,7 @@ export const legalDocs: LegalDoc[] = [
         <a href="mailto:support@spoo.me">support@spoo.me</a>. We are committed to addressing your privacy concerns 
         and ensuring compliance with applicable data protection regulations.</p>
 <h2 id="update">Update</h2>
-<p>This Privacy Policy was <b>last updated on Saturday, November 16th, 2025</b>. If there will be any update,
+<p>This Privacy Policy was <b>last updated on Sunday, August 30th, 2026</b>. If there will be any update,
         amendment, or changes to our Privacy Policy then these will be posted on this page.</p>
 <h2 id="contact-us">Contact Us</h2>
 <p>If you have any questions about this Privacy Policy, wish to exercise your data rights, or have concerns 
@@ -770,7 +771,7 @@ export const legalDocs: LegalDoc[] = [
     <li>For legal notices: Please specify "Legal Notice" in your subject line</li>
 </ul>
 <h2 id="updates-to-terms">Updates to Terms</h2>
-<p>These Terms of Service were <b>last updated on Saturday, November 16th, 2025</b>.</p>
+<p>These Terms of Service were <b>last updated on Sunday, August 30th, 2026</b>.</p>
 
 <p>We may update these terms from time to time. When we make material changes, we will notify you by:</p>
 <ul>
