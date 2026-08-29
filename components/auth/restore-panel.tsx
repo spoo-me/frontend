@@ -62,9 +62,9 @@ export function RestorePanel({ token }: { token: string | null }) {
               This link is not valid
             </h1>
             <p className="text-muted-foreground text-sm">
-              It may have expired or already been used. If your account is
-              still scheduled for deletion, sign in with your password to
-              restore it, or email{" "}
+              It may have expired or already been used. If your account is still
+              scheduled for deletion, sign in with your password to restore it,
+              or email{" "}
               <a
                 href="mailto:support@spoo.me"
                 className="text-foreground underline underline-offset-4"

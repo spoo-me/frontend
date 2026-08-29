@@ -493,8 +493,7 @@ function DeleteAccountRow({ user }: { user: AuthUser }) {
         )
       else if (e instanceof SpooApiError && e.status === 409)
         setError("deletion is already scheduled")
-      else
-        setError(e instanceof Error ? e.message : "something went wrong")
+      else setError(e instanceof Error ? e.message : "something went wrong")
     },
   })
 

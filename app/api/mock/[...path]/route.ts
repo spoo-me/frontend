@@ -1132,9 +1132,7 @@ async function handle(req: NextRequest, path: string[]) {
       } else if (String(body.confirm_email ?? "") !== s.email) {
         return fail(403, "forbidden", "re-authentication failed")
       }
-      s.pendingDeletion = new Date(
-        Date.now() + 7 * 86_400_000
-      ).toISOString()
+      s.pendingDeletion = new Date(Date.now() + 7 * 86_400_000).toISOString()
       return json({ purge_after: s.pendingDeletion })
     }
     case "POST /auth/restore": {
