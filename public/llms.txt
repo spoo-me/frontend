@@ -11,8 +11,11 @@
 
 ## Tools
 
-- [Free link tools](https://spoo.me/tools): UTM builder and other small link utilities, no account needed
+- [Free link tools](https://spoo.me/tools): four small link utilities, no account needed
 - [UTM builder](https://spoo.me/tools/utm-builder): build tagged campaign links, shorten them, and track clicks
+- [Link preview checker](https://spoo.me/tools/link-preview): see how any URL renders on X, Discord, Slack, WhatsApp, and LinkedIn, with a meta-tag audit
+- [URL expander](https://spoo.me/tools/url-expander): follow a short link's full redirect chain and read the destination's records before clicking
+- [QR code generator](https://spoo.me/tools/qr-code): custom QR codes for any link, downloadable as PNG or SVG
 
 ## Developers
 
