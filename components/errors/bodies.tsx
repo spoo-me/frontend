@@ -58,9 +58,20 @@ export function BlockedBody() {
           </li>
         ))}
       </ul>
-      {/* No report CTA — FINAL (settled twice): the block already
-          happened, a report here is process for its own sake. Reporting
-          lives where it's actionable: live links (preview page, footer). */}
+      {/* Still no report CTA (settled twice) — reporting a link that is
+          already blocked is process for its own sake. The appeal below is
+          the opposite direction and is actionable: blocks are reversible,
+          and false positives have no other route back. */}
+      <p className="mt-8 text-muted-foreground text-sm">
+        Think this is a mistake? Blocks are reversible.{" "}
+        <a
+          href="/contact"
+          className="text-foreground underline underline-offset-4 hover:text-muted-foreground"
+        >
+          Ask us to review it
+        </a>
+        .
+      </p>
     </div>
   )
 }
