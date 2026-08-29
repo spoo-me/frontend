@@ -45,11 +45,24 @@ export const metadata: Metadata = {
     title: `${siteConfig.name} · open-source link management platform`,
     description: siteConfig.description,
     siteName: siteConfig.name,
+    // Static file, not the opengraph-image file convention: the metadata
+    // route streams without content-length, which X's image ingester
+    // rejects (card renders text-only). Pages with their own socialCard
+    // override this wholesale.
+    images: [
+      {
+        url: "/og/home.jpg",
+        width: 2400,
+        height: 1260,
+        alt: "spoo.me, the open-source link platform that proves every click",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
+    images: ["/og/home.jpg"],
   },
 }
 
