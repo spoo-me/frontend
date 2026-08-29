@@ -4,6 +4,7 @@ import { connectedApps } from "@/lib/apps-data"
 import { PRICING_ENABLED } from "@/lib/flags"
 import { siteConfig } from "@/lib/site-config"
 import { testimonials } from "@/lib/testimonials"
+import { liveTools } from "@/lib/tools-data"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPaths = [
@@ -17,6 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/terms",
     "/legal",
     "/stats",
+    "/tools",
+    ...liveTools.map((t) => `/tools/${t.slug}`),
     ...(PRICING_ENABLED ? ["/pricing"] : []),
   ]
 

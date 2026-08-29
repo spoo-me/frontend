@@ -9,6 +9,11 @@
 - [Apps & SDKs](https://spoo.me/apps): official clients for Raycast, Chrome, Discord, Telegram, Slack, Windows, Android, iOS, plus SDKs for Python, TypeScript, Rust, Go, Kotlin, and C++
 - [Link stats lookup](https://spoo.me/stats): public click analytics for any spoo.me short link
 
+## Tools
+
+- [Free link tools](https://spoo.me/tools): UTM builder and other small link utilities, no account needed
+- [UTM builder](https://spoo.me/tools/utm-builder): build tagged campaign links, shorten them, and track clicks
+
 ## Developers
 
 - [Documentation](https://spoo.me/docs/introduction): API reference, self-hosting guides, SDK quickstarts

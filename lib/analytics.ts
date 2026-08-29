@@ -269,6 +269,7 @@ export function trackRecentLinkClicked(kind: "open" | "copy" | "stats") {
     whole discovery matrix is a single breakdown-by-action chart — and the
     union keeps the action list from sprawling into free-text. */
 export type UiAction =
+  | "tool_used"
   | "copy_short_link"
   | "copy_api_key"
   | "copy_dns_record"
