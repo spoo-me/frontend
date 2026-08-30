@@ -7,8 +7,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowUpRight,
   BadgeCheck,
+  Pencil,
   Plus,
   ShieldCheck,
+  SlidersHorizontal,
   TriangleAlert,
   UserRound,
 } from "lucide-react"
@@ -33,7 +35,7 @@ import { PRICING_ENABLED } from "@/lib/flags"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/format"
 import { SESSION_KEY, useAuth } from "@/components/auth/auth-context"
-import { UserAvatar } from "@/components/auth/user-menu"
+import { UserAvatar, userInitials } from "@/components/auth/user-menu"
 import { BrandIcons } from "@/components/icons/brand-icons"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
@@ -47,6 +49,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Popover,
@@ -69,18 +72,56 @@ const PICTURES_KEY = ["profile-pictures"] as const
 
 function Row({
   label,
+  description,
   children,
 }: {
-  label: string
+  label: React.ReactNode
+  description?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-12 items-center justify-between gap-4 px-4 py-2.5">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="flex min-w-0 items-center gap-2 text-foreground text-sm">
-        {children}
-      </span>
+    <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2.5 font-medium text-foreground text-sm">
+          {label}
+        </div>
+        {description && (
+          <div className="mt-1 truncate text-[13px] text-muted-foreground">
+            {description}
+          </div>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-3">{children}</div>
     </div>
+  )
+}
+
+/**
+ * Settings grammar: the section's name and one dry sentence sit in a left
+ * rail, the rows in a panel on the right — the rail is what keeps a wide
+ * page from reading as a floating strip of rows.
+ */
+function Section({
+  icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ElementType
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="grid gap-4 py-10 first:pt-0 last:pb-0 lg:grid-cols-[200px_1fr] lg:gap-12">
+      <div>
+        <SectionHeader icon={icon} title={title} className="h-auto" />
+        <p className="mt-2 text-[13px] text-muted-foreground/80 leading-relaxed">
+          {description}
+        </p>
+      </div>
+      <Panel className="h-fit divide-y divide-border/60">{children}</Panel>
+    </section>
   )
 }
 
@@ -139,18 +180,26 @@ function NameRow({ user }: { user: AuthUser }) {
 
   if (!editing)
     return (
-      <button
-        type="button"
-        onClick={open}
-        className="group flex items-center gap-2.5"
-      >
-        <span className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 group-hover:text-foreground">
-          edit
+      <>
+        <span className="text-foreground text-sm">
+          {user.user_name ?? (
+            <span className="text-muted-foreground">not set</span>
+          )}
         </span>
-        {user.user_name ?? (
-          <span className="text-muted-foreground">not set</span>
-        )}
-      </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Edit name"
+              onClick={open}
+            >
+              <Pencil />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit name</TooltipContent>
+        </Tooltip>
+      </>
     )
 
   return (
@@ -176,16 +225,61 @@ function NameRow({ user }: { user: AuthUser }) {
         disabled={save.isPending}
         placeholder="Your name"
         aria-label="Display name"
-        className="h-7 w-44 rounded-md border border-border/60 bg-transparent px-2 text-foreground text-sm outline-none focus:border-border disabled:opacity-50"
+        className="h-8 w-52 rounded-lg border border-border/60 bg-transparent px-2.5 text-foreground text-sm outline-none focus:border-ring disabled:opacity-50"
       />
     </span>
   )
 }
 
+/** One option in the avatar chooser: a circle with its source named under it. */
+function AvatarChoice({
+  label,
+  current,
+  onSelect,
+  disabled,
+  children,
+}: {
+  label: string
+  current: boolean
+  onSelect: () => void
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      disabled={disabled}
+      className="group flex w-16 flex-col items-center gap-2 disabled:opacity-50"
+    >
+      <span
+        className={cn(
+          "rounded-full transition-shadow duration-150",
+          current
+            ? "ring-2 ring-brand ring-offset-2 ring-offset-popover"
+            : "group-hover:ring-2 group-hover:ring-border group-hover:ring-offset-2 group-hover:ring-offset-popover"
+        )}
+      >
+        {children}
+      </span>
+      <span
+        className={cn(
+          "font-mono text-[10px] transition-colors duration-150",
+          current
+            ? "text-foreground"
+            : "text-muted-foreground group-hover:text-foreground"
+        )}
+      >
+        {label}
+      </span>
+    </button>
+  )
+}
+
 /**
- * The avatar with a chooser: provider pictures to pick from, an upload
- * tile, and — only while a picture is set — a remove affordance that goes
- * back to the initials avatar.
+ * The avatar with a chooser: every state is an equal, named tile —
+ * provider pictures, your upload, and the initials fallback — so going
+ * back to initials is a choice, not a separate "remove" affordance.
  */
 function AvatarRow({ user }: { user: AuthUser }) {
   const queryClient = useQueryClient()
@@ -250,91 +344,76 @@ function AvatarRow({ user }: { user: AuthUser }) {
 
   return (
     <Popover>
+      <UserAvatar user={user} className="size-9" />
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label="Change avatar"
-          className="group flex items-center gap-2.5"
-        >
-          <span className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 group-hover:text-foreground">
-            change
-          </span>
-          <UserAvatar user={user} className="size-8" />
-        </button>
+        <Button variant="outline" size="sm" aria-label="Change avatar">
+          Change
+        </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto p-3">
-        <div className="flex items-center gap-3">
+      <PopoverContent align="end" className="w-auto p-4">
+        <div className="flex items-start gap-2">
           {pictures.map((pic) => (
-            <Tooltip key={pic.id}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setPfp.mutate(pic.id)}
-                  disabled={setPfp.isPending}
-                  className={cn(
-                    "rounded-full transition-shadow duration-150",
-                    pic.is_current
-                      ? "ring-2 ring-brand ring-offset-2 ring-offset-popover"
-                      : "hover:ring-2 hover:ring-border hover:ring-offset-2 hover:ring-offset-popover"
-                  )}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={pic.url}
-                    alt={`Picture from ${pic.source}`}
-                    referrerPolicy="no-referrer"
-                    className="size-9 rounded-full object-cover"
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>from {pic.source}</TooltipContent>
-            </Tooltip>
+            <AvatarChoice
+              key={pic.id}
+              label={pic.source}
+              current={pic.is_current}
+              onSelect={() => {
+                if (!pic.is_current) setPfp.mutate(pic.id)
+              }}
+              disabled={setPfp.isPending}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={pic.url}
+                alt={`Picture from ${pic.source}`}
+                referrerPolicy="no-referrer"
+                className="size-11 rounded-full object-cover"
+              />
+            </AvatarChoice>
           ))}
-          {user.pfp?.source === "upload" && user.pfp.url && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="rounded-full ring-2 ring-brand ring-offset-2 ring-offset-popover">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={user.pfp.url}
-                    alt="Your uploaded picture"
-                    className="size-9 rounded-full object-cover"
-                  />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>your upload</TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label="Upload a picture"
-                onClick={() => fileRef.current?.click()}
-                disabled={upload.isPending}
-                className="flex size-9 items-center justify-center rounded-full border border-border border-dashed text-muted-foreground transition-colors duration-150 hover:border-foreground/40 hover:text-foreground disabled:opacity-50"
-              >
-                <Plus className="size-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>upload an image, up to 512 KB</TooltipContent>
-          </Tooltip>
-        </div>
-        {uploadError && (
-          <p className="mt-2 font-mono text-[11px] text-destructive">
-            {uploadError}
-          </p>
-        )}
-        {user.pfp?.url && (
-          <button
-            type="button"
-            onClick={() => remove.mutate()}
-            disabled={remove.isPending}
-            className="mt-2.5 text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground disabled:opacity-50"
+          <AvatarChoice
+            label="upload"
+            current={user.pfp?.source === "upload" && !!user.pfp.url}
+            onSelect={() => fileRef.current?.click()}
+            disabled={upload.isPending}
           >
-            remove picture
-          </button>
-        )}
+            {user.pfp?.source === "upload" && user.pfp.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.pfp.url}
+                alt="Your uploaded picture"
+                className="size-11 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex size-11 items-center justify-center rounded-full border border-border border-dashed text-muted-foreground transition-colors duration-150 group-hover:border-foreground/40 group-hover:text-foreground">
+                <Plus className="size-4" />
+              </span>
+            )}
+          </AvatarChoice>
+          <AvatarChoice
+            label="initials"
+            current={!user.pfp?.url}
+            onSelect={() => {
+              if (user.pfp?.url) remove.mutate()
+            }}
+            disabled={remove.isPending}
+          >
+            <span
+              aria-hidden
+              className="flex size-11 items-center justify-center rounded-full bg-brand/15 font-semibold text-[15px] text-brand"
+            >
+              {userInitials(user)}
+            </span>
+          </AvatarChoice>
+        </div>
+        <p
+          className={cn(
+            "mt-3 font-mono text-[10px]",
+            uploadError ? "text-destructive" : "text-muted-foreground/70"
+          )}
+        >
+          {uploadError ?? "png, jpeg or webp · up to 512 KB"}
+        </p>
         <input
           ref={fileRef}
           aria-label="Profile picture file"
@@ -378,42 +457,47 @@ function ProviderRow({
   })
 
   return (
-    <div className="flex min-h-12 items-center justify-between gap-4 px-4 py-2.5">
-      <span className="flex items-center gap-2.5 text-foreground text-sm">
-        <Brand className="size-4 text-muted-foreground" />
-        {PROVIDER_LABELS[name]}
-      </span>
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="ph-no-capture hidden truncate font-mono text-muted-foreground text-xs sm:block">
-          {linked?.email}
+    <Row
+      label={
+        <>
+          <Brand className="size-4 text-muted-foreground" />
+          {PROVIDER_LABELS[name]}
+        </>
+      }
+      description={
+        <span className="font-mono text-xs">
+          <span className="ph-no-capture">{linked?.email}</span>
+          {linked?.linked_at && (
+            <span className="text-muted-foreground/60">
+              {" · "}linked {formatDate(linked.linked_at)}
+            </span>
+          )}
         </span>
-        {linked?.linked_at && (
-          <span className="hidden whitespace-nowrap font-mono text-[11px] text-muted-foreground/60 md:block">
-            linked {formatDate(linked.linked_at)}
-          </span>
-        )}
-        {lastMethod ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-not-allowed text-muted-foreground/40 text-xs">
+      }
+    >
+      {lastMethod ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="cursor-not-allowed">
+              <Button variant="outline" size="sm" disabled>
                 Disconnect
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              Your only way to sign in. Set a password first.
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirmOpen(true)}
-            disabled={unlink.isPending}
-            className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground disabled:opacity-50"
-          >
-            Disconnect
-          </button>
-        )}
-      </span>
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            Your only way to sign in. Set a password first.
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setConfirmOpen(true)}
+          disabled={unlink.isPending}
+        >
+          Disconnect
+        </Button>
+      )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
@@ -437,29 +521,25 @@ function ProviderRow({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </Row>
   )
 }
 
 /** Unlinked providers collapse into one quiet row of link-out affordances. */
 function LinkProviderRow({ unlinked }: { unlinked: OAuthProviderName[] }) {
   return (
-    <Row label="Link a provider">
-      <span className="flex items-center gap-4">
-        {unlinked.map((name) => {
-          const Brand = BrandIcons[name]
-          return (
-            <a
-              key={name}
-              href={oauthLinkHref(name)}
-              className="flex items-center gap-1.5 text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
-            >
+    <Row label="Link a provider" description="Add another way to sign in.">
+      {unlinked.map((name) => {
+        const Brand = BrandIcons[name]
+        return (
+          <Button key={name} variant="outline" size="sm" asChild>
+            <a href={oauthLinkHref(name)}>
               <Brand className="size-3.5" />
               {PROVIDER_LABELS[name]}
             </a>
-          )
-        })}
-      </span>
+          </Button>
+        )
+      })}
     </Row>
   )
 }
@@ -516,17 +596,13 @@ function DeleteAccountRow({ user }: { user: AuthUser }) {
   }
 
   return (
-    <Row label="Delete account">
-      <span className="hidden text-muted-foreground text-xs sm:block">
-        erases your links, analytics and profile
-      </span>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-destructive/80 text-xs underline underline-offset-4 transition-colors duration-150 hover:text-destructive"
-      >
-        Delete…
-      </button>
+    <Row
+      label="Delete account"
+      description="Erases your links, analytics and profile after a 7 day grace period."
+    >
+      <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>
+        Delete account
+      </Button>
 
       <AlertDialog open={open} onOpenChange={reset}>
         <AlertDialogContent>
@@ -631,88 +707,107 @@ export default function SettingsPage() {
   const unlinked = OAUTH_PROVIDERS.filter((n) => !linked.includes(n))
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-8">
+    <div className="mx-auto w-full max-w-4xl pb-12">
       <span className="label-mono text-muted-foreground/60">Settings</span>
       <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
         Account
       </h1>
 
-      <div className="mt-6">
-        <SectionHeader icon={UserRound} title="Profile" />
-        <Panel className="mt-2 divide-y divide-border/60">
-          <Row label="Avatar">
+      <div className="mt-10 divide-y divide-border/50">
+        <Section
+          icon={UserRound}
+          title="Profile"
+          description="How your account appears."
+        >
+          <Row
+            label="Avatar"
+            description="A provider picture, or upload your own."
+          >
             <AvatarRow user={user} />
           </Row>
-          <Row label="Name">
+          <Row label="Name" description="How the dashboard addresses you.">
             <NameRow user={user} />
           </Row>
-          <Row label="Email">
-            <span className="ph-no-capture truncate font-mono text-xs">
+          <Row label="Email" description="Where account mail is sent.">
+            <span className="ph-no-capture truncate font-mono text-[13px]">
               {user.email}
             </span>
             {user.email_verified && (
-              <span className="flex items-center gap-1 rounded-full bg-live/10 px-2 py-0.5 font-medium text-[10px] text-live">
-                <BadgeCheck className="size-3" />
-                verified
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <BadgeCheck
+                    aria-label="Email verified"
+                    className="size-3.5 text-live"
+                  />
+                </TooltipTrigger>
+                <TooltipContent>verified</TooltipContent>
+              </Tooltip>
             )}
           </Row>
           {PRICING_ENABLED && (
-            <Row label="Plan">
-              <span className="rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 font-mono text-[11px] uppercase">
+            <Row label="Plan" description="What this account is on.">
+              <span className="font-mono text-[11px] text-muted-foreground uppercase">
                 {user.plan ?? "free"}
               </span>
             </Row>
           )}
-          <Row label="Theme">
+        </Section>
+
+        <Section
+          icon={SlidersHorizontal}
+          title="Preferences"
+          description="Defaults for this browser."
+        >
+          <Row label="Theme" description="System follows your OS setting.">
             <ThemeToggle />
           </Row>
-        </Panel>
-      </div>
+        </Section>
 
-      <div className="mt-8">
-        <SectionHeader icon={ShieldCheck} title="Security" />
-        <Panel className="mt-2 divide-y divide-border/60">
-          <Row label="Password">
-            {user.password_set ? (
-              <span className="text-muted-foreground text-xs">
-                set
-                {!user.auth_providers?.length && " · your only sign-in method"}{" "}
-                · change via{" "}
-                <Link
-                  href="/forgot-password"
-                  className="text-foreground underline underline-offset-4"
-                >
-                  password reset
-                </Link>
-              </span>
-            ) : (
-              <span className="text-muted-foreground text-xs">
-                not set · you sign in with a provider
-              </span>
+        <Section
+          icon={ShieldCheck}
+          title="Security"
+          description="Ways to sign in, and what has access."
+        >
+          <Row
+            label="Password"
+            description={
+              user.password_set
+                ? user.auth_providers?.length
+                  ? "Set."
+                  : "Set. Your only sign-in method."
+                : "Not set. You sign in with a provider."
+            }
+          >
+            {user.password_set && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/forgot-password">Change password</Link>
+              </Button>
             )}
           </Row>
           {linked.map((name) => (
             <ProviderRow key={name} name={name} user={user} />
           ))}
           {unlinked.length > 0 && <LinkProviderRow unlinked={unlinked} />}
-          <Row label="Connected apps">
-            <Link
-              href="/dashboard/apps"
-              className="flex items-center gap-1 text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
-            >
-              manage in Apps
-              <ArrowUpRight className="size-3" />
-            </Link>
+          <Row
+            label="Connected apps"
+            description="Third-party apps authorized on your account."
+          >
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/apps">
+                Manage in Apps
+                <ArrowUpRight className="size-3.5" />
+              </Link>
+            </Button>
           </Row>
-        </Panel>
-      </div>
+        </Section>
 
-      <div className="mt-8">
-        <SectionHeader icon={TriangleAlert} title="Danger zone" />
-        <Panel className="mt-2">
+        <Section
+          icon={TriangleAlert}
+          title="Danger zone"
+          description="Remove the account and everything in it."
+        >
           <DeleteAccountRow user={user} />
-        </Panel>
+        </Section>
       </div>
     </div>
   )
