@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowUpRight,
   BadgeCheck,
+  KeyRound,
   Pencil,
   Plus,
   TriangleAlert,
@@ -47,6 +48,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
   Popover,
@@ -432,9 +441,42 @@ function AvatarRow({ user }: { user: AuthUser }) {
 }
 
 /**
- * One row per LINKED provider — your sign-in methods are the rows that
- * exist, not a catalogue of what you could add. The guard against removing
- * the last method is a disabled affordance with the reason in a tooltip.
+ * One method inside the sign-in dialog: glyph, name, the linked identity
+ * under it, one action. The settings page never renders these — the whole
+ * list lives behind Manage so the page stays a list of settings.
+ */
+function MethodRow({
+  icon: Icon,
+  label,
+  identity,
+  children,
+}: {
+  icon: React.ElementType
+  label: string
+  identity?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-3 py-3">
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium text-foreground text-sm">
+          {label}
+        </span>
+        {identity && (
+          <span className="block truncate font-mono text-[11px] text-muted-foreground">
+            {identity}
+          </span>
+        )}
+      </span>
+      <span className="flex shrink-0 items-center">{children}</span>
+    </div>
+  )
+}
+
+/**
+ * A provider's method row. The guard against removing the last sign-in
+ * method is a disabled affordance with the reason in a tooltip.
  */
 function ProviderRow({
   name,
@@ -461,25 +503,27 @@ function ProviderRow({
   })
 
   return (
-    <Row
-      label={
-        <>
-          <Brand className="size-4 text-muted-foreground" />
-          {PROVIDER_LABELS[name]}
-        </>
-      }
-      description={
-        <span className="font-mono text-xs">
-          <span className="ph-no-capture">{linked?.email}</span>
-          {linked?.linked_at && (
-            <span className="text-muted-foreground/60">
-              {" · "}linked {formatDate(linked.linked_at)}
-            </span>
-          )}
-        </span>
+    <MethodRow
+      icon={Brand}
+      label={PROVIDER_LABELS[name]}
+      identity={
+        linked && (
+          <>
+            <span className="ph-no-capture">{linked.email}</span>
+            {linked.linked_at && (
+              <span className="text-muted-foreground/60">
+                {" · "}linked {formatDate(linked.linked_at)}
+              </span>
+            )}
+          </>
+        )
       }
     >
-      {lastMethod ? (
+      {!linked ? (
+        <Button variant="outline" size="sm" asChild>
+          <a href={oauthLinkHref(name)}>Connect</a>
+        </Button>
+      ) : lastMethod ? (
         <Tooltip>
           <TooltipTrigger asChild>
             <span className="cursor-not-allowed">
@@ -525,25 +569,61 @@ function ProviderRow({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Row>
+    </MethodRow>
   )
 }
 
-/** Unlinked providers collapse into one quiet row of link-out affordances. */
-function LinkProviderRow({ unlinked }: { unlinked: OAuthProviderName[] }) {
+/**
+ * The sign-in setting: one row naming what you can sign in with, and a
+ * dialog holding the methods themselves. Keeping the list off the page is
+ * what stops four methods from reading as four separate settings.
+ */
+function SignInMethodsRow({ user }: { user: AuthUser }) {
+  const connected = [
+    ...(user.password_set ? ["Password"] : []),
+    ...OAUTH_PROVIDERS.filter((n) =>
+      user.auth_providers?.some((p) => p.provider === n)
+    ).map((n) => PROVIDER_LABELS[n]),
+  ]
+
   return (
-    <Row label="Link a provider" description="Add another way to sign in.">
-      {unlinked.map((name) => {
-        const Brand = BrandIcons[name]
-        return (
-          <Button key={name} variant="outline" size="sm" asChild>
-            <a href={oauthLinkHref(name)}>
-              <Brand className="size-3.5" />
-              {PROVIDER_LABELS[name]}
-            </a>
+    <Row
+      label="Sign-in methods"
+      description={
+        connected.length ? connected.join(", ") : "No sign-in method set."
+      }
+    >
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            Manage
           </Button>
-        )
-      })}
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sign-in methods</DialogTitle>
+            <DialogDescription>
+              How you get into your account. Keep at least one.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="divide-y divide-border/60">
+            <MethodRow
+              icon={KeyRound}
+              label="Password"
+              identity={user.password_set ? "set" : "not set"}
+            >
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/forgot-password">
+                  {user.password_set ? "Change" : "Set"}
+                </Link>
+              </Button>
+            </MethodRow>
+            {OAUTH_PROVIDERS.map((name) => (
+              <ProviderRow key={name} name={name} user={user} />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Row>
   )
 }
@@ -705,11 +785,6 @@ export default function SettingsPage() {
   const { user } = useAuth()
   if (!user) return null
 
-  const linked = OAUTH_PROVIDERS.filter((n) =>
-    user.auth_providers?.some((p) => p.provider === n)
-  )
-  const unlinked = OAUTH_PROVIDERS.filter((n) => !linked.includes(n))
-
   return (
     <div className="mx-auto w-full max-w-4xl pb-12">
       <span className="label-mono text-muted-foreground/60">Settings</span>
@@ -718,10 +793,7 @@ export default function SettingsPage() {
       </h1>
 
       <div className="mt-10 divide-y divide-border/50">
-        <Section
-          title="Profile"
-          description="How your account appears."
-        >
+        <Section title="Profile" description="How your account appears.">
           <Row
             label="Avatar"
             description="A provider picture, or upload your own."
@@ -756,10 +828,7 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        <Section
-          title="Preferences"
-          description="Defaults for this browser."
-        >
+        <Section title="Preferences" description="Defaults for this browser.">
           <Row label="Theme" description="System follows your OS setting.">
             <ThemeToggle />
           </Row>
@@ -769,26 +838,7 @@ export default function SettingsPage() {
           title="Security"
           description="Ways to sign in, and what has access."
         >
-          <Row
-            label="Password"
-            description={
-              user.password_set
-                ? user.auth_providers?.length
-                  ? "Set."
-                  : "Set. Your only sign-in method."
-                : "Not set. You sign in with a provider."
-            }
-          >
-            {user.password_set && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/forgot-password">Change password</Link>
-              </Button>
-            )}
-          </Row>
-          {linked.map((name) => (
-            <ProviderRow key={name} name={name} user={user} />
-          ))}
-          {unlinked.length > 0 && <LinkProviderRow unlinked={unlinked} />}
+          <SignInMethodsRow user={user} />
           <Row
             label="Connected apps"
             description="Third-party apps authorized on your account."
