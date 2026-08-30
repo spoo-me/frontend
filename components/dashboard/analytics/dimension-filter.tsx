@@ -110,7 +110,7 @@ export function DimensionFilter({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">
         <CommandPrimitive>
-          <div className="border-border/60 border-b px-3 transition-colors focus-within:border-ring/60">
+          <div className="border-border/60 border-b px-3">
             <CommandPrimitive.Input
               placeholder={`Search ${label.toLowerCase()}…`}
               className="h-9 w-full bg-transparent text-xs outline-none placeholder:text-muted-foreground/60"
