@@ -342,11 +342,17 @@ function AvatarRow({ user }: { user: AuthUser }) {
 
   return (
     <Popover>
-      <UserAvatar user={user} className="size-9" />
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" aria-label="Change avatar">
-          Change
-        </Button>
+        <button
+          type="button"
+          aria-label="Change avatar"
+          className="group relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <UserAvatar user={user} className="size-10" />
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 group-aria-expanded:opacity-100">
+            <Pencil className="size-4 text-white" />
+          </span>
+        </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-auto p-4">
         <div className="flex items-start gap-2">
