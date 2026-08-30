@@ -681,18 +681,8 @@ export default function LinksPage() {
           }}
         />
 
-        {/* Metadata, not an action: recedes below the filter controls. The
-            visible range doubles as a "more pages exist" signal, since the
-            paginator itself lives below the fold. */}
-        <span className="ml-auto font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-          {urls.isPending
-            ? "…"
-            : totalPages > 1
-              ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${formatCount(total)}`
-              : `${formatCount(total)} link${total === 1 ? "" : "s"}`}
-        </span>
         <RefreshControl
-          className="ml-1"
+          className="ml-auto"
           intervalMs={refreshEvery}
           onIntervalChange={setRefreshEvery}
           onRefresh={() =>
@@ -889,32 +879,36 @@ export default function LinksPage() {
           </tbody>
         </table>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Footer rail: the totals' one home — count always, pager only
+            when there are pages to move between. */}
+        {!urls.isPending && total > 0 && (
           <div className="flex h-11 items-center justify-between border-border/60 border-t bg-muted/30 px-4">
             <span className="font-mono text-muted-foreground text-xs tabular-nums">
-              page {page} of {totalPages}
+              {formatCount(total)} link{total === 1 ? "" : "s"}
+              {totalPages > 1 && ` · page ${page} of ${totalPages}`}
             </span>
-            <span className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Previous page"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1 <= 1 ? null : page - 1)}
-              >
-                <ChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Next page"
-                disabled={!urls.data?.hasNext}
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight />
-              </Button>
-            </span>
+            {totalPages > 1 && (
+              <span className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Previous page"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1 <= 1 ? null : page - 1)}
+                >
+                  <ChevronLeft />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Next page"
+                  disabled={!urls.data?.hasNext}
+                  onClick={() => setPage(page + 1)}
+                >
+                  <ChevronRight />
+                </Button>
+              </span>
+            )}
           </div>
         )}
       </Panel>
