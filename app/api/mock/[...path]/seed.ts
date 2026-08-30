@@ -387,6 +387,23 @@ export function buildGrants(): MockGrant[] {
       granted_at: isoUtc(33),
       last_used_at: isoUtc(0.1),
     },
+    // Registry key ≠ catalogue slug (spoo-mobile → /apps/android): exercises
+    // the registryKey join on the apps page.
+    {
+      id: "grant_mobile",
+      app: "spoo-mobile",
+      app_name: "Spoo Mobile",
+      icon: "spoo-mobile.svg",
+      scopes: ["shorten:create", "urls:read", "urls:manage", "stats:read"],
+      permissions: [
+        "Create short links",
+        "List and read links",
+        "Edit and delete links",
+        "Read analytics data",
+      ],
+      granted_at: isoUtc(6),
+      last_used_at: isoUtc(0.3),
+    },
     {
       id: "grant_snap",
       app: "spoo-snap",

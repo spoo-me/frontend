@@ -1,5 +1,8 @@
 export type ConnectedApp = {
   slug: string
+  /** Backend registry key (config/apps.yaml) when it differs from the slug —
+   *  the slug is also the public /apps/{slug} URL, so it can't just rename. */
+  registryKey?: string
   name: string
   category: "extension" | "desktop" | "mobile" | "bot" | "sdk" | "cli"
   tagline: string
@@ -132,6 +135,7 @@ export const connectedApps: ConnectedApp[] = [
   },
   {
     slug: "android",
+    registryKey: "spoo-mobile",
     name: "Android",
     category: "mobile",
     tagline: "Material 3 Expressive shortener for Android",

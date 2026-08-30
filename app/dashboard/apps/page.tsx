@@ -58,9 +58,10 @@ import {
 /** Grants → catalogue slugs, so connected rows share the brand tiles and
  *  already-connected apps drop out of the catalogue below. */
 // Grants carry the backend registry key (config/apps.yaml) in `app`;
-// catalogue slugs use the same namespace, so the join is exact.
+// catalogue slugs share that namespace except where registryKey says so
+// (the slug is also the public /apps/{slug} URL).
 const grantApp = (grant: AppGrant) =>
-  connectedApps.find((a) => a.slug === grant.app) ?? null
+  connectedApps.find((a) => (a.registryKey ?? a.slug) === grant.app) ?? null
 
 /** Shipped apps first; unshipped sink to the bottom of the grid. */
 const availableFirst = (list: ConnectedApp[]) => [
@@ -184,13 +185,16 @@ function GrantRow({ grant }: { grant: AppGrant }) {
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const app = grantApp(grant)
+  // The catalogue name wins over the registry's (grant.app_name), so the
+  // connected row and the catalogue card below never disagree.
+  const displayName = app?.name ?? grant.app_name
 
   const revoke = useMutation({
     // Revoke keys on the grant document id (`grant_id` on the wire).
     mutationFn: () => revokeAppGrant(grant.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apps"] })
-      toast.success(`${grant.app_name} disconnected`)
+      toast.success(`${displayName} disconnected`)
     },
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Couldn't revoke"),
@@ -209,7 +213,7 @@ function GrantRow({ grant }: { grant: AppGrant }) {
       )}
       <div className="min-w-0 flex-1">
         <div className="font-medium text-foreground text-sm">
-          {grant.app_name}
+          {displayName}
         </div>
         <div className="truncate text-muted-foreground text-xs">
           connected {formatWhen(grant.granted_at)} · last used{" "}
@@ -258,7 +262,7 @@ function GrantRow({ grant }: { grant: AppGrant }) {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Disconnect {grant.app_name}?</AlertDialogTitle>
+            <AlertDialogTitle>Disconnect {displayName}?</AlertDialogTitle>
             <AlertDialogDescription>
               The app loses access immediately. You can reconnect it any time by
               signing in from the app again.
