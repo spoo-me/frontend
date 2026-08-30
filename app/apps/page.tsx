@@ -59,6 +59,7 @@ export default function AppsPage() {
           <Section caption="Ecosystem">
             <div className="px-5 pt-28 pb-20 sm:px-9">
               <SectionHeading
+                level={1}
                 title={
                   <>
                     One link platform.{" "}
