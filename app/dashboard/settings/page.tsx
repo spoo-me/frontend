@@ -9,10 +9,7 @@ import {
   BadgeCheck,
   Pencil,
   Plus,
-  ShieldCheck,
-  SlidersHorizontal,
   TriangleAlert,
-  UserRound,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -107,7 +104,8 @@ function Section({
   description,
   children,
 }: {
-  icon: React.ElementType
+  /** Danger zone only — the warning glyph earns its place, the rest don't. */
+  icon?: React.ElementType
   title: string
   description: string
   children: React.ReactNode
@@ -715,7 +713,6 @@ export default function SettingsPage() {
 
       <div className="mt-10 divide-y divide-border/50">
         <Section
-          icon={UserRound}
           title="Profile"
           description="How your account appears."
         >
@@ -754,7 +751,6 @@ export default function SettingsPage() {
         </Section>
 
         <Section
-          icon={SlidersHorizontal}
           title="Preferences"
           description="Defaults for this browser."
         >
@@ -764,7 +760,6 @@ export default function SettingsPage() {
         </Section>
 
         <Section
-          icon={ShieldCheck}
           title="Security"
           description="Ways to sign in, and what has access."
         >
