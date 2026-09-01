@@ -532,8 +532,10 @@ function ProviderRow({
               </Button>
             </span>
           </TooltipTrigger>
+          {/* Not "set a password first": password reset is a no-op for
+              accounts that never had one, so connecting is the only path. */}
           <TooltipContent>
-            Your only way to sign in. Set a password first.
+            Your only way to sign in. Connect another provider first.
           </TooltipContent>
         </Tooltip>
       ) : (
@@ -547,28 +549,30 @@ function ProviderRow({
         </Button>
       )}
 
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Disconnect {PROVIDER_LABELS[name]}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You will no longer be able to sign in with {PROVIDER_LABELS[name]}
-              . You can reconnect it any time.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => unlink.mutate()}
-            >
-              Disconnect
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {linked && (
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Disconnect {PROVIDER_LABELS[name]}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                You will no longer be able to sign in with{" "}
+                {PROVIDER_LABELS[name]}. You can reconnect it any time.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={() => unlink.mutate()}
+              >
+                Disconnect
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </MethodRow>
   )
 }
@@ -610,13 +614,19 @@ function SignInMethodsRow({ user }: { user: AuthUser }) {
             <MethodRow
               icon={KeyRound}
               label="Password"
-              identity={user.password_set ? "set" : "not set"}
+              identity={
+                user.password_set
+                  ? "set"
+                  : "not set, you sign in with a provider"
+              }
             >
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/forgot-password">
-                  {user.password_set ? "Change" : "Set"}
-                </Link>
-              </Button>
+              {/* No "set password" affordance: the reset flow returns early
+                  for accounts without one, so the button would do nothing. */}
+              {user.password_set && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/forgot-password">Change</Link>
+                </Button>
+              )}
             </MethodRow>
             {OAUTH_PROVIDERS.map((name) => (
               <ProviderRow key={name} name={name} user={user} />
