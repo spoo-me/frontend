@@ -212,9 +212,7 @@ function GrantRow({ grant }: { grant: AppGrant }) {
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="font-medium text-foreground text-sm">
-          {displayName}
-        </div>
+        <div className="font-medium text-foreground text-sm">{displayName}</div>
         <div className="truncate text-muted-foreground text-xs">
           connected {formatWhen(grant.granted_at)} · last used{" "}
           {formatWhen(grant.last_used_at)}
