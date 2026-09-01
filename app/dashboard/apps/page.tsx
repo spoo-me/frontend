@@ -17,7 +17,7 @@ import { motion } from "motion/react"
 import { trackUiAction } from "@/lib/analytics"
 import { listAppGrants, revokeAppGrant, type AppGrant } from "@/lib/api"
 import {
-  connectedApps,
+  appByRegistryKey,
   integrations,
   sdks,
   type ConnectedApp,
@@ -55,13 +55,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-/** Grants → catalogue slugs, so connected rows share the brand tiles and
+/** Grants → catalogue entries, so connected rows share the brand tiles and
  *  already-connected apps drop out of the catalogue below. */
-// Grants carry the backend registry key (config/apps.yaml) in `app`;
-// catalogue slugs share that namespace except where registryKey says so
-// (the slug is also the public /apps/{slug} URL).
-const grantApp = (grant: AppGrant) =>
-  connectedApps.find((a) => (a.registryKey ?? a.slug) === grant.app) ?? null
+const grantApp = (grant: AppGrant) => appByRegistryKey(grant.app)
 
 /** Shipped apps first; unshipped sink to the bottom of the grid. */
 const availableFirst = (list: ConnectedApp[]) => [

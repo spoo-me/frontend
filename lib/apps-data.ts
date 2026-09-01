@@ -428,3 +428,13 @@ export const connectedApps: ConnectedApp[] = [
 
 export const sdks = connectedApps.filter((a) => a.category === "sdk")
 export const integrations = connectedApps.filter((a) => a.category !== "sdk")
+
+/**
+ * Resolve an OAuth grant's backend registry key (config/apps.yaml) to its
+ * catalogue entry. Every surface showing a grant must join through here:
+ * slugs and registry keys agree except where `registryKey` says otherwise,
+ * and two hand-rolled copies of this lookup already drifted once.
+ */
+export function appByRegistryKey(key: string): ConnectedApp | null {
+  return connectedApps.find((a) => (a.registryKey ?? a.slug) === key) ?? null
+}

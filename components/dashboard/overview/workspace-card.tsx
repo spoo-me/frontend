@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 
 import type { ApiKey, AppGrant, CustomDomain, UrlListItem } from "@/lib/api"
-import { connectedApps, type ConnectedApp } from "@/lib/apps-data"
+import { appByRegistryKey, type ConnectedApp } from "@/lib/apps-data"
 import { formatCount, formatWhen } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useFeature } from "@/hooks/use-features"
@@ -42,8 +42,14 @@ const CATEGORY_ICONS: Record<ConnectedApp["category"], React.ElementType> = {
 }
 
 function grantIcon(grant: AppGrant): React.ElementType {
-  const app = connectedApps.find((a) => a.slug === grant.app)
+  const app = appByRegistryKey(grant.app)
   return app ? CATEGORY_ICONS[app.category] : Puzzle
+}
+
+/** Catalogue name wins over the registry's, so this card and the apps page
+ *  never disagree about what an app is called. */
+function grantName(grant: AppGrant): string {
+  return appByRegistryKey(grant.app)?.name ?? grant.app_name
 }
 
 function ColumnHeader({
@@ -196,7 +202,7 @@ export function WorkspaceCard({
                     strokeWidth={1.75}
                   />
                   <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
-                    {g.app_name}
+                    {grantName(g)}
                   </span>
                   <span className="shrink-0 font-mono text-[11px] text-muted-foreground/70">
                     {formatWhen(g.last_used_at)}
