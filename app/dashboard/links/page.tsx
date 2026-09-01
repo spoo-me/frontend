@@ -126,7 +126,7 @@ function Favicon({ url }: { url: string | null }) {
   const domain = domainOf(url)
   const [failed, setFailed] = React.useState(false)
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-muted/30">
+    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-muted/30">
       {domain && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -134,13 +134,10 @@ function Favicon({ url }: { url: string | null }) {
           alt=""
           loading="lazy"
           onError={() => setFailed(true)}
-          className="size-4"
+          className="size-5"
         />
       ) : (
-        <Globe
-          className="size-3.5 text-muted-foreground/60"
-          strokeWidth={1.75}
-        />
+        <Globe className="size-4 text-muted-foreground/60" strokeWidth={1.75} />
       )}
     </span>
   )
@@ -684,18 +681,8 @@ export default function LinksPage() {
           }}
         />
 
-        {/* Metadata, not an action: recedes below the filter controls. The
-            visible range doubles as a "more pages exist" signal, since the
-            paginator itself lives below the fold. */}
-        <span className="ml-auto font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-          {urls.isPending
-            ? "…"
-            : totalPages > 1
-              ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${formatCount(total)}`
-              : `${formatCount(total)} link${total === 1 ? "" : "s"}`}
-        </span>
         <RefreshControl
-          className="ml-1"
+          className="ml-auto"
           intervalMs={refreshEvery}
           onIntervalChange={setRefreshEvery}
           onRefresh={() =>
@@ -850,9 +837,9 @@ export default function LinksPage() {
                 <tr key={i}>
                   <td className="px-4 py-3" colSpan={6}>
                     <div className="flex items-center gap-3">
-                      <Skeleton className="size-7 rounded-md" />
+                      <Skeleton className="size-9 rounded-lg" />
                       <div className="flex-1 space-y-1.5">
-                        <Skeleton className="h-3 w-40" />
+                        <Skeleton className="h-3.5 w-44" />
                         <Skeleton className="h-3 w-64" />
                       </div>
                     </div>
@@ -892,32 +879,36 @@ export default function LinksPage() {
           </tbody>
         </table>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Footer rail: the totals' one home — count always, pager only
+            when there are pages to move between. */}
+        {!urls.isPending && total > 0 && (
           <div className="flex h-11 items-center justify-between border-border/60 border-t bg-muted/30 px-4">
             <span className="font-mono text-muted-foreground text-xs tabular-nums">
-              page {page} of {totalPages}
+              {formatCount(total)} link{total === 1 ? "" : "s"}
+              {totalPages > 1 && ` · page ${page} of ${totalPages}`}
             </span>
-            <span className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Previous page"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1 <= 1 ? null : page - 1)}
-              >
-                <ChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Next page"
-                disabled={!urls.data?.hasNext}
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight />
-              </Button>
-            </span>
+            {totalPages > 1 && (
+              <span className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Previous page"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1 <= 1 ? null : page - 1)}
+                >
+                  <ChevronLeft />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Next page"
+                  disabled={!urls.data?.hasNext}
+                  onClick={() => setPage(page + 1)}
+                >
+                  <ChevronRight />
+                </Button>
+              </span>
+            )}
           </div>
         )}
       </Panel>
@@ -1252,7 +1243,7 @@ function LinkRow({
           {/* Favicon <-> checkbox swap: no dedicated column, no dead gutter.
               Identity at rest, selection affordance on hover. */}
           <span
-            className="relative size-7 shrink-0"
+            className="relative size-9 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
             <span
@@ -1282,7 +1273,7 @@ function LinkRow({
           </span>
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <span className="truncate font-medium font-mono text-[13px] text-foreground">
+              <span className="truncate font-medium font-mono text-foreground text-sm">
                 {(link.domain ?? "spoo.me") + "/" + link.alias}
               </span>
               <CopyButton
@@ -1291,7 +1282,7 @@ function LinkRow({
                 className="opacity-0 transition-opacity duration-150 [tr:focus-within_&]:opacity-100 [tr:hover_&]:opacity-100"
               />
             </div>
-            <div className="ph-no-capture truncate text-muted-foreground text-xs">
+            <div className="ph-no-capture mt-0.5 truncate text-[13px] text-muted-foreground">
               {displayUrl(link.long_url)}
             </div>
           </div>
@@ -1333,14 +1324,14 @@ function LinkRow({
         <StatusPill status={link.status} />
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 text-right">
-        <span className="font-medium font-mono text-[13px] text-foreground tabular-nums">
+        <span className="font-medium font-mono text-foreground text-sm tabular-nums">
           {formatCount(link.total_clicks)}
         </span>
       </td>
-      <td className="hidden whitespace-nowrap px-3 py-2.5 text-muted-foreground text-xs md:table-cell">
+      <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13px] text-muted-foreground md:table-cell">
         {formatWhen(link.last_click)}
       </td>
-      <td className="hidden whitespace-nowrap px-3 py-2.5 text-muted-foreground text-xs lg:table-cell">
+      <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13px] text-muted-foreground lg:table-cell">
         {formatWhen(link.created_at)}
       </td>
       <td className="px-2 py-2.5 text-right">
