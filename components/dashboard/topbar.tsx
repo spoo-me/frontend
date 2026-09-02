@@ -56,6 +56,9 @@ function Breadcrumb() {
 
 export function DashboardTopbar() {
   const [sheetOpen, setSheetOpen] = React.useState(false)
+  // The overview carries its own create box; two primary buttons in one
+  // viewport would fight. Every other page keeps the topbar entry point.
+  const onOverview = usePathname() === "/dashboard"
 
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-border/60 border-b bg-background px-4 sm:px-6">
@@ -79,14 +82,16 @@ export function DashboardTopbar() {
       <Breadcrumb />
 
       <div className="ml-auto flex items-center gap-2">
-        <Button onClick={() => openLinkComposer()}>
-          <Plus data-icon="inline-start" />
-          New link
-          {/* Keyboard hint means nothing on touch and eats breadcrumb room. */}
-          <Kbd className="ml-1 border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80 max-sm:hidden">
-            N
-          </Kbd>
-        </Button>
+        {!onOverview && (
+          <Button onClick={() => openLinkComposer()}>
+            <Plus data-icon="inline-start" />
+            New link
+            {/* Keyboard hint means nothing on touch and eats breadcrumb room. */}
+            <Kbd className="ml-1 border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80 max-sm:hidden">
+              N
+            </Kbd>
+          </Button>
+        )}
         {/* No avatar here: the account menu lives in the sidebar on desktop
             and in the same sidebar (as the sheet) on mobile — one home. */}
       </div>

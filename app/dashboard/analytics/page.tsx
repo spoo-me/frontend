@@ -108,11 +108,8 @@ export default function AnalyticsPage() {
     const p =
       PRESETS.find((x) => x.token === rangeToken) ??
       PRESETS.find((x) => x.token === "30d")!
-    return {
-      from: new Date(nowMs - p.ms),
-      to: new Date(nowMs),
-      preset: p.token,
-    }
+    const to = new Date(nowMs)
+    return { from: p.from(to), to, preset: p.token }
   }, [rangeToken, fromMs, toMs, nowMs])
 
   const applyRange = (r: TimeRange) => {
@@ -206,9 +203,12 @@ export default function AnalyticsPage() {
 
   const s = stats.data
   const prev = prevStats.data
-  const deltaLabel = range.preset
-    ? `vs previous ${range.preset}`
-    : "vs previous period"
+  const deltaLabel =
+    range.preset === "today"
+      ? "vs yesterday"
+      : range.preset
+        ? `vs previous ${range.preset}`
+        : "vs previous period"
   const rangeLabel = humanize(range).toLowerCase()
   const activeChips = FILTER_DIMS.flatMap(({ key, dim }) =>
     values[key].map((v) => ({ key, dim, value: v }))
