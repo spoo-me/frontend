@@ -11,20 +11,31 @@
 
 export type TimeRange = { from: Date; to: Date; preset?: string }
 
-export const PRESETS: Array<{ token: string; label: string; ms: number }> = [
-  { token: "1h", label: "Last 1 hour", ms: 3_600_000 },
-  { token: "6h", label: "Last 6 hours", ms: 6 * 3_600_000 },
-  { token: "24h", label: "Last 24 hours", ms: 24 * 3_600_000 },
-  { token: "7d", label: "Last 7 days", ms: 7 * 86_400_000 },
-  { token: "30d", label: "Last 30 days", ms: 30 * 86_400_000 },
-  { token: "90d", label: "Last 90 days", ms: 90 * 86_400_000 },
+export type Preset = {
+  token: string
+  label: string
+  /** Window start for a given "now". */
+  from: (now: Date) => Date
+}
+
+const ago = (ms: number) => (now: Date) => new Date(now.getTime() - ms)
+const startOfDay = (now: Date) => new Date(new Date(now).setHours(0, 0, 0, 0))
+
+export const PRESETS: Preset[] = [
+  { token: "today", label: "Today", from: startOfDay },
+  { token: "1h", label: "Last 1 hour", from: ago(3_600_000) },
+  { token: "6h", label: "Last 6 hours", from: ago(6 * 3_600_000) },
+  { token: "24h", label: "Last 24 hours", from: ago(24 * 3_600_000) },
+  { token: "7d", label: "Last 7 days", from: ago(7 * 86_400_000) },
+  { token: "30d", label: "Last 30 days", from: ago(30 * 86_400_000) },
+  { token: "90d", label: "Last 90 days", from: ago(90 * 86_400_000) },
 ]
 
 export function presetRange(token: string): TimeRange | null {
   const p = PRESETS.find((x) => x.token === token)
   if (!p) return null
   const to = new Date()
-  return { from: new Date(to.getTime() - p.ms), to, preset: token }
+  return { from: p.from(to), to, preset: token }
 }
 
 const UNIT_MS: Record<string, number> = {

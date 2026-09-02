@@ -84,7 +84,7 @@ export function trackLoggedIn(method: "password") {
 
 export function trackLinkCreated(
   input: ShortenInput,
-  surface: "composer" | "onboarding"
+  surface: "composer" | "onboarding" | "overview"
 ) {
   const geoCount = Object.keys(input.geo_rules ?? {}).length
   const variantCount = input.ab_variants?.length ?? 0

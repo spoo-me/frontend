@@ -2,36 +2,29 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
-import { ArrowUpRight, Flame } from "lucide-react"
+import { ArrowUpRight, TrendingUp } from "lucide-react"
 
-import { dimensionRowsOf, getStats } from "@/lib/api"
+import { dimensionRowsOf } from "@/lib/api"
 import { formatCount } from "@/lib/format"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useTodayStats } from "@/components/dashboard/overview/today"
 
 /**
- * What's moving RIGHT NOW: top links over roughly the last hour (hourly
- * buckets floor to hour boundaries, so "last hour" is honest-loose).
- * Row background doubles as the proportional bar; refreshed every minute.
+ * What's moving today: the five most clicked links since midnight, the
+ * same window as the cards above so the page tells one story. Row
+ * background doubles as the proportional bar; refreshed every minute.
  */
 
-export function HotLinks() {
-  const hot = useQuery({
-    queryKey: ["stats", "hot-hour"],
-    queryFn: () =>
-      getStats({
-        startDate: new Date(Date.now() - 3_600_000),
-        endDate: new Date(),
-        groupBy: ["short_code"],
-      }),
-    refetchInterval: 60_000,
-  })
-
-  const rows = hot.data
-    ? dimensionRowsOf(hot.data, "short_code").slice(0, 5)
+export function TopLinks() {
+  const today = useTodayStats()
+  const rows = today.data
+    ? dimensionRowsOf(today.data, "short_code")
+        .slice()
+        .sort((a, b) => b.clicks - a.clicks)
+        .slice(0, 5)
     : []
   const max = rows[0]?.clicks ?? 1
 
@@ -39,16 +32,16 @@ export function HotLinks() {
     <div className="flex h-full flex-col rounded-2xl border border-border/60 bg-shell p-0.5">
       <SectionHeader
         className="h-9 px-2.5"
-        icon={Flame}
-        title="Hot right now"
+        icon={TrendingUp}
+        title="Top links today"
         badge={
-          <InfoHint label="What counts as hot">
-            The most clicked links in the last hour, refreshed every minute.
+          <InfoHint label="What counts">
+            The most clicked links since midnight, refreshed every minute.
           </InfoHint>
         }
         action={
           <Link
-            href="/dashboard/analytics"
+            href="/dashboard/analytics?range=today"
             className="flex items-center gap-1 text-muted-foreground text-xs transition-colors duration-150 hover:text-foreground"
           >
             Open analytics
@@ -57,7 +50,7 @@ export function HotLinks() {
         }
       />
       <Panel className="mt-0 flex-1 rounded-[14px] bg-background p-2">
-        {hot.isPending ? (
+        {today.isPending ? (
           <div className="space-y-1">
             {[88, 71, 62, 48, 39].map((w, i) => (
               <Skeleton
@@ -105,7 +98,7 @@ export function HotLinks() {
         ) : (
           <div className="pattern-dots m-2 flex h-40 min-h-[calc(100%-1rem)] items-center justify-center rounded-lg">
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
-              A quiet hour
+              No clicks yet today
             </span>
           </div>
         )}
