@@ -12,7 +12,7 @@ import { socialCard } from "@/lib/og"
 
 const title = "About: the link platform that proves every click"
 const description =
-  "spoo.me is an open-source link management platform: analytics-led, API-first, self-hostable, and free of dark patterns."
+  "spoo.me is an open-source link management platform: analytics-led, API-first, self-hostable, and free of dark patterns. Built and run in the open."
 
 export const metadata: Metadata = {
   title,
@@ -54,6 +54,7 @@ export default function AboutPage() {
           <section className="pt-28 pb-12 sm:pt-32 sm:pb-16">
             <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
               <SectionHeading
+                level={1}
                 eyebrow={
                   <>
                     <Building2 className="size-3" /> About spoo

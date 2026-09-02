@@ -40,6 +40,7 @@ export default function TestimonialsIndexPage() {
 
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
               <SectionHeading
+                level={1}
                 title={
                   <>
                     Built by us, shaped by{" "}
