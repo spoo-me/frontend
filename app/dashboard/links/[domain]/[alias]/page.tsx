@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, ChartLine, Globe2, Settings2 } from "lucide-react"
+import { ArrowLeft, ChartLine, Globe2, Settings2, Split } from "lucide-react"
 
 import {
   dimensionRowsOf,
@@ -36,6 +36,7 @@ import {
   shortUrlOf,
 } from "@/components/dashboard/links/link-actions"
 import { LinkSettingsForm } from "@/components/dashboard/links/link-settings-form"
+import { VariantBreakdown } from "@/components/dashboard/links/variant-breakdown"
 import { linkDetailPath } from "@/lib/link-detail"
 
 const RANGES = [
@@ -71,13 +72,17 @@ export default function LinkDetailPage() {
 
   // Stats by id, not by an alias filter: the id is unambiguous across
   // domains, and the per-link endpoint 404s instead of silently emptying.
+  // "variant" rides every per-link query, split or not: a link that ran a
+  // split and had it cleared still owns clicks under old variant indices,
+  // and those must stay visible as removed-variant rows.
+  const variants = link?.ab_variants ?? []
   const stats = useQuery({
     queryKey: ["stats", "link", link?.id, rangeDays],
     queryFn: () =>
       getLinkStats(link!.id, {
         startDate: range.start,
         endDate: range.end,
-        groupBy: ["time", "referrer", "country"],
+        groupBy: ["time", "referrer", "country", "variant"],
       }),
     enabled: !!link,
   })
@@ -117,6 +122,8 @@ export default function LinkDetailPage() {
   }
 
   const s = stats.data
+  const variantRows = s ? dimensionRowsOf(s, "variant") : []
+  const hasVariantHistory = variantRows.some((r) => r.value !== "(default)")
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -226,6 +233,24 @@ export default function LinkDetailPage() {
           )}
         </Panel>
       </div>
+
+      {/* Per-variant split: current split, or an ended one with history */}
+      {link && (variants.length > 0 || hasVariantHistory) && (
+        <div className="mt-8">
+          <SectionHeader icon={Split} title="Variants" />
+          <Panel className="mt-2 p-2">
+            {stats.isPending ? (
+              <Skeleton className="h-28 w-full" />
+            ) : (
+              <VariantBreakdown
+                longUrl={link.long_url}
+                variants={variants}
+                rows={variantRows}
+              />
+            )}
+          </Panel>
+        </div>
+      )}
 
       {/* Breakdowns */}
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">

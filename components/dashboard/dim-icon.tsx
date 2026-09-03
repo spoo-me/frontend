@@ -116,6 +116,8 @@ export function DimensionIcon({
           strokeWidth={1.75}
         />
       )
+    case "variant":
+      return <Favicon domain={value} className={className} />
     case "browser":
       return <BrowserLogo name={value} className={className} />
     case "os":

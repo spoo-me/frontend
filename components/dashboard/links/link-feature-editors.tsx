@@ -167,6 +167,31 @@ export const completeVariants = (variants: VariantDraft[]): AbVariant[] =>
 export const variantTotal = (variants: VariantDraft[]) =>
   completeVariants(variants).reduce((a, v) => a + v.weight, 0)
 
+// Sum of every entered weight, URL or no URL — what the subtext above the
+// rows describes, since it reads the boxes the user is looking at.
+// variantTotal (URL + weight both set) is the number that actually ships
+// and gates save; a still-blank-url row already has a weight after
+// evenSplitVariants runs, so the two totals can legitimately differ.
+export const enteredWeightTotal = (variants: VariantDraft[]) =>
+  variants.reduce(
+    (a, v) => a + (Number(v.weight) > 0 ? Number(v.weight) : 0),
+    0
+  )
+
+// Splits 100% evenly across every variant, remainder to the first ones —
+// so adding a variant rebalances the group instead of leaving the new row
+// at 0% and the total over 100.
+export const evenSplitVariants = (variants: VariantDraft[]): VariantDraft[] => {
+  const n = variants.length
+  if (n === 0) return variants
+  const base = Math.floor(100 / n)
+  const remainder = 100 - base * n
+  return variants.map((v, i) => ({
+    ...v,
+    weight: String(base + (i < remainder ? 1 : 0)),
+  }))
+}
+
 /** Canonical wire payload (PR #231): undefined when nothing is set. The
     backend requires `title` on any meta_tags object, so a draft with only
     extras produces undefined too — metaTagsProblem flags that case before
@@ -571,14 +596,14 @@ export function VariantsEditor({
   variants: VariantDraft[]
   onChange: (variants: VariantDraft[]) => void
 }) {
-  const total = variantTotal(variants)
+  const total = enteredWeightTotal(variants)
   return (
     <div className="space-y-2">
       <span className="flex items-center gap-1.5">
         <SectionLabel>A/B testing</SectionLabel>
         <InfoHint label="How A/B testing works">
-          Traffic splits between variant URLs by weight. Weights are relative
-          shares, not percentages.
+          Each weight is the percentage of visitors sent to that variant. The
+          destination keeps whatever the weights leave over.
         </InfoHint>
       </span>
       <p
@@ -612,7 +637,7 @@ export function VariantsEditor({
             <Input
               type="number"
               min={1}
-              max={99}
+              max={100}
               value={variant.weight}
               onChange={(e) =>
                 onChange(
@@ -621,8 +646,18 @@ export function VariantsEditor({
                   )
                 )
               }
+              onBlur={(e) => {
+                const n = Number(e.target.value)
+                if (Number.isFinite(n) && n > 100) {
+                  onChange(
+                    variants.map((v, j) =>
+                      j === i ? { ...v, weight: "100" } : v
+                    )
+                  )
+                }
+              }}
               placeholder="50"
-              className="w-16 pr-6 font-mono text-xs"
+              className="w-20 pr-6 font-mono text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
             <span className="absolute top-1/2 right-2.5 -translate-y-1/2 font-mono text-muted-foreground/60 text-xs">
               %
@@ -642,7 +677,9 @@ export function VariantsEditor({
       <Button
         type="button"
         variant="outline"
-        onClick={() => onChange([...variants, { url: "", weight: "" }])}
+        onClick={() =>
+          onChange(evenSplitVariants([...variants, { url: "", weight: "" }]))
+        }
       >
         <Plus data-icon="inline-start" />
         Add variant
