@@ -324,9 +324,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="overflow-hidden"
+              className="-mx-1 overflow-hidden px-1"
             >
-              <div className="flex flex-col gap-1.5 pb-px">
+              <div className="flex flex-col gap-1.5 pb-1">
                 <label
                   htmlFor="auth-password"
                   className="font-medium text-foreground text-sm"
