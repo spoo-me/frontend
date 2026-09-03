@@ -9,6 +9,7 @@ export default defineConfig({
     include: [
       "lib/**/*.test.ts",
       "hooks/**/*.test.ts",
+      "components/**/*.test.ts",
       "proxy.test.ts",
       "sentry.application-key.test.ts",
     ],

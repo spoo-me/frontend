@@ -85,11 +85,11 @@ export function DimensionFilter({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
+          size={compact ? "icon" : "default"}
           aria-label={label}
           title={compact ? label : undefined}
           className={cn(
-            compact ? "relative size-7 p-0" : "h-8",
+            compact && "relative",
             selected.length > 0 && "border-brand/40",
             className
           )}
@@ -113,7 +113,7 @@ export function DimensionFilter({
           <div className="border-border/60 border-b px-3">
             <CommandPrimitive.Input
               placeholder={`Search ${label.toLowerCase()}…`}
-              className="h-9 w-full bg-transparent text-xs outline-none placeholder:text-muted-foreground/60"
+              className="h-10 w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground/60"
             />
           </div>
           <CommandPrimitive.List className="max-h-64 overflow-y-auto p-1.5 [mask-image:linear-gradient(to_bottom,black,black_calc(100%-20px),transparent)]">
@@ -127,27 +127,27 @@ export function DimensionFilter({
                   key={row.value}
                   value={`${row.value} ${dimensionLabel(dimension, row.value)}`}
                   onSelect={() => toggle(row.value)}
-                  className="flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-xs data-[selected=true]:bg-accent/70"
+                  className="flex h-9 cursor-default select-none items-center gap-2.5 rounded-md px-2.5 text-[13px] data-[selected=true]:bg-accent/70"
                 >
                   <span
                     className={cn(
-                      "flex size-3.5 items-center justify-center rounded-[4px] border border-border",
+                      "flex size-[18px] items-center justify-center rounded-[5px] border border-border",
                       active && "border-primary bg-primary"
                     )}
                   >
                     {active && (
-                      <Check className="size-2.5 text-primary-foreground" />
+                      <Check className="size-3.5 text-primary-foreground" />
                     )}
                   </span>
                   <DimensionIcon
                     dimension={dimension}
                     value={row.value}
-                    className="size-3.5"
+                    className="size-4"
                   />
                   <span className="min-w-0 flex-1 truncate text-foreground">
                     {dimensionLabel(dimension, row.value)}
                   </span>
-                  <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">
+                  <span className="font-mono text-[11px] text-muted-foreground/70 tabular-nums">
                     {formatCount(row.clicks)}
                   </span>
                 </CommandPrimitive.Item>

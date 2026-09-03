@@ -69,7 +69,7 @@ function DateTimeText({
         }}
         placeholder="2026-01-01 00:00"
         spellCheck={false}
-        className="h-8 font-mono text-xs"
+        className="font-mono text-xs"
       />
     </label>
   )
@@ -118,8 +118,7 @@ export function TimeRangePicker({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
-          className={cn("h-8", !value && "text-muted-foreground")}
+          className={cn(!value && "text-muted-foreground")}
         >
           <CalendarDays data-icon="inline-start" />
           {value ? humanize(value) : placeholder}
@@ -255,7 +254,6 @@ export function TimeRangePicker({
             {onClear && value && (
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={() => {
                   onClear()
                   setOpen(false)
@@ -265,7 +263,6 @@ export function TimeRangePicker({
               </Button>
             )}
             <Button
-              size="sm"
               onClick={apply}
               disabled={!effective || effective.from >= effective.to}
             >

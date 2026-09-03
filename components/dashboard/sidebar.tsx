@@ -55,7 +55,7 @@ function NavRow({
       aria-current={active ? "page" : undefined}
       aria-label={collapsed ? item.title : undefined}
       className={cn(
-        "relative flex h-9 items-center gap-2.5 rounded-lg font-medium text-[13px] transition-colors duration-150",
+        "relative flex h-10 items-center gap-2.5 rounded-lg font-medium text-sm transition-colors duration-150",
         collapsed ? "justify-center px-0" : "px-2.5",
         active
           ? "text-foreground"
@@ -74,7 +74,7 @@ function NavRow({
           className="absolute inset-0 rounded-lg border border-border/50 bg-card shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
         />
       )}
-      <item.icon className="relative size-[15px] shrink-0" strokeWidth={1.75} />
+      <item.icon className="relative size-4 shrink-0" strokeWidth={1.75} />
       {!collapsed && <span className="relative">{item.title}</span>}
     </Link>
   )
@@ -98,11 +98,11 @@ function ResourceRow({
       rel="noreferrer"
       aria-label={collapsed ? label : undefined}
       className={cn(
-        "flex h-8 items-center gap-2.5 rounded-lg text-[13px] text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
+        "flex h-10 items-center gap-2.5 rounded-lg text-[13px] text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground",
         collapsed ? "justify-center px-0" : "px-2.5"
       )}
     >
-      <Icon className="size-[15px] shrink-0" />
+      <Icon className="size-4 shrink-0" />
       {!collapsed && label}
     </a>
   )

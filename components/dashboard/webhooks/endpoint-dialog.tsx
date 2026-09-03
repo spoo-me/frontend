@@ -182,7 +182,7 @@ export function EndpointDialog({
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/hooks/spoo"
                 spellCheck={false}
-                className="h-9 font-mono text-xs"
+                className="font-mono text-xs"
               />
             </div>
 
@@ -262,13 +262,12 @@ export function EndpointDialog({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g. clicks to #launch-channel"
                 maxLength={256}
-                className="h-9 text-sm"
+                className="text-sm"
               />
             </div>
           </div>
           <DialogFooter>
             <Button
-              size="sm"
               disabled={!valid || save.isPending}
               onClick={() => save.mutate()}
             >

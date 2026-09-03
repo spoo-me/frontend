@@ -342,7 +342,6 @@ export default function DomainDetailPage() {
           <StatusPill status={dom.status} kind="domain" explain />
           {dom.status === "ACTIVE" && (
             <Button
-              size="sm"
               variant="outline"
               // When the row wraps (phones) the button joins the content
               // flow left-aligned instead of floating off the right edge.
@@ -423,7 +422,6 @@ export default function DomainDetailPage() {
                 )}
                 <div className="pt-1">
                   <Button
-                    size="sm"
                     disabled={verify.isPending}
                     onClick={() => verify.mutate()}
                   >
@@ -470,7 +468,6 @@ export default function DomainDetailPage() {
                     )}
                   >
                     <Button
-                      size="sm"
                       disabled={saveRouting.isPending}
                       onClick={() => saveRouting.mutate()}
                     >
@@ -501,7 +498,7 @@ export default function DomainDetailPage() {
                         onChange={(e) => setRootRedirect(e.target.value)}
                         placeholder={`Where ${dom.fqdn}/ goes`}
                         spellCheck={false}
-                        className="h-9 font-mono text-xs"
+                        className="font-mono text-xs"
                       />
                       <p className="text-muted-foreground/70 text-xs">
                         Visitors hitting the bare domain get sent here. Blank
@@ -521,7 +518,7 @@ export default function DomainDetailPage() {
                         onChange={(e) => setNotFound(e.target.value)}
                         placeholder="Where unknown aliases go"
                         spellCheck={false}
-                        className="h-9 font-mono text-xs"
+                        className="font-mono text-xs"
                       />
                       <p className="text-muted-foreground/70 text-xs">
                         Fallback for typos and missing aliases. Blank serves a
@@ -613,7 +610,7 @@ export default function DomainDetailPage() {
               <p className="max-w-sm text-center text-muted-foreground text-xs">
                 Links on {dom.fqdn} stopped resolving. Revocation is terminal.
               </p>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline">
                 <Link href="/dashboard/domains">Back to domains</Link>
               </Button>
             </div>
@@ -637,7 +634,6 @@ export default function DomainDetailPage() {
               </div>
               <Button
                 variant="destructive"
-                size="sm"
                 onClick={() => setConfirmOpen(true)}
               >
                 Revoke domain
