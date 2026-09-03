@@ -9,6 +9,11 @@ import {
 import { TAG_ICONS } from "@/components/dashboard/tags/tag-glyph"
 
 describe("normalizeTagName", () => {
+  it("counts code points, not UTF-16 units", () => {
+    const astral = "𝔞".repeat(TAG_MAX_LENGTH)
+    expect(normalizeTagName(astral)).toBe(astral)
+    expect(normalizeTagName(`${astral}𝔞`)).toBeNull()
+  })
   it("trims, lowercases and collapses whitespace like the server", () => {
     expect(normalizeTagName("  Launch   Q3 ")).toBe("launch q3")
   })

@@ -141,7 +141,12 @@ export function normalizeTagName(raw: string): string | null {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase()
-  if (!name || name.length > TAG_MAX_LENGTH || !TAG_ALLOWED.test(name))
+  // Code points, not UTF-16 units: the server counts len(str).
+  if (
+    !name ||
+    Array.from(name).length > TAG_MAX_LENGTH ||
+    !TAG_ALLOWED.test(name)
+  )
     return null
   return name
 }

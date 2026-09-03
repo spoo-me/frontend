@@ -89,6 +89,14 @@ export function TagDialog({
     },
     onSuccess: (saved) => {
       trackUiAction("tag_saved", tag ? "update" : "create")
+      // Seed the list before the refetch so a picker can label the new tag
+      // the moment it selects it.
+      queryClient.setQueryData<{ items: Tag[] }>(TAGS_QUERY_KEY, (cur) => {
+        const items = cur?.items ?? []
+        return items.some((t) => t.id === saved.id)
+          ? { items: items.map((t) => (t.id === saved.id ? saved : t)) }
+          : { items: [...items, saved] }
+      })
       queryClient.invalidateQueries({ queryKey: TAGS_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["url"] })

@@ -305,7 +305,8 @@ function normalizeTagName(v: unknown): string | null {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase()
-  if (!name || name.length > 32 || !TAG_ALLOWED.test(name)) return null
+  if (!name || Array.from(name).length > 32 || !TAG_ALLOWED.test(name))
+    return null
   return name
 }
 type TagsResult = { ok: string[] } | { err: NextResponse }
@@ -1599,6 +1600,14 @@ async function handle(req: NextRequest, path: string[]) {
             for (const t of s.tags)
               if (names.includes(t.name) && !wantedIds.includes(t.id))
                 wantedIds.push(t.id)
+            // A name no tag carries can never be on every link.
+            if (
+              f.tagsMatch === "all" &&
+              names.some(
+                (n: string | null) => !s.tags.some((t) => t.name === n)
+              )
+            )
+              items = []
           }
           if (
             wantedIds.length ||
