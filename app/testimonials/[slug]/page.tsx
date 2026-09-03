@@ -85,9 +85,9 @@ export default async function TestimonialDetailPage({
             </Link>
 
             <div className="mt-10">
-              <span className="font-mono font-semibold text-[11px] text-foreground/80 uppercase tracking-[0.18em]">
+              <h1 className="font-mono font-semibold text-[11px] text-foreground/80 uppercase tracking-[0.18em]">
                 {t.company.name}
-              </span>
+              </h1>
             </div>
 
             <blockquote className="mt-8 text-balance font-normal text-3xl text-foreground/80 leading-[1.3] tracking-tight sm:text-4xl md:text-[2.75rem]">

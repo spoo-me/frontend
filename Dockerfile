@@ -18,6 +18,12 @@ WORKDIR /app
 # they must arrive here as build args, runtime env on the container is
 # too late. Empty defaults degrade cleanly (lib/flags.ts): analytics
 # no-ops, pricing stays dark, the captcha step is skipped.
+# The /auth, /oauth and /api/v1 proxy targets are compiled into the routes
+# manifest at build time, so the backend origin must arrive here too; the
+# runtime env of the same name only steers server-side fetches.
+ARG SPOO_API_URL="https://spoo.me"
+ENV SPOO_API_URL=${SPOO_API_URL}
+RUN echo "proxy compiled for ${SPOO_API_URL}"
 ARG NEXT_PUBLIC_POSTHOG_KEY=""
 ARG NEXT_PUBLIC_PRICING=""
 ARG NEXT_PUBLIC_HCAPTCHA_SITEKEY=""
@@ -52,7 +58,9 @@ FROM node:22-alpine
 
 # Injected by CI: release version or short sha for edge builds
 ARG APP_VERSION=dev
+ARG SPOO_API_URL="https://spoo.me"
 ENV APP_VERSION=${APP_VERSION} \
+    SPOO_BUILT_API_URL=${SPOO_API_URL} \
     NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \

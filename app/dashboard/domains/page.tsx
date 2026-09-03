@@ -75,7 +75,7 @@ export default function DomainsPage() {
             Serve short links from your own domain, with per-domain routing.
           </p>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
+        <Button onClick={() => setAddOpen(true)}>
           <Plus data-icon="inline-start" />
           Add domain
         </Button>
@@ -84,15 +84,15 @@ export default function DomainsPage() {
       <Panel className="mt-6">
         {domains.isPending ? (
           <div className="space-y-3 p-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
         ) : !items.length ? (
           <div className="pattern-dots m-4 flex h-48 flex-col items-center justify-center gap-3 rounded-lg">
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No custom domains yet
             </span>
-            <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Button onClick={() => setAddOpen(true)}>
               <Plus data-icon="inline-start" />
               Add your first domain
             </Button>
@@ -112,9 +112,9 @@ export default function DomainsPage() {
               >
                 <Link
                   href={`/dashboard/domains/${dom.id}`}
-                  className="flex h-14 items-center gap-3 px-4 transition-colors duration-150 hover:bg-accent/40"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-accent/40"
                 >
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
                     <Globe
                       className="size-4 text-muted-foreground"
                       strokeWidth={1.75}
@@ -168,13 +168,12 @@ export default function DomainsPage() {
               }}
               placeholder="go.yourdomain.com"
               spellCheck={false}
-              className="h-9 font-mono text-xs"
+              className="font-mono text-xs"
             />
             {error && <p className="text-destructive text-xs">{error}</p>}
           </div>
           <DialogFooter>
             <Button
-              size="sm"
               disabled={!fqdn.trim() || create.isPending}
               onClick={() => create.mutate()}
             >

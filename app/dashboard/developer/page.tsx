@@ -238,7 +238,7 @@ export default function DeveloperPage() {
             Scoped keys for the spoo.me API. Keys are shown once, at creation.
           </p>
         </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus data-icon="inline-start" />
           New key
         </Button>
@@ -255,7 +255,7 @@ export default function DeveloperPage() {
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No API keys yet
             </span>
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Button onClick={() => setCreateOpen(true)}>
               <Plus data-icon="inline-start" />
               Create your first key
             </Button>
@@ -275,7 +275,7 @@ export default function DeveloperPage() {
           icon={KeyRound}
           title="Using your key"
           action={
-            <Button asChild variant="outline" size="sm" className="h-7">
+            <Button asChild variant="outline">
               <a
                 href="https://spoo.me/docs/introduction"
                 target="_blank"
@@ -368,9 +368,7 @@ export default function DeveloperPage() {
                 if it leaks.
               </div>
               <DialogFooter>
-                <Button size="sm" onClick={() => setCreateOpen(false)}>
-                  Done
-                </Button>
+                <Button onClick={() => setCreateOpen(false)}>Done</Button>
               </DialogFooter>
             </>
           ) : (
@@ -396,7 +394,7 @@ export default function DeveloperPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. GitHub Actions"
-                    className="h-9 text-sm"
+                    className="text-sm"
                   />
                 </div>
 
@@ -404,12 +402,12 @@ export default function DeveloperPage() {
                   <Label className="font-medium text-foreground text-xs">
                     Scopes
                   </Label>
-                  <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
+                  <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60">
                     {API_KEY_SCOPES.map((scope) => (
                       <label
                         key={scope}
                         className={cn(
-                          "flex cursor-pointer items-center gap-2.5 px-3 py-2 transition-opacity duration-150",
+                          "flex cursor-pointer items-center gap-3 px-3 py-2 transition-opacity duration-150",
                           adminAll && "pointer-events-none opacity-45"
                         )}
                       >
@@ -424,10 +422,10 @@ export default function DeveloperPage() {
                             )
                           }
                         />
-                        <span className="w-36 shrink-0 font-mono text-foreground text-xs">
+                        <span className="w-36 shrink-0 font-mono text-[13px] text-foreground">
                           {scope}
                         </span>
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-[13px] text-muted-foreground">
                           {SCOPE_INFO[scope]}
                         </span>
                       </label>
@@ -435,7 +433,7 @@ export default function DeveloperPage() {
                   </div>
                   <label
                     className={cn(
-                      "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors duration-150",
+                      "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 transition-colors duration-150",
                       adminAll
                         ? "border-amber-500/40 bg-amber-500/5 dark:bg-amber-400/10"
                         : "border-border/60"
@@ -456,10 +454,10 @@ export default function DeveloperPage() {
                         }
                       }}
                     />
-                    <span className="w-36 shrink-0 font-mono text-foreground text-xs">
+                    <span className="w-36 shrink-0 font-mono text-[13px] text-foreground">
                       {ADMIN_SCOPE}
                     </span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-[13px] text-muted-foreground">
                       Full access, overrides all scopes
                     </span>
                   </label>
@@ -476,7 +474,7 @@ export default function DeveloperPage() {
                         type="button"
                         onClick={() => setExpiry(p.token)}
                         className={cn(
-                          "h-8 rounded-lg border px-2.5 text-xs transition-colors duration-150",
+                          "h-9 rounded-lg border px-2.5 text-[13px] transition-colors duration-150",
                           expiry === p.token
                             ? "border-border bg-accent/70 text-foreground"
                             : "border-border/60 text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -491,7 +489,6 @@ export default function DeveloperPage() {
                         onChange={setCustomExpiry}
                         placeholder="Pick date and time"
                         defaultOpen
-                        className="h-8"
                       />
                     )}
                   </div>
@@ -504,7 +501,6 @@ export default function DeveloperPage() {
               </div>
               <DialogFooter>
                 <Button
-                  size="sm"
                   disabled={
                     !name.trim() ||
                     !scopes.length ||

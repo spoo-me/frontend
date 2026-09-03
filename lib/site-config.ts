@@ -5,7 +5,7 @@ export const siteConfig = {
   name: "spoo.me",
   url: "https://spoo.me",
   description:
-    "Open-source link management platform with advanced analytics and an API-first core. Self-hostable in one command.",
+    "Open-source link management with advanced analytics and an API-first core. Free short links, click analytics and QR codes. Self-hostable in one command.",
   links: {
     github: "https://github.com/spoo-me/spoo",
     githubOrg: "https://github.com/spoo-me",
@@ -278,6 +278,7 @@ export const footerLinks = {
     { label: "All SDKs", href: "/apps#sdks" },
   ],
   company: [
+    { label: "About", href: "/about" },
     { label: "GitHub", href: siteConfig.links.github, external: true },
     { label: "Login", href: "/login" },
     { label: "Sign up", href: "/signup" },

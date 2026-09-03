@@ -1,4 +1,5 @@
 import { apiFetch, authedFetch, jsonInit, parse } from "./client"
+import type { TagRef } from "./tags"
 
 export type ShortUrl = {
   id: string
@@ -101,6 +102,8 @@ export type UrlListItem = {
   geo_rules?: GeoRules | null
   ab_variants?: AbVariant[] | null
   meta_tags?: MetaTags | null
+  /** The link's tags (id, name, colour, icon), in the link's order. */
+  tags?: TagRef[]
 }
 
 export type UrlListResponse = {
@@ -324,6 +327,8 @@ export type ShortenInput = {
   /** Live on the backend (PR #231); requires a verified account with the
       custom_meta_tags flag — 403 otherwise. */
   meta_tags?: MetaTagsInput
+  /** Ids of tags from GET /api/v1/tags; every one must be yours (400 otherwise). */
+  tag_ids?: string[]
 }
 
 export function shorten(input: ShortenInput) {
@@ -355,6 +360,10 @@ export type UrlListFilter = {
   maxClicksSet?: boolean
   createdAfter?: string
   createdBefore?: string
+  /** Links carrying these tags, by id or by name; `tagsMatch` says any or every. */
+  tagIds?: string[]
+  tagNames?: string[]
+  tagsMatch?: "any" | "all"
 }
 
 export type ListUrlsParams = {
@@ -418,6 +427,8 @@ export type UpdateUrlInput = Partial<{
   ab_variants: AbVariant[] | null
   /** Whole-object replace; null clears (clearing is never gated). */
   meta_tags: MetaTagsInput | null
+  /** Whole-list replace of tag ids; null or [] clears. */
+  tag_ids: string[] | null
 }>
 
 export function updateUrl(urlId: string, input: UpdateUrlInput) {
@@ -554,7 +565,7 @@ export function summarizeBulkFailures(rows: BulkResultRow[]): string {
 }
 
 async function bulkPost(
-  op: "delete" | "status" | "expiry" | "domain",
+  op: "delete" | "status" | "expiry" | "domain" | "tags",
   ids: string[],
   extra: Record<string, unknown>
 ): Promise<BulkOperationResult> {
@@ -602,4 +613,15 @@ export function bulkMoveUrlDomain(ids: string[], domain: string | null) {
   return bulkPost("domain", ids, {
     domain: domain === "spoo.me" ? null : domain,
   })
+}
+
+/**
+ * Retag a selection in one request, by tag id: per item the result is its
+ * current tags minus `remove`, plus `add` (kept once, order preserved). Items
+ * already in that state are success no-ops; an item that would exceed the
+ * per-link cap reports `validation_error`. An `add` id you do not own
+ * rejects the whole request before any item is touched.
+ */
+export function bulkTagUrls(ids: string[], add: string[], remove: string[]) {
+  return bulkPost("tags", ids, { add, remove })
 }

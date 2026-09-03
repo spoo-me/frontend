@@ -69,7 +69,7 @@ function DateTimeText({
         }}
         placeholder="2026-01-01 00:00"
         spellCheck={false}
-        className="h-8 font-mono text-xs"
+        className="font-mono text-xs"
       />
     </label>
   )
@@ -118,8 +118,7 @@ export function TimeRangePicker({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
-          className={cn("h-8", !value && "text-muted-foreground")}
+          className={cn(!value && "text-muted-foreground")}
         >
           <CalendarDays data-icon="inline-start" />
           {value ? humanize(value) : placeholder}
@@ -131,7 +130,11 @@ export function TimeRangePicker({
       >
         {/* Parse box — borderless, directly on the surface; the
             resolved-range hint rides inline so the row never changes height */}
-        <div className="flex items-center gap-3 border-border/60 border-b px-4 transition-colors focus-within:border-ring/60">
+        {/* Focus can leave this input for the calendar and presets and come
+            back, so the divider carries the indicator (same hue, one step up
+            from the hairline). The cmdk filter never loses focus, so it
+            deliberately has no focus state at all. */}
+        <div className="flex items-center gap-3 border-border/60 border-b px-4 transition-colors focus-within:border-border">
           <input
             autoFocus
             aria-label="Custom time range"
@@ -251,7 +254,6 @@ export function TimeRangePicker({
             {onClear && value && (
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={() => {
                   onClear()
                   setOpen(false)
@@ -261,7 +263,6 @@ export function TimeRangePicker({
               </Button>
             )}
             <Button
-              size="sm"
               onClick={apply}
               disabled={!effective || effective.from >= effective.to}
             >

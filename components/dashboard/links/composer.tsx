@@ -20,7 +20,6 @@ import {
 import { toast } from "sonner"
 
 import { trackLinkCreated, trackUiAction } from "@/lib/analytics"
-import { smallBurst } from "@/lib/confetti"
 import {
   fetchUrlMetadata,
   listCustomDomains,
@@ -60,6 +59,7 @@ import { PasswordInput } from "@/components/dashboard/password-input"
 import { Kbd } from "@/components/dashboard/kbd"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { EmojiPicker } from "@/components/dashboard/links/emoji-picker"
+import { notifyLinkCreated } from "@/components/dashboard/links/create-toast"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,10 +88,11 @@ import {
   type MetaDraft,
   type VariantDraft,
 } from "@/components/dashboard/links/link-feature-editors"
+import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 
 const OPEN_EVENT = "spoo:new-link"
 
-export function openLinkComposer(opts?: { domain?: string }) {
+export function openLinkComposer(opts?: { domain?: string; longUrl?: string }) {
   window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: opts }))
 }
 
@@ -117,63 +118,6 @@ const pickWord = () => WORDS[randInt(WORDS.length)]
 const suggestPassword = () =>
   `${pickWord()}.${pickWord()}.${pickWord()}.${100 + randInt(900)}`
 const suggestAlias = () => `${pickWord()}-${10 + randInt(89)}`
-
-/** One smallBurst from the success toast. Zero-size marker inside the toast;
-    it waits out sonner's slide-in, then bursts from the toast (the marker's
-    closest li) so the origin tracks wherever the toast actually landed. */
-function ToastConfetti() {
-  const ref = React.useRef<HTMLSpanElement>(null)
-  React.useEffect(() => {
-    const t = setTimeout(() => {
-      const el = ref.current
-      if (!el) return
-      smallBurst(el.closest("li") ?? el, {
-        // Tilted toward the viewport: the toast sits in the corner.
-        angle: 100,
-        // Above sonner's 999999999 toaster, else the burst hides behind
-        // the very toast it comes from (canvas-confetti defaults to 100).
-        zIndex: 2147483647,
-      })
-    }, 350)
-    return () => clearTimeout(t)
-  }, [])
-  return <span ref={ref} aria-hidden className="absolute" />
-}
-
-/** Action chip for the create toast. Copy feedback lives here, not in the
-    toast title: the chip starts as "Copied" when the auto-copy landed,
-    relaxes back to "Copy", and every press copies again. data-button opts
-    into sonner's own action-chip layout; the fixed width keeps the flip
-    from resizing the chip. */
-function CopyToastAction({
-  short,
-  autoCopied,
-}: {
-  short: string
-  autoCopied: boolean
-}) {
-  const [copied, setCopied] = React.useState(autoCopied)
-  React.useEffect(() => {
-    if (!copied) return
-    const t = setTimeout(() => setCopied(false), 1600)
-    return () => clearTimeout(t)
-  }, [copied])
-  return (
-    <button
-      type="button"
-      data-button
-      onClick={() =>
-        navigator.clipboard.writeText(short).then(
-          () => setCopied(true),
-          () => {}
-        )
-      }
-      className="!w-16 !justify-center !bg-primary !text-primary-foreground whitespace-nowrap"
-    >
-      {copied ? "Copied" : "Copy"}
-    </button>
-  )
-}
 
 /** Same field anatomy as the link settings form — create and edit are
     siblings and should read as one product. */
@@ -270,6 +214,7 @@ export function LinkComposer() {
   const [metaCustomized, setMetaCustomized] = React.useState(false)
   const [blockBots, setBlockBots] = React.useState(false)
   const [privateStats, setPrivateStats] = React.useState(false)
+  const [tagIds, setTagIds] = React.useState<string[]>([])
   // Server-side destination verdicts (the DB blocklist can't be mirrored
   // client-side) render inline like every other URL problem — keyed to the
   // URL they rejected, so fresh input clears them.
@@ -313,7 +258,10 @@ export function LinkComposer() {
   React.useEffect(() => {
     const onOpen = (e: Event) => {
       // reset() ran on close, so a preset here can't leak between opens.
-      const preset = (e as CustomEvent<{ domain?: string } | undefined>).detail
+      const preset = (
+        e as CustomEvent<{ domain?: string; longUrl?: string } | undefined>
+      ).detail
+      if (preset?.longUrl) setLongUrl(preset.longUrl)
       if (preset?.domain) {
         setDomain(preset.domain)
       } else {
@@ -347,6 +295,7 @@ export function LinkComposer() {
     setMetaCustomized(false)
     setBlockBots(false)
     setPrivateStats(false)
+    setTagIds([])
     setDebouncedUrl("")
     setServerUrlError(null)
     optionUse.reset()
@@ -445,34 +394,12 @@ export function LinkComposer() {
     onSuccess: (created, input) => {
       trackLinkCreated(input, "composer")
       queryClient.invalidateQueries({ queryKey: ["urls"] })
+      if (input.tag_ids?.length)
+        queryClient.invalidateQueries({ queryKey: ["tags"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
       setOpen(false)
       reset()
-      const short = created.short_url
-      // Machine text reads mono, same as every short link in the app.
-      const description = (
-        <span className="font-mono">
-          {short.replace(/^https?:\/\//, "")}
-          <ToastConfetti />
-        </span>
-      )
-      // Auto-copy on create; the chip's initial state says whether it landed
-      // (Safari denies clipboard writes once the network await has burned the
-      // user gesture, so the chip simply starts as "Copy" there). The
-      // Promise.resolve hop matters: on plain-HTTP origins the clipboard API
-      // is absent and writeText throws synchronously — without it neither
-      // branch runs and the toast never fires.
-      const notify = (autoCopied: boolean) =>
-        toast.success("Link created", {
-          description,
-          action: <CopyToastAction short={short} autoCopied={autoCopied} />,
-        })
-      Promise.resolve()
-        .then(() => navigator.clipboard.writeText(short))
-        .then(
-          () => notify(true),
-          () => notify(false)
-        )
+      notifyLinkCreated(created.short_url)
     },
     onError: (err) => {
       if (err instanceof SpooApiError && err.field === "alias") {
@@ -545,6 +472,7 @@ export function LinkComposer() {
       ...(geoCount ? { geo_rules: geoPayload } : {}),
       ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
       ...(metaPayload ? { meta_tags: metaPayload } : {}),
+      ...(tagIds.length ? { tag_ids: tagIds } : {}),
     })
   }
 
@@ -564,7 +492,7 @@ export function LinkComposer() {
     normalized !== longUrl.trim() &&
     looksLikeUrl(longUrl)
 
-  const basicSet = expiry !== "" || maxClicks !== ""
+  const basicSet = expiry !== "" || maxClicks !== "" || tagIds.length > 0
   const securitySet = password !== "" || blockBots || privateStats
   const targetingSet = geoCount > 0 || variantPayload.length > 0
 
@@ -631,7 +559,7 @@ export function LinkComposer() {
         }}
         placeholder="Never"
         minDate={startDate ?? undefined}
-        className="h-9 w-full"
+        className="w-full"
       />
     </Field>
   )
@@ -654,7 +582,26 @@ export function LinkComposer() {
           setMaxClicks(e.target.value)
         }}
         placeholder="Unlimited"
-        className="h-9 font-mono text-xs"
+        className="font-mono text-xs"
+      />
+    </Field>
+  )
+  const tagsField = (
+    <Field
+      label="Tags"
+      labelHint={
+        <InfoHint label="How tags work">
+          Pick from your tags or make a new one right here. Tags group links in
+          the list and its filters.
+        </InfoHint>
+      }
+    >
+      <TagPicker
+        selected={tagIds}
+        onChange={(next) => {
+          optionUse.note("tags", next.length > 0)
+          setTagIds(next)
+        }}
       />
     </Field>
   )
@@ -738,9 +685,9 @@ export function LinkComposer() {
               tabs (response to a click, not a shift). */}
           <div
             style={{ height: panelH }}
-            className="overflow-hidden transition-[height] duration-200 ease-out"
+            className="-mx-1 overflow-hidden px-1 transition-[height] duration-200 ease-out"
           >
-            <div ref={panelRef} className="min-h-[392px] pt-3">
+            <div ref={panelRef} className="min-h-[392px] pt-3 pb-1">
               <TabsContent value="basic" className="space-y-5">
                 <Field
                   label="Destination"
@@ -843,7 +790,7 @@ export function LinkComposer() {
                         placeholder="custom-alias"
                         spellCheck={false}
                         autoComplete="off"
-                        className="h-9 pr-8 font-mono text-xs"
+                        className="pr-8 font-mono text-xs"
                       />
                       <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
                         {aliasVerdict.state === "checking" && (
@@ -863,8 +810,8 @@ export function LinkComposer() {
                         <Button
                           type="button"
                           variant="outline"
-                          size="icon-sm"
-                          className="size-9 shrink-0"
+                          size="icon"
+                          className="shrink-0"
                           aria-label="Suggest an alias"
                         >
                           <Dices />
@@ -911,13 +858,17 @@ export function LinkComposer() {
                     </div>
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                       {maxClicksField}
+                      {tagsField}
                     </div>
                   </>
                 ) : (
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    {expirationField}
-                    {maxClicksField}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      {expirationField}
+                      {maxClicksField}
+                    </div>
+                    {tagsField}
+                  </>
                 )}
               </TabsContent>
 
@@ -942,13 +893,11 @@ export function LinkComposer() {
                       visible={passwordVisible}
                       onVisibleChange={setPasswordVisible}
                       placeholder="None"
-                      className="[&_input]:h-9"
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      className="h-9 shrink-0"
+                      className="shrink-0"
                       onClick={() => {
                         trackUiAction("password_suggested")
                         optionUse.note("password", true)
@@ -1094,15 +1043,10 @@ export function LinkComposer() {
         </Tabs>
 
         <div className="flex items-center justify-end gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setOpen(false)}
-          >
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button size="sm" disabled={!canCreate} onClick={submit}>
+          <Button disabled={!canCreate} onClick={submit}>
             {create.isPending && (
               <LoaderCircle className="size-3.5 animate-spin" />
             )}

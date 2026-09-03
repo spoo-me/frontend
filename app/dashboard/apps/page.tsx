@@ -17,7 +17,7 @@ import { motion } from "motion/react"
 import { trackUiAction } from "@/lib/analytics"
 import { listAppGrants, revokeAppGrant, type AppGrant } from "@/lib/api"
 import {
-  connectedApps,
+  appByRegistryKey,
   integrations,
   sdks,
   type ConnectedApp,
@@ -55,12 +55,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-/** Grants → catalogue slugs, so connected rows share the brand tiles and
+/** Grants → catalogue entries, so connected rows share the brand tiles and
  *  already-connected apps drop out of the catalogue below. */
-// Grants carry the backend registry key (config/apps.yaml) in `app`;
-// catalogue slugs use the same namespace, so the join is exact.
-const grantApp = (grant: AppGrant) =>
-  connectedApps.find((a) => a.slug === grant.app) ?? null
+const grantApp = (grant: AppGrant) => appByRegistryKey(grant.app)
 
 /** Shipped apps first; unshipped sink to the bottom of the grid. */
 const availableFirst = (list: ConnectedApp[]) => [
@@ -184,13 +181,16 @@ function GrantRow({ grant }: { grant: AppGrant }) {
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const app = grantApp(grant)
+  // The catalogue name wins over the registry's (grant.app_name), so the
+  // connected row and the catalogue card below never disagree.
+  const displayName = app?.name ?? grant.app_name
 
   const revoke = useMutation({
     // Revoke keys on the grant document id (`grant_id` on the wire).
     mutationFn: () => revokeAppGrant(grant.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apps"] })
-      toast.success(`${grant.app_name} disconnected`)
+      toast.success(`${displayName} disconnected`)
     },
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Couldn't revoke"),
@@ -208,9 +208,7 @@ function GrantRow({ grant }: { grant: AppGrant }) {
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="font-medium text-foreground text-sm">
-          {grant.app_name}
-        </div>
+        <div className="font-medium text-foreground text-sm">{displayName}</div>
         <div className="truncate text-muted-foreground text-xs">
           connected {formatWhen(grant.granted_at)} · last used{" "}
           {formatWhen(grant.last_used_at)}
@@ -246,8 +244,8 @@ function GrantRow({ grant }: { grant: AppGrant }) {
         )}
       </div>
       <Button
-        variant="outline"
         size="sm"
+        variant="outline"
         onClick={() => setConfirmOpen(true)}
         className="hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive dark:hover:bg-destructive/10"
       >
@@ -258,7 +256,7 @@ function GrantRow({ grant }: { grant: AppGrant }) {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Disconnect {grant.app_name}?</AlertDialogTitle>
+            <AlertDialogTitle>Disconnect {displayName}?</AlertDialogTitle>
             <AlertDialogDescription>
               The app loses access immediately. You can reconnect it any time by
               signing in from the app again.
@@ -473,7 +471,7 @@ export default function AppsPage() {
 
               <DialogFooter>
                 {detail.github && (
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="outline">
                     <a href={detail.github} target="_blank" rel="noreferrer">
                       <BrandIcons.github data-icon="inline-start" />
                       GitHub
@@ -481,11 +479,9 @@ export default function AppsPage() {
                   </Button>
                 )}
                 {detail.status === "soon" ? (
-                  <Button size="sm" disabled>
-                    Coming soon
-                  </Button>
+                  <Button disabled>Coming soon</Button>
                 ) : (
-                  <Button asChild size="sm">
+                  <Button asChild>
                     <a href={detail.url} target="_blank" rel="noreferrer">
                       Get {detail.name}
                       <ArrowUpRight data-icon="inline-end" />

@@ -235,8 +235,8 @@ function EmojiPickerBody({
         <Button
           type="button"
           variant="outline"
-          size="icon-sm"
-          className="size-9 shrink-0"
+          size="icon"
+          className="shrink-0"
           aria-label="Browse emoji"
         >
           <Smile />

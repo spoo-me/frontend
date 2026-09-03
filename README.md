@@ -129,8 +129,9 @@ NEXT_PUBLIC_SENTRY_DSN=              # unset disables browser error reporting
 ### 🐳 Docker
 
 ```bash
-docker build -t spoo-frontend .
-docker run -p 3000:3000 -e SPOO_API_URL=http://host.docker.internal:8000 spoo-frontend
+# The backend origin is compiled into the proxy at build time (default https://spoo.me).
+docker build --build-arg SPOO_API_URL=http://host.docker.internal:8000 -t spoo-frontend .
+docker run -p 3000:3000 spoo-frontend
 ```
 
 The image is a multi-stage build ending on Next's standalone output: no `node_modules` at runtime, non-root user, a health endpoint at `/api/health`.

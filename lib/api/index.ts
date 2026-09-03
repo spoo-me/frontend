@@ -1,6 +1,7 @@
 export { SpooApiError } from "./client"
 export * from "./auth"
 export * from "./links"
+export * from "./tags"
 export * from "./keys"
 export * from "./onboarding"
 export * from "./domains"

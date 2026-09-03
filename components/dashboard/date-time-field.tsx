@@ -142,13 +142,11 @@ export function DateTimeField({
               placeholder="23:59"
               spellCheck={false}
               disabled={!date}
-              className="h-7 w-16 text-center font-mono text-xs"
+              className="w-16 text-center font-mono text-xs"
             />
             <Button
               type="button"
-              size="sm"
               variant="outline"
-              className="h-7"
               onClick={() => {
                 commitTime(rawTime)
                 setOpen(false)

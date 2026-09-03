@@ -50,7 +50,7 @@ export function PreStartUrlControl({
               aria-label="Where early visitors land"
               disabled={!enabled}
               className={cn(
-                "size-9 shrink-0",
+                "shrink-0",
                 isSet ? "text-foreground" : "text-muted-foreground"
               )}
             >
@@ -81,7 +81,7 @@ export function PreStartUrlControl({
           placeholder="https://"
           spellCheck={false}
           autoFocus
-          className="h-9 font-mono text-xs"
+          className="font-mono text-xs"
         />
         {problem ? (
           <p className="text-destructive text-xs">{problem}</p>
@@ -93,19 +93,13 @@ export function PreStartUrlControl({
         )}
         <div className="flex justify-end gap-1.5 pt-1">
           {value !== "" && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onChange("")}
-            >
+            <Button type="button" variant="ghost" onClick={() => onChange("")}>
               Clear
             </Button>
           )}
           <Button
             type="button"
             variant="outline"
-            size="sm"
             disabled={problem !== null}
             onClick={() => setOpen(false)}
           >

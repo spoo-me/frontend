@@ -48,9 +48,52 @@ export type MockLink = {
     color: string | null
     warnings: string[] | null
   } | null
+  /** Ids into the account's tag registry (MockTag), in the link's order. */
+  tag_ids: string[]
   /** Relative traffic weight used by the stats generator. */
   weight: number
 }
+
+/** Mirrors the real TagResponse wire: palette key colour, curated icon key. */
+export type MockTag = {
+  id: string
+  name: string
+  color: string
+  icon: string
+  created_at: string
+  updated_at: string | null
+}
+
+export function buildTags(): MockTag[] {
+  const base = Date.parse("2026-05-20T10:00:00Z")
+  return (
+    [
+      ["launch", "violet", "rocket"],
+      ["q3", "teal", "calendar"],
+      ["sales", "amber", "briefcase"],
+      ["events", "pink", "tag"],
+      ["pricing", "green", "credit-card"],
+    ] as const
+  ).map(([name, color, icon], i) => ({
+    id: `tag_${SEED}_${i}`,
+    name,
+    color,
+    icon,
+    created_at: new Date(base + i * 86_400_000).toISOString(),
+    updated_at: null,
+  }))
+}
+
+// A few seeded links carry tags so the filter, the picker, the stats scope
+// and the row rendering all have something to show out of the box.
+const SEED_TAGS: Record<string, string[]> = {
+  launch: ["launch", "q3"],
+  pricing: ["pricing", "q3"],
+  deck: ["sales"],
+  invite: ["sales", "events"],
+  beta: ["launch"],
+}
+const tagIdByName = new Map(buildTags().map((t) => [t.name, t.id]))
 
 // Mirrors the real CustomDomainResponse wire byte-for-byte: lowercase
 // status, verification_method present, no cf_* fields (the real DTO
@@ -229,6 +272,7 @@ export function buildLinks(): MockLink[] {
             }
           : null,
       ab_variants: null,
+      tag_ids: (SEED_TAGS[alias] ?? []).map((n) => tagIdByName.get(n)!),
       // "launch" carries a custom social card — the meta editor and the
       // unfurl previews have something real to round-trip out of the box.
       meta_tags:
@@ -401,6 +445,23 @@ export function buildGrants(): MockGrant[] {
       ],
       granted_at: isoUtc(33),
       last_used_at: isoUtc(0.1),
+    },
+    // Registry key ≠ catalogue slug (spoo-mobile → /apps/android): exercises
+    // the registryKey join on the apps page.
+    {
+      id: "grant_mobile",
+      app: "spoo-mobile",
+      app_name: "Spoo Mobile",
+      icon: "spoo-mobile.svg",
+      scopes: ["shorten:create", "urls:read", "urls:manage", "stats:read"],
+      permissions: [
+        "Create short links",
+        "List and read links",
+        "Edit and delete links",
+        "Read analytics data",
+      ],
+      granted_at: isoUtc(6),
+      last_used_at: isoUtc(0.3),
     },
     {
       id: "grant_snap",

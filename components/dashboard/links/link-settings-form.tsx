@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { trackLinkUpdated } from "@/lib/analytics"
 import {
   fetchUrlMetadata,
+  sameTagIds,
   updateUrl,
   SpooApiError,
   type UpdateUrlInput,
@@ -45,6 +46,7 @@ import { PreStartUrlControl } from "@/components/dashboard/links/pre-start-url-c
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { EmojiPicker } from "@/components/dashboard/links/emoji-picker"
 import { PasswordInput } from "@/components/dashboard/password-input"
+import { TagPicker, useTags } from "@/components/dashboard/tags/tag-picker"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -147,7 +149,8 @@ type ChangeRow = { field: string; from: string; to: string }
 /** Audit rows for the confirm dialog — only what changed, values summarized. */
 function describeChanges(
   link: UrlListItem,
-  patch: UpdateUrlInput
+  patch: UpdateUrlInput,
+  tagNameOf: (id: string) => string = (id) => id
 ): ChangeRow[] {
   const rows: ChangeRow[] = []
   const strip = (u: string) => u.replace(/^https?:\/\//, "")
@@ -230,6 +233,16 @@ function describeChanges(
       field: "A/B variants",
       from: countOf(link.ab_variants?.length, "variant"),
       to: countOf(patch.ab_variants?.length, "variant"),
+    })
+  if (patch.tag_ids !== undefined)
+    rows.push({
+      field: "Tags",
+      from: link.tags?.length
+        ? link.tags.map((t) => t.name).join(", ")
+        : "none",
+      to: patch.tag_ids?.length
+        ? patch.tag_ids.map(tagNameOf).join(", ")
+        : "none",
     })
   if (patch.meta_tags !== undefined) {
     // The echo carries explicit nulls (and warnings) — count set fields only.
@@ -344,6 +357,14 @@ export function LinkSettingsForm({
     }))
   )
   const [meta, setMeta] = React.useState<MetaDraft>(metaDraftOf(link.meta_tags))
+  const [tagIds, setTagIds] = React.useState<string[]>(
+    (link.tags ?? []).map((t) => t.id)
+  )
+  const knownTags = useTags()
+  const tagNameOf = (id: string) =>
+    knownTags.data?.items.find((t) => t.id === id)?.name ??
+    link.tags?.find((t) => t.id === id)?.name ??
+    id
   // Customized = this link freezes its own tags (meta_tags set on the wire,
   // or a manual edit in this form). While false the fields merely MIRROR
   // the destination's live tags (fetched below, display only — an untouched
@@ -471,6 +492,9 @@ export function LinkSettingsForm({
   // previously-customized link makes null differ from the echo → PATCH null.
   const metaPayload = metaCustomized ? (metaTagsOf(meta) ?? null) : null
   if (!sameMetaTags(metaPayload, link.meta_tags)) patch.meta_tags = metaPayload
+  const linkTagIds = (link.tags ?? []).map((t) => t.id)
+  if (!sameTagIds(tagIds, linkTagIds))
+    patch.tag_ids = tagIds.length ? tagIds : null
   const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
   // Mirroring = uncustomized with a fetch worth showing: the header's
   // live dot says so; an empty or failed fetch stays bare (the notice
@@ -507,6 +531,8 @@ export function LinkSettingsForm({
       // prefix, and the detail header and off-page sheet both render from
       // one. Without this they keep showing pre-save values.
       queryClient.invalidateQueries({ queryKey: ["url"] })
+      if (patch.tag_ids !== undefined)
+        queryClient.invalidateQueries({ queryKey: ["tags"] })
       setPasswordMode("keep")
       setNewPassword("")
       // A data-URI upload echoes back as a rehosted CDN https URL — adopt
@@ -569,7 +595,7 @@ export function LinkSettingsForm({
   const canSave = dirty && !save.isPending && saveBlocker === null
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
-  const changes = describeChanges(link, patch)
+  const changes = describeChanges(link, patch, tagNameOf)
 
   // Same bookend layout as the composer; the pre-start URL lives behind
   // the gear on the start input.
@@ -630,7 +656,7 @@ export function LinkSettingsForm({
           value={maxClicks}
           onChange={(e) => setMaxClicks(e.target.value)}
           placeholder="Unlimited"
-          className="h-9 font-mono text-xs"
+          className="font-mono text-xs"
         />
         {maxClicks && (
           <Button
@@ -644,6 +670,19 @@ export function LinkSettingsForm({
           </Button>
         )}
       </div>
+    </Field>
+  )
+  const tagsField = (
+    <Field
+      label="Tags"
+      labelHint={
+        <InfoHint label="How tags work">
+          Pick from your tags or make a new one right here. Tags group links in
+          the list and its filters.
+        </InfoHint>
+      }
+    >
+      <TagPicker selected={tagIds} onChange={setTagIds} />
     </Field>
   )
   const goesLiveField = (
@@ -704,7 +743,7 @@ export function LinkSettingsForm({
             value={longUrl}
             onChange={(e) => setLongUrl(e.target.value)}
             spellCheck={false}
-            className="h-9 font-mono text-xs"
+            className="font-mono text-xs"
           />
         </Field>
 
@@ -766,7 +805,7 @@ export function LinkSettingsForm({
                 value={alias}
                 onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
                 spellCheck={false}
-                className="h-9 pr-8 font-mono text-xs"
+                className="pr-8 font-mono text-xs"
               />
               <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
                 {aliasVerdict.state === "checking" && (
@@ -783,8 +822,8 @@ export function LinkSettingsForm({
             <Button
               type="button"
               variant="outline"
-              size="icon-sm"
-              className="size-9 shrink-0"
+              size="icon"
+              className="shrink-0"
               aria-label="Suggest an alias"
               onClick={() => setAlias(suggestAlias())}
             >
@@ -814,7 +853,7 @@ export function LinkSettingsForm({
                   visible={passwordVisible}
                   onVisibleChange={setPasswordVisible}
                   readOnly
-                  className="[&_input]:h-9 [&_input]:bg-muted/30"
+                  className="[&_input]:bg-muted/30"
                 />
               ) : (
                 <span className="flex h-9 flex-1 items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-muted-foreground text-xs">
@@ -876,13 +915,11 @@ export function LinkSettingsForm({
                     ? "New password"
                     : "Add a password (optional)"
                 }
-                className="[&_input]:h-9"
               />
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="h-9 shrink-0"
+                className="shrink-0"
                 onClick={() => {
                   setPasswordMode("set")
                   setNewPassword(suggestPassword())
@@ -918,13 +955,17 @@ export function LinkSettingsForm({
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               {maxClicksField}
+              {tagsField}
             </div>
           </>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            {expiresField}
-            {maxClicksField}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {expiresField}
+              {maxClicksField}
+            </div>
+            {tagsField}
+          </>
         )}
 
         <div className="divide-y divide-border/60 rounded-xl border border-border/60">
@@ -1034,11 +1075,7 @@ export function LinkSettingsForm({
         >
           {save.isPending ? "Saving…" : (saveBlocker ?? "Unsaved changes")}
         </span>
-        <Button
-          size="sm"
-          disabled={!canSave}
-          onClick={() => setConfirmOpen(true)}
-        >
+        <Button disabled={!canSave} onClick={() => setConfirmOpen(true)}>
           Save changes
         </Button>
       </div>

@@ -49,6 +49,7 @@ export default function LegalIndexPage() {
           <Section caption="Legal">
             <div className="px-5 pt-24 pb-24 sm:px-9">
               <SectionHeading
+                level={1}
                 title={
                   <>
                     The paperwork,{" "}

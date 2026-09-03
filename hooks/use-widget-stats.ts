@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
-import { getStats, type StatsDimension, type StatsResponse } from "@/lib/api"
+import { getStats, type StatsGroupBy, type StatsResponse } from "@/lib/api"
 import { mergeScope, type Widget } from "@/lib/analytics-layout"
 import type { TimeRange } from "@/components/dashboard/analytics/time-range"
 
@@ -51,7 +51,7 @@ export function useWidgetStats(
     widget.kind === "stat" ||
     (widget.kind === "timeseries" && widget.config.compare === "previous")
 
-  const groupBy: StatsDimension[] =
+  const groupBy: StatsGroupBy[] =
     widget.kind === "breakdown" ? [widget.config.dimension] : ["time"]
 
   const fromMs = ctx.range.from.getTime()

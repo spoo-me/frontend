@@ -4,6 +4,8 @@ import { motion } from "motion/react"
 import { cn } from "@/lib/utils"
 
 type Props = {
+  /** A page's own hero heading is its h1; every other use stays an h2. */
+  level?: 1 | 2
   eyebrow?: React.ReactNode
   title: React.ReactNode
   description?: React.ReactNode
@@ -12,12 +14,14 @@ type Props = {
 }
 
 export function SectionHeading({
+  level = 2,
   eyebrow,
   title,
   description,
   align = "center",
   className,
 }: Props) {
+  const Heading = level === 1 ? motion.h1 : motion.h2
   return (
     <div
       className={cn(
@@ -39,7 +43,7 @@ export function SectionHeading({
           {eyebrow}
         </motion.span>
       )}
-      <motion.h2
+      <Heading
         initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.5 }}
@@ -50,7 +54,7 @@ export function SectionHeading({
         )}
       >
         {title}
-      </motion.h2>
+      </Heading>
       {description && (
         <motion.p
           initial={{ opacity: 0, y: 12 }}

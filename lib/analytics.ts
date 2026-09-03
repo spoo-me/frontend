@@ -84,7 +84,7 @@ export function trackLoggedIn(method: "password") {
 
 export function trackLinkCreated(
   input: ShortenInput,
-  surface: "composer" | "onboarding"
+  surface: "composer" | "onboarding" | "overview"
 ) {
   const geoCount = Object.keys(input.geo_rules ?? {}).length
   const variantCount = input.ab_variants?.length ?? 0
@@ -100,6 +100,8 @@ export function trackLinkCreated(
     has_ab_variants: variantCount > 0,
     ab_variants_count: variantCount,
     has_meta_tags: !!input.meta_tags,
+    has_tags: (input.tag_ids?.length ?? 0) > 0,
+    tags_count: input.tag_ids?.length ?? 0,
     block_bots: !!input.block_bots,
     private_stats: !!input.private_stats,
   })
@@ -122,6 +124,7 @@ export type CreateOption =
   | "geo_rules"
   | "ab_variants"
   | "meta_tags"
+  | "tags"
 
 export type CreateOptionSurface = "composer" | "hero" | "onboarding"
 
@@ -287,6 +290,7 @@ export type UiAction =
   | "time_range_changed"
   | "links_searched"
   | "links_filtered"
+  | "tag_saved"
   | "links_sorted"
   | "composer_tab_opened"
   | "shortener_options_opened"
