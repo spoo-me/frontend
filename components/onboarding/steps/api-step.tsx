@@ -243,6 +243,7 @@ export function ApiStep({
 
             <Button
               onClick={() => void generate()}
+              translate="no"
               className="mt-6 h-10 min-w-44"
               disabled={pending}
             >

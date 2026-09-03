@@ -193,6 +193,7 @@ export function ForgotPasswordForm() {
 
             <Button
               type="submit"
+              translate="no"
               className="h-10 w-full"
               disabled={
                 pending || code.length !== 6 || !passwordSatisfies(password)
@@ -205,7 +206,10 @@ export function ForgotPasswordForm() {
             </Button>
           </form>
 
-          <p className="text-center text-muted-foreground text-sm">
+          <p
+            translate="no"
+            className="text-center text-muted-foreground text-sm"
+          >
             Didn&apos;t get it?{" "}
             {cooldown > 0 ? (
               <span className="text-muted-foreground/70 tabular-nums">
@@ -272,6 +276,7 @@ export function ForgotPasswordForm() {
             </div>
             <Button
               type="submit"
+              translate="no"
               className="h-10 w-full"
               disabled={pending || !email}
             >

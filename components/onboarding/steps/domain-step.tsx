@@ -336,6 +336,7 @@ export function DomainStep({ onDone }: { onDone: () => void }) {
               />
               <Button
                 type="submit"
+                translate="no"
                 disabled={!valid || pending}
                 className="h-10 shrink-0"
               >
