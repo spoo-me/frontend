@@ -237,14 +237,28 @@ function slug() {
   return Math.random().toString(36).slice(2, 7)
 }
 
+/** The backend derives SCHEDULED from a future starts_at on an ACTIVE
+    link; the stored status never changes. Mirror that here. */
+function effectiveStatus(l: MockLink): MockLink["status"] | "SCHEDULED" {
+  if (
+    l.status === "ACTIVE" &&
+    l.starts_at !== null &&
+    l.starts_at > Math.floor(Date.now() / 1000)
+  )
+    return "SCHEDULED"
+  return l.status
+}
+
 function linkItem(l: MockLink) {
   return {
     id: l.id,
     alias: l.alias,
     long_url: l.long_url,
-    status: l.status,
+    status: effectiveStatus(l),
     created_at: l.created_at,
     expire_after: l.expire_after,
+    starts_at: l.starts_at,
+    pre_start_url: l.pre_start_url,
     max_clicks: l.max_clicks,
     private_stats: l.private_stats,
     block_bots: l.block_bots,
@@ -1387,6 +1401,11 @@ async function handle(req: NextRequest, path: string[]) {
         created_at: new Date().toISOString(),
         expire_after:
           typeof body.expire_after === "number" ? body.expire_after : null,
+        starts_at: typeof body.starts_at === "number" ? body.starts_at : null,
+        pre_start_url:
+          typeof body.pre_start_url === "string" && body.pre_start_url
+            ? String(body.pre_start_url)
+            : null,
         max_clicks:
           typeof body.max_clicks === "number" ? body.max_clicks : null,
         password_set:
@@ -1453,7 +1472,9 @@ async function handle(req: NextRequest, path: string[]) {
           }
           if (f.status)
             items = items.filter(
-              (l) => l.status.toLowerCase() === String(f.status).toLowerCase()
+              (l) =>
+                effectiveStatus(l).toLowerCase() ===
+                String(f.status).toLowerCase()
             )
           if (typeof f.passwordSet === "boolean")
             items = items.filter((l) => l.password_set === f.passwordSet)
@@ -1751,6 +1772,33 @@ async function handle(req: NextRequest, path: string[]) {
       if ("expire_after" in body)
         link.expire_after =
           body.expire_after === null ? null : Number(body.expire_after)
+      if ("starts_at" in body) {
+        const starts = body.starts_at === null ? null : Number(body.starts_at)
+        if (starts !== null && starts <= Math.floor(Date.now() / 1000))
+          return fail(
+            400,
+            "validation_error",
+            "starts_at must be in the future",
+            "starts_at"
+          )
+        if (
+          starts !== null &&
+          link.expire_after !== null &&
+          starts >= link.expire_after
+        )
+          return fail(
+            400,
+            "validation_error",
+            "starts_at must be before expire_after",
+            "starts_at"
+          )
+        link.starts_at = starts
+      }
+      if ("pre_start_url" in body)
+        link.pre_start_url =
+          body.pre_start_url === null || body.pre_start_url === ""
+            ? null
+            : String(body.pre_start_url)
       if ("private_stats" in body)
         link.private_stats = Boolean(body.private_stats)
       if ("block_bots" in body) link.block_bots = Boolean(body.block_bots)
@@ -2081,6 +2129,7 @@ async function handle(req: NextRequest, path: string[]) {
         custom_meta_tags: "enabled",
         ab_testing: "enabled",
         webhooks: "enabled",
+        link_scheduling: "enabled",
       },
     })
   }

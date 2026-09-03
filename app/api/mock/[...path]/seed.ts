@@ -26,6 +26,9 @@ export type MockLink = {
   status: "ACTIVE" | "INACTIVE" | "EXPIRED" | "BLOCKED"
   created_at: string
   expire_after: number | null
+  /** Real wire shape (link_scheduling): unix seconds, null = live now. */
+  starts_at: number | null
+  pre_start_url: string | null
   max_clicks: number | null
   password_set: boolean
   password: string | null
@@ -126,6 +129,7 @@ const DESTINATIONS: Array<[alias: string, url: string, weight: number]> = [
   ["report", "https://blog.spoo.me/state-of-link-sharing-2026", 2],
   ["invite", "https://spoo.me/i/team-invite", 2],
   ["beta", "https://spoo.me/beta/edge-analytics", 2],
+  ["keynote", "https://www.youtube.com/live/spoo-keynote-2026", 2],
   ["ios", "https://apps.apple.com/app/spoo-shortener/id123456", 2],
   ["feedback", "https://spoo.canny.io/feature-requests", 2],
   ["newsletter", "https://buttondown.email/spoo/archive", 2],
@@ -186,6 +190,13 @@ export function buildLinks(): MockLink[] {
           : alias === "beta"
             ? Math.floor((Date.now() + 21 * 86_400_000) / 1000)
             : null,
+      // "keynote" is scheduled: live in nine days, teaser page until then.
+      starts_at:
+        alias === "keynote"
+          ? Math.floor((Date.now() + 9 * 86_400_000) / 1000)
+          : null,
+      pre_start_url:
+        alias === "keynote" ? "https://spoo.me/events/keynote-2026" : null,
       max_clicks: alias === "invite" ? 500 : alias === "swag" ? 1000 : null,
       password_set: alias === "deck" || alias === "kit",
       password:
@@ -197,13 +208,17 @@ export function buildLinks(): MockLink[] {
       private_stats: alias === "hiring",
       block_bots: weight >= 6,
       total_clicks:
-        status === "ACTIVE" || status === "EXPIRED"
-          ? clicks
-          : Math.round(clicks * 0.3),
+        alias === "keynote"
+          ? 0
+          : status === "ACTIVE" || status === "EXPIRED"
+            ? clicks
+            : Math.round(clicks * 0.3),
       last_click:
-        status === "ACTIVE"
-          ? isoDaysAgo(rand() * 2, rand)
-          : isoDaysAgo(20 + rand() * 30, rand),
+        alias === "keynote"
+          ? null
+          : status === "ACTIVE"
+            ? isoDaysAgo(rand() * 2, rand)
+            : isoDaysAgo(20 + rand() * 30, rand),
       // "pricing" ships purchasing-power-parity pages — a believable geo
       // demo the settings form can round-trip out of the box.
       geo_rules:

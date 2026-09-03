@@ -55,6 +55,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
+import { PreStartUrlControl } from "@/components/dashboard/links/pre-start-url-control"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Kbd } from "@/components/dashboard/kbd"
 import { InfoHint } from "@/components/dashboard/info-hint"
@@ -116,17 +117,6 @@ const pickWord = () => WORDS[randInt(WORDS.length)]
 const suggestPassword = () =>
   `${pickWord()}.${pickWord()}.${pickWord()}.${100 + randInt(900)}`
 const suggestAlias = () => `${pickWord()}-${10 + randInt(89)}`
-
-const EXPIRY_PRESETS: Array<[label: string, hours: number]> = [
-  ["1 day", 24],
-  ["7 days", 168],
-  ["30 days", 720],
-]
-
-function toLocalInputValue(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
 
 /** One smallBurst from the success toast. Zero-size marker inside the toast;
     it waits out sonner's slide-in, then bursts from the toast (the marker's
@@ -237,6 +227,7 @@ export function LinkComposer() {
 
   // Backend-gated capabilities: hidden features simply don't exist here.
   const showGeo = useFeature("geo_targeting") === "enabled"
+  const showScheduling = useFeature("link_scheduling") === "enabled"
   const showVariants = useFeature("ab_testing") === "enabled"
   const showMeta = useFeature("custom_meta_tags") === "enabled"
   const showDomains = useFeature("custom_domains") === "enabled"
@@ -259,6 +250,8 @@ export function LinkComposer() {
   const [password, setPassword] = React.useState("")
   const [passwordVisible, setPasswordVisible] = React.useState(false)
   const [expiry, setExpiry] = React.useState("")
+  const [startsAt, setStartsAt] = React.useState("")
+  const [preStartUrl, setPreStartUrl] = React.useState("")
   const [maxClicks, setMaxClicks] = React.useState("")
   // One draft row ready to fill: an empty section behind an add-button is
   // a click tax; incomplete drafts never travel.
@@ -345,6 +338,8 @@ export function LinkComposer() {
     setDomain("spoo.me")
     setPassword("")
     setExpiry("")
+    setStartsAt("")
+    setPreStartUrl("")
     setMaxClicks("")
     setGeoRules([{ country: "", url: "" }])
     setVariants([{ url: "", weight: "" }])
@@ -502,6 +497,16 @@ export function LinkComposer() {
     },
   })
 
+  // Only a URL while a start time is set counts; the field is inert without one.
+  const preStartProblem =
+    startsAt && preStartUrl.trim() ? urlProblem(preStartUrl) : null
+  // Mirrors the server rule: a link that expires before it opens is never live.
+  const startDate = startsAt ? new Date(startsAt) : null
+  const expiryDate = expiry ? new Date(expiry) : null
+  const orderProblem =
+    startDate && expiryDate && expiryDate <= startDate
+      ? "Expiration must be after the go-live time."
+      : null
   const canCreate =
     longUrl.trim() !== "" &&
     !urlProblem(longUrl) &&
@@ -509,6 +514,8 @@ export function LinkComposer() {
     weights <= 100 &&
     !geoProblem &&
     !metaProblem &&
+    !preStartProblem &&
+    !orderProblem &&
     (alias === "" ||
       aliasVerdict.state === "available" ||
       aliasVerdict.state === "checking" ||
@@ -525,6 +532,12 @@ export function LinkComposer() {
       ...(password ? { password } : {}),
       ...(expiry
         ? { expire_after: Math.floor(new Date(expiry).getTime() / 1000) }
+        : {}),
+      ...(startsAt
+        ? { starts_at: Math.floor(new Date(startsAt).getTime() / 1000) }
+        : {}),
+      ...(startsAt && preStartUrl.trim()
+        ? { pre_start_url: normalizeUrl(preStartUrl) }
         : {}),
       ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
       ...(blockBots ? { block_bots: true } : {}),
@@ -594,6 +607,87 @@ export function LinkComposer() {
         {tabDot(isSet)}
       </span>
     </TabsTrigger>
+  )
+
+  // The two time bookends sit side by side when scheduling is on; the
+  // pre-start URL hides behind a gear on the start input.
+  const expirationField = (
+    <Field
+      label="Expiration"
+      labelHint={
+        <InfoHint label="How expiry works">
+          After this moment, in your timezone, the link shows an ended page
+          instead of redirecting. Extend or clear it later to bring the link
+          back.
+        </InfoHint>
+      }
+      error={orderProblem}
+    >
+      <DateTimeField
+        value={expiry}
+        onChange={(v) => {
+          optionUse.note("expiry", v !== "")
+          setExpiry(v)
+        }}
+        placeholder="Never"
+        minDate={startDate ?? undefined}
+        className="h-9 w-full"
+      />
+    </Field>
+  )
+  const maxClicksField = (
+    <Field
+      label="Max clicks"
+      labelHint={
+        <InfoHint label="How click limits work">
+          Once total clicks reach this number the link stops redirecting. Raise
+          or clear the limit later to bring it back.
+        </InfoHint>
+      }
+    >
+      <Input
+        type="number"
+        min={1}
+        value={maxClicks}
+        onChange={(e) => {
+          optionUse.note("max_clicks", e.target.value !== "")
+          setMaxClicks(e.target.value)
+        }}
+        placeholder="Unlimited"
+        className="h-9 font-mono text-xs"
+      />
+    </Field>
+  )
+  const goesLiveField = (
+    <Field
+      label="Goes live"
+      labelHint={
+        <InfoHint label="How scheduling works">
+          The link is hidden until this moment, in your timezone. Early visitors
+          see a not-yet-live page, or the address you set beside the date.
+        </InfoHint>
+      }
+      error={preStartProblem}
+    >
+      <div className="flex items-center gap-1.5">
+        <DateTimeField
+          value={startsAt}
+          onChange={(v) => {
+            optionUse.note("starts_at", v !== "")
+            setStartsAt(v)
+          }}
+          placeholder="Now"
+          defaultTime="09:00"
+          maxDate={expiryDate ?? undefined}
+          className="min-w-0 flex-1"
+        />
+        <PreStartUrlControl
+          enabled={startsAt !== ""}
+          value={preStartUrl}
+          onChange={setPreStartUrl}
+        />
+      </div>
+    </Field>
   )
 
   return (
@@ -809,58 +903,22 @@ export function LinkComposer() {
                   </div>
                 </Field>
 
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <Field
-                    label="Expiration"
-                    hint="The link stops redirecting after this moment."
-                  >
-                    <DateTimeField
-                      value={expiry}
-                      onChange={(v) => {
-                        optionUse.note("expiry", v !== "")
-                        setExpiry(v)
-                      }}
-                      placeholder="Never"
-                      className="h-9 w-full"
-                    />
-                    <div className="flex items-center gap-1">
-                      {EXPIRY_PRESETS.map(([label, hours]) => (
-                        <button
-                          key={label}
-                          type="button"
-                          onClick={() => {
-                            optionUse.note("expiry", true)
-                            setExpiry(
-                              toLocalInputValue(
-                                new Date(Date.now() + hours * 3_600_000)
-                              )
-                            )
-                          }}
-                          className="h-6 rounded-md border border-border/60 px-2 text-[11px] text-muted-foreground transition-colors duration-150 hover:bg-accent/50 hover:text-foreground"
-                        >
-                          {label}
-                        </button>
-                      ))}
+                {showScheduling ? (
+                  <>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      {goesLiveField}
+                      {expirationField}
                     </div>
-                  </Field>
-
-                  <Field
-                    label="Max clicks"
-                    hint="The link deactivates after this many clicks."
-                  >
-                    <Input
-                      type="number"
-                      min={1}
-                      value={maxClicks}
-                      onChange={(e) => {
-                        optionUse.note("max_clicks", e.target.value !== "")
-                        setMaxClicks(e.target.value)
-                      }}
-                      placeholder="Unlimited"
-                      className="h-9 font-mono text-xs"
-                    />
-                  </Field>
-                </div>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      {maxClicksField}
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    {expirationField}
+                    {maxClicksField}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="security" className="space-y-5">

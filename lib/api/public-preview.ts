@@ -31,8 +31,10 @@ export type PublicPreview = {
   generation: "v1" | "v2"
   alias: string
   short_url: string
-  status: "active" | "inactive" | "expired" | "blocked"
+  status: "active" | "inactive" | "expired" | "blocked" | "scheduled"
   created_at: string | null
+  /** Unix seconds; set only while `status` is "scheduled". */
+  starts_at: number | null
   password_protected: boolean
   destination: PreviewDestination | null
   geo_destinations: PreviewGeoDestination[] | null

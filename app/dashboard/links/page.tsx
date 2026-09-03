@@ -19,6 +19,7 @@ import {
   ArrowDown,
   ArrowUp,
   Bot,
+  CalendarClock,
   CalendarDays,
   Globe,
   ChevronLeft,
@@ -106,6 +107,8 @@ import {
 } from "@/components/ui/tooltip"
 import { Panel } from "@/components/dashboard/section"
 import { StatusPill } from "@/components/dashboard/status-pill"
+import { ScheduledState } from "@/components/dashboard/links/scheduled-state"
+import { useFeature } from "@/hooks/use-features"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import {
   LinkActions,
@@ -118,7 +121,13 @@ import { TimeRangePicker } from "@/components/dashboard/analytics/time-range-pic
 import { RefreshControl } from "@/components/dashboard/refresh-control"
 import { useAutoRefreshPref } from "@/hooks/use-auto-refresh"
 
-const STATUSES = ["ACTIVE", "INACTIVE", "EXPIRED", "BLOCKED"] as const
+const STATUSES = [
+  "ACTIVE",
+  "SCHEDULED",
+  "INACTIVE",
+  "EXPIRED",
+  "BLOCKED",
+] as const
 const SORTS = ["created_at", "last_click", "total_clicks"] as const
 const PAGE_SIZE = 15
 
@@ -171,6 +180,7 @@ export default function LinksPage() {
     "status",
     parseAsStringLiteral(STATUSES)
   )
+  const showScheduling = useFeature("link_scheduling") === "enabled"
   const [protectedOnly, setProtectedOnly] = useQueryState(
     "protected",
     parseAsString
@@ -615,27 +625,29 @@ export default function LinksPage() {
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Status
             </DropdownMenuLabel>
-            {STATUSES.map((s) => (
-              <DropdownMenuCheckboxItem
-                key={s}
-                checked={status === s}
-                onCheckedChange={(v) => {
-                  setStatus(v ? s : null)
-                  setPage(null)
-                }}
-              >
-                <span
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    s === "ACTIVE" && "bg-live",
-                    s === "INACTIVE" && "bg-muted-foreground/50",
-                    s === "EXPIRED" && "bg-amber-500",
-                    s === "BLOCKED" && "bg-destructive"
-                  )}
-                />
-                {s.charAt(0) + s.slice(1).toLowerCase()}
-              </DropdownMenuCheckboxItem>
-            ))}
+            {STATUSES.filter((s) => s !== "SCHEDULED" || showScheduling).map(
+              (s) => (
+                <DropdownMenuCheckboxItem
+                  key={s}
+                  checked={status === s}
+                  onCheckedChange={(v) => {
+                    setStatus(v ? s : null)
+                    setPage(null)
+                  }}
+                >
+                  <span
+                    className={cn(
+                      "size-1.5 rounded-full",
+                      s === "ACTIVE" && "bg-live",
+                      s === "INACTIVE" && "bg-muted-foreground/50",
+                      s === "EXPIRED" && "bg-amber-500",
+                      s === "BLOCKED" && "bg-destructive"
+                    )}
+                  />
+                  {s.charAt(0) + s.slice(1).toLowerCase()}
+                </DropdownMenuCheckboxItem>
+              )
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Protections
@@ -1302,6 +1314,12 @@ function LinkRow({
                 label="Visitors need a password to reach the destination."
               />
             )}
+            {link.status === "SCHEDULED" && (
+              <PropIcon
+                icon={CalendarClock}
+                label="Not live until a set moment."
+              />
+            )}
             {link.expire_after != null && (
               <PropIcon
                 icon={Timer}
@@ -1330,7 +1348,11 @@ function LinkRow({
         </div>
       </td>
       <td className="hidden whitespace-nowrap px-3 py-2.5 sm:table-cell">
-        <StatusPill status={link.status} />
+        {link.status === "SCHEDULED" && link.starts_at != null ? (
+          <ScheduledState startsAt={link.starts_at} />
+        ) : (
+          <StatusPill status={link.status} />
+        )}
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 text-right">
         <span className="font-medium font-mono text-[13px] text-foreground tabular-nums">

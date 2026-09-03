@@ -115,6 +115,7 @@ export type CreateOption =
   | "domain"
   | "password"
   | "expiry"
+  | "starts_at"
   | "max_clicks"
   | "block_bots"
   | "private_stats"

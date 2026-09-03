@@ -23,7 +23,7 @@ export type PublicLinkFacts = {
       redirect would. Owner sessions still get it. */
   long_url: string | null
   created_at: string | null
-  status: "active" | "inactive" | "expired" | "blocked"
+  status: "active" | "inactive" | "expired" | "blocked" | "scheduled"
   max_clicks: number | null
   block_bots: boolean
   password_protected: boolean

@@ -51,20 +51,27 @@ export function handlePublicPreview(code: string): NextResponse {
     )
   const { link, generation } = found
 
+  // A future starts_at derives "scheduled" on an ACTIVE link, mirroring
+  // the backend; the destination is withheld and starts_at rides the wire.
+  const nowSec = Math.floor(Date.now() / 1000)
+  const scheduled =
+    link.status === "ACTIVE" &&
+    link.starts_at !== null &&
+    link.starts_at > nowSec
   const base = {
     generation,
     alias: link.alias,
     short_url: `https://${link.domain ?? "spoo.me"}/${link.alias}`,
-    status: link.status.toLowerCase(),
+    status: scheduled ? "scheduled" : link.status.toLowerCase(),
     created_at: link.created_at,
+    starts_at: scheduled ? link.starts_at : null,
     password_protected: link.password_set,
   }
 
-  // The destination is visible ONLY while the link is active: passwords
-  // protect it, and expired/paused/blocked links stop revealing it the
-  // moment the redirect does (time-sensitive links stay dead, blocked
-  // destinations stay unreachable).
-  if (link.password_set || link.status !== "ACTIVE")
+  // The destination is visible ONLY while the link is active and started:
+  // passwords protect it, and expired/paused/blocked/scheduled links stop
+  // revealing it the moment the redirect does.
+  if (link.password_set || link.status !== "ACTIVE" || scheduled)
     return NextResponse.json({
       ...base,
       destination: null,
