@@ -302,14 +302,20 @@ export function TagLabel({
   tag,
   className,
   nameClassName,
+  glyphClassName,
 }: {
   tag: Pick<TagRef, "name" | "color" | "icon">
   className?: string
   nameClassName?: string
+  glyphClassName?: string
 }) {
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-1.5", className)}>
-      <TagGlyph color={tag.color} icon={tag.icon} />
+      <TagGlyph
+        color={tag.color}
+        icon={tag.icon}
+        className={glyphClassName}
+      />
       <span
         className={cn(
           "ph-no-capture truncate font-mono text-[11px]",

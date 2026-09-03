@@ -168,7 +168,7 @@ export function TagPicker({
             "p-0",
             variant === "field"
               ? "w-[var(--radix-popover-trigger-width)]"
-              : "w-72"
+              : "w-64"
           )}
         >
           <CommandPrimitive shouldFilter={false}>
@@ -177,10 +177,10 @@ export function TagPicker({
                 value={search}
                 onValueChange={setSearch}
                 placeholder="Search tags…"
-                className="h-9 w-full bg-transparent font-mono text-xs outline-none placeholder:text-muted-foreground/60"
+                className="h-10 w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground/60"
               />
             </div>
-            <CommandPrimitive.List className="max-h-64 overflow-y-auto p-1.5">
+            <CommandPrimitive.List className="max-h-64 overflow-y-auto p-1.5 [mask-image:linear-gradient(to_bottom,black,black_calc(100%-20px),transparent)]">
               {tags.isPending ? (
                 <div className="px-2.5 py-6 text-center text-muted-foreground text-xs">
                   loading…
@@ -203,29 +203,30 @@ export function TagPicker({
                       disabled={blocked}
                       onSelect={() => toggle(tag.id)}
                       className={cn(
-                        "flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-xs data-[selected=true]:bg-accent/70",
+                        "flex h-9 cursor-default select-none items-center gap-2.5 rounded-md px-2.5 text-[13px] data-[selected=true]:bg-accent/70",
                         blocked && "opacity-40"
                       )}
                     >
                       <span
                         className={cn(
-                          "flex size-3.5 items-center justify-center rounded-[4px] border border-border",
+                          "flex size-[18px] items-center justify-center rounded-[5px] border border-border",
                           (active || partial) && "border-primary bg-primary"
                         )}
                       >
                         {active && (
-                          <Check className="size-2.5 text-primary-foreground" />
+                          <Check className="size-3.5 text-primary-foreground" />
                         )}
                         {partial && (
-                          <Minus className="size-2.5 text-primary-foreground" />
+                          <Minus className="size-3.5 text-primary-foreground" />
                         )}
                       </span>
                       <TagLabel
                         tag={tag}
-                        className="min-w-0 flex-1"
-                        nameClassName="text-foreground"
+                        className="min-w-0 flex-1 gap-2.5"
+                        nameClassName="text-xs text-foreground"
+                        glyphClassName="size-4"
                       />
-                      <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">
+                      <span className="font-mono text-[11px] text-muted-foreground/70 tabular-nums">
                         {formatCount(tag.link_count)}
                       </span>
                     </CommandPrimitive.Item>
@@ -237,13 +238,13 @@ export function TagPicker({
                 </div>
               )}
             </CommandPrimitive.List>
-            <div className="flex items-center justify-between border-border/60 border-t px-1.5 py-1.5">
+            <div className="flex items-center gap-1.5 border-border/60 border-t p-1.5">
               <button
                 type="button"
                 onClick={startCreate}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
+                className="inline-flex h-9 flex-1 items-center gap-2.5 rounded-md px-2.5 text-[13px] text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground"
               >
-                <Plus className="size-3" />
+                <Plus className="size-4" />
                 {q && !exactExists ? `New tag "${q}"` : "New tag"}
               </button>
               {onMatchChange && selected.length > 1 && (
