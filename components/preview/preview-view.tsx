@@ -9,6 +9,7 @@ import {
   Lock,
   Pause,
   ShieldAlert,
+  Split,
 } from "lucide-react"
 
 import type {
@@ -157,7 +158,7 @@ export function PreviewView({ data }: { data: PublicPreview }) {
                   className="mb-[7px] ml-2.5 h-full w-4 shrink-0 rounded-bl-lg border-border/60 border-b border-l"
                 />
                 <span className="label-mono text-muted-foreground">
-                  {data.geo_destinations
+                  {data.geo_destinations || data.variant_destinations
                     ? "Default destination"
                     : "Redirects to"}
                 </span>
@@ -203,6 +204,34 @@ export function PreviewView({ data }: { data: PublicPreview }) {
                 <p className="mt-2 text-muted-foreground/70 text-xs">
                   Visitors are sent to different destinations depending on their
                   country. Every destination is listed above.
+                </p>
+              </div>
+            )}
+
+            {/* A/B split — every variant listed with its share, nothing cloaked */}
+            {data.variant_destinations && (
+              <div className="mt-8">
+                <SectionHeader icon={Split} title="Destinations by split" />
+                <Panel className="mt-2 divide-y divide-border/60">
+                  {data.variant_destinations.map((dest, i) => (
+                    <div
+                      key={`${i}-${dest.url}`}
+                      className="flex items-center gap-3 p-3.5"
+                    >
+                      <span className="min-w-14 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
+                        {dest.weight}% of visitors
+                      </span>
+                      <DestinationRow destination={dest} compact />
+                    </div>
+                  ))}
+                </Panel>
+                <p className="mt-2 text-muted-foreground/70 text-xs">
+                  Visitors are split between these destinations at random by the
+                  shares shown.
+                  {data.variant_destinations.reduce((a, d) => a + d.weight, 0) <
+                  100
+                    ? " The rest go to the default destination above."
+                    : ""}
                 </p>
               </div>
             )}
