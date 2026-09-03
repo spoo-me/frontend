@@ -56,19 +56,19 @@ components:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.surface}"
     rounded: "{rounded.lg}"
-    height: "32px"
+    height: "36px"
     padding: "0 10px"
   button-outline:
     backgroundColor: "transparent"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
-    height: "32px"
+    height: "36px"
     padding: "0 10px"
   input:
     backgroundColor: "transparent"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
-    height: "32px"
+    height: "36px"
     padding: "4px 10px"
   card:
     backgroundColor: "{colors.surface}"
@@ -157,7 +157,7 @@ Depth is hairline-fused: every shadow ships welded to a 1px ring or border, and 
 Tactile and machined: controls feel physically made — beveled, inset-lit, and they depress on press.
 
 ### Buttons
-- **Shape:** gently rounded (10px, `rounded-lg`), 32px default height (36px `lg`, hero CTAs 40px)
+- **Shape:** gently rounded (10px, `rounded-lg`), 36px default height (hero CTAs 40px). One control height: inputs, selects, date fields and buttons that stand on their own are all 36px, carried by the primitives, never by a per-site `h-*`. The compact `sm` tier (28px) exists only for labelled actions inside list rows and as icon-only row actions; floating action pills use the standard height
 - **Primary:** the Kumo bevel recipe — vertical gradient from ink+15% white to ink, 1px inset top highlight at +30% white, ring at −10% black; hover brightens the gradient start. In dark mode the near-white primary flips the bevel downward (gradient to −12% black, no inset highlight).
 - **Press / Focus:** `active:translate-y-px` — every button physically depresses 1px; focus is a 3px `ring/50` halo with border shift.
 - **Outline:** hairline border, transparent fill, muted hover fill. **Ghost:** no chrome until hover. **Destructive:** tinted `destructive/10` fill, never solid red.
@@ -169,7 +169,7 @@ Tactile and machined: controls feel physically made — beveled, inset-lit, and 
 - **Internal Padding:** 16px default, 12px small variant; images bleed full-width to the card edge
 
 ### Inputs / Fields
-- **Style:** transparent field, hairline `border-input`, 10px radius, 32px height, soft shadow; dark mode adds `bg-input/30` plus a 1px inset top light
+- **Style:** transparent field, hairline `border-input`, 10px radius, 36px height, soft shadow; dark mode adds `bg-input/30` plus a 1px inset top light
 - **Focus:** border takes the ring color + 3px `ring/50` halo (same grammar as buttons)
 - **Error:** `aria-invalid` swaps border and halo to destructive tints
 

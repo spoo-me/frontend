@@ -11,3 +11,7 @@ Before any design or UI work, read:
 - `.impeccable/design.json` — machine-readable tokens and component snippets (regenerate alongside DESIGN.md).
 
 Every new surface must satisfy both files; when they conflict with convenience, the files win.
+
+## Controls
+
+Every standalone input, select, date field and button in the dashboard is 36px, and only the `components/ui` primitives carry that height. Never pass `h-*` or `size="sm"` per site; `components/ui/control-heights.test.ts` fails `npm test` if you do. The compact 28px tier (`size="sm"`) is only for labelled actions inside list rows (apps, settings) and icon-only row actions. Floating action pills use the standard height. The test carries the allowlist.

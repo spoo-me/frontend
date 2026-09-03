@@ -113,7 +113,7 @@ export function TagFields({
             placeholder="launch"
             spellCheck={false}
             autoComplete="off"
-            className="h-9 pl-8 font-mono text-xs"
+            className="pl-8 font-mono text-xs"
           />
         </div>
       </Field>
@@ -158,7 +158,7 @@ export function TagFields({
             placeholder="Search icons"
             spellCheck={false}
             autoComplete="off"
-            className="h-8 pl-8 font-mono text-xs"
+            className="pl-8 text-[13px]"
           />
         </div>
         <div

@@ -81,7 +81,7 @@ export function RecentLinks({
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No links yet
             </span>
-            <Button size="sm" onClick={() => openLinkComposer()}>
+            <Button onClick={() => openLinkComposer()}>
               <Plus data-icon="inline-start" />
               New link
             </Button>

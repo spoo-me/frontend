@@ -261,7 +261,7 @@ export function ComposerForm({
           onChange={(e) => onChange({ title: e.target.value })}
           placeholder="Optional"
           maxLength={40}
-          className="h-8 text-xs"
+          className="text-xs"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -535,10 +535,10 @@ export function WidgetComposer({
               board is full ({MAX_WIDGETS} widgets)
             </span>
           )}
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button size="sm" disabled={full} onClick={handleAdd}>
+          <Button disabled={full} onClick={handleAdd}>
             Add widget
           </Button>
         </DialogFooter>

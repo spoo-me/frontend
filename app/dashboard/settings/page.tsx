@@ -232,7 +232,7 @@ function NameRow({ user }: { user: AuthUser }) {
         disabled={save.isPending}
         placeholder="Your name"
         aria-label="Display name"
-        className="h-8 w-52 rounded-lg border border-border/60 bg-transparent px-2.5 text-foreground text-sm outline-none focus:border-ring disabled:opacity-50"
+        className="h-9 w-52 rounded-lg border border-border/60 bg-transparent px-2.5 text-foreground text-sm outline-none focus:border-ring disabled:opacity-50"
       />
     </span>
   )
@@ -540,8 +540,8 @@ function ProviderRow({
         </Tooltip>
       ) : (
         <Button
-          variant="outline"
           size="sm"
+          variant="outline"
           onClick={() => setConfirmOpen(true)}
           disabled={unlink.isPending}
         >
@@ -694,7 +694,7 @@ function DeleteAccountRow({ user }: { user: AuthUser }) {
       label="Delete account"
       description="Erases your links, analytics and profile after a 7 day grace period."
     >
-      <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="destructive" onClick={() => setOpen(true)}>
         Delete account
       </Button>
 

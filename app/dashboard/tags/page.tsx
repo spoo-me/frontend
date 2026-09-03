@@ -79,7 +79,7 @@ export default function TagsPage() {
             colour and an icon.
           </p>
         </div>
-        <Button size="sm" onClick={openNew}>
+        <Button onClick={openNew}>
           <Plus data-icon="inline-start" />
           New tag
         </Button>
@@ -94,7 +94,7 @@ export default function TagsPage() {
             placeholder="Search tags"
             spellCheck={false}
             autoComplete="off"
-            className="h-8 pl-8 font-mono text-xs"
+            className="pl-8 text-[13px]"
           />
         </div>
       )}
@@ -110,7 +110,7 @@ export default function TagsPage() {
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No tags yet
             </span>
-            <Button size="sm" onClick={openNew}>
+            <Button onClick={openNew}>
               <Plus data-icon="inline-start" />
               Make your first tag
             </Button>

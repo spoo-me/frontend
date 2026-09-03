@@ -240,7 +240,7 @@ export default function WebhooksPage() {
             Signed event deliveries for your account&apos;s events.
           </p>
         </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus data-icon="inline-start" />
           New endpoint
         </Button>
@@ -257,7 +257,7 @@ export default function WebhooksPage() {
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No endpoints yet
             </span>
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Button onClick={() => setCreateOpen(true)}>
               <Plus data-icon="inline-start" />
               Add your first endpoint
             </Button>

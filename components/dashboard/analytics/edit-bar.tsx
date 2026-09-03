@@ -138,7 +138,7 @@ function BarIconButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40",
+        "flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40",
         destructive
           ? "hover:bg-destructive/10 hover:text-destructive"
           : "hover:bg-accent/60 hover:text-foreground"
@@ -340,8 +340,7 @@ export function EditBar({
               <BarDivider />
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
+                className="px-2"
                 disabled={!selected.config.scope}
                 onClick={() => onConfigChange(selected.id, { scope: null })}
               >
@@ -363,11 +362,7 @@ export function EditBar({
                   <BarDivider />
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1.5 px-2"
-                      >
+                      <Button variant="ghost" className="gap-1.5 px-2">
                         {currentVizOption && (
                           <>
                             <currentVizOption.icon
@@ -411,11 +406,7 @@ export function EditBar({
               {seriesMetric && currentMetric && (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 gap-1.5 px-2"
-                    >
+                    <Button variant="ghost" className="gap-1.5 px-2">
                       <currentMetric.icon
                         className="size-3.5"
                         strokeWidth={1.75}
@@ -474,7 +465,7 @@ export function EditBar({
                     type="button"
                     aria-label="Chart ink"
                     title="Chart ink"
-                    className="flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-150 hover:bg-accent/60 aria-expanded:bg-accent/60"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-md transition-colors duration-150 hover:bg-accent/60 aria-expanded:bg-accent/60"
                   >
                     <span
                       aria-hidden
@@ -557,11 +548,7 @@ export function EditBar({
             <>
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1.5 px-2.5"
-                  >
+                  <Button variant="ghost" className="gap-1.5 px-2.5">
                     <Plus className="size-3.5" strokeWidth={1.75} />
                     <span className="text-xs">Add widget</span>
                   </Button>
@@ -625,7 +612,7 @@ export function EditBar({
                     type="button"
                     aria-label="More"
                     title="More"
-                    className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground aria-expanded:bg-accent/60 aria-expanded:text-foreground"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent/60 hover:text-foreground aria-expanded:bg-accent/60 aria-expanded:text-foreground"
                   >
                     <Ellipsis className="size-3.5" strokeWidth={1.75} />
                   </button>
@@ -647,11 +634,7 @@ export function EditBar({
                 </DropdownMenuContent>
               </DropdownMenu>
               <BarDivider />
-              <Button
-                size="sm"
-                className="h-7 rounded-full px-3"
-                onClick={onDone}
-              >
+              <Button className="rounded-full px-3" onClick={onDone}>
                 Done
               </Button>
             </>
@@ -724,7 +707,7 @@ export function EditBar({
             )}
           </div>
           <DialogFooter>
-            <Button size="sm" disabled={!importText.trim()} onClick={runImport}>
+            <Button disabled={!importText.trim()} onClick={runImport}>
               Import
             </Button>
           </DialogFooter>

@@ -572,9 +572,9 @@ export function LinkComposer() {
               tabs (response to a click, not a shift). */}
           <div
             style={{ height: panelH }}
-            className="overflow-hidden transition-[height] duration-200 ease-out"
+            className="-mx-1 overflow-hidden px-1 transition-[height] duration-200 ease-out"
           >
-            <div ref={panelRef} className="min-h-[392px] pt-3">
+            <div ref={panelRef} className="min-h-[392px] pt-3 pb-1">
               <TabsContent value="basic" className="space-y-5">
                 <Field
                   label="Destination"
@@ -677,7 +677,7 @@ export function LinkComposer() {
                         placeholder="custom-alias"
                         spellCheck={false}
                         autoComplete="off"
-                        className="h-9 pr-8 font-mono text-xs"
+                        className="pr-8 font-mono text-xs"
                       />
                       <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
                         {aliasVerdict.state === "checking" && (
@@ -697,8 +697,8 @@ export function LinkComposer() {
                         <Button
                           type="button"
                           variant="outline"
-                          size="icon-sm"
-                          className="size-9 shrink-0"
+                          size="icon"
+                          className="shrink-0"
                           aria-label="Suggest an alias"
                         >
                           <Dices />
@@ -749,7 +749,7 @@ export function LinkComposer() {
                         setExpiry(v)
                       }}
                       placeholder="Never"
-                      className="h-9 w-full"
+                      className="w-full"
                     />
                     <div className="flex items-center gap-1">
                       {EXPIRY_PRESETS.map(([label, hours]) => (
@@ -785,7 +785,7 @@ export function LinkComposer() {
                         setMaxClicks(e.target.value)
                       }}
                       placeholder="Unlimited"
-                      className="h-9 font-mono text-xs"
+                      className="font-mono text-xs"
                     />
                   </Field>
                 </div>
@@ -825,13 +825,11 @@ export function LinkComposer() {
                       visible={passwordVisible}
                       onVisibleChange={setPasswordVisible}
                       placeholder="None"
-                      className="[&_input]:h-9"
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      className="h-9 shrink-0"
+                      className="shrink-0"
                       onClick={() => {
                         trackUiAction("password_suggested")
                         optionUse.note("password", true)
@@ -977,15 +975,10 @@ export function LinkComposer() {
         </Tabs>
 
         <div className="flex items-center justify-end gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setOpen(false)}
-          >
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button size="sm" disabled={!canCreate} onClick={submit}>
+          <Button disabled={!canCreate} onClick={submit}>
             {create.isPending && (
               <LoaderCircle className="size-3.5 animate-spin" />
             )}

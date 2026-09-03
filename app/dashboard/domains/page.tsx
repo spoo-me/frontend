@@ -75,7 +75,7 @@ export default function DomainsPage() {
             Serve short links from your own domain, with per-domain routing.
           </p>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
+        <Button onClick={() => setAddOpen(true)}>
           <Plus data-icon="inline-start" />
           Add domain
         </Button>
@@ -92,7 +92,7 @@ export default function DomainsPage() {
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No custom domains yet
             </span>
-            <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Button onClick={() => setAddOpen(true)}>
               <Plus data-icon="inline-start" />
               Add your first domain
             </Button>
@@ -168,13 +168,12 @@ export default function DomainsPage() {
               }}
               placeholder="go.yourdomain.com"
               spellCheck={false}
-              className="h-9 font-mono text-xs"
+              className="font-mono text-xs"
             />
             {error && <p className="text-destructive text-xs">{error}</p>}
           </div>
           <DialogFooter>
             <Button
-              size="sm"
               disabled={!fqdn.trim() || create.isPending}
               onClick={() => create.mutate()}
             >

@@ -127,11 +127,11 @@ export function TagPicker({
     ) : (
       <Button
         variant="outline"
-        size="sm"
+        size={variant === "compact" ? "icon" : "default"}
         aria-label={label}
         title={variant === "compact" ? label : undefined}
         className={cn(
-          variant === "compact" ? "relative size-7 p-0" : "h-8",
+          variant === "compact" && "relative",
           selected.length > 0 && "border-brand/40",
           className
         )}

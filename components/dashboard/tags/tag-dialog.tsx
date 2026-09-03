@@ -123,7 +123,6 @@ export function TagDialog({
         />
         <DialogFooter>
           <Button
-            size="sm"
             disabled={!!problem || save.isPending}
             onClick={() => save.mutate()}
           >
