@@ -446,7 +446,7 @@ function CountrySelect({
         <CommandPrimitive className="flex flex-col">
           <CommandPrimitive.Input
             placeholder="Search countries…"
-            className="h-9 w-full border-border/60 border-b bg-transparent px-3 text-xs outline-none placeholder:text-muted-foreground/60"
+            className="h-10 w-full border-border/60 border-b bg-transparent px-3 text-[13px] outline-none placeholder:text-muted-foreground/60"
           />
           <CommandPrimitive.List className="max-h-56 overflow-y-auto p-1 [mask-image:linear-gradient(to_bottom,black,black_calc(100%-16px),transparent)]">
             <CommandPrimitive.Empty className="px-2.5 py-6 text-center text-muted-foreground text-xs">
@@ -460,20 +460,20 @@ function CountrySelect({
                   onChange(a2)
                   setOpen(false)
                 }}
-                className="flex h-8 cursor-default select-none items-center gap-2 rounded-md px-2 text-xs data-[selected=true]:bg-accent/70"
+                className="flex h-9 cursor-default select-none items-center gap-2.5 rounded-md px-2.5 text-[13px] data-[selected=true]:bg-accent/70"
               >
                 <DimensionIcon
                   dimension="country"
                   value={a2}
-                  className="size-3.5 shrink-0"
+                  className="size-4 shrink-0"
                 />
                 <span className="min-w-0 flex-1 truncate text-foreground">
                   {name}
                 </span>
-                <span className="shrink-0 font-mono text-[10px] text-muted-foreground/60">
+                <span className="shrink-0 font-mono text-[11px] text-muted-foreground/60">
                   {a2}
                 </span>
-                {value === a2 && <Check className="size-3.5 shrink-0" />}
+                {value === a2 && <Check className="size-4 shrink-0" />}
               </CommandPrimitive.Item>
             ))}
           </CommandPrimitive.List>
@@ -536,7 +536,7 @@ export function GeoRulesEditor({
                 : "this country"
             }`}
             spellCheck={false}
-            className="h-9 flex-1 font-mono text-xs"
+            className="flex-1 font-mono text-xs"
           />
           <Button
             type="button"
@@ -552,8 +552,6 @@ export function GeoRulesEditor({
       <Button
         type="button"
         variant="outline"
-        size="sm"
-        className="h-8"
         disabled={rules.length >= GEO_RULES_MAX_COUNTRIES}
         onClick={() => onChange([...rules, { country: "", url: "" }])}
       >
@@ -608,7 +606,7 @@ export function VariantsEditor({
             }
             placeholder={`https://example.com/variant-${String.fromCharCode(98 + i)}`}
             spellCheck={false}
-            className="h-9 flex-1 font-mono text-xs"
+            className="flex-1 font-mono text-xs"
           />
           <div className="relative shrink-0">
             <Input
@@ -624,7 +622,7 @@ export function VariantsEditor({
                 )
               }
               placeholder="50"
-              className="h-9 w-16 pr-6 font-mono text-xs"
+              className="w-16 pr-6 font-mono text-xs"
             />
             <span className="absolute top-1/2 right-2.5 -translate-y-1/2 font-mono text-muted-foreground/60 text-xs">
               %
@@ -644,8 +642,6 @@ export function VariantsEditor({
       <Button
         type="button"
         variant="outline"
-        size="sm"
-        className="h-8"
         onClick={() => onChange([...variants, { url: "", weight: "" }])}
       >
         <Plus data-icon="inline-start" />
@@ -781,7 +777,7 @@ export function MetaTagsEditor({
             onChange={(e) => patch({ title: e.target.value })}
             placeholder="From the destination"
             maxLength={META_TITLE_MAX}
-            className={cn("h-9 text-xs", restorable("title") && "pr-8")}
+            className={cn("text-xs", restorable("title") && "pr-8")}
           />
           {restorable("title") && (
             <RestoreBtn
@@ -801,7 +797,7 @@ export function MetaTagsEditor({
             onChange={(e) => patch({ description: e.target.value })}
             placeholder="From the destination"
             maxLength={META_DESCRIPTION_MAX}
-            className={cn("h-9 text-xs", restorable("description") && "pr-8")}
+            className={cn("text-xs", restorable("description") && "pr-8")}
           />
           {restorable("description") && (
             <RestoreBtn
@@ -842,7 +838,7 @@ export function MetaTagsEditor({
                 placeholder="https://example.com/og.png"
                 spellCheck={false}
                 className={cn(
-                  "h-9 font-mono text-xs",
+                  "font-mono text-xs",
                   restorable("image") && "pr-8"
                 )}
               />
@@ -858,8 +854,8 @@ export function MetaTagsEditor({
           <Button
             type="button"
             variant="outline"
-            size="icon-sm"
-            className="size-9 shrink-0"
+            size="icon"
+            className="shrink-0"
             aria-label="Upload an image"
             onClick={() => fileRef.current?.click()}
           >
@@ -929,7 +925,7 @@ export function MetaTagsEditor({
             }}
             placeholder="None"
             spellCheck={false}
-            className="h-9 w-36 font-mono text-xs"
+            className="w-36 font-mono text-xs"
           />
           <span className="flex items-center gap-1">
             {COLOR_PRESETS.map((c) => (

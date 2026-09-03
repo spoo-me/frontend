@@ -220,7 +220,7 @@ export function LinkActions({
                 placeholder="delete"
                 spellCheck={false}
                 autoComplete="off"
-                className="h-9 font-mono text-xs"
+                className="font-mono text-xs"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && confirmed) {
                     setConfirmOpen(false)

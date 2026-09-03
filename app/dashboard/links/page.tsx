@@ -590,7 +590,7 @@ export default function LinksPage() {
             onChange={(e) => setSearchDraft(e.target.value)}
             placeholder="Search links…"
             spellCheck={false}
-            className="h-8 w-56 pl-8 text-[13px]"
+            className="w-56 pl-8 text-[13px]"
           />
         </div>
 
@@ -598,7 +598,7 @@ export default function LinksPage() {
             should act on the first click, not eat it. */}
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8">
+            <Button variant="outline">
               <ListFilter data-icon="inline-start" />
               Filters
               {activeFilterCount > 0 && (
@@ -623,7 +623,7 @@ export default function LinksPage() {
               >
                 <span
                   className={cn(
-                    "size-1.5 rounded-full",
+                    "size-2.5 rounded-[3px]",
                     s === "ACTIVE" && "bg-live",
                     s === "INACTIVE" && "bg-muted-foreground/50",
                     s === "EXPIRED" && "bg-amber-500",
@@ -713,7 +713,7 @@ export default function LinksPage() {
               icon={
                 <span
                   className={cn(
-                    "size-1.5 rounded-full",
+                    "size-2.5 rounded-[3px]",
                     status === "ACTIVE" && "bg-live",
                     status === "INACTIVE" && "bg-muted-foreground/50",
                     status === "EXPIRED" && "bg-amber-500",
@@ -786,7 +786,7 @@ export default function LinksPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-border/60 border-b bg-muted text-left text-muted-foreground dark:bg-muted/40">
-              <th className="label-mono relative h-9 w-full px-4 font-medium text-[10px]">
+              <th className="label-mono relative h-10 w-full px-4 font-medium">
                 {/* Same swap grammar as rows: label at rest, select-all on
                       header hover or while a selection exists. */}
                 <span
@@ -814,21 +814,21 @@ export default function LinksPage() {
                   />
                 </span>
               </th>
-              <th className="label-mono hidden h-9 px-3 font-medium text-[10px] sm:table-cell">
+              <th className="label-mono hidden h-10 px-3 font-medium sm:table-cell">
                 Status
               </th>
-              <th className="label-mono h-9 px-3 font-medium text-[10px]">
+              <th className="label-mono h-10 px-3 font-medium">
                 <span className="flex justify-end">
                   {sortHeader("total_clicks", "Clicks")}
                 </span>
               </th>
-              <th className="label-mono hidden h-9 whitespace-nowrap px-3 font-medium text-[10px] md:table-cell">
+              <th className="label-mono hidden h-10 whitespace-nowrap px-3 font-medium md:table-cell">
                 {sortHeader("last_click", "Last click")}
               </th>
-              <th className="label-mono hidden h-9 whitespace-nowrap px-3 font-medium text-[10px] lg:table-cell">
+              <th className="label-mono hidden h-10 whitespace-nowrap px-3 font-medium lg:table-cell">
                 {sortHeader("created_at", "Created")}
               </th>
-              <th className="h-9 w-10 px-2" />
+              <th className="h-10 w-10 px-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
@@ -857,7 +857,7 @@ export default function LinksPage() {
                         : "No links yet"}
                     </span>
                     {!q && !activeFilterCount && (
-                      <Button size="sm" onClick={() => openLinkComposer()}>
+                      <Button onClick={() => openLinkComposer()}>
                         <Plus data-icon="inline-start" />
                         Create your first link
                       </Button>
@@ -932,7 +932,6 @@ export default function LinksPage() {
               </span>
               <Button
                 variant="outline"
-                size="sm"
                 className="shrink-0 max-sm:px-2.5"
                 aria-label="Activate selected"
                 disabled={bulk.isPending}
@@ -945,7 +944,6 @@ export default function LinksPage() {
               </Button>
               <Button
                 variant="outline"
-                size="sm"
                 className="shrink-0 max-sm:px-2.5"
                 aria-label="Deactivate selected"
                 disabled={bulk.isPending}
@@ -960,7 +958,6 @@ export default function LinksPage() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    size="sm"
                     className="shrink-0 px-2.5"
                     aria-label="More bulk actions"
                     disabled={bulk.isPending}
@@ -993,7 +990,6 @@ export default function LinksPage() {
               </DropdownMenu>
               <Button
                 variant="destructive"
-                size="sm"
                 className="shrink-0 max-sm:px-2.5"
                 aria-label="Delete selected"
                 disabled={bulk.isPending}
@@ -1008,7 +1004,7 @@ export default function LinksPage() {
               />
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="icon"
                 className="rounded-full"
                 aria-label="Clear selection"
                 onClick={clearSelection}
@@ -1052,7 +1048,7 @@ export default function LinksPage() {
               placeholder="delete"
               spellCheck={false}
               autoComplete="off"
-              className="h-9 font-mono text-xs"
+              className="font-mono text-xs"
             />
           </div>
           <AlertDialogFooter>
@@ -1112,7 +1108,6 @@ export default function LinksPage() {
           </div>
           <DialogFooter>
             <Button
-              size="sm"
               disabled={!moveTarget || bulk.isPending}
               onClick={() =>
                 bulk.mutate({
@@ -1158,7 +1153,6 @@ export default function LinksPage() {
           <DialogFooter>
             <Button
               variant="ghost"
-              size="sm"
               disabled={bulk.isPending}
               onClick={() =>
                 bulk.mutate({
@@ -1171,7 +1165,6 @@ export default function LinksPage() {
               Remove expiry
             </Button>
             <Button
-              size="sm"
               disabled={!bulkExpiry || bulk.isPending}
               onClick={() =>
                 bulk.mutate({

@@ -554,7 +554,7 @@ export function LinkSettingsForm({
             value={longUrl}
             onChange={(e) => setLongUrl(e.target.value)}
             spellCheck={false}
-            className="h-9 font-mono text-xs"
+            className="font-mono text-xs"
           />
         </Field>
 
@@ -616,7 +616,7 @@ export function LinkSettingsForm({
                 value={alias}
                 onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
                 spellCheck={false}
-                className="h-9 pr-8 font-mono text-xs"
+                className="pr-8 font-mono text-xs"
               />
               <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
                 {aliasVerdict.state === "checking" && (
@@ -633,8 +633,8 @@ export function LinkSettingsForm({
             <Button
               type="button"
               variant="outline"
-              size="icon-sm"
-              className="size-9 shrink-0"
+              size="icon"
+              className="shrink-0"
               aria-label="Suggest an alias"
               onClick={() => setAlias(suggestAlias())}
             >
@@ -664,7 +664,7 @@ export function LinkSettingsForm({
                   visible={passwordVisible}
                   onVisibleChange={setPasswordVisible}
                   readOnly
-                  className="[&_input]:h-9 [&_input]:bg-muted/30"
+                  className="[&_input]:bg-muted/30"
                 />
               ) : (
                 <span className="flex h-9 flex-1 items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-muted-foreground text-xs">
@@ -726,13 +726,11 @@ export function LinkSettingsForm({
                     ? "New password"
                     : "Add a password (optional)"
                 }
-                className="[&_input]:h-9"
               />
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="h-9 shrink-0"
+                className="shrink-0"
                 onClick={() => {
                   setPasswordMode("set")
                   setNewPassword(suggestPassword())
@@ -796,7 +794,7 @@ export function LinkSettingsForm({
                 value={maxClicks}
                 onChange={(e) => setMaxClicks(e.target.value)}
                 placeholder="Unlimited"
-                className="h-9 font-mono text-xs"
+                className="font-mono text-xs"
               />
               {maxClicks && (
                 <Button
@@ -920,11 +918,7 @@ export function LinkSettingsForm({
         >
           {save.isPending ? "Saving…" : (saveBlocker ?? "Unsaved changes")}
         </span>
-        <Button
-          size="sm"
-          disabled={!canSave}
-          onClick={() => setConfirmOpen(true)}
-        >
+        <Button disabled={!canSave} onClick={() => setConfirmOpen(true)}>
           Save changes
         </Button>
       </div>

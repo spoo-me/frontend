@@ -138,7 +138,7 @@ export function CreateBox() {
           autoComplete="off"
           spellCheck={false}
           disabled={create.isPending}
-          className="h-9 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 aria-invalid:border-transparent aria-invalid:ring-0 dark:bg-transparent dark:shadow-none"
+          className="border-0 bg-transparent px-2 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 aria-invalid:border-transparent aria-invalid:ring-0 dark:bg-transparent dark:shadow-none"
         />
         <Tooltip>
           <TooltipTrigger asChild>

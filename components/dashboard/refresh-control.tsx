@@ -40,8 +40,8 @@ export function RefreshControl({
     <div className={cn("flex items-center", className)}>
       <Button
         variant="outline"
-        size="icon-sm"
-        className="h-8 w-8 rounded-r-none"
+        size="icon"
+        className="rounded-r-none"
         aria-label="Refresh now"
         onClick={() => {
           trackUiAction("stats_refreshed")
@@ -57,8 +57,7 @@ export function RefreshControl({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            size="sm"
-            className="h-8 gap-1 rounded-l-none border-l-0 px-1.5"
+            className="gap-1 rounded-l-none border-l-0 px-1.5"
             aria-label="Auto-refresh interval"
           >
             {intervalMs !== false && (

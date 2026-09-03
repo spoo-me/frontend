@@ -395,7 +395,7 @@ export default function AnalyticsPage() {
             ml-auto would strand it right-aligned on its own row. */}
         <span className="flex items-center gap-1.5 lg:ml-auto">
           {isLgUp && !editing && (
-            <Button variant="outline" size="sm" onClick={startEditing}>
+            <Button variant="outline" onClick={startEditing}>
               <LayoutGrid data-icon="inline-start" />
               Edit layout
             </Button>
@@ -455,7 +455,7 @@ export default function AnalyticsPage() {
               this dashboard is empty
             </span>
             {isLgUp ? (
-              <Button size="sm" onClick={startEditing}>
+              <Button onClick={startEditing}>
                 <Plus data-icon="inline-start" />
                 Add widgets
               </Button>
