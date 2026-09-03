@@ -95,6 +95,7 @@ export function trackLinkCreated(
     has_password: !!input.password,
     has_expiry: input.expire_after != null,
     has_max_clicks: input.max_clicks != null,
+    has_expired_fallback: input.expired_redirect_url != null,
     has_geo_rules: geoCount > 0,
     geo_rules_count: geoCount,
     has_ab_variants: variantCount > 0,
@@ -116,6 +117,7 @@ export type CreateOption =
   | "password"
   | "expiry"
   | "max_clicks"
+  | "expired_redirect_url"
   | "block_bots"
   | "private_stats"
   | "geo_rules"

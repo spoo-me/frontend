@@ -22,6 +22,7 @@ import {
   type UpdateUrlInput,
   type UrlListItem,
 } from "@/lib/api"
+import { displayUrl } from "@/lib/format"
 import { normalizeUrl, urlProblem } from "@/lib/validation"
 import { countGraphemes } from "@/lib/emoji-alias"
 import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
@@ -192,6 +193,16 @@ function describeChanges(
       from: link.max_clicks != null ? String(link.max_clicks) : "unlimited",
       to: patch.max_clicks != null ? String(patch.max_clicks) : "unlimited",
     })
+  if (patch.expired_redirect_url !== undefined)
+    rows.push({
+      field: "After expiry",
+      from: link.expired_redirect_url
+        ? displayUrl(link.expired_redirect_url)
+        : "expired page",
+      to: patch.expired_redirect_url
+        ? displayUrl(patch.expired_redirect_url)
+        : "expired page",
+    })
   if (patch.block_bots !== undefined)
     rows.push({
       field: "Block bots",
@@ -311,6 +322,9 @@ export function LinkSettingsForm({
   const [maxClicks, setMaxClicks] = React.useState(
     link.max_clicks != null ? String(link.max_clicks) : ""
   )
+  const [fallbackUrl, setFallbackUrl] = React.useState(
+    link.expired_redirect_url ?? ""
+  )
   const [blockBots, setBlockBots] = React.useState(Boolean(link.block_bots))
   const [privateStats, setPrivateStats] = React.useState(
     Boolean(link.private_stats)
@@ -391,6 +405,9 @@ export function LinkSettingsForm({
     url: string
     message: string
   } | null>(null)
+  const [serverFallbackError, setServerFallbackError] = React.useState<
+    string | null
+  >(null)
   const aliasServerMsg =
     serverAliasError &&
     serverAliasError.alias === alias &&
@@ -424,6 +441,9 @@ export function LinkSettingsForm({
   const maxClicksVal = maxClicks === "" ? null : Number(maxClicks)
   if (maxClicksVal !== (link.max_clicks ?? null))
     patch.max_clicks = maxClicksVal
+  const fallbackVal = fallbackUrl.trim() ? normalizeUrl(fallbackUrl) : null
+  if (fallbackVal !== (link.expired_redirect_url ?? null))
+    patch.expired_redirect_url = fallbackVal
   if (blockBots !== Boolean(link.block_bots)) patch.block_bots = blockBots
   if (privateStats !== Boolean(link.private_stats))
     patch.private_stats = privateStats
@@ -467,6 +487,11 @@ export function LinkSettingsForm({
             ? serverUrlError.message
             : null))
 
+  const fallbackProblem =
+    patch.expired_redirect_url === undefined || !fallbackUrl.trim()
+      ? null
+      : (urlProblem(fallbackUrl) ?? serverFallbackError)
+
   const save = useMutation({
     mutationFn: () => updateUrl(link.id, patch),
     onSuccess: (next) => {
@@ -505,6 +530,14 @@ export function LinkSettingsForm({
         setServerAliasError({ alias, domain, message: err.message })
         return
       }
+      if (err instanceof SpooApiError && err.field === "expired_redirect_url") {
+        setServerFallbackError(
+          err.message === "URL is blocked"
+            ? "That fallback is blocked on spoo.me."
+            : err.message
+        )
+        return
+      }
       toast.error(err instanceof Error ? err.message : "Couldn't save changes")
     },
   })
@@ -527,6 +560,7 @@ export function LinkSettingsForm({
     }
     if (variantTotal(variants) > 100) return "A/B split exceeds 100%."
     if (geoRulesProblem(geoRules)) return "Fix the geo rules to save."
+    if (fallbackProblem) return "Fix the fallback URL to save."
     if (metaProblem) return "Fix the link preview to save."
     return null
   })()
@@ -812,6 +846,42 @@ export function LinkSettingsForm({
             </div>
           </Field>
         </div>
+
+        <Velvet feature="expired_fallback">
+          <Field
+            label="After expiry"
+            hint="Where visitors land once the link has expired, by time or by click limit."
+            error={fallbackProblem}
+          >
+            <div className="flex items-center gap-1.5">
+              <Input
+                type="url"
+                inputMode="url"
+                value={fallbackUrl}
+                onChange={(e) => {
+                  setServerFallbackError(null)
+                  setFallbackUrl(e.target.value)
+                }}
+                placeholder="Expired page"
+                className="h-9 font-mono text-xs"
+              />
+              {fallbackUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Remove fallback URL"
+                  onClick={() => {
+                    setServerFallbackError(null)
+                    setFallbackUrl("")
+                  }}
+                >
+                  <X />
+                </Button>
+              )}
+            </div>
+          </Field>
+        </Velvet>
 
         <div className="divide-y divide-border/60 rounded-xl border border-border/60">
           <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">

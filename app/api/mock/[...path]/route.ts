@@ -197,6 +197,42 @@ function longUrlFail(raw: unknown, required: boolean): NextResponse | null {
   return null
 }
 
+/** expired_redirect_url is a destination: same validate_url + blocklist
+    gate as long_url, with its own field path. null/"" clears. */
+function fallbackUrlFail(
+  raw: unknown
+): { ok: string | null } | { err: NextResponse } {
+  if (raw === undefined || raw === null || raw === "") return { ok: null }
+  if (typeof raw !== "string")
+    return {
+      err: fail(
+        422,
+        "validation_error",
+        "expired_redirect_url: Input should be a valid string",
+        "expired_redirect_url"
+      ),
+    }
+  if (!validDestinationUrl(raw))
+    return {
+      err: fail(
+        400,
+        "validation_error",
+        "URL is not allowed or invalid",
+        "expired_redirect_url"
+      ),
+    }
+  if (urlIsBlocked(raw))
+    return {
+      err: fail(
+        400,
+        "validation_error",
+        "URL is blocked",
+        "expired_redirect_url"
+      ),
+    }
+  return { ok: raw }
+}
+
 function user() {
   const s = state()
   return {
@@ -254,6 +290,7 @@ function linkItem(l: MockLink) {
     last_click: l.last_click,
     domain: l.domain,
     geo_rules: l.geo_rules,
+    expired_redirect_url: l.expired_redirect_url,
     ab_variants: l.ab_variants,
     meta_tags: l.meta_tags,
   }
@@ -1374,6 +1411,8 @@ async function handle(req: NextRequest, path: string[]) {
       if ("err" in geo) return geo.err
       const meta = normalizeMetaTags(body.meta_tags)
       if ("err" in meta) return meta.err
+      const fallback = fallbackUrlFail(body.expired_redirect_url)
+      if ("err" in fallback) return fallback.err
       // Flag-gated + verified-account only (403 with a clear message —
       // the field rides a shared endpoint, nothing to hide). PR #231.
       if (meta.ok !== null && !s.verified)
@@ -1400,6 +1439,7 @@ async function handle(req: NextRequest, path: string[]) {
         total_clicks: 0,
         last_click: null,
         geo_rules: geo.ok,
+        expired_redirect_url: fallback.ok,
         ab_variants: parseVariants(body.ab_variants),
         meta_tags: meta.ok,
         weight: 1,
@@ -1421,6 +1461,7 @@ async function handle(req: NextRequest, path: string[]) {
         private_stats: link.private_stats,
         // UrlResponse echoes the normalized map (or null) — PR #230.
         geo_rules: link.geo_rules,
+        expired_redirect_url: link.expired_redirect_url,
         // UrlResponse echoes the full object with explicit nulls — PR #231.
         meta_tags: link.meta_tags,
       })
@@ -1762,6 +1803,11 @@ async function handle(req: NextRequest, path: string[]) {
         if ("err" in geo) return geo.err
         link.geo_rules = geo.ok
       }
+      if ("expired_redirect_url" in body) {
+        const fallback = fallbackUrlFail(body.expired_redirect_url)
+        if ("err" in fallback) return fallback.err
+        link.expired_redirect_url = fallback.ok
+      }
       if ("ab_variants" in body)
         link.ab_variants =
           body.ab_variants === null ? null : parseVariants(body.ab_variants)
@@ -2081,6 +2127,7 @@ async function handle(req: NextRequest, path: string[]) {
         custom_meta_tags: "enabled",
         ab_testing: "enabled",
         webhooks: "enabled",
+        expired_fallback: "enabled",
       },
     })
   }

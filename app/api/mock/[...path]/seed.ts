@@ -35,6 +35,8 @@ export type MockLink = {
   last_click: string | null
   /** Real wire shape (backend PR #230): UPPERCASE ISO alpha-2 → URL. */
   geo_rules: Record<string, string> | null
+  /** Served with a 302 once the link is EXPIRED; null = the expired page. */
+  expired_redirect_url: string | null
   ab_variants: Array<{ url: string; weight: number }> | null
   /** Real wire shape (backend PR #231): full echo, explicit nulls;
       `warnings` stays null until async image validation runs. */
@@ -213,6 +215,14 @@ export function buildLinks(): MockLink[] {
               BR: "https://spoo.me/br/#pricing",
             }
           : null,
+      // "webinar" has already expired and "invite" carries a click cap:
+      // both show the fallback state without touching the seed clock.
+      expired_redirect_url:
+        alias === "webinar"
+          ? "https://acme.dev/webinar/replay"
+          : alias === "invite"
+            ? "https://acme.dev/waitlist"
+            : null,
       ab_variants: null,
       // "launch" carries a custom social card — the meta editor and the
       // unfurl previews have something real to round-trip out of the box.

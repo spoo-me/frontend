@@ -203,6 +203,7 @@ export function LinkComposer() {
   const [passwordVisible, setPasswordVisible] = React.useState(false)
   const [expiry, setExpiry] = React.useState("")
   const [maxClicks, setMaxClicks] = React.useState("")
+  const [fallbackUrl, setFallbackUrl] = React.useState("")
   // One draft row ready to fill: an empty section behind an add-button is
   // a click tax; incomplete drafts never travel.
   const [geoRules, setGeoRules] = React.useState<GeoRuleDraft[]>([
@@ -227,6 +228,9 @@ export function LinkComposer() {
     url: string
     message: string
   } | null>(null)
+  const [serverFallbackError, setServerFallbackError] = React.useState<
+    string | null
+  >(null)
 
   // Destination-tag prefill (GET /api/v1/metadata, PR #231). The long URL
   // debounces ~600ms into a stable key; the fetch itself only runs while
@@ -292,6 +296,8 @@ export function LinkComposer() {
     setPassword("")
     setExpiry("")
     setMaxClicks("")
+    setFallbackUrl("")
+    setServerFallbackError(null)
     setGeoRules([{ country: "", url: "" }])
     setVariants([{ url: "", weight: "" }])
     setMeta(emptyMetaDraft())
@@ -374,6 +380,9 @@ export function LinkComposer() {
   const geoPayload = completeGeoRules(geoRules)
   const geoCount = Object.keys(geoPayload).length
   const geoProblem = geoRulesProblem(geoRules)
+  const fallbackProblem = fallbackUrl.trim()
+    ? (urlProblem(fallbackUrl) ?? serverFallbackError)
+    : null
   const variantPayload = completeVariants(variants)
   // Uncustomized = inherit the destination's live tags: the (display-only)
   // prefill never travels and never blocks submit.
@@ -416,6 +425,16 @@ export function LinkComposer() {
               ? "That destination is blocked on spoo.me."
               : err.message,
         })
+      } else if (
+        err instanceof SpooApiError &&
+        err.field === "expired_redirect_url"
+      ) {
+        setTab("basic")
+        setServerFallbackError(
+          err.message === "URL is blocked"
+            ? "That fallback is blocked on spoo.me."
+            : err.message
+        )
       } else {
         toast.error(
           err instanceof Error ? err.message : "Couldn't create the link"
@@ -430,6 +449,7 @@ export function LinkComposer() {
     !create.isPending &&
     weights <= 100 &&
     !geoProblem &&
+    !fallbackProblem &&
     !metaProblem &&
     (alias === "" ||
       aliasVerdict.state === "available" ||
@@ -449,6 +469,9 @@ export function LinkComposer() {
         ? { expire_after: Math.floor(new Date(expiry).getTime() / 1000) }
         : {}),
       ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
+      ...(fallbackUrl.trim()
+        ? { expired_redirect_url: normalizeUrl(fallbackUrl) }
+        : {}),
       ...(blockBots ? { block_bots: true } : {}),
       ...(privateStats ? { private_stats: true } : {}),
       ...(geoCount ? { geo_rules: geoPayload } : {}),
@@ -473,7 +496,7 @@ export function LinkComposer() {
     normalized !== longUrl.trim() &&
     looksLikeUrl(longUrl)
 
-  const basicSet = expiry !== "" || maxClicks !== ""
+  const basicSet = expiry !== "" || maxClicks !== "" || fallbackUrl !== ""
   const securitySet = password !== "" || blockBots || privateStats
   const targetingSet = geoCount > 0 || variantPayload.length > 0
 
@@ -783,6 +806,30 @@ export function LinkComposer() {
                     />
                   </Field>
                 </div>
+
+                <Velvet feature="expired_fallback">
+                  <Field
+                    label="After expiry"
+                    hint="Where visitors land once the link has expired, by time or by click limit."
+                    error={fallbackProblem}
+                  >
+                    <Input
+                      type="url"
+                      inputMode="url"
+                      value={fallbackUrl}
+                      onChange={(e) => {
+                        optionUse.note(
+                          "expired_redirect_url",
+                          e.target.value !== ""
+                        )
+                        setServerFallbackError(null)
+                        setFallbackUrl(e.target.value)
+                      }}
+                      placeholder="Expired page"
+                      className="h-9 font-mono text-xs"
+                    />
+                  </Field>
+                </Velvet>
               </TabsContent>
 
               <TabsContent value="security" className="space-y-5">

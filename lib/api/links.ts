@@ -10,6 +10,7 @@ export type ShortUrl = {
   status: string
   private_stats: boolean | null
   geo_rules?: GeoRules | null
+  expired_redirect_url?: string | null
   meta_tags?: MetaTags | null
   /** One-time bearer proof of creation, anonymous creates only. Shown
       exactly once; store it or lose the ability to claim the link. */
@@ -88,6 +89,8 @@ export type UrlListItem = {
   domain: string | null
   geo_rules?: GeoRules | null
   ab_variants?: AbVariant[] | null
+  /** Where visitors land once the link has expired; null = the expired page. */
+  expired_redirect_url?: string | null
   meta_tags?: MetaTags | null
 }
 
@@ -301,6 +304,9 @@ export type ShortenInput = {
   /** Live on the backend (PR #230); flag-gated — 403 when geo_targeting is
       off for the account, 401 for anonymous callers. */
   geo_rules?: GeoRules
+  /** Served with a 302 once the link has expired, by time or by click
+      limit. Flag-gated (expired_fallback): 403 when off, 401 anonymous. */
+  expired_redirect_url?: string
   /** Planned capability — typed now so the UI is contract-ready; the
       backend accepts-and-ignores until it ships. */
   ab_variants?: AbVariant[]
@@ -396,6 +402,8 @@ export type UpdateUrlInput = Partial<{
   /** Full replace; null or {} clears every rule (clearing is never gated). */
   geo_rules: GeoRules | null
   ab_variants: AbVariant[] | null
+  /** null clears (clearing is never gated). */
+  expired_redirect_url: string | null
   /** Whole-object replace; null clears (clearing is never gated). */
   meta_tags: MetaTagsInput | null
 }>
