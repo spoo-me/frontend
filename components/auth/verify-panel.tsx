@@ -236,7 +236,7 @@ export function VerifyPanel({
         </AnimatePresence>
       </div>
 
-      <p className="mt-4 text-muted-foreground text-sm">
+      <p translate="no" className="mt-4 text-muted-foreground text-sm">
         Didn&apos;t receive a code?{" "}
         {cooldown > 0 ? (
           <span className="text-muted-foreground/70 tabular-nums">

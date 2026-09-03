@@ -385,7 +385,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
         </AnimatePresence>
 
         {error && (
-          <p id="auth-error" role="alert" className="text-destructive text-sm">
+          <p
+            id="auth-error"
+            role="alert"
+            translate="no"
+            className="text-destructive text-sm"
+          >
             {error}
             {conflict && (
               <>
@@ -415,6 +420,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
         <Button
           type="submit"
+          translate="no"
           className="h-10 w-full"
           disabled={pending || !canSubmit}
         >

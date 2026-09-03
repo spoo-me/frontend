@@ -70,7 +70,10 @@ export default function OnboardingLayout({
 
       <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-14">
         {!user || redirecting ? (
-          <span className="label-mono animate-pulse text-[10px] text-muted-foreground/60">
+          <span
+            translate="no"
+            className="label-mono animate-pulse text-[10px] text-muted-foreground/60"
+          >
             loading…
           </span>
         ) : (
@@ -78,8 +81,14 @@ export default function OnboardingLayout({
         )}
       </main>
 
-      {/* Dub-style escape hatch — present on every step */}
-      <footer className="relative z-10 flex items-center justify-between px-6 pb-5 sm:px-10">
+      {/* Dub-style escape hatch — present on every step.
+          translate="no": sign-out unmounts this chrome's text nodes, and a
+          page translator has replaced them with its own elements by then, so
+          React's removal throws NotFoundError and blanks the page. */}
+      <footer
+        translate="no"
+        className="relative z-10 flex items-center justify-between px-6 pb-5 sm:px-10"
+      >
         <p className="text-muted-foreground/70 text-xs">
           {user ? (
             <>
