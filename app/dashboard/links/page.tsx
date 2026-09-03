@@ -9,6 +9,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query"
 import {
+  parseAsArrayOf,
   parseAsInteger,
   parseAsIsoDateTime,
   parseAsString,
@@ -34,6 +35,7 @@ import {
   Play,
   Plus,
   Search,
+  Tag,
   Timer,
   Trash2,
   X,
@@ -49,6 +51,7 @@ import {
   bulkMoveUrlDomain,
   bulkSetUrlExpiry,
   bulkSetUrlStatus,
+  bulkTagUrls,
   getUrl,
   listCustomDomains,
   listUrls,
@@ -113,6 +116,13 @@ import {
 } from "@/components/dashboard/links/link-actions"
 import { LinkSheet } from "@/components/dashboard/links/link-sheet"
 import { FilterChip } from "@/components/dashboard/filter-chip"
+import {
+  TAGS_QUERY_KEY,
+  TagList,
+  TagPicker,
+  useTags,
+} from "@/components/dashboard/tags/tag-picker"
+import { TagGlyph } from "@/components/dashboard/tags/tag-glyph"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
 import { TimeRangePicker } from "@/components/dashboard/analytics/time-range-picker"
 import { RefreshControl } from "@/components/dashboard/refresh-control"
@@ -183,6 +193,14 @@ export default function LinksPage() {
   )
   const [after, setAfter] = useQueryState("after", parseAsIsoDateTime)
   const [before, setBefore] = useQueryState("before", parseAsIsoDateTime)
+  const [tagFilter, setTagFilter] = useQueryState(
+    "tags",
+    parseAsArrayOf(parseAsString).withDefault([])
+  )
+  const [tagsMatch, setTagsMatch] = useQueryState(
+    "tagsMatch",
+    parseAsStringLiteral(["any", "all"] as const)
+  )
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1))
   const [selected, setSelected] = useQueryState("link", parseAsString)
 
@@ -230,6 +248,14 @@ export default function LinksPage() {
     ...(limitedOnly ? { maxClicksSet: limitedOnly === "yes" } : {}),
     ...(after ? { createdAfter: after.toISOString() } : {}),
     ...(before ? { createdBefore: before.toISOString() } : {}),
+    ...(tagFilter.length
+      ? {
+          tagIds: tagFilter,
+          ...(tagsMatch === "all" && tagFilter.length > 1
+            ? { tagsMatch: "all" as const }
+            : {}),
+        }
+      : {}),
   }
 
   // Filter/sort usage — one emission per change, skipping the initial
@@ -239,6 +265,7 @@ export default function LinksPage() {
     protectedOnly && `protected:${protectedOnly}`,
     limitedOnly && `limited:${limitedOnly}`,
     (after || before) && "created",
+    tagFilter.length && `tags:${tagsMatch ?? "any"}`,
   ]
     .filter(Boolean)
     .join(",")
@@ -304,6 +331,10 @@ export default function LinksPage() {
   }, [urls.data, page, sortBy, sortDir, JSON.stringify(filter)])
 
   const items = urls.data?.items ?? []
+  const knownTags = useTags()
+  // Column presence is a session-level fact (the account uses tags), not a
+  // per-page one, so paging never reflows the table.
+  const showTags = (knownTags.data?.items.length ?? 0) > 0
   const selectedRef = selected === null ? null : parseLinkSheetParam(selected)
   const selectedInPage = selectedRef
     ? (items.find(
@@ -337,6 +368,36 @@ export default function LinksPage() {
   const [moveTarget, setMoveTarget] = React.useState<string | null>(null)
   const [expiryOpen, setExpiryOpen] = React.useState(false)
   const [bulkExpiry, setBulkExpiry] = React.useState("")
+  const [tagsOpen, setTagsOpen] = React.useState(false)
+  // Bulk tag dialog: the checklist starts from the selection's own tags
+  // (on all = checked, on some = mixed) and the diff becomes add/remove.
+  const [bulkTagIds, setBulkTagIds] = React.useState<string[] | null>(null)
+  // Tag state of the selection: ids on every selected link vs on some.
+  const bulkTagState = React.useMemo(() => {
+    const picked = items.filter((l) => selectedIds.has(l.id))
+    const counts = new Map<string, number>()
+    for (const l of picked)
+      for (const t of l.tags ?? [])
+        counts.set(t.id, (counts.get(t.id) ?? 0) + 1)
+    // Selection survives paging, but only this page's rows are loaded. With
+    // off-page links in the selection nothing may claim "on every link", or
+    // an untick would strip tags from links the dialog never saw.
+    if (picked.length < selectedIds.size)
+      return { all: [] as string[], some: new Set(counts.keys()) }
+    const all: string[] = []
+    const some = new Set<string>()
+    for (const [id, n] of counts)
+      if (n === picked.length) all.push(id)
+      else some.add(id)
+    return { all, some }
+  }, [items, selectedIds])
+  const bulkTagDiff = React.useMemo(() => {
+    const next = bulkTagIds ?? bulkTagState.all
+    return {
+      add: next.filter((id) => !bulkTagState.all.includes(id)),
+      remove: bulkTagState.all.filter((id) => !next.includes(id)),
+    }
+  }, [bulkTagIds, bulkTagState])
   const domains = useQuery({
     queryKey: ["domains"],
     queryFn: listCustomDomains,
@@ -420,11 +481,13 @@ export default function LinksPage() {
       action,
       domain,
       expireAfter,
+      tags,
     }: {
       ids: string[]
-      action: "ACTIVE" | "INACTIVE" | "DELETE" | "DOMAIN" | "EXPIRY"
+      action: "ACTIVE" | "INACTIVE" | "DELETE" | "DOMAIN" | "EXPIRY" | "TAGS"
       domain?: string
       expireAfter?: number | null
+      tags?: { add: string[]; remove: string[] }
     }): Promise<{
       result: BulkOperationResult
       action: typeof action
@@ -438,7 +501,9 @@ export default function LinksPage() {
             ? await bulkMoveUrlDomain(ids, domain ?? null)
             : action === "EXPIRY"
               ? await bulkSetUrlExpiry(ids, expireAfter ?? null)
-              : await bulkSetUrlStatus(ids, action)
+              : action === "TAGS"
+                ? await bulkTagUrls(ids, tags?.add ?? [], tags?.remove ?? [])
+                : await bulkSetUrlStatus(ids, action)
       return { result, action, domain, expireAfter }
     },
     onSuccess: ({ result, action, domain, expireAfter }) => {
@@ -451,6 +516,7 @@ export default function LinksPage() {
       trackLinksBulkAction(action, total, failed)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
+      queryClient.invalidateQueries({ queryKey: TAGS_QUERY_KEY })
       const verb =
         action === "DELETE"
           ? "deleted"
@@ -462,7 +528,9 @@ export default function LinksPage() {
                 ? expireAfter == null
                   ? "expiry cleared"
                   : "set to expire"
-                : `moved to ${domain}`
+                : action === "TAGS"
+                  ? "retagged"
+                  : `moved to ${domain}`
 
       // The action ran, so its dialog is done regardless of outcome — the
       // selection bar and the toast carry the result, so no modal lingers.
@@ -472,6 +540,8 @@ export default function LinksPage() {
       setMoveTarget(null)
       setExpiryOpen(false)
       setBulkExpiry("")
+      setTagsOpen(false)
+      setBulkTagIds(null)
 
       if (failed === 0) {
         clearSelection()
@@ -666,6 +736,22 @@ export default function LinksPage() {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        <TagPicker
+          variant="button"
+          selected={tagFilter}
+          max={50}
+          match={tagsMatch ?? "any"}
+          onMatchChange={(m) => {
+            setTagsMatch(m === "any" ? null : m)
+            setPage(null)
+          }}
+          onChange={(v) => {
+            setTagFilter(v.length ? v : null)
+            if (v.length < 2) setTagsMatch(null)
+            setPage(null)
+          }}
+        />
+
         <TimeRangePicker
           value={after && before ? { from: after, to: before } : null}
           placeholder="All time"
@@ -693,7 +779,12 @@ export default function LinksPage() {
       </div>
 
       {/* Applied filter chips — always visible, dismissible (SPEC §7) */}
-      {(status || protectedOnly || limitedOnly || q || (after && before)) && (
+      {(status ||
+        protectedOnly ||
+        limitedOnly ||
+        q ||
+        tagFilter.length > 0 ||
+        (after && before)) && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {q && (
             <FilterChip
@@ -762,7 +853,39 @@ export default function LinksPage() {
               }}
             />
           )}
-          {activeFilterCount + (q ? 1 : 0) >= 2 && (
+          {tagFilter.map((id) => {
+            const tag = knownTags.data?.items.find((t) => t.id === id)
+            return (
+              <FilterChip
+                key={id}
+                label={
+                  tagsMatch === "all" && tagFilter.length > 1
+                    ? "Tags (all)"
+                    : "Tags"
+                }
+                icon={
+                  tag ? (
+                    <TagGlyph
+                      color={tag.color}
+                      icon={tag.icon}
+                      className="size-3"
+                    />
+                  ) : (
+                    <Tag className="size-3 text-muted-foreground" />
+                  )
+                }
+                value={tag?.name ?? id}
+                onClear={() => {
+                  const next = tagFilter.filter((v) => v !== id)
+                  setTagFilter(next.length ? next : null)
+                  if (next.length < 2) setTagsMatch(null)
+                  setPage(null)
+                }}
+              />
+            )
+          })}
+          {activeFilterCount + (q ? 1 : 0) + (tagFilter.length ? 1 : 0) >=
+            2 && (
             <button
               type="button"
               onClick={() => {
@@ -771,6 +894,8 @@ export default function LinksPage() {
                 setStatus(null)
                 setProtectedOnly(null)
                 setLimitedOnly(null)
+                setTagFilter(null)
+                setTagsMatch(null)
                 setPage(null)
               }}
               className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
@@ -814,6 +939,11 @@ export default function LinksPage() {
                   />
                 </span>
               </th>
+              {showTags && (
+                <th className="label-mono hidden h-9 px-3 font-medium text-[10px] lg:table-cell">
+                  Tags
+                </th>
+              )}
               <th className="label-mono hidden h-9 px-3 font-medium text-[10px] sm:table-cell">
                 Status
               </th>
@@ -835,7 +965,7 @@ export default function LinksPage() {
             {urls.isPending &&
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="px-4 py-3" colSpan={6}>
+                  <td className="px-4 py-3" colSpan={showTags ? 7 : 6}>
                     <div className="flex items-center gap-3">
                       <Skeleton className="size-9 rounded-lg" />
                       <div className="flex-1 space-y-1.5">
@@ -849,14 +979,14 @@ export default function LinksPage() {
 
             {!urls.isPending && !items.length && (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={showTags ? 7 : 6}>
                   <div className="pattern-dots m-4 flex h-48 flex-col items-center justify-center gap-3 rounded-lg">
                     <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
-                      {q || activeFilterCount
+                      {q || activeFilterCount || tagFilter.length
                         ? "Nothing matches these filters"
                         : "No links yet"}
                     </span>
-                    {!q && !activeFilterCount && (
+                    {!q && !activeFilterCount && !tagFilter.length && (
                       <Button size="sm" onClick={() => openLinkComposer()}>
                         <Plus data-icon="inline-start" />
                         Create your first link
@@ -874,6 +1004,12 @@ export default function LinksPage() {
                 onOpen={() => setSelected(linkSheetParam(link))}
                 rowSelected={selectedIds.has(link.id)}
                 onToggleSelect={() => toggleId(link.id)}
+                showTags={showTags}
+                onTagClick={(tag) => {
+                  if (!tagFilter.includes(tag))
+                    setTagFilter([...tagFilter, tag])
+                  setPage(null)
+                }}
               />
             ))}
           </tbody>
@@ -976,6 +1112,10 @@ export default function LinksPage() {
                   <DropdownMenuItem onSelect={() => setMoveOpen(true)}>
                     <Globe />
                     Move to domain…
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setTagsOpen(true)}>
+                    <Tag />
+                    Edit tags…
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setExpiryOpen(true)}>
                     <Timer />
@@ -1130,6 +1270,54 @@ export default function LinksPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk: edit tags on the selection */}
+      <Dialog
+        open={tagsOpen}
+        onOpenChange={(v) => {
+          setTagsOpen(v)
+          if (!v) setBulkTagIds(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              Tags on {selectedIds.size} link
+              {selectedIds.size === 1 ? "" : "s"}
+            </DialogTitle>
+            <DialogDescription>
+              Ticked tags go on every selected link, unticked ones come off. A
+              dash means only some of them carry it; leave it to keep that.
+            </DialogDescription>
+          </DialogHeader>
+          <TagPicker
+            selected={bulkTagIds ?? bulkTagState.all}
+            mixed={bulkTagState.some}
+            onChange={setBulkTagIds}
+            placeholder="Choose tags"
+          />
+          <DialogFooter>
+            <Button
+              size="sm"
+              disabled={
+                (!bulkTagDiff.add.length && !bulkTagDiff.remove.length) ||
+                bulk.isPending
+              }
+              onClick={() =>
+                bulk.mutate({
+                  ids: [...selectedIds],
+                  action: "TAGS",
+                  tags: bulkTagDiff,
+                })
+              }
+            >
+              {bulk.isPending
+                ? "Saving…"
+                : `Apply to ${selectedIds.size} link${selectedIds.size === 1 ? "" : "s"}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Bulk: set / clear expiry */}
       <Dialog
         open={expiryOpen}
@@ -1207,12 +1395,17 @@ function LinkRow({
   onOpen,
   rowSelected,
   onToggleSelect,
+  onTagClick,
+  showTags,
 }: {
   link: UrlListItem
   onOpen: () => void
   rowSelected: boolean
   onToggleSelect: () => void
+  onTagClick: (id: string) => void
+  showTags: boolean
 }) {
+  const tags = link.tags ?? []
   return (
     <tr
       onClick={onOpen}
@@ -1320,6 +1513,11 @@ function LinkRow({
           </span>
         </div>
       </td>
+      {showTags && (
+        <td className="hidden max-w-56 whitespace-nowrap px-3 py-2.5 lg:table-cell">
+          <TagList tags={tags} limit={2} onTagClick={onTagClick} />
+        </td>
+      )}
       <td className="hidden whitespace-nowrap px-3 py-2.5 sm:table-cell">
         <StatusPill status={link.status} />
       </td>

@@ -44,6 +44,7 @@ const CHORDS: Record<string, string> = {
   "/dashboard": "O",
   "/dashboard/links": "L",
   "/dashboard/analytics": "A",
+  "/dashboard/tags": "T",
   "/dashboard/domains": "D",
   "/dashboard/apps": "P",
   "/dashboard/developer": "K",

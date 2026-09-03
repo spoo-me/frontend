@@ -21,9 +21,10 @@ import {
   Link2,
   MapPin,
   MonitorSmartphone,
+  Tag,
   Plus,
 } from "lucide-react"
-import { getStats, type StatsDimension } from "@/lib/api"
+import { getStats, type StatsGroupBy } from "@/lib/api"
 import { trackUiAction } from "@/lib/analytics"
 import type { Widget } from "@/lib/analytics-layout"
 import type { WidgetStatsCtx } from "@/hooks/use-widget-stats"
@@ -31,6 +32,8 @@ import { FilterChip } from "@/components/dashboard/filter-chip"
 import { Button } from "@/components/ui/button"
 import { TimeRangePicker } from "@/components/dashboard/analytics/time-range-picker"
 import { DimensionFilter } from "@/components/dashboard/analytics/dimension-filter"
+import { TagPicker, useTags } from "@/components/dashboard/tags/tag-picker"
+import { TagGlyph } from "@/components/dashboard/tags/tag-glyph"
 import {
   humanize,
   PRESETS,
@@ -57,6 +60,7 @@ const FILTER_DIMS = [
   { key: "browser", dim: "browser", label: "Browser", icon: Compass },
   { key: "os", dim: "os", label: "OS", icon: MonitorSmartphone },
   { key: "city", dim: "city", label: "City", icon: Building2 },
+  { key: "tag", dim: "tag_id", label: "Tags", icon: Tag },
 ] as const
 
 const arrayParser = parseAsArrayOf(parseAsString).withDefault([])
@@ -76,6 +80,7 @@ export default function AnalyticsPage() {
   const [browsers, setBrowsers] = useQueryState("browser", arrayParser)
   const [oses, setOses] = useQueryState("os", arrayParser)
   const [cities, setCities] = useQueryState("city", arrayParser)
+  const [tags, setTags] = useQueryState("tag", arrayParser)
 
   const setters = {
     link: setLinks,
@@ -84,6 +89,7 @@ export default function AnalyticsPage() {
     browser: setBrowsers,
     os: setOses,
     city: setCities,
+    tag: setTags,
   } as const
   const values = {
     link: links,
@@ -92,6 +98,7 @@ export default function AnalyticsPage() {
     browser: browsers,
     os: oses,
     city: cities,
+    tag: tags,
   } as const
 
   const fromMs = from?.getTime()
@@ -131,6 +138,7 @@ export default function AnalyticsPage() {
     ...(browsers.length ? { browser: browsers } : {}),
     ...(oses.length ? { os: oses } : {}),
     ...(cities.length ? { city: cities } : {}),
+    ...(tags.length ? { tag_id: tags } : {}),
   }
 
   const stats = useQuery({
@@ -210,6 +218,9 @@ export default function AnalyticsPage() {
         ? `vs previous ${range.preset}`
         : "vs previous period"
   const rangeLabel = humanize(range).toLowerCase()
+  const knownTags = useTags(tags.length > 0)
+  const tagOf = (id: string) => knownTags.data?.items.find((t) => t.id === id)
+  const tagNameOf = (id: string) => tagOf(id)?.name
   const activeChips = FILTER_DIMS.flatMap(({ key, dim }) =>
     values[key].map((v) => ({ key, dim, value: v }))
   )
@@ -377,20 +388,33 @@ export default function AnalyticsPage() {
       {/* Toolbar: time range + dimension filters + layout editing */}
       <div className="flex flex-wrap items-center gap-2">
         <TimeRangePicker value={range} onApply={applyRange} />
-        {FILTER_DIMS.map(({ key, dim, label, icon }) => (
-          <DimensionFilter
-            key={key}
-            dimension={dim as Exclude<StatsDimension, "time">}
-            label={label}
-            icon={icon}
-            range={range}
-            selected={values[key]}
-            onChange={(v) => {
-              trackUiAction("board_filter_applied", key)
-              setters[key](v.length ? v : null)
-            }}
-          />
-        ))}
+        {FILTER_DIMS.map(({ key, dim, label, icon }) =>
+          dim === "tag_id" ? (
+            <TagPicker
+              key={key}
+              variant="button"
+              label={label}
+              selected={values[key]}
+              onChange={(v) => {
+                trackUiAction("board_filter_applied", key)
+                setters[key](v.length ? v : null)
+              }}
+            />
+          ) : (
+            <DimensionFilter
+              key={key}
+              dimension={dim as Exclude<StatsGroupBy, "time">}
+              label={label}
+              icon={icon}
+              range={range}
+              selected={values[key]}
+              onChange={(v) => {
+                trackUiAction("board_filter_applied", key)
+                setters[key](v.length ? v : null)
+              }}
+            />
+          )
+        )}
         {/* Below lg the refresh group flows with the wrapping chips —
             ml-auto would strand it right-aligned on its own row. */}
         <span className="flex items-center gap-1.5 lg:ml-auto">
@@ -417,14 +441,26 @@ export default function AnalyticsPage() {
               key={`${key}:${value}`}
               label={FILTER_DIMS.find((f) => f.key === key)?.label ?? key}
               icon={
-                <DimensionIcon
-                  dimension={dim}
-                  value={value}
-                  className="size-3.5"
-                />
+                dim === "tag_id" && tagOf(value) ? (
+                  <TagGlyph
+                    color={tagOf(value)!.color}
+                    icon={tagOf(value)!.icon}
+                    className="size-3.5"
+                  />
+                ) : (
+                  <DimensionIcon
+                    dimension={dim}
+                    value={value}
+                    className="size-3.5"
+                  />
+                )
               }
               value={
-                dim === "short_code" ? `/${value}` : dimensionLabel(dim, value)
+                dim === "short_code"
+                  ? `/${value}`
+                  : dim === "tag_id"
+                    ? (tagNameOf(value) ?? value)
+                    : dimensionLabel(dim, value)
               }
               onClear={() =>
                 setters[key](

@@ -14,6 +14,7 @@ import {
   Link2,
   MapPin,
   MonitorSmartphone,
+  Tag,
   Plus,
   Redo2,
   RotateCcw,
@@ -38,6 +39,7 @@ import {
   type WidgetConfigPatch,
 } from "@/lib/analytics-layout"
 import { DimensionFilter } from "@/components/dashboard/analytics/dimension-filter"
+import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 import { WidgetComposer } from "@/components/dashboard/analytics/widget-composer"
 import type { WidgetStatsCtx } from "@/hooks/use-widget-stats"
 import type { TimeRange } from "@/components/dashboard/analytics/time-range"
@@ -108,6 +110,7 @@ const SCOPE_FIELDS: Array<{
   { dim: "browser", label: "Browser", icon: Compass },
   { dim: "os", label: "OS", icon: MonitorSmartphone },
   { dim: "city", label: "City", icon: Building2 },
+  { dim: "tag_id", label: "Tags", icon: Tag },
 ]
 
 function BarDivider() {
@@ -303,22 +306,36 @@ export function EditBar({
               </span>
               <BarDivider />
               <span className="flex items-center gap-1.5 px-1">
-                {SCOPE_FIELDS.map((f) => (
-                  <DimensionFilter
-                    key={f.dim}
-                    compact
-                    dimension={f.dim}
-                    label={f.label}
-                    icon={f.icon}
-                    range={range}
-                    selected={selected.config.scope?.[f.dim] ?? []}
-                    onChange={(values) =>
-                      onConfigChange(selected.id, {
-                        scope: { ...selected.config.scope, [f.dim]: values },
-                      })
-                    }
-                  />
-                ))}
+                {SCOPE_FIELDS.map((f) =>
+                  f.dim === "tag_id" ? (
+                    <TagPicker
+                      key={f.dim}
+                      variant="compact"
+                      label={f.label}
+                      selected={selected.config.scope?.tag_id ?? []}
+                      onChange={(values) =>
+                        onConfigChange(selected.id, {
+                          scope: { ...selected.config.scope, tag_id: values },
+                        })
+                      }
+                    />
+                  ) : (
+                    <DimensionFilter
+                      key={f.dim}
+                      compact
+                      dimension={f.dim}
+                      label={f.label}
+                      icon={f.icon}
+                      range={range}
+                      selected={selected.config.scope?.[f.dim] ?? []}
+                      onChange={(values) =>
+                        onConfigChange(selected.id, {
+                          scope: { ...selected.config.scope, [f.dim]: values },
+                        })
+                      }
+                    />
+                  )
+                )}
               </span>
               <BarDivider />
               <Button

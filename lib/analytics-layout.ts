@@ -78,8 +78,9 @@ export const ACCENTS = [
 ] as const
 export type Accent = (typeof ACCENTS)[number]
 
-/** Dimensions a widget can be scoped to — the same six the global filter
-    chips speak. `short_code` merges against the toolbar's link filter. */
+/** Dimensions a widget can be scoped to — the same seven the global filter
+    chips speak. `short_code` merges against the toolbar's link filter;
+    `tag_id` is a link property the server resolves to link ids. */
 export const SCOPE_DIMENSIONS = [
   "short_code",
   "referrer",
@@ -87,10 +88,11 @@ export const SCOPE_DIMENSIONS = [
   "browser",
   "os",
   "city",
+  "tag_id",
 ] as const
 export type ScopeDimension = (typeof SCOPE_DIMENSIONS)[number]
 
-/** Every key a scope may carry — the six pickable dimensions plus `url_id`.
+/** Every key a scope may carry — the seven pickable dimensions plus `url_id`.
     The single list every scope reader iterates (normalization, mergeScope,
     the ScopeChip), so readers can't silently diverge on which keys exist. */
 export const SCOPE_KEYS = [...SCOPE_DIMENSIONS, "url_id"] as const

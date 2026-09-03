@@ -18,6 +18,7 @@ import {
   shortUrlOf,
 } from "@/components/dashboard/links/link-actions"
 import { LinkSettingsForm } from "@/components/dashboard/links/link-settings-form"
+import { TagList } from "@/components/dashboard/tags/tag-picker"
 
 /**
  * Quick sheet — URL-addressable (?link=alias, wired by the links page).
@@ -100,6 +101,9 @@ export function LinkSheet({
               <p className="ph-no-capture mt-1 truncate text-muted-foreground text-xs">
                 {link.long_url}
               </p>
+              {link.tags && link.tags.length > 0 && (
+                <TagList tags={link.tags} limit={6} className="mt-2" />
+              )}
 
               <div className="mt-4 grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/60 bg-card">
                 <div className="px-3 py-2.5">
