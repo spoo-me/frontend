@@ -87,6 +87,7 @@ import {
   type MetaDraft,
   type VariantDraft,
 } from "@/components/dashboard/links/link-feature-editors"
+import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 
 const OPEN_EVENT = "spoo:new-link"
 
@@ -220,6 +221,7 @@ export function LinkComposer() {
   const [metaCustomized, setMetaCustomized] = React.useState(false)
   const [blockBots, setBlockBots] = React.useState(false)
   const [privateStats, setPrivateStats] = React.useState(false)
+  const [tagIds, setTagIds] = React.useState<string[]>([])
   // Server-side destination verdicts (the DB blocklist can't be mirrored
   // client-side) render inline like every other URL problem — keyed to the
   // URL they rejected, so fresh input clears them.
@@ -298,6 +300,7 @@ export function LinkComposer() {
     setMetaCustomized(false)
     setBlockBots(false)
     setPrivateStats(false)
+    setTagIds([])
     setDebouncedUrl("")
     setServerUrlError(null)
     optionUse.reset()
@@ -396,6 +399,8 @@ export function LinkComposer() {
     onSuccess: (created, input) => {
       trackLinkCreated(input, "composer")
       queryClient.invalidateQueries({ queryKey: ["urls"] })
+      if (input.tag_ids?.length)
+        queryClient.invalidateQueries({ queryKey: ["tags"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
       setOpen(false)
       reset()
@@ -454,6 +459,7 @@ export function LinkComposer() {
       ...(geoCount ? { geo_rules: geoPayload } : {}),
       ...(variantPayload.length ? { ab_variants: variantPayload } : {}),
       ...(metaPayload ? { meta_tags: metaPayload } : {}),
+      ...(tagIds.length ? { tag_ids: tagIds } : {}),
     })
   }
 
@@ -473,7 +479,7 @@ export function LinkComposer() {
     normalized !== longUrl.trim() &&
     looksLikeUrl(longUrl)
 
-  const basicSet = expiry !== "" || maxClicks !== ""
+  const basicSet = expiry !== "" || maxClicks !== "" || tagIds.length > 0
   const securitySet = password !== "" || blockBots || privateStats
   const targetingSet = geoCount > 0 || variantPayload.length > 0
 
@@ -783,6 +789,19 @@ export function LinkComposer() {
                     />
                   </Field>
                 </div>
+
+                <Field
+                  label="Tags"
+                  hint="Pick from your tags or make a new one right here."
+                >
+                  <TagPicker
+                    selected={tagIds}
+                    onChange={(next) => {
+                      optionUse.note("tags", next.length > 0)
+                      setTagIds(next)
+                    }}
+                  />
+                </Field>
               </TabsContent>
 
               <TabsContent value="security" className="space-y-5">

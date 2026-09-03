@@ -6,7 +6,7 @@ import { Command as CommandPrimitive } from "cmdk"
 import { Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { getStats, type StatsDimension } from "@/lib/api"
+import { getStats, type StatsGroupBy } from "@/lib/api"
 import { formatCount } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,7 +32,7 @@ export function DimensionFilter({
   className,
   modal,
 }: {
-  dimension: Exclude<StatsDimension, "time">
+  dimension: Exclude<StatsGroupBy, "time">
   label: string
   icon: React.ElementType
   range: TimeRange

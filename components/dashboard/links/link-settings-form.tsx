@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { trackLinkUpdated } from "@/lib/analytics"
 import {
   fetchUrlMetadata,
+  sameTagIds,
   updateUrl,
   SpooApiError,
   type UpdateUrlInput,
@@ -44,6 +45,7 @@ import { DateTimeField } from "@/components/dashboard/date-time-field"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { EmojiPicker } from "@/components/dashboard/links/emoji-picker"
 import { PasswordInput } from "@/components/dashboard/password-input"
+import { TagPicker, useTags } from "@/components/dashboard/tags/tag-picker"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -146,7 +148,8 @@ type ChangeRow = { field: string; from: string; to: string }
 /** Audit rows for the confirm dialog — only what changed, values summarized. */
 function describeChanges(
   link: UrlListItem,
-  patch: UpdateUrlInput
+  patch: UpdateUrlInput,
+  tagNameOf: (id: string) => string = (id) => id
 ): ChangeRow[] {
   const rows: ChangeRow[] = []
   const strip = (u: string) => u.replace(/^https?:\/\//, "")
@@ -217,6 +220,16 @@ function describeChanges(
       field: "A/B variants",
       from: countOf(link.ab_variants?.length, "variant"),
       to: countOf(patch.ab_variants?.length, "variant"),
+    })
+  if (patch.tag_ids !== undefined)
+    rows.push({
+      field: "Tags",
+      from: link.tags?.length
+        ? link.tags.map((t) => t.name).join(", ")
+        : "none",
+      to: patch.tag_ids?.length
+        ? patch.tag_ids.map(tagNameOf).join(", ")
+        : "none",
     })
   if (patch.meta_tags !== undefined) {
     // The echo carries explicit nulls (and warnings) — count set fields only.
@@ -326,6 +339,14 @@ export function LinkSettingsForm({
     }))
   )
   const [meta, setMeta] = React.useState<MetaDraft>(metaDraftOf(link.meta_tags))
+  const [tagIds, setTagIds] = React.useState<string[]>(
+    (link.tags ?? []).map((t) => t.id)
+  )
+  const knownTags = useTags()
+  const tagNameOf = (id: string) =>
+    knownTags.data?.items.find((t) => t.id === id)?.name ??
+    link.tags?.find((t) => t.id === id)?.name ??
+    id
   // Customized = this link freezes its own tags (meta_tags set on the wire,
   // or a manual edit in this form). While false the fields merely MIRROR
   // the destination's live tags (fetched below, display only — an untouched
@@ -440,6 +461,9 @@ export function LinkSettingsForm({
   // previously-customized link makes null differ from the echo → PATCH null.
   const metaPayload = metaCustomized ? (metaTagsOf(meta) ?? null) : null
   if (!sameMetaTags(metaPayload, link.meta_tags)) patch.meta_tags = metaPayload
+  const linkTagIds = (link.tags ?? []).map((t) => t.id)
+  if (!sameTagIds(tagIds, linkTagIds))
+    patch.tag_ids = tagIds.length ? tagIds : null
   const metaProblem = metaCustomized ? metaTagsProblem(meta) : null
   // Mirroring = uncustomized with a fetch worth showing: the header's
   // live dot says so; an empty or failed fetch stays bare (the notice
@@ -476,6 +500,8 @@ export function LinkSettingsForm({
       // prefix, and the detail header and off-page sheet both render from
       // one. Without this they keep showing pre-save values.
       queryClient.invalidateQueries({ queryKey: ["url"] })
+      if (patch.tag_ids !== undefined)
+        queryClient.invalidateQueries({ queryKey: ["tags"] })
       setPasswordMode("keep")
       setNewPassword("")
       // A data-URI upload echoes back as a rehosted CDN https URL — adopt
@@ -534,7 +560,7 @@ export function LinkSettingsForm({
   const canSave = dirty && !save.isPending && saveBlocker === null
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
-  const changes = describeChanges(link, patch)
+  const changes = describeChanges(link, patch, tagNameOf)
 
   return (
     <div
@@ -810,6 +836,13 @@ export function LinkSettingsForm({
             </div>
           </Field>
         </div>
+
+        <Field
+          label="Tags"
+          hint="Pick from your tags or make a new one right here."
+        >
+          <TagPicker selected={tagIds} onChange={setTagIds} />
+        </Field>
 
         <div className="divide-y divide-border/60 rounded-xl border border-border/60">
           <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">

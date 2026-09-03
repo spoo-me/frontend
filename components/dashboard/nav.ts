@@ -6,6 +6,7 @@ import {
   House,
   KeyRound,
   Link2,
+  Tag,
   Webhook,
   type LucideIcon,
 } from "lucide-react"
@@ -85,6 +86,7 @@ export const dashboardNav: DashboardNavGroup[] = [
         icon: KeyRound,
         matchPrefix: true,
       },
+      { title: "Tags", href: "/dashboard/tags", icon: Tag },
     ],
   },
 ]

@@ -8,6 +8,7 @@ import {
   MapPin,
   MonitorSmartphone,
   MoveUpRight,
+  Tag,
 } from "lucide-react"
 import { FaWindows } from "react-icons/fa6"
 import { SiAndroid, SiApple, SiLinux } from "react-icons/si"
@@ -90,6 +91,13 @@ export function DimensionIcon({
   className?: string
 }) {
   switch (dimension) {
+    case "tag_id":
+      return (
+        <Tag
+          className={cn("text-muted-foreground", className)}
+          strokeWidth={1.75}
+        />
+      )
     case "referrer":
       if (value === "direct")
         return (

@@ -10,6 +10,7 @@ import {
   Link2,
   MapPin,
   MonitorSmartphone,
+  Tag,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -40,6 +41,7 @@ import {
 } from "@/components/dashboard/analytics/widget-meta"
 import { WidgetCell } from "@/components/dashboard/analytics/widget-cell"
 import { DimensionFilter } from "@/components/dashboard/analytics/dimension-filter"
+import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import type { TimeRange } from "@/components/dashboard/analytics/time-range"
 import { Button } from "@/components/ui/button"
@@ -99,6 +101,7 @@ const SCOPE_FIELDS: Array<{
   { dim: "country", label: "Country", icon: MapPin },
   { dim: "browser", label: "Browser", icon: Compass },
   { dim: "os", label: "OS", icon: MonitorSmartphone },
+  { dim: "tag_id", label: "Tags", icon: Tag },
   { dim: "city", label: "City", icon: Building2 },
 ]
 
@@ -356,21 +359,35 @@ export function ComposerForm({
           Scope
         </FieldLabel>
         <div className="grid grid-cols-2 gap-1.5">
-          {SCOPE_FIELDS.map((f) => (
-            <DimensionFilter
-              key={f.dim}
-              dimension={f.dim}
-              label={f.label}
-              icon={f.icon}
-              range={range}
-              selected={state.scope[f.dim] ?? []}
-              onChange={(values) =>
-                onChange({ scope: { ...state.scope, [f.dim]: values } })
-              }
-              className="w-full justify-start"
-              modal
-            />
-          ))}
+          {SCOPE_FIELDS.map((f) =>
+            f.dim === "tag_id" ? (
+              <TagPicker
+                key={f.dim}
+                variant="button"
+                label={f.label}
+                selected={state.scope.tag_id ?? []}
+                onChange={(values) =>
+                  onChange({ scope: { ...state.scope, tag_id: values } })
+                }
+                className="w-full justify-start"
+                modal
+              />
+            ) : (
+              <DimensionFilter
+                key={f.dim}
+                dimension={f.dim}
+                label={f.label}
+                icon={f.icon}
+                range={range}
+                selected={state.scope[f.dim] ?? []}
+                onChange={(values) =>
+                  onChange({ scope: { ...state.scope, [f.dim]: values } })
+                }
+                className="w-full justify-start"
+                modal
+              />
+            )
+          )}
         </div>
       </div>
       <div className="grid grid-cols-2 items-end gap-3 border-border/60 border-t pt-5">
