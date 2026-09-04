@@ -43,7 +43,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
+import { ExpiryInput } from "@/components/dashboard/links/expiry-input"
 import {
+  AFTER_EXPIRY_COPY,
   FallbackUrlControl,
   PRE_START_COPY,
 } from "@/components/dashboard/links/fallback-url-control"
@@ -496,7 +498,10 @@ export function LinkSettingsForm({
   const maxClicksVal = maxClicks === "" ? null : Number(maxClicks)
   if (maxClicksVal !== (link.max_clicks ?? null))
     patch.max_clicks = maxClicksVal
-  const fallbackVal = fallbackUrl.trim() ? normalizeUrl(fallbackUrl) : null
+  // Same rule as pre_start_url: nothing to end the link, no fallback on the wire.
+  const fallbackActive =
+    (expiry !== "" || maxClicks !== "") && fallbackUrl.trim() !== ""
+  const fallbackVal = fallbackActive ? normalizeUrl(fallbackUrl) : null
   if (fallbackVal !== (link.expired_redirect_url ?? null))
     patch.expired_redirect_url = fallbackVal
   if (blockBots !== Boolean(link.block_bots)) patch.block_bots = blockBots
@@ -545,7 +550,7 @@ export function LinkSettingsForm({
             ? serverUrlError.message
             : null))
 
-  const fallbackProblem = fallbackUrl.trim()
+  const fallbackProblem = fallbackActive
     ? (urlProblem(fallbackUrl) ?? serverFallbackError)
     : null
 
@@ -648,114 +653,38 @@ export function LinkSettingsForm({
       label="Expires"
       labelHint={
         <InfoHint label="How expiry works">
-          After this moment, in your timezone, the link shows an ended page
-          instead of redirecting. Extend or clear it later to bring the link
-          back.
+          The link ends at this moment, in your timezone, or once total clicks
+          reach the cap, whichever comes first. Visitors then see an ended page,
+          or the address behind the button beside the field. Extend or clear
+          either to bring the link back.
         </InfoHint>
       }
-      error={orderProblem}
+      error={orderProblem ?? fallbackProblem}
     >
       <div className="flex items-center gap-1.5">
-        <DateTimeField
-          value={expiry}
-          onChange={setExpiry}
-          placeholder="Never"
+        <ExpiryInput
+          expiry={expiry}
+          onExpiryChange={setExpiry}
+          maxClicks={maxClicks}
+          onMaxClicksChange={setMaxClicks}
           minDate={startDate ?? undefined}
+          clearable
           className="min-w-0 flex-1"
         />
-        {expiry && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Remove expiry"
-            onClick={() => setExpiry("")}
-          >
-            <X />
-          </Button>
-        )}
-      </div>
-    </Field>
-  )
-  const maxClicksField = (
-    <Field
-      label="Max clicks"
-      labelHint={
-        <InfoHint label="How click limits work">
-          Once total clicks reach this number the link stops redirecting. Raise
-          or clear the limit later to bring it back.
-        </InfoHint>
-      }
-    >
-      <div className="flex items-center gap-1.5">
-        <Input
-          type="number"
-          min={1}
-          value={maxClicks}
-          onChange={(e) => setMaxClicks(e.target.value)}
-          placeholder="Unlimited"
-          className="font-mono text-xs"
-        />
-        {maxClicks && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Remove click limit"
-            onClick={() => setMaxClicks("")}
-          >
-            <X />
-          </Button>
-        )}
-      </div>
-    </Field>
-  )
-  const afterExpiryField = (
-    <Velvet feature="expired_fallback">
-      <Field
-        label="After expiry"
-        hint="Where visitors land once the link has ended, by date or by click count. Blank shows an ended page."
-        error={fallbackProblem}
-      >
-        <div className="flex items-center gap-1.5">
-          <Input
-            type="url"
-            inputMode="url"
+        <Velvet feature="expired_fallback">
+          <FallbackUrlControl
+            copy={AFTER_EXPIRY_COPY}
+            enabled={expiry !== "" || maxClicks !== ""}
             value={fallbackUrl}
-            onChange={(e) => {
+            serverError={serverFallbackError}
+            onChange={(v) => {
               setServerFallbackError(null)
-              setFallbackUrl(e.target.value)
+              setFallbackUrl(v)
             }}
-            placeholder="Ended page"
-            spellCheck={false}
-            className="font-mono text-xs"
           />
-          {fallbackUrl && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Remove fallback URL"
-              onClick={() => {
-                setServerFallbackError(null)
-                setFallbackUrl("")
-              }}
-            >
-              <X />
-            </Button>
-          )}
-        </div>
-      </Field>
-    </Velvet>
-  )
-  const lifetimeBlock = (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        {expiresField}
-        {maxClicksField}
+        </Velvet>
       </div>
-      {afterExpiryField}
-    </div>
+    </Field>
   )
   const tagsField = (
     <Field
@@ -1039,11 +968,11 @@ export function LinkSettingsForm({
               {goesLiveField}
               {tagsField}
             </div>
-            {lifetimeBlock}
+            {expiresField}
           </>
         ) : (
           <>
-            {lifetimeBlock}
+            {expiresField}
             {tagsField}
           </>
         )}

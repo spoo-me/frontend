@@ -36,6 +36,15 @@ export const PRE_START_COPY: FallbackUrlCopy = {
   hint: "Anyone who opens the link before it goes live. Blank shows a not-yet-live page.",
 }
 
+/** Where visitors land once the link has ended, beside the expiry field. */
+export const AFTER_EXPIRY_COPY: FallbackUrlCopy = {
+  ariaLabel: "Where visitors land after expiry",
+  tooltipUnset: "Where visitors land after expiry",
+  tooltipSet: "Expired visitors are sent elsewhere",
+  label: "Expired visitors go to",
+  hint: "Anyone who opens the link after it expires or hits its click cap. Blank shows an ended page.",
+}
+
 /**
  * A fallback URL tucked behind a gear on the input it depends on: a rare
  * sub-setting of a rare setting, so it earns no row of its own. Inert
