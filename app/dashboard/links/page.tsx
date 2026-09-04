@@ -708,7 +708,8 @@ export default function LinksPage() {
                       s === "ACTIVE" && "bg-live",
                       s === "INACTIVE" && "bg-muted-foreground/50",
                       s === "EXPIRED" && "bg-amber-500",
-                      s === "BLOCKED" && "bg-destructive"
+                      s === "BLOCKED" && "bg-destructive",
+                      s === "SCHEDULED" && "border border-muted-foreground/50"
                     )}
                   />
                   {s.charAt(0) + s.slice(1).toLowerCase()}
@@ -820,7 +821,9 @@ export default function LinksPage() {
                     status === "ACTIVE" && "bg-live",
                     status === "INACTIVE" && "bg-muted-foreground/50",
                     status === "EXPIRED" && "bg-amber-500",
-                    status === "BLOCKED" && "bg-destructive"
+                    status === "BLOCKED" && "bg-destructive",
+                    status === "SCHEDULED" &&
+                      "border border-muted-foreground/50"
                   )}
                 />
               }

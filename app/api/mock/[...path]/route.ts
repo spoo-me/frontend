@@ -1499,6 +1499,24 @@ async function handle(req: NextRequest, path: string[]) {
       // the field rides a shared endpoint, nothing to hide). PR #231.
       if (meta.ok !== null && !s.verified)
         return fail(403, "forbidden", "meta_tags requires a verified account")
+      const startsAt =
+        typeof body.starts_at === "number" ? body.starts_at : null
+      const expireAfter =
+        typeof body.expire_after === "number" ? body.expire_after : null
+      if (startsAt !== null && startsAt <= Math.floor(Date.now() / 1000))
+        return fail(
+          400,
+          "validation_error",
+          "starts_at must be in the future",
+          "starts_at"
+        )
+      if (startsAt !== null && expireAfter !== null && startsAt >= expireAfter)
+        return fail(
+          400,
+          "validation_error",
+          "starts_at must be before expire_after",
+          "starts_at"
+        )
       const link: MockLink = {
         id: `url_${slug()}`,
         alias,
@@ -1506,9 +1524,8 @@ async function handle(req: NextRequest, path: string[]) {
         domain,
         status: "ACTIVE",
         created_at: new Date().toISOString(),
-        expire_after:
-          typeof body.expire_after === "number" ? body.expire_after : null,
-        starts_at: typeof body.starts_at === "number" ? body.starts_at : null,
+        expire_after: expireAfter,
+        starts_at: startsAt,
         pre_start_url:
           typeof body.pre_start_url === "string" && body.pre_start_url
             ? String(body.pre_start_url)
