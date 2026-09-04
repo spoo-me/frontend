@@ -55,12 +55,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
-import { ExpiryInput } from "@/components/dashboard/links/expiry-input"
-import {
-  AFTER_EXPIRY_COPY,
-  FallbackUrlControl,
-  PRE_START_COPY,
-} from "@/components/dashboard/links/fallback-url-control"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Kbd } from "@/components/dashboard/kbd"
 import { InfoHint } from "@/components/dashboard/info-hint"
@@ -588,49 +582,76 @@ export function LinkComposer() {
 
   // The two time bookends sit side by side when scheduling is on; the
   // pre-start URL hides behind a gear on the start input.
-  const expiresField = (
+  const expirationField = (
     <Field
       label="Expiration"
       labelHint={
         <InfoHint label="How expiry works">
-          The link ends at this moment, in your timezone, or once total clicks
-          reach the cap, whichever comes first. Visitors then see an ended page,
-          or the address behind the button beside the field. Extend or clear
-          either to bring the link back.
+          After this moment, in your timezone, the link shows an ended page
+          instead of redirecting. Extend or clear it later to bring the link
+          back.
         </InfoHint>
       }
-      error={orderProblem ?? fallbackProblem}
+      error={orderProblem}
     >
-      <div className="flex items-center gap-1.5">
-        <ExpiryInput
-          expiry={expiry}
-          onExpiryChange={(v) => {
-            optionUse.note("expiry", v !== "")
-            setExpiry(v)
-          }}
-          maxClicks={maxClicks}
-          onMaxClicksChange={(v) => {
-            optionUse.note("max_clicks", v !== "")
-            setMaxClicks(v)
-          }}
-          minDate={startDate ?? undefined}
-          className="min-w-0 flex-1"
-        />
-        <Velvet feature="expired_fallback">
-          <FallbackUrlControl
-            copy={AFTER_EXPIRY_COPY}
-            enabled={expiry !== "" || maxClicks !== ""}
-            value={fallbackUrl}
-            serverError={serverFallbackError}
-            onChange={(v) => {
-              optionUse.note("expired_redirect_url", v !== "")
-              setServerFallbackError(null)
-              setFallbackUrl(v)
-            }}
-          />
-        </Velvet>
-      </div>
+      <DateTimeField
+        value={expiry}
+        onChange={(v) => {
+          optionUse.note("expiry", v !== "")
+          setExpiry(v)
+        }}
+        placeholder="Never"
+        minDate={startDate ?? undefined}
+        className="w-full"
+      />
     </Field>
+  )
+  const maxClicksField = (
+    <Field
+      label="Max clicks"
+      labelHint={
+        <InfoHint label="How click limits work">
+          Once total clicks reach this number the link stops redirecting. Raise
+          or clear the limit later to bring it back.
+        </InfoHint>
+      }
+    >
+      <Input
+        type="number"
+        min={1}
+        value={maxClicks}
+        onChange={(e) => {
+          optionUse.note("max_clicks", e.target.value !== "")
+          setMaxClicks(e.target.value)
+        }}
+        placeholder="Unlimited"
+        className="font-mono text-xs"
+      />
+    </Field>
+  )
+  const afterExpiryField = (
+    <Velvet feature="expired_fallback">
+      <Field
+        label="After expiry"
+        hint="Where visitors land once the link has ended, by date or by click count. Blank shows an ended page."
+        error={fallbackProblem}
+      >
+        <Input
+          type="url"
+          inputMode="url"
+          value={fallbackUrl}
+          onChange={(e) => {
+            optionUse.note("expired_redirect_url", e.target.value !== "")
+            setServerFallbackError(null)
+            setFallbackUrl(e.target.value)
+          }}
+          placeholder="Ended page"
+          spellCheck={false}
+          disabled={expiry === "" && maxClicks === ""}
+          className="font-mono text-xs"
+        />
+      </Field>
+    </Velvet>
   )
   const tagsField = (
     <Field
@@ -657,31 +678,64 @@ export function LinkComposer() {
       labelHint={
         <InfoHint label="How scheduling works">
           The link is hidden until this moment, in your timezone. Early visitors
-          see a not-yet-live page, or the address you set beside the date.
+          see a not-yet-live page, or the address you set under Until then.
         </InfoHint>
       }
-      error={startPassed ?? preStartProblem}
+      error={startPassed}
     >
-      <div className="flex items-center gap-1.5">
-        <DateTimeField
-          value={startsAt}
-          onChange={(v) => {
-            optionUse.note("starts_at", v !== "")
-            setStartsAt(v)
-          }}
-          placeholder="Now"
-          defaultTime="09:00"
-          maxDate={expiryDate ?? undefined}
-          className="min-w-0 flex-1"
-        />
-        <FallbackUrlControl
-          copy={PRE_START_COPY}
-          enabled={startsAt !== ""}
-          value={preStartUrl}
-          onChange={setPreStartUrl}
-        />
-      </div>
+      <DateTimeField
+        value={startsAt}
+        onChange={(v) => {
+          optionUse.note("starts_at", v !== "")
+          setStartsAt(v)
+        }}
+        placeholder="Now"
+        defaultTime="09:00"
+        maxDate={expiryDate ?? undefined}
+        className="w-full"
+      />
     </Field>
+  )
+  const untilThenField = (
+    <Field
+      label="Until then"
+      hint="Where early visitors land. Blank shows a not-yet-live page."
+      error={preStartProblem}
+    >
+      <Input
+        type="url"
+        inputMode="url"
+        value={preStartUrl}
+        onChange={(e) => setPreStartUrl(e.target.value)}
+        placeholder="Not-yet-live page"
+        spellCheck={false}
+        disabled={startsAt === ""}
+        className="font-mono text-xs"
+      />
+    </Field>
+  )
+  // Two groups, one grammar each: the date that flips the state, then where
+  // visitors land while the link is in it.
+  const lifetimePanel = (
+    <div className="space-y-6">
+      {showScheduling && (
+        <div className="space-y-3">
+          <SectionLabel>Starts</SectionLabel>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {goesLiveField}
+            {untilThenField}
+          </div>
+        </div>
+      )}
+      <div className="space-y-3">
+        {showScheduling && <SectionLabel>Ends</SectionLabel>}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {expirationField}
+          {maxClicksField}
+        </div>
+        {afterExpiryField}
+      </div>
+    </div>
   )
 
   return (
@@ -902,8 +956,7 @@ export function LinkComposer() {
               </TabsContent>
 
               <TabsContent value="lifetime" className="space-y-5">
-                {showScheduling && goesLiveField}
-                {expiresField}
+                {lifetimePanel}
               </TabsContent>
 
               <TabsContent value="security" className="space-y-5">
