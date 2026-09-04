@@ -7,9 +7,12 @@ import { apiFetch, parse } from "./client"
  * Safety semantics the UI relies on:
  *  - status-agnostic resolution: expired/blocked/inactive links still
  *    answer, with their status stated. Only truly missing codes 404.
- *  - destination + geo rules ride the wire ONLY while the link is active
+ *  - destination, geo rules and A/B variants ride the wire ONLY while the link is active
  *    and unlocked: password, expiry, pause and block all withhold them
- *    (the preview never reveals more than the redirect would)
+ *    (the preview never reveals more than the redirect would); the rule
+ *    runs both ways for expired_destination, which names an expired
+ *    link's fallback so the preview never shows LESS than the redirect
+ *    serves either
  *  - never any stats payload; private_stats links preview like any other
  *  - deliberately no owner-set meta: the preview shows OUR resolved facts
  *    only, custom meta is sender-controlled content
@@ -27,6 +30,11 @@ export type PreviewGeoDestination = PreviewDestination & {
   countries: string[]
 }
 
+export type PreviewVariantDestination = PreviewDestination & {
+  /** Percent of visitors sent here; the default keeps the remainder. */
+  weight: number
+}
+
 export type PublicPreview = {
   generation: "v1" | "v2"
   alias: string
@@ -38,6 +46,7 @@ export type PublicPreview = {
   password_protected: boolean
   destination: PreviewDestination | null
   geo_destinations: PreviewGeoDestination[] | null
+  variant_destinations: PreviewVariantDestination[] | null
   /** Where an expired link still sends visitors; set only while `status`
       is "expired" and the owner set a fallback. */
   expired_destination: PreviewDestination | null

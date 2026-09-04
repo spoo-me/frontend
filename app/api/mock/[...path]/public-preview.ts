@@ -76,6 +76,7 @@ export function handlePublicPreview(code: string): NextResponse {
       ...base,
       destination: null,
       geo_destinations: null,
+      variant_destinations: null,
       // An expired link with a fallback still sends everyone there, so the
       // preview names it: the page never shows less than the redirect serves.
       expired_destination:
@@ -98,10 +99,17 @@ export function handlePublicPreview(code: string): NextResponse {
     }))
   }
 
+  const variant_destinations =
+    link.ab_variants?.map((v) => ({
+      weight: v.weight,
+      ...splitDestination(v.url),
+    })) ?? null
+
   return NextResponse.json({
     ...base,
     destination: splitDestination(link.long_url),
     geo_destinations,
+    variant_destinations,
     expired_destination: null,
   })
 }
