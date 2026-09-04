@@ -36,6 +36,7 @@ import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 import { useAcceptedEmoji, useGenerateEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
+import { cn } from "@/lib/utils"
 import { CLICK_CAP_PROBLEM, CLICK_CAP_RE } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -93,6 +94,10 @@ import {
 import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 
 const OPEN_EVENT = "spoo:new-link"
+
+// Mounted but out of the way: still measurable, never focusable or seen.
+const INACTIVE_PANEL =
+  "data-[state=inactive]:pointer-events-none data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-3"
 
 export function openLinkComposer(opts?: { domain?: string; longUrl?: string }) {
   window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: opts }))
@@ -317,16 +322,61 @@ export function LinkComposer() {
   // Animated tab height: measure the active panel, glide the container.
   const panelRef = React.useRef<HTMLDivElement>(null)
   const [panelH, setPanelH] = React.useState<number | undefined>(undefined)
+
+  // The dialog is pinned where it would sit if centred at its TALLEST tab:
+  // every panel stays mounted (invisible) so the tallest can be measured,
+  // shorter tabs end early, and the tab strip never moves between tabs.
+  const dialogRef = React.useRef<HTMLDivElement>(null)
+  const frameRef = React.useRef<HTMLDivElement>(null)
+  const panelEls = React.useRef(new Map<string, HTMLDivElement>())
+  const panelRefs = React.useMemo(() => {
+    const make = (name: string) => (el: HTMLDivElement | null) => {
+      if (el) panelEls.current.set(name, el)
+      else panelEls.current.delete(name)
+    }
+    return {
+      basic: make("basic"),
+      lifetime: make("lifetime"),
+      security: make("security"),
+      targeting: make("targeting"),
+      metadata: make("metadata"),
+    }
+  }, [])
+  const [pinTop, setPinTop] = React.useState<number | null>(null)
+  const repin = React.useCallback(() => {
+    const dialog = dialogRef.current
+    const frame = frameRef.current
+    const panel = panelRef.current
+    if (!dialog || !frame || !panel) return
+    let tallest = 0
+    let active = 0
+    for (const el of panelEls.current.values()) {
+      tallest = Math.max(tallest, el.offsetHeight)
+      if (el.dataset.state === "active") active = el.offsetHeight
+    }
+    const chrome = dialog.offsetHeight - frame.offsetHeight
+    const padding = panel.offsetHeight - active
+    const total = chrome + padding + tallest
+    setPinTop(Math.max(16, Math.round((window.innerHeight - total) / 2)))
+  }, [])
   React.useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setPinTop(null)
+      return
+    }
     const el = panelRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
       setPanelH(entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height)
+      repin()
     })
     ro.observe(el)
-    return () => ro.disconnect()
-  }, [open])
+    window.addEventListener("resize", repin)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener("resize", repin)
+    }
+  }, [open, repin])
 
   // Active custom domains join the alias control (integrated, ref SPEC §5).
   const domains = useQuery({
@@ -762,7 +812,9 @@ export function LinkComposer() {
       }}
     >
       <DialogContent
-        className="sm:max-w-2xl"
+        ref={dialogRef}
+        style={pinTop === null ? undefined : { top: pinTop }}
+        className={cn("sm:max-w-2xl", pinTop !== null && "translate-y-0")}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit()
           // Figma/Notion grammar: mod+1..4 jumps between the dialog's tabs.
@@ -802,11 +854,17 @@ export function LinkComposer() {
           {/* Each tab sizes to its content; the height glides between
               tabs (response to a click, not a shift). */}
           <div
+            ref={frameRef}
             style={{ height: panelH }}
             className="-mx-1 overflow-hidden px-1 transition-[height] duration-200 ease-out"
           >
-            <div ref={panelRef} className="pt-3 pb-1">
-              <TabsContent value="basic" className="space-y-5">
+            <div ref={panelRef} className="relative pt-3 pb-1">
+              <TabsContent
+                value="basic"
+                forceMount
+                ref={panelRefs.basic}
+                className={cn("space-y-5", INACTIVE_PANEL)}
+              >
                 <Field
                   label="Destination"
                   error={destProblem}
@@ -973,12 +1031,22 @@ export function LinkComposer() {
               </TabsContent>
 
               {showLifetime && (
-                <TabsContent value="lifetime" className="space-y-5">
+                <TabsContent
+                  value="lifetime"
+                  forceMount
+                  ref={panelRefs.lifetime}
+                  className={cn("space-y-5", INACTIVE_PANEL)}
+                >
                   {lifetimePanel}
                 </TabsContent>
               )}
 
-              <TabsContent value="security" className="space-y-5">
+              <TabsContent
+                value="security"
+                forceMount
+                ref={panelRefs.security}
+                className={cn("space-y-5", INACTIVE_PANEL)}
+              >
                 <Field
                   label="Password"
                   hint="Visitors will need this to reach the destination."
@@ -1065,7 +1133,12 @@ export function LinkComposer() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="targeting" className="space-y-5">
+              <TabsContent
+                value="targeting"
+                forceMount
+                ref={panelRefs.targeting}
+                className={cn("space-y-5", INACTIVE_PANEL)}
+              >
                 <Velvet feature="geo_targeting">
                   <GeoRulesEditor
                     rules={geoRules}
@@ -1094,7 +1167,12 @@ export function LinkComposer() {
                 </Velvet>
               </TabsContent>
 
-              <TabsContent value="metadata" className="space-y-2">
+              <TabsContent
+                value="metadata"
+                forceMount
+                ref={panelRefs.metadata}
+                className={cn("space-y-2", INACTIVE_PANEL)}
+              >
                 {/* Fixed-height header row: the live-dot status and reset
                     action swap in place, zero layout shift between mirrored
                     and customized states. */}
