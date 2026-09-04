@@ -4,13 +4,19 @@ import { describe, expect, it } from "vitest"
 
 // Dashboard controls share one height, and only the ui primitives carry it.
 // Per-site h-*/size-* overrides are how a 28/32/36px mix crept in before.
-const ROOTS = ["app/dashboard", "components/dashboard"]
+const ROOTS = [
+  "app/dashboard",
+  "app/upgrade",
+  "components/dashboard",
+  "components/plan",
+]
 const TAGS = new Set(["Input", "PasswordInput", "DateTimeField", "Button"])
 // Compact tier: labelled actions that sit inside list rows, where a 36px
 // button next to two lines of row text reads huge.
 const COMPACT_ALLOWED = new Set([
   "app/dashboard/apps/page.tsx",
   "app/dashboard/settings/page.tsx",
+  "components/plan/plan-row.tsx",
 ])
 
 function walk(dir: string, out: string[] = []): string[] {

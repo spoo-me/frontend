@@ -57,7 +57,6 @@ function capture(event: string, props?: Record<string, unknown>) {
 export function identifyUser(user: AuthUser) {
   if (!ready) return
   posthog.identify(user.id, {
-    plan: user.plan,
     email_verified: user.email_verified,
   })
 }
@@ -356,4 +355,67 @@ export function trackOnboardingCompleted(props: {
     artifact_kind: props.artifactKind,
     ...(props.heardFrom ? { heard_from: props.heardFrom } : {}),
   })
+}
+
+/* ---------- plans ---------- */
+
+/** Person property, not an event: the plan the dashboard resolved. */
+export function trackPlanResolved(plan: string) {
+  if (!ready) return
+  posthog.setPersonProperties({ plan })
+}
+
+/** A status move seen by the client. Cancel and downgrade are the two the
+    funnel cares about; every other move is a plan_changed. */
+export function trackPlanChanged(
+  before: { name: string | null; status: string | null },
+  after: { name: string | null; status: string | null }
+) {
+  if (after.status === "cancel_at_period_end")
+    capture("plan_cancelled", { ...after })
+  else if (before.name === "pro" && after.name === "free")
+    capture("plan_downgraded", { ...after })
+  else
+    capture("plan_changed", {
+      from: before.name,
+      to: after.name,
+      status: after.status,
+    })
+  if (ready && after.name) posthog.setPersonProperties({ plan: after.name })
+}
+
+export function trackPricingViewed(surface: "pricing" | "upgrade") {
+  capture("pricing_viewed", { surface })
+}
+
+export function trackPlanCtaClicked(plan: "pro", cadence: "monthly" | "year") {
+  capture("plan_cta_clicked", { plan, cadence })
+}
+
+export function trackUpgradeStarted(
+  cadence: "monthly" | "year",
+  from?: string
+) {
+  capture("upgrade_started", { cadence, ...(from ? { from } : {}) })
+}
+
+export function trackUpgradeCompleted(props: {
+  waited_ms: number
+  from?: string
+}) {
+  capture("upgrade_completed", props)
+}
+
+export function trackLockedFeatureViewed(feature: string) {
+  capture("locked_feature_viewed", { feature })
+}
+
+export function trackLockedFeatureUpgradeClicked(feature: string) {
+  capture("locked_feature_upgrade_clicked", { feature })
+}
+
+export function trackProOnboarding(
+  step: "started" | "completed" | "dismissed"
+) {
+  capture("pro_onboarding", { step })
 }
