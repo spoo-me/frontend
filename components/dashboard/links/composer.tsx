@@ -171,13 +171,17 @@ export function LinkComposer() {
   // Backend-gated capabilities: hidden features simply don't exist here.
   const showGeo = useFeature("geo_targeting") === "enabled"
   const showScheduling = useFeature("link_scheduling") === "enabled"
+  const showFallback = useFeature("expired_fallback") === "enabled"
+  // Expiry and the click cap alone do not earn a tab; they sit on Basic
+  // until scheduling or the fallback gives the lifetime story more to say.
+  const showLifetime = showScheduling || showFallback
   const showVariants = useFeature("ab_testing") === "enabled"
   const showMeta = useFeature("custom_meta_tags") === "enabled"
   const showDomains = useFeature("custom_domains") === "enabled"
   const showTargeting = showGeo || showVariants
   const tabOrder = [
     "basic",
-    "lifetime",
+    ...(showLifetime ? ["lifetime"] : []),
     "security",
     ...(showTargeting ? ["targeting"] : []),
     ...(showMeta ? ["metadata"] : []),
@@ -524,13 +528,10 @@ export function LinkComposer() {
     normalized !== longUrl.trim() &&
     looksLikeUrl(longUrl)
 
-  const basicSet = tagIds.length > 0
+  const endsSet = expiry !== "" || maxClicks !== ""
+  const basicSet = tagIds.length > 0 || (!showLifetime && endsSet)
   const lifetimeSet =
-    startsAt !== "" ||
-    preStartUrl !== "" ||
-    expiry !== "" ||
-    maxClicks !== "" ||
-    fallbackUrl !== ""
+    startsAt !== "" || preStartUrl !== "" || endsSet || fallbackUrl !== ""
   const securitySet = password !== "" || blockBots || privateStats
   const targetingSet = geoCount > 0 || variantPayload.length > 0
 
@@ -715,6 +716,12 @@ export function LinkComposer() {
   // visitors land while the link is in it.
   // Ends before Starts: killing a link on a date or after N clicks is what
   // people come here for; scheduling a go-live is the rarer case.
+  const endsPair = (
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      {expirationField}
+      {maxClicksField}
+    </div>
+  )
   const lifetimePanel = (
     <div className="space-y-5">
       {showScheduling && (
@@ -728,10 +735,7 @@ export function LinkComposer() {
       )}
       <div className="space-y-3">
         {showScheduling && <SectionLabel>Ends</SectionLabel>}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {expirationField}
-          {maxClicksField}
-        </div>
+        {endsPair}
         {afterExpiryField}
       </div>
     </div>
@@ -774,7 +778,8 @@ export function LinkComposer() {
         >
           <TabsList className="w-full">
             {tabTrigger("basic", Link2, "Basic", basicSet)}
-            {tabTrigger("lifetime", CalendarClock, "Lifetime", lifetimeSet)}
+            {showLifetime &&
+              tabTrigger("lifetime", CalendarClock, "Lifetime", lifetimeSet)}
             {tabTrigger("security", ShieldCheck, "Security", securitySet)}
             {showTargeting &&
               tabTrigger("targeting", Crosshair, "Targeting", targetingSet)}
@@ -951,12 +956,15 @@ export function LinkComposer() {
                   </div>
                 </Field>
 
+                {!showLifetime && endsPair}
                 {tagsField}
               </TabsContent>
 
-              <TabsContent value="lifetime" className="space-y-5">
-                {lifetimePanel}
-              </TabsContent>
+              {showLifetime && (
+                <TabsContent value="lifetime" className="space-y-5">
+                  {lifetimePanel}
+                </TabsContent>
+              )}
 
               <TabsContent value="security" className="space-y-5">
                 <Field
