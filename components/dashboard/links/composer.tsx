@@ -36,6 +36,7 @@ import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 import { useAcceptedEmoji, useGenerateEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
+import { CLICK_CAP_PROBLEM, CLICK_CAP_RE } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { UrlInput } from "@/components/dashboard/links/url-input"
@@ -227,9 +228,11 @@ export function LinkComposer() {
     url: string
     message: string
   } | null>(null)
-  const [serverFallbackError, setServerFallbackError] = React.useState<
-    string | null
-  >(null)
+  // Keyed to the URL it rejected, so fresh input clears it (see serverUrlError).
+  const [serverFallbackError, setServerFallbackError] = React.useState<{
+    url: string
+    message: string
+  } | null>(null)
 
   // Destination-tag prefill (GET /api/v1/metadata, PR #231). The long URL
   // debounces ~600ms into a stable key; the fetch itself only runs while
@@ -382,11 +385,17 @@ export function LinkComposer() {
   const geoPayload = completeGeoRules(geoRules)
   const geoCount = Object.keys(geoPayload).length
   const geoProblem = geoRulesProblem(geoRules)
+  // Mirrors the DTO: max_clicks is a positive integer or nothing.
+  const capSet = CLICK_CAP_RE.test(maxClicks.trim())
+  const maxClicksProblem =
+    maxClicks.trim() !== "" && !capSet ? CLICK_CAP_PROBLEM : null
   // Same rule as preStartProblem: only means something once the link can end.
-  const fallbackActive =
-    (expiry !== "" || maxClicks !== "") && fallbackUrl.trim() !== ""
+  const fallbackActive = (expiry !== "" || capSet) && fallbackUrl.trim() !== ""
   const fallbackProblem = fallbackActive
-    ? (urlProblem(fallbackUrl) ?? serverFallbackError)
+    ? (urlProblem(fallbackUrl) ??
+      (serverFallbackError?.url === normalizeUrl(fallbackUrl)
+        ? serverFallbackError.message
+        : null))
     : null
   const variantPayload = completeVariants(variants)
   // Uncustomized = inherit the destination's live tags: the (display-only)
@@ -437,11 +446,13 @@ export function LinkComposer() {
         err.field === "expired_redirect_url"
       ) {
         setTab("lifetime")
-        setServerFallbackError(
-          err.message === "URL is blocked"
-            ? "That fallback is blocked on spoo.me."
-            : err.message
-        )
+        setServerFallbackError({
+          url: normalizeUrl(fallbackUrl),
+          message:
+            err.message === "URL is blocked"
+              ? "That fallback is blocked on spoo.me."
+              : err.message,
+        })
       } else {
         toast.error(
           err instanceof Error ? err.message : "Couldn't create the link"
@@ -471,6 +482,7 @@ export function LinkComposer() {
     !create.isPending &&
     weights <= 100 &&
     !geoProblem &&
+    !maxClicksProblem &&
     !fallbackProblem &&
     !metaProblem &&
     !preStartProblem &&
@@ -611,10 +623,12 @@ export function LinkComposer() {
           or clear the limit later to bring it back.
         </InfoHint>
       }
+      error={maxClicksProblem}
     >
       <Input
         type="number"
         min={1}
+        step={1}
         value={maxClicks}
         onChange={(e) => {
           optionUse.note("max_clicks", e.target.value !== "")
@@ -641,7 +655,6 @@ export function LinkComposer() {
           value={fallbackUrl}
           onChange={(e) => {
             optionUse.note("expired_redirect_url", e.target.value !== "")
-            setServerFallbackError(null)
             setFallbackUrl(e.target.value)
           }}
           placeholder="Ended page"
@@ -714,8 +727,7 @@ export function LinkComposer() {
   )
   // Two groups, one grammar each: the date that flips the state, then where
   // visitors land while the link is in it.
-  // Ends before Starts: killing a link on a date or after N clicks is what
-  // people come here for; scheduling a go-live is the rarer case.
+  // Starts above Ends: the panel reads as the link's timeline, top to bottom.
   const endsPair = (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
       {expirationField}

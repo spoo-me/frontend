@@ -106,6 +106,29 @@ export function PreviewView({ data }: { data: PublicPreview }) {
         </div>
       )}
 
+      {/* An expired link with a fallback still sends everyone there: the
+          page names it, so it never shows less than the redirect serves. */}
+      {data.expired_destination && (
+        <div className="mt-1.5">
+          <div className="flex h-9 items-end gap-2.5">
+            <span
+              aria-hidden
+              className="mb-[7px] ml-2.5 h-full w-4 shrink-0 rounded-bl-lg border-border/60 border-b border-l"
+            />
+            <span className="label-mono text-muted-foreground">
+              Visitors now go to
+            </span>
+          </div>
+          <div className="mt-3 pl-9">
+            <DestinationCard
+              url={data.expired_destination.url}
+              domain={data.expired_destination.domain}
+              isHttps={data.expired_destination.is_https}
+            />
+          </div>
+        </div>
+      )}
+
       {data.status === "active" && data.password_protected ? (
         <div className="mt-6 flex items-start gap-3 rounded-xl border border-border/60 bg-card p-4">
           <Lock

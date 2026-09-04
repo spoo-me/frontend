@@ -24,7 +24,12 @@ import {
   type UrlListItem,
 } from "@/lib/api"
 import { displayUrl } from "@/lib/format"
-import { normalizeUrl, urlProblem } from "@/lib/validation"
+import {
+  CLICK_CAP_PROBLEM,
+  CLICK_CAP_RE,
+  normalizeUrl,
+  urlProblem,
+} from "@/lib/validation"
 import { countGraphemes } from "@/lib/emoji-alias"
 import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
 import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
@@ -439,9 +444,10 @@ export function LinkSettingsForm({
     url: string
     message: string
   } | null>(null)
-  const [serverFallbackError, setServerFallbackError] = React.useState<
-    string | null
-  >(null)
+  const [serverFallbackError, setServerFallbackError] = React.useState<{
+    url: string
+    message: string
+  } | null>(null)
   const aliasServerMsg =
     serverAliasError &&
     serverAliasError.alias === alias &&
@@ -488,9 +494,11 @@ export function LinkSettingsForm({
   const maxClicksVal = maxClicks === "" ? null : Number(maxClicks)
   if (maxClicksVal !== (link.max_clicks ?? null))
     patch.max_clicks = maxClicksVal
+  const capSet = CLICK_CAP_RE.test(maxClicks.trim())
+  const maxClicksProblem =
+    maxClicks.trim() !== "" && !capSet ? CLICK_CAP_PROBLEM : null
   // Same rule as pre_start_url: nothing to end the link, no fallback on the wire.
-  const fallbackActive =
-    (expiry !== "" || maxClicks !== "") && fallbackUrl.trim() !== ""
+  const fallbackActive = (expiry !== "" || capSet) && fallbackUrl.trim() !== ""
   const fallbackVal = fallbackActive ? normalizeUrl(fallbackUrl) : null
   if (fallbackVal !== (link.expired_redirect_url ?? null))
     patch.expired_redirect_url = fallbackVal
@@ -541,7 +549,10 @@ export function LinkSettingsForm({
             : null))
 
   const fallbackProblem = fallbackActive
-    ? (urlProblem(fallbackUrl) ?? serverFallbackError)
+    ? (urlProblem(fallbackUrl) ??
+      (serverFallbackError?.url === normalizeUrl(fallbackUrl)
+        ? serverFallbackError.message
+        : null))
     : null
 
   const save = useMutation({
@@ -585,11 +596,13 @@ export function LinkSettingsForm({
         return
       }
       if (err instanceof SpooApiError && err.field === "expired_redirect_url") {
-        setServerFallbackError(
-          err.message === "URL is blocked"
-            ? "That fallback is blocked on spoo.me."
-            : err.message
-        )
+        setServerFallbackError({
+          url: normalizeUrl(fallbackUrl),
+          message:
+            err.message === "URL is blocked"
+              ? "That fallback is blocked on spoo.me."
+              : err.message,
+        })
         return
       }
       toast.error(err instanceof Error ? err.message : "Couldn't save changes")
@@ -614,6 +627,7 @@ export function LinkSettingsForm({
     }
     if (variantTotal(variants) > 100) return "A/B split exceeds 100%."
     if (geoRulesProblem(geoRules)) return "Fix the geo rules to save."
+    if (maxClicksProblem) return "Fix the click limit to save."
     if (fallbackProblem) return "Fix the fallback URL to save."
     if (metaProblem) return "Fix the link preview to save."
     if (startsAt && preStartUrl.trim() && urlProblem(preStartUrl))
@@ -681,11 +695,13 @@ export function LinkSettingsForm({
           or clear the limit later to bring it back.
         </InfoHint>
       }
+      error={maxClicksProblem}
     >
       <div className="flex items-center gap-1.5">
         <Input
           type="number"
           min={1}
+          step={1}
           value={maxClicks}
           onChange={(e) => setMaxClicks(e.target.value)}
           placeholder="Unlimited"
@@ -720,10 +736,7 @@ export function LinkSettingsForm({
         <div className="flex items-center gap-1.5">
           <UrlInput
             value={fallbackUrl}
-            onChange={(e) => {
-              setServerFallbackError(null)
-              setFallbackUrl(e.target.value)
-            }}
+            onChange={(e) => setFallbackUrl(e.target.value)}
             placeholder="Ended page"
             disabled={expiry === "" && maxClicks === ""}
           />
@@ -733,10 +746,7 @@ export function LinkSettingsForm({
               variant="ghost"
               size="icon-sm"
               aria-label="Remove fallback URL"
-              onClick={() => {
-                setServerFallbackError(null)
-                setFallbackUrl("")
-              }}
+              onClick={() => setFallbackUrl("")}
             >
               <X />
             </Button>

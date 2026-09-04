@@ -2100,6 +2100,9 @@ async function handle(req: NextRequest, path: string[]) {
       return json(linkItem(link))
     }
     if (req.method === "PATCH") {
+      // Validated up front: a rejected fallback must leave the link untouched.
+      const fallback = fallbackUrlFail(body.expired_redirect_url)
+      if ("err" in fallback) return fallback.err
       // Alias `url` accepted; null = keep; only a CHANGED value revalidates
       // (services/url_service.py _handle_long_url).
       const rawLong = body.long_url !== undefined ? body.long_url : body.url
@@ -2182,11 +2185,8 @@ async function handle(req: NextRequest, path: string[]) {
         if ("err" in geo) return geo.err
         link.geo_rules = geo.ok
       }
-      if ("expired_redirect_url" in body) {
-        const fallback = fallbackUrlFail(body.expired_redirect_url)
-        if ("err" in fallback) return fallback.err
+      if ("expired_redirect_url" in body)
         link.expired_redirect_url = fallback.ok
-      }
       if ("ab_variants" in body)
         link.ab_variants =
           body.ab_variants === null ? null : parseVariants(body.ab_variants)

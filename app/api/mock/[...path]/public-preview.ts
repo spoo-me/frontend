@@ -76,6 +76,12 @@ export function handlePublicPreview(code: string): NextResponse {
       ...base,
       destination: null,
       geo_destinations: null,
+      // An expired link with a fallback still sends everyone there, so the
+      // preview names it: the page never shows less than the redirect serves.
+      expired_destination:
+        link.status === "EXPIRED" && link.expired_redirect_url
+          ? splitDestination(link.expired_redirect_url)
+          : null,
     })
 
   // Geo-targeted links list EVERY destination, grouped by URL — the
@@ -96,5 +102,6 @@ export function handlePublicPreview(code: string): NextResponse {
     ...base,
     destination: splitDestination(link.long_url),
     geo_destinations,
+    expired_destination: null,
   })
 }
