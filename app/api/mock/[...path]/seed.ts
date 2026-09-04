@@ -26,6 +26,9 @@ export type MockLink = {
   status: "ACTIVE" | "INACTIVE" | "EXPIRED" | "BLOCKED"
   created_at: string
   expire_after: number | null
+  /** Real wire shape (link_scheduling): unix seconds, null = live now. */
+  starts_at: number | null
+  pre_start_url: string | null
   max_clicks: number | null
   password_set: boolean
   password: string | null
@@ -47,9 +50,52 @@ export type MockLink = {
     color: string | null
     warnings: string[] | null
   } | null
+  /** Ids into the account's tag registry (MockTag), in the link's order. */
+  tag_ids: string[]
   /** Relative traffic weight used by the stats generator. */
   weight: number
 }
+
+/** Mirrors the real TagResponse wire: palette key colour, curated icon key. */
+export type MockTag = {
+  id: string
+  name: string
+  color: string
+  icon: string
+  created_at: string
+  updated_at: string | null
+}
+
+export function buildTags(): MockTag[] {
+  const base = Date.parse("2026-05-20T10:00:00Z")
+  return (
+    [
+      ["launch", "violet", "rocket"],
+      ["q3", "teal", "calendar"],
+      ["sales", "amber", "briefcase"],
+      ["events", "pink", "tag"],
+      ["pricing", "green", "credit-card"],
+    ] as const
+  ).map(([name, color, icon], i) => ({
+    id: `tag_${SEED}_${i}`,
+    name,
+    color,
+    icon,
+    created_at: new Date(base + i * 86_400_000).toISOString(),
+    updated_at: null,
+  }))
+}
+
+// A few seeded links carry tags so the filter, the picker, the stats scope
+// and the row rendering all have something to show out of the box.
+const SEED_TAGS: Record<string, string[]> = {
+  launch: ["launch", "q3"],
+  pricing: ["pricing", "q3"],
+  deck: ["sales"],
+  invite: ["sales", "events"],
+  beta: ["launch"],
+}
+const tagIdByName = new Map(buildTags().map((t) => [t.name, t.id]))
 
 // Mirrors the real CustomDomainResponse wire byte-for-byte: lowercase
 // status, verification_method present, no cf_* fields (the real DTO
@@ -128,6 +174,7 @@ const DESTINATIONS: Array<[alias: string, url: string, weight: number]> = [
   ["report", "https://blog.spoo.me/state-of-link-sharing-2026", 2],
   ["invite", "https://spoo.me/i/team-invite", 2],
   ["beta", "https://spoo.me/beta/edge-analytics", 2],
+  ["keynote", "https://www.youtube.com/live/spoo-keynote-2026", 2],
   ["ios", "https://apps.apple.com/app/spoo-shortener/id123456", 2],
   ["feedback", "https://spoo.canny.io/feature-requests", 2],
   ["newsletter", "https://buttondown.email/spoo/archive", 2],
@@ -188,6 +235,13 @@ export function buildLinks(): MockLink[] {
           : alias === "beta"
             ? Math.floor((Date.now() + 21 * 86_400_000) / 1000)
             : null,
+      // "keynote" is scheduled: live in nine days, teaser page until then.
+      starts_at:
+        alias === "keynote"
+          ? Math.floor((Date.now() + 9 * 86_400_000) / 1000)
+          : null,
+      pre_start_url:
+        alias === "keynote" ? "https://spoo.me/events/keynote-2026" : null,
       max_clicks: alias === "invite" ? 500 : alias === "swag" ? 1000 : null,
       password_set: alias === "deck" || alias === "kit",
       password:
@@ -199,13 +253,17 @@ export function buildLinks(): MockLink[] {
       private_stats: alias === "hiring",
       block_bots: weight >= 6,
       total_clicks:
-        status === "ACTIVE" || status === "EXPIRED"
-          ? clicks
-          : Math.round(clicks * 0.3),
+        alias === "keynote"
+          ? 0
+          : status === "ACTIVE" || status === "EXPIRED"
+            ? clicks
+            : Math.round(clicks * 0.3),
       last_click:
-        status === "ACTIVE"
-          ? isoDaysAgo(rand() * 2, rand)
-          : isoDaysAgo(20 + rand() * 30, rand),
+        alias === "keynote"
+          ? null
+          : status === "ACTIVE"
+            ? isoDaysAgo(rand() * 2, rand)
+            : isoDaysAgo(20 + rand() * 30, rand),
       // "pricing" ships purchasing-power-parity pages — a believable geo
       // demo the settings form can round-trip out of the box.
       geo_rules:
@@ -224,6 +282,7 @@ export function buildLinks(): MockLink[] {
             ? "https://acme.dev/waitlist"
             : null,
       ab_variants: null,
+      tag_ids: (SEED_TAGS[alias] ?? []).map((n) => tagIdByName.get(n)!),
       // "launch" carries a custom social card — the meta editor and the
       // unfurl previews have something real to round-trip out of the box.
       meta_tags:

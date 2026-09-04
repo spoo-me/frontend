@@ -20,6 +20,7 @@ export type FeatureName =
   | "ab_testing"
   | "webhooks"
   | "expired_fallback"
+  | "link_scheduling"
 
 export type FeatureMap = Partial<Record<FeatureName, FeatureState>> &
   Record<string, FeatureState>

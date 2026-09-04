@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 
 import { ErrorShell } from "@/components/errors/error-shell"
 import { NotFoundBody } from "@/components/errors/not-found-body"
+import { NotLiveYetBody } from "@/components/errors/not-live-yet-body"
+import { NotLiveCountdown } from "@/components/errors/not-live-countdown"
 import {
   BlockedBody,
   GoneBody,
@@ -18,10 +20,12 @@ import {
  * Directly reachable in dev; no Caddy needed to build against.
  */
 
-type View = "404" | "410" | "451" | "429" | "5xx"
+type View = "404" | "410" | "451" | "429" | "5xx" | "scheduled"
 
 const SLUG_VIEWS: Record<string, View> = {
   not_found: "404",
+  // A 404 by status, but the link exists and has a start time.
+  not_yet_live: "scheduled",
   gone: "410",
   blocked: "451",
   rate_limit_exceeded: "429",
@@ -50,6 +54,7 @@ const TITLES: Record<View, string> = {
   "451": "Link blocked",
   "429": "Slow down",
   "5xx": "Something went wrong",
+  scheduled: "Not live yet",
 }
 
 type Params = {
@@ -78,9 +83,17 @@ export default async function ErrorPage({ params, searchParams }: Params) {
   const view = resolveView(status, code)
 
   return (
-    <ErrorShell status={status} fisher={view === "404"}>
+    <ErrorShell
+      status={status}
+      fisher={view === "404"}
+      watermark={
+        view === "scheduled" ? <NotLiveCountdown from={from} /> : undefined
+      }
+    >
       {view === "404" ? (
         <NotFoundBody from={from} />
+      ) : view === "scheduled" ? (
+        <NotLiveYetBody from={from} />
       ) : view === "410" ? (
         <GoneBody />
       ) : view === "451" ? (

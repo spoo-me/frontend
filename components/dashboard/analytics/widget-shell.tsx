@@ -12,6 +12,7 @@ import {
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Panel, SectionHeader } from "@/components/dashboard/section"
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
+import { useTags } from "@/components/dashboard/tags/tag-picker"
 
 /**
  * Shared widget frame: header + a panel whose height derives from the grid
@@ -82,6 +83,11 @@ export function WidgetShell({
     value, "+n" for the rest, everything in the title attr. The bar owns
     editing. */
 export function ScopeChip({ scope }: { scope: WidgetScope }) {
+  const knownTags = useTags(!!scope.tag_id?.length)
+  const label = (dim: ScopeKey, value: string) =>
+    dim === "tag_id"
+      ? (knownTags.data?.items.find((t) => t.id === value)?.name ?? "tag")
+      : scopeLabel(dim, value)
   // Iterate the same SCOPE_KEYS list mergeScope filters by, so any key the
   // merge honors also surfaces here — a scoped widget can never render
   // chipless (which would silently present it as unscoped).
@@ -99,7 +105,7 @@ export function ScopeChip({ scope }: { scope: WidgetScope }) {
       // a count is the honest summary — raw hex would read as noise.
       d === "url_id"
         ? `${v.length} link${v.length === 1 ? "" : "s"}`
-        : v.map((x) => scopeLabel(d, x)).join(", ")
+        : v.map((x) => label(d, x)).join(", ")
     )
     .join(" · ")
   return (
@@ -112,7 +118,7 @@ export function ScopeChip({ scope }: { scope: WidgetScope }) {
         value={first}
         className="size-3 shrink-0"
       />
-      <span className="truncate">{scopeLabel(dim, first)}</span>
+      <span className="truncate">{label(dim, first)}</span>
       {total > 1 && (
         <span className="shrink-0 text-muted-foreground/60">+{total - 1}</span>
       )}

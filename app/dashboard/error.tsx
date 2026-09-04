@@ -29,7 +29,7 @@ export default function DashboardError({
           <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
             this view crashed
           </span>
-          <Button size="sm" onClick={reset}>
+          <Button onClick={reset}>
             <RotateCcw data-icon="inline-start" />
             Try again
           </Button>

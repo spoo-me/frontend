@@ -1,4 +1,5 @@
 import { apiFetch, authedFetch, jsonInit, parse } from "./client"
+import type { TagRef } from "./tags"
 
 export type ShortUrl = {
   id: string
@@ -17,7 +18,14 @@ export type ShortUrl = {
   claim_token?: string | null
 }
 
-export type UrlStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "BLOCKED"
+/** SCHEDULED is derived server-side from a future `starts_at`; it is never
+    stored, and the row shows it as quiet mono text rather than a pill. */
+export type UrlStatus =
+  | "ACTIVE"
+  | "INACTIVE"
+  | "EXPIRED"
+  | "BLOCKED"
+  | "SCHEDULED"
 
 /**
  * Per-country destination overrides (backend PR #230). The wire is a FLAT
@@ -78,6 +86,11 @@ export type UrlListItem = {
   status: UrlStatus | null
   created_at: string | null
   expire_after: number | null
+  /** Go-live time (unix seconds); null when live now. Flag-gated
+      (link_scheduling); older backends omit both fields. */
+  starts_at?: number | null
+  /** Where visitors go before `starts_at`; null for the not-yet-live page. */
+  pre_start_url?: string | null
   max_clicks: number | null
   private_stats: boolean | null
   block_bots: boolean | null
@@ -92,6 +105,8 @@ export type UrlListItem = {
   /** Where visitors land once the link has expired; null = the expired page. */
   expired_redirect_url?: string | null
   meta_tags?: MetaTags | null
+  /** The link's tags (id, name, colour, icon), in the link's order. */
+  tags?: TagRef[]
 }
 
 export type UrlListResponse = {
@@ -298,6 +313,11 @@ export type ShortenInput = {
   password?: string
   max_clicks?: number
   expire_after?: number
+  /** Go-live time (unix seconds). Flag-gated (link_scheduling): 403 when off,
+      401 for anonymous callers. Must be before expire_after. */
+  starts_at?: number
+  /** Visitors land here before starts_at; omitted = not-yet-live page. */
+  pre_start_url?: string
   domain?: string
   block_bots?: boolean
   private_stats?: boolean
@@ -313,6 +333,8 @@ export type ShortenInput = {
   /** Live on the backend (PR #231); requires a verified account with the
       custom_meta_tags flag — 403 otherwise. */
   meta_tags?: MetaTagsInput
+  /** Ids of tags from GET /api/v1/tags; every one must be yours (400 otherwise). */
+  tag_ids?: string[]
 }
 
 export function shorten(input: ShortenInput) {
@@ -344,6 +366,10 @@ export type UrlListFilter = {
   maxClicksSet?: boolean
   createdAfter?: string
   createdBefore?: string
+  /** Links carrying these tags, by id or by name; `tagsMatch` says any or every. */
+  tagIds?: string[]
+  tagNames?: string[]
+  tagsMatch?: "any" | "all"
 }
 
 export type ListUrlsParams = {
@@ -396,6 +422,9 @@ export type UpdateUrlInput = Partial<{
   block_bots: boolean
   max_clicks: number | null
   expire_after: number | null
+  /** null makes the link live now (clearing is never gated). */
+  starts_at: number | null
+  pre_start_url: string | null
   private_stats: boolean
   status: "ACTIVE" | "INACTIVE"
   domain: string | null
@@ -406,6 +435,8 @@ export type UpdateUrlInput = Partial<{
   expired_redirect_url: string | null
   /** Whole-object replace; null clears (clearing is never gated). */
   meta_tags: MetaTagsInput | null
+  /** Whole-list replace of tag ids; null or [] clears. */
+  tag_ids: string[] | null
 }>
 
 export function updateUrl(urlId: string, input: UpdateUrlInput) {
@@ -542,7 +573,7 @@ export function summarizeBulkFailures(rows: BulkResultRow[]): string {
 }
 
 async function bulkPost(
-  op: "delete" | "status" | "expiry" | "domain",
+  op: "delete" | "status" | "expiry" | "domain" | "tags",
   ids: string[],
   extra: Record<string, unknown>
 ): Promise<BulkOperationResult> {
@@ -590,4 +621,15 @@ export function bulkMoveUrlDomain(ids: string[], domain: string | null) {
   return bulkPost("domain", ids, {
     domain: domain === "spoo.me" ? null : domain,
   })
+}
+
+/**
+ * Retag a selection in one request, by tag id: per item the result is its
+ * current tags minus `remove`, plus `add` (kept once, order preserved). Items
+ * already in that state are success no-ops; an item that would exceed the
+ * per-link cap reports `validation_error`. An `add` id you do not own
+ * rejects the whole request before any item is touched.
+ */
+export function bulkTagUrls(ids: string[], add: string[], remove: string[]) {
+  return bulkPost("tags", ids, { add, remove })
 }

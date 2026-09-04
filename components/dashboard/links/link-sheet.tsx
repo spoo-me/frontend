@@ -11,6 +11,7 @@ import { linkDetailPath } from "@/lib/link-detail"
 import { formatCount, formatWhen } from "@/lib/format"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { StatusPill } from "@/components/dashboard/status-pill"
+import { ScheduledState } from "@/components/dashboard/links/scheduled-state"
 import { useFeature } from "@/hooks/use-features"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import {
@@ -18,6 +19,7 @@ import {
   shortUrlOf,
 } from "@/components/dashboard/links/link-actions"
 import { LinkSettingsForm } from "@/components/dashboard/links/link-settings-form"
+import { TagList } from "@/components/dashboard/tags/tag-picker"
 
 /**
  * Quick sheet — URL-addressable (?link=alias, wired by the links page).
@@ -90,7 +92,11 @@ export function LinkSheet({
                   trackAs="copy_short_link"
                 />
                 <span className="ml-auto flex items-center gap-1">
-                  <StatusPill status={link.status} />
+                  {link.status === "SCHEDULED" && link.starts_at != null ? (
+                    <ScheduledState startsAt={link.starts_at} />
+                  ) : (
+                    <StatusPill status={link.status} />
+                  )}
                   <LinkActions
                     link={link}
                     onDeleted={() => onOpenChange(false)}
@@ -100,6 +106,9 @@ export function LinkSheet({
               <p className="ph-no-capture mt-1 truncate text-muted-foreground text-xs">
                 {link.long_url}
               </p>
+              {link.tags && link.tags.length > 0 && (
+                <TagList tags={link.tags} limit={6} className="mt-2" />
+              )}
 
               <div className="mt-4 grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/60 bg-card">
                 <div className="px-3 py-2.5">

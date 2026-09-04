@@ -244,8 +244,8 @@ function GrantRow({ grant }: { grant: AppGrant }) {
         )}
       </div>
       <Button
-        variant="outline"
         size="sm"
+        variant="outline"
         onClick={() => setConfirmOpen(true)}
         className="hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive dark:hover:bg-destructive/10"
       >
@@ -471,7 +471,7 @@ export default function AppsPage() {
 
               <DialogFooter>
                 {detail.github && (
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="outline">
                     <a href={detail.github} target="_blank" rel="noreferrer">
                       <BrandIcons.github data-icon="inline-start" />
                       GitHub
@@ -479,11 +479,9 @@ export default function AppsPage() {
                   </Button>
                 )}
                 {detail.status === "soon" ? (
-                  <Button size="sm" disabled>
-                    Coming soon
-                  </Button>
+                  <Button disabled>Coming soon</Button>
                 ) : (
-                  <Button asChild size="sm">
+                  <Button asChild>
                     <a href={detail.url} target="_blank" rel="noreferrer">
                       Get {detail.name}
                       <ArrowUpRight data-icon="inline-end" />

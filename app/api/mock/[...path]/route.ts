@@ -22,7 +22,10 @@ import {
   type MockLink,
   type MockWebhook,
   type StatsDimension,
+  buildTags,
+  type MockTag,
 } from "./seed"
+import { TAG_ICON_KEYS } from "@/lib/api/tags"
 
 /**
  * Mock backend for design walkthroughs — enabled only when SPOO_MOCK=1
@@ -62,6 +65,7 @@ type MockState = {
   /** ISO purge deadline while a deletion is scheduled; null = active. */
   pendingDeletion: string | null
   links: MockLink[]
+  tags: MockTag[]
   domains: MockDomain[]
   keys: MockKey[]
   webhooks: MockWebhook[]
@@ -116,6 +120,7 @@ const initial = (): MockState => ({
   onboarding: { step: null, path: null },
   onboardedAt: null,
   links: buildLinks(),
+  tags: buildTags(),
   domains: buildDomains(),
   keys: buildKeys(),
   webhooks: buildWebhooks(),
@@ -273,14 +278,28 @@ function slug() {
   return Math.random().toString(36).slice(2, 7)
 }
 
+/** The backend derives SCHEDULED from a future starts_at on an ACTIVE
+    link; the stored status never changes. Mirror that here. */
+function effectiveStatus(l: MockLink): MockLink["status"] | "SCHEDULED" {
+  if (
+    l.status === "ACTIVE" &&
+    l.starts_at !== null &&
+    l.starts_at > Math.floor(Date.now() / 1000)
+  )
+    return "SCHEDULED"
+  return l.status
+}
+
 function linkItem(l: MockLink) {
   return {
     id: l.id,
     alias: l.alias,
     long_url: l.long_url,
-    status: l.status,
+    status: effectiveStatus(l),
     created_at: l.created_at,
     expire_after: l.expire_after,
+    starts_at: l.starts_at,
+    pre_start_url: l.pre_start_url,
     max_clicks: l.max_clicks,
     private_stats: l.private_stats,
     block_bots: l.block_bots,
@@ -293,7 +312,103 @@ function linkItem(l: MockLink) {
     expired_redirect_url: l.expired_redirect_url,
     ab_variants: l.ab_variants,
     meta_tags: l.meta_tags,
+    tags: l.tag_ids
+      .map((id) => state().tags.find((t) => t.id === id))
+      .filter((t): t is MockTag => !!t)
+      .map(tagRef),
   }
+}
+
+function tagRef(t: MockTag) {
+  return { id: t.id, name: t.name, color: t.color, icon: t.icon }
+}
+
+function tagItem(t: MockTag) {
+  return {
+    ...tagRef(t),
+    link_count: state().links.filter((l) => l.tag_ids.includes(t.id)).length,
+    created_at: t.created_at,
+    updated_at: t.updated_at,
+  }
+}
+
+/* Tag names mirror shared/tags.py: trim, lowercase, collapse whitespace,
+   letters/digits/marks plus space - _ . only, ≤ 32 chars. Tag ids on a link
+   mirror the DTO: 24-hex, deduped, at most 10 (422), and every id must be
+   one of the account's tags (400, like the service). */
+const TAG_ALLOWED = /^[\p{L}\p{N}\p{M} ._-]+$/u
+const TAG_COLORS = new Set([
+  "gray",
+  "red",
+  "orange",
+  "amber",
+  "green",
+  "teal",
+  "blue",
+  "violet",
+  "pink",
+])
+function normalizeTagName(v: unknown): string | null {
+  if (typeof v !== "string") return null
+  const name = v
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x1f\x7f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+  if (!name || Array.from(name).length > 32 || !TAG_ALLOWED.test(name))
+    return null
+  return name
+}
+type TagsResult = { ok: string[] } | { err: NextResponse }
+function normalizeTagIds(v: unknown, field = "tag_ids"): TagsResult {
+  if (v === null || v === undefined) return { ok: [] }
+  if (!Array.isArray(v))
+    return {
+      err: fail(
+        422,
+        "validation_error",
+        `${field}: Input should be a valid list`,
+        field
+      ),
+    }
+  const out: string[] = []
+  for (const raw of v) {
+    if (typeof raw !== "string" || !/^[0-9a-f]{24}$|^tag_\w+$/.test(raw))
+      return {
+        err: fail(422, "validation_error", `'${raw}' is not a valid id`, field),
+      }
+    if (!out.includes(raw)) out.push(raw)
+  }
+  if (out.length > 10)
+    return {
+      err: fail(422, "validation_error", "at most 10 tags per link", field),
+    }
+  return { ok: out }
+}
+function assertOwnedTagIds(
+  ids: string[],
+  field = "tag_ids"
+): NextResponse | null {
+  const known = new Set(state().tags.map((t) => t.id))
+  const missing = ids.filter((id) => !known.has(id))
+  return missing.length
+    ? fail(
+        400,
+        "validation_error",
+        `unknown tag ids: ${missing.join(", ")}`,
+        field
+      )
+    : null
+}
+function pickAutoColor(): string {
+  const used = new Map<string, number>()
+  for (const t of state().tags) used.set(t.color, (used.get(t.color) ?? 0) + 1)
+  return (
+    [...TAG_COLORS]
+      .filter((c) => c !== "gray")
+      .sort((a, b) => (used.get(a) ?? 0) - (used.get(b) ?? 0))[0] ?? "violet"
+  )
 }
 
 /* geo_rules mirrors backend PR #230 byte-for-byte: the wire is a FLAT MAP of
@@ -1022,6 +1137,7 @@ async function handle(req: NextRequest, path: string[]) {
             ...initial(),
             onboardedAt: ONBOARDED_AT,
             links: [],
+            tags: [],
             domains: [],
             keys: [],
             webhooks: [],
@@ -1055,6 +1171,7 @@ async function handle(req: NextRequest, path: string[]) {
         userName: body.user_name ? String(body.user_name) : null,
         verified: false, // signup walks the OTP beat
         links: [],
+        tags: [],
         providers: [], // email signup starts with no linked providers
         pfp: null,
         onboarding: { step: null, path: null },
@@ -1413,10 +1530,37 @@ async function handle(req: NextRequest, path: string[]) {
       if ("err" in meta) return meta.err
       const fallback = fallbackUrlFail(body.expired_redirect_url)
       if ("err" in fallback) return fallback.err
+      const tags = normalizeTagIds(body.tag_ids)
+      if ("err" in tags) return tags.err
+      const foreign = assertOwnedTagIds(tags.ok)
+      if (foreign) return foreign
       // Flag-gated + verified-account only (403 with a clear message —
       // the field rides a shared endpoint, nothing to hide). PR #231.
       if (meta.ok !== null && !s.verified)
         return fail(403, "forbidden", "meta_tags requires a verified account")
+      const startsAt =
+        typeof body.starts_at === "number" && Number.isFinite(body.starts_at)
+          ? body.starts_at
+          : null
+      const expireAfter =
+        typeof body.expire_after === "number" &&
+        Number.isFinite(body.expire_after)
+          ? body.expire_after
+          : null
+      if (startsAt !== null && startsAt <= Math.floor(Date.now() / 1000))
+        return fail(
+          400,
+          "validation_error",
+          "starts_at must be in the future",
+          "starts_at"
+        )
+      if (startsAt !== null && expireAfter !== null && startsAt >= expireAfter)
+        return fail(
+          400,
+          "validation_error",
+          "starts_at must be before expire_after",
+          "starts_at"
+        )
       const link: MockLink = {
         id: `url_${slug()}`,
         alias,
@@ -1424,8 +1568,12 @@ async function handle(req: NextRequest, path: string[]) {
         domain,
         status: "ACTIVE",
         created_at: new Date().toISOString(),
-        expire_after:
-          typeof body.expire_after === "number" ? body.expire_after : null,
+        expire_after: expireAfter,
+        starts_at: startsAt,
+        pre_start_url:
+          typeof body.pre_start_url === "string" && body.pre_start_url
+            ? String(body.pre_start_url)
+            : null,
         max_clicks:
           typeof body.max_clicks === "number" ? body.max_clicks : null,
         password_set:
@@ -1442,6 +1590,7 @@ async function handle(req: NextRequest, path: string[]) {
         expired_redirect_url: fallback.ok,
         ab_variants: parseVariants(body.ab_variants),
         meta_tags: meta.ok,
+        tag_ids: tags.ok,
         weight: 1,
       }
       s.links.unshift(link)
@@ -1491,10 +1640,15 @@ async function handle(req: NextRequest, path: string[]) {
             maxClicksSet?: boolean
             createdAfter?: string
             createdBefore?: string
+            tagIds?: string[]
+            tagNames?: string[]
+            tagsMatch?: string
           }
           if (f.status)
             items = items.filter(
-              (l) => l.status.toLowerCase() === String(f.status).toLowerCase()
+              (l) =>
+                effectiveStatus(l).toLowerCase() ===
+                String(f.status).toLowerCase()
             )
           if (typeof f.passwordSet === "boolean")
             items = items.filter((l) => l.password_set === f.passwordSet)
@@ -1512,6 +1666,43 @@ async function handle(req: NextRequest, path: string[]) {
               (l) =>
                 l.alias.toLowerCase().includes(q) ||
                 l.long_url.toLowerCase().includes(q)
+            )
+          }
+          const wantedIds: string[] = Array.isArray(f.tagIds)
+            ? f.tagIds.map(String)
+            : []
+          if (Array.isArray(f.tagNames) && f.tagNames.length) {
+            // Names resolve through the registry; unknown names match nothing.
+            const names = f.tagNames.map((n: unknown) => normalizeTagName(n))
+            if (names.some((n: string | null) => n === null))
+              return fail(
+                422,
+                "validation_error",
+                "invalid tag name",
+                "filter.tagNames"
+              )
+            for (const t of s.tags)
+              if (names.includes(t.name) && !wantedIds.includes(t.id))
+                wantedIds.push(t.id)
+            // A name no tag carries can never be on every link.
+            if (
+              f.tagsMatch === "all" &&
+              names.some(
+                (n: string | null) => !s.tags.some((t) => t.name === n)
+              )
+            )
+              items = []
+          }
+          if (
+            wantedIds.length ||
+            (Array.isArray(f.tagNames) && f.tagNames.length)
+          ) {
+            const all = f.tagsMatch === "all"
+            items = items.filter((l) =>
+              all
+                ? wantedIds.length > 0 &&
+                  wantedIds.every((t) => l.tag_ids.includes(t))
+                : wantedIds.some((t) => l.tag_ids.includes(t))
             )
           }
         } catch {
@@ -1543,6 +1734,117 @@ async function handle(req: NextRequest, path: string[]) {
         total: items.length,
         hasNext: startIdx + pageSize < items.length,
       })
+    }
+  }
+
+  /* ---------- tags: the per-account registry links point at by id ---------- */
+  if (route === "GET /v1/tags") {
+    return json({ items: s.tags.map(tagItem) })
+  }
+  if (route === "POST /v1/tags") {
+    const name = normalizeTagName(body.name)
+    if (!name)
+      return fail(
+        422,
+        "validation_error",
+        "name: letters, digits, spaces, - _ . only",
+        "name"
+      )
+    if (
+      body.color !== undefined &&
+      body.color !== null &&
+      !TAG_COLORS.has(String(body.color))
+    )
+      return fail(
+        422,
+        "validation_error",
+        "color: unknown palette key",
+        "color"
+      )
+    if (
+      body.icon !== undefined &&
+      body.icon !== null &&
+      body.icon !== "" &&
+      !(TAG_ICON_KEYS as readonly string[]).includes(String(body.icon))
+    )
+      return fail(
+        422,
+        "validation_error",
+        `unknown tag icon '${body.icon}'`,
+        "icon"
+      )
+    if (s.tags.some((t) => t.name === name))
+      return fail(409, "conflict", `you already have a tag named '${name}'`)
+    if (s.tags.length >= 500)
+      return fail(
+        400,
+        "validation_error",
+        "an account can have at most 500 tags",
+        "name"
+      )
+    const tag: MockTag = {
+      id: `tag_${slug()}`,
+      name,
+      color: body.color ? String(body.color) : pickAutoColor(),
+      icon: body.icon ? String(body.icon) : "tag",
+      created_at: new Date().toISOString(),
+      updated_at: null,
+    }
+    s.tags.push(tag)
+    return json(tagItem(tag), { status: 201 })
+  }
+  if (path[0] === "v1" && path[1] === "tags" && path[2] && !path[3]) {
+    const tag = s.tags.find((t) => t.id === path[2])
+    if (req.method === "PATCH") {
+      if (!tag) return fail(404, "not_found", "Tag not found")
+      if ("name" in body && body.name !== null) {
+        const name = normalizeTagName(body.name)
+        if (!name)
+          return fail(
+            422,
+            "validation_error",
+            "name: letters, digits, spaces, - _ . only",
+            "name"
+          )
+        if (s.tags.some((t) => t !== tag && t.name === name))
+          return fail(409, "conflict", `you already have a tag named '${name}'`)
+        tag.name = name
+      }
+      if ("color" in body && body.color !== null) {
+        if (!TAG_COLORS.has(String(body.color)))
+          return fail(
+            422,
+            "validation_error",
+            "color: unknown palette key",
+            "color"
+          )
+        tag.color = String(body.color)
+      }
+      if ("icon" in body) {
+        if (body.icon === null)
+          return fail(422, "validation_error", "icon cannot be null", "icon")
+        if (!(TAG_ICON_KEYS as readonly string[]).includes(String(body.icon)))
+          return fail(
+            422,
+            "validation_error",
+            `unknown tag icon '${body.icon}'`,
+            "icon"
+          )
+        tag.icon = String(body.icon)
+      }
+      tag.updated_at = new Date().toISOString()
+      return json(tagItem(tag))
+    }
+    if (req.method === "DELETE") {
+      if (!tag) return fail(404, "not_found", "Tag not found")
+      let links_updated = 0
+      for (const l of s.links)
+        if (l.tag_ids.includes(tag.id)) {
+          l.tag_ids = l.tag_ids.filter((id) => id !== tag.id)
+          links_updated += 1
+        }
+      s.tags = s.tags.filter((t) => t !== tag)
+      return json({ deleted: true, links_updated })
     }
   }
 
@@ -1708,6 +2010,42 @@ async function handle(req: NextRequest, path: string[]) {
         link.domain = target
         return null
       }
+    } else if (op === "tags") {
+      const add = normalizeTagIds(body.add, "add")
+      if ("err" in add) return add.err
+      const remove = normalizeTagIds(body.remove, "remove")
+      if ("err" in remove) return remove.err
+      if (!add.ok.length && !remove.ok.length)
+        return fail(
+          422,
+          "validation_error",
+          "add or remove must name at least one tag",
+          "add"
+        )
+      if (add.ok.some((t) => remove.ok.includes(t)))
+        return fail(
+          422,
+          "validation_error",
+          "tags cannot be both added and removed",
+          "add"
+        )
+      // Envelope precondition, like the real service: every added tag
+      // must be one of yours, or nothing is attempted.
+      const foreign = assertOwnedTagIds(add.ok, "add")
+      if (foreign) return foreign
+      apply = (link) => {
+        if (link.status === "BLOCKED")
+          return { code: "forbidden", msg: "blocked URLs cannot be modified" }
+        const kept = link.tag_ids.filter((t) => !remove.ok.includes(t))
+        const next = [...kept, ...add.ok.filter((t) => !kept.includes(t))]
+        if (next.length > 10)
+          return {
+            code: "validation_error",
+            msg: "a link can carry at most 10 tags",
+          }
+        link.tag_ids = next
+        return null
+      }
     } else {
       return fail(404, "not_found", "Unknown bulk operation")
     }
@@ -1789,9 +2127,50 @@ async function handle(req: NextRequest, path: string[]) {
           body.max_clicks === null || body.max_clicks === 0
             ? null
             : Number(body.max_clicks)
-      if ("expire_after" in body)
-        link.expire_after =
-          body.expire_after === null ? null : Number(body.expire_after)
+      // Stage the scheduling pair and validate before touching the link, so
+      // a rejected request leaves it exactly as it was.
+      const nextExpire =
+        "expire_after" in body
+          ? body.expire_after === null
+            ? null
+            : Number(body.expire_after)
+          : link.expire_after
+      const nextStart =
+        "starts_at" in body
+          ? body.starts_at === null
+            ? null
+            : Number(body.starts_at)
+          : link.starts_at
+      if (nextStart !== null && !Number.isFinite(nextStart))
+        return fail(
+          422,
+          "validation_error",
+          "Invalid starts_at format",
+          "starts_at"
+        )
+      if ("starts_at" in body && nextStart !== null) {
+        if (nextStart <= Math.floor(Date.now() / 1000))
+          return fail(
+            400,
+            "validation_error",
+            "starts_at must be in the future",
+            "starts_at"
+          )
+        if (nextExpire !== null && nextStart >= nextExpire)
+          return fail(
+            400,
+            "validation_error",
+            "starts_at must be before expire_after",
+            "starts_at"
+          )
+      }
+      if ("expire_after" in body) link.expire_after = nextExpire
+      if ("starts_at" in body) link.starts_at = nextStart
+      if ("pre_start_url" in body)
+        link.pre_start_url =
+          body.pre_start_url === null || body.pre_start_url === ""
+            ? null
+            : String(body.pre_start_url)
       if ("private_stats" in body)
         link.private_stats = Boolean(body.private_stats)
       if ("block_bots" in body) link.block_bots = Boolean(body.block_bots)
@@ -1811,6 +2190,14 @@ async function handle(req: NextRequest, path: string[]) {
       if ("ab_variants" in body)
         link.ab_variants =
           body.ab_variants === null ? null : parseVariants(body.ab_variants)
+      if ("tag_ids" in body) {
+        // Whole-list replace; null and [] both clear.
+        const tags = normalizeTagIds(body.tag_ids)
+        if ("err" in tags) return tags.err
+        const foreign = assertOwnedTagIds(tags.ok)
+        if (foreign) return foreign
+        link.tag_ids = tags.ok
+      }
       if ("meta_tags" in body) {
         // PR #231 PATCH semantics: null clears (never gated), an object
         // replaces in full (gated: verified account + flag).
@@ -1904,6 +2291,25 @@ async function handle(req: NextRequest, path: string[]) {
     delete filters?.short_code
     const urlIds = filters?.url_id as string[] | undefined
     delete filters?.url_id
+    // Tag scope resolves through the links, like the real service does:
+    // clicks on links carrying any listed tag (by id or by name); a tag
+    // nobody uses matches nothing.
+    const tagIdScope = (filters?.tag_id as string[] | undefined) ?? []
+    const tagNameScope = (filters?.tag as string[] | undefined) ?? []
+    delete filters?.tag_id
+    delete filters?.tag
+    if (tagIdScope.length || tagNameScope.length) {
+      const names = tagNameScope.map((n) => normalizeTagName(n))
+      const wanted = new Set(tagIdScope)
+      for (const t of s.tags) if (names.includes(t.name)) wanted.add(t.id)
+      const tagged = s.links
+        .filter((l) => l.tag_ids.some((t) => wanted.has(t)))
+        .map((l) => l.alias)
+      shortCodes = shortCodes
+        ? shortCodes.filter((c) => tagged.includes(c))
+        : tagged
+      if (!shortCodes.length) shortCodes = ["__no_match__"]
+    }
     if (urlIds?.length) {
       const byId = s.links
         .filter((l) => urlIds.includes(l.id))
@@ -2128,6 +2534,7 @@ async function handle(req: NextRequest, path: string[]) {
         ab_testing: "enabled",
         webhooks: "enabled",
         expired_fallback: "enabled",
+        link_scheduling: "enabled",
       },
     })
   }

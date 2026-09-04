@@ -9,6 +9,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query"
 import {
+  parseAsArrayOf,
   parseAsInteger,
   parseAsIsoDateTime,
   parseAsString,
@@ -19,6 +20,7 @@ import {
   ArrowDown,
   ArrowUp,
   Bot,
+  CalendarClock,
   CalendarDays,
   CornerDownRight,
   Globe,
@@ -35,6 +37,7 @@ import {
   Play,
   Plus,
   Search,
+  Tag,
   Timer,
   Trash2,
   X,
@@ -50,6 +53,7 @@ import {
   bulkMoveUrlDomain,
   bulkSetUrlExpiry,
   bulkSetUrlStatus,
+  bulkTagUrls,
   getUrl,
   listCustomDomains,
   listUrls,
@@ -107,6 +111,8 @@ import {
 } from "@/components/ui/tooltip"
 import { Panel } from "@/components/dashboard/section"
 import { StatusPill } from "@/components/dashboard/status-pill"
+import { ScheduledState } from "@/components/dashboard/links/scheduled-state"
+import { useFeature } from "@/hooks/use-features"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import {
   LinkActions,
@@ -114,12 +120,25 @@ import {
 } from "@/components/dashboard/links/link-actions"
 import { LinkSheet } from "@/components/dashboard/links/link-sheet"
 import { FilterChip } from "@/components/dashboard/filter-chip"
+import {
+  TAGS_QUERY_KEY,
+  TagList,
+  TagPicker,
+  useTags,
+} from "@/components/dashboard/tags/tag-picker"
+import { TagGlyph } from "@/components/dashboard/tags/tag-glyph"
 import { openLinkComposer } from "@/components/dashboard/links/composer"
 import { TimeRangePicker } from "@/components/dashboard/analytics/time-range-picker"
 import { RefreshControl } from "@/components/dashboard/refresh-control"
 import { useAutoRefreshPref } from "@/hooks/use-auto-refresh"
 
-const STATUSES = ["ACTIVE", "INACTIVE", "EXPIRED", "BLOCKED"] as const
+const STATUSES = [
+  "ACTIVE",
+  "SCHEDULED",
+  "INACTIVE",
+  "EXPIRED",
+  "BLOCKED",
+] as const
 const SORTS = ["created_at", "last_click", "total_clicks"] as const
 const PAGE_SIZE = 15
 
@@ -169,6 +188,7 @@ export default function LinksPage() {
     "status",
     parseAsStringLiteral(STATUSES)
   )
+  const showScheduling = useFeature("link_scheduling") === "enabled"
   const [protectedOnly, setProtectedOnly] = useQueryState(
     "protected",
     parseAsString
@@ -184,6 +204,14 @@ export default function LinksPage() {
   )
   const [after, setAfter] = useQueryState("after", parseAsIsoDateTime)
   const [before, setBefore] = useQueryState("before", parseAsIsoDateTime)
+  const [tagFilter, setTagFilter] = useQueryState(
+    "tags",
+    parseAsArrayOf(parseAsString).withDefault([])
+  )
+  const [tagsMatch, setTagsMatch] = useQueryState(
+    "tagsMatch",
+    parseAsStringLiteral(["any", "all"] as const)
+  )
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1))
   const [selected, setSelected] = useQueryState("link", parseAsString)
 
@@ -231,6 +259,14 @@ export default function LinksPage() {
     ...(limitedOnly ? { maxClicksSet: limitedOnly === "yes" } : {}),
     ...(after ? { createdAfter: after.toISOString() } : {}),
     ...(before ? { createdBefore: before.toISOString() } : {}),
+    ...(tagFilter.length
+      ? {
+          tagIds: tagFilter,
+          ...(tagsMatch === "all" && tagFilter.length > 1
+            ? { tagsMatch: "all" as const }
+            : {}),
+        }
+      : {}),
   }
 
   // Filter/sort usage — one emission per change, skipping the initial
@@ -240,6 +276,7 @@ export default function LinksPage() {
     protectedOnly && `protected:${protectedOnly}`,
     limitedOnly && `limited:${limitedOnly}`,
     (after || before) && "created",
+    tagFilter.length && `tags:${tagsMatch ?? "any"}`,
   ]
     .filter(Boolean)
     .join(",")
@@ -305,6 +342,10 @@ export default function LinksPage() {
   }, [urls.data, page, sortBy, sortDir, JSON.stringify(filter)])
 
   const items = urls.data?.items ?? []
+  const knownTags = useTags()
+  // Column presence is a session-level fact (the account uses tags), not a
+  // per-page one, so paging never reflows the table.
+  const showTags = (knownTags.data?.items.length ?? 0) > 0
   const selectedRef = selected === null ? null : parseLinkSheetParam(selected)
   const selectedInPage = selectedRef
     ? (items.find(
@@ -338,6 +379,36 @@ export default function LinksPage() {
   const [moveTarget, setMoveTarget] = React.useState<string | null>(null)
   const [expiryOpen, setExpiryOpen] = React.useState(false)
   const [bulkExpiry, setBulkExpiry] = React.useState("")
+  const [tagsOpen, setTagsOpen] = React.useState(false)
+  // Bulk tag dialog: the checklist starts from the selection's own tags
+  // (on all = checked, on some = mixed) and the diff becomes add/remove.
+  const [bulkTagIds, setBulkTagIds] = React.useState<string[] | null>(null)
+  // Tag state of the selection: ids on every selected link vs on some.
+  const bulkTagState = React.useMemo(() => {
+    const picked = items.filter((l) => selectedIds.has(l.id))
+    const counts = new Map<string, number>()
+    for (const l of picked)
+      for (const t of l.tags ?? [])
+        counts.set(t.id, (counts.get(t.id) ?? 0) + 1)
+    // Selection survives paging, but only this page's rows are loaded. With
+    // off-page links in the selection nothing may claim "on every link", or
+    // an untick would strip tags from links the dialog never saw.
+    if (picked.length < selectedIds.size)
+      return { all: [] as string[], some: new Set(counts.keys()) }
+    const all: string[] = []
+    const some = new Set<string>()
+    for (const [id, n] of counts)
+      if (n === picked.length) all.push(id)
+      else some.add(id)
+    return { all, some }
+  }, [items, selectedIds])
+  const bulkTagDiff = React.useMemo(() => {
+    const next = bulkTagIds ?? bulkTagState.all
+    return {
+      add: next.filter((id) => !bulkTagState.all.includes(id)),
+      remove: bulkTagState.all.filter((id) => !next.includes(id)),
+    }
+  }, [bulkTagIds, bulkTagState])
   const domains = useQuery({
     queryKey: ["domains"],
     queryFn: listCustomDomains,
@@ -421,11 +492,13 @@ export default function LinksPage() {
       action,
       domain,
       expireAfter,
+      tags,
     }: {
       ids: string[]
-      action: "ACTIVE" | "INACTIVE" | "DELETE" | "DOMAIN" | "EXPIRY"
+      action: "ACTIVE" | "INACTIVE" | "DELETE" | "DOMAIN" | "EXPIRY" | "TAGS"
       domain?: string
       expireAfter?: number | null
+      tags?: { add: string[]; remove: string[] }
     }): Promise<{
       result: BulkOperationResult
       action: typeof action
@@ -439,7 +512,9 @@ export default function LinksPage() {
             ? await bulkMoveUrlDomain(ids, domain ?? null)
             : action === "EXPIRY"
               ? await bulkSetUrlExpiry(ids, expireAfter ?? null)
-              : await bulkSetUrlStatus(ids, action)
+              : action === "TAGS"
+                ? await bulkTagUrls(ids, tags?.add ?? [], tags?.remove ?? [])
+                : await bulkSetUrlStatus(ids, action)
       return { result, action, domain, expireAfter }
     },
     onSuccess: ({ result, action, domain, expireAfter }) => {
@@ -452,6 +527,7 @@ export default function LinksPage() {
       trackLinksBulkAction(action, total, failed)
       queryClient.invalidateQueries({ queryKey: ["urls"] })
       queryClient.invalidateQueries({ queryKey: ["stats"] })
+      queryClient.invalidateQueries({ queryKey: TAGS_QUERY_KEY })
       const verb =
         action === "DELETE"
           ? "deleted"
@@ -463,7 +539,9 @@ export default function LinksPage() {
                 ? expireAfter == null
                   ? "expiry cleared"
                   : "set to expire"
-                : `moved to ${domain}`
+                : action === "TAGS"
+                  ? "retagged"
+                  : `moved to ${domain}`
 
       // The action ran, so its dialog is done regardless of outcome — the
       // selection bar and the toast carry the result, so no modal lingers.
@@ -473,6 +551,8 @@ export default function LinksPage() {
       setMoveTarget(null)
       setExpiryOpen(false)
       setBulkExpiry("")
+      setTagsOpen(false)
+      setBulkTagIds(null)
 
       if (failed === 0) {
         clearSelection()
@@ -591,7 +671,7 @@ export default function LinksPage() {
             onChange={(e) => setSearchDraft(e.target.value)}
             placeholder="Search links…"
             spellCheck={false}
-            className="h-8 w-56 pl-8 text-[13px]"
+            className="w-56 pl-8 text-[13px]"
           />
         </div>
 
@@ -599,7 +679,7 @@ export default function LinksPage() {
             should act on the first click, not eat it. */}
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8">
+            <Button variant="outline">
               <ListFilter data-icon="inline-start" />
               Filters
               {activeFilterCount > 0 && (
@@ -613,27 +693,30 @@ export default function LinksPage() {
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Status
             </DropdownMenuLabel>
-            {STATUSES.map((s) => (
-              <DropdownMenuCheckboxItem
-                key={s}
-                checked={status === s}
-                onCheckedChange={(v) => {
-                  setStatus(v ? s : null)
-                  setPage(null)
-                }}
-              >
-                <span
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    s === "ACTIVE" && "bg-live",
-                    s === "INACTIVE" && "bg-muted-foreground/50",
-                    s === "EXPIRED" && "bg-amber-500",
-                    s === "BLOCKED" && "bg-destructive"
-                  )}
-                />
-                {s.charAt(0) + s.slice(1).toLowerCase()}
-              </DropdownMenuCheckboxItem>
-            ))}
+            {STATUSES.filter((s) => s !== "SCHEDULED" || showScheduling).map(
+              (s) => (
+                <DropdownMenuCheckboxItem
+                  key={s}
+                  checked={status === s}
+                  onCheckedChange={(v) => {
+                    setStatus(v ? s : null)
+                    setPage(null)
+                  }}
+                >
+                  <span
+                    className={cn(
+                      "size-2.5 rounded-[3px]",
+                      s === "ACTIVE" && "bg-live",
+                      s === "INACTIVE" && "bg-muted-foreground/50",
+                      s === "EXPIRED" && "bg-amber-500",
+                      s === "BLOCKED" && "bg-destructive",
+                      s === "SCHEDULED" && "border border-muted-foreground/50"
+                    )}
+                  />
+                  {s.charAt(0) + s.slice(1).toLowerCase()}
+                </DropdownMenuCheckboxItem>
+              )
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Protections
@@ -667,6 +750,22 @@ export default function LinksPage() {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        <TagPicker
+          variant="button"
+          selected={tagFilter}
+          max={50}
+          match={tagsMatch ?? "any"}
+          onMatchChange={(m) => {
+            setTagsMatch(m === "any" ? null : m)
+            setPage(null)
+          }}
+          onChange={(v) => {
+            setTagFilter(v.length ? v : null)
+            if (v.length < 2) setTagsMatch(null)
+            setPage(null)
+          }}
+        />
+
         <TimeRangePicker
           value={after && before ? { from: after, to: before } : null}
           placeholder="All time"
@@ -694,7 +793,12 @@ export default function LinksPage() {
       </div>
 
       {/* Applied filter chips — always visible, dismissible (SPEC §7) */}
-      {(status || protectedOnly || limitedOnly || q || (after && before)) && (
+      {(status ||
+        protectedOnly ||
+        limitedOnly ||
+        q ||
+        tagFilter.length > 0 ||
+        (after && before)) && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {q && (
             <FilterChip
@@ -714,11 +818,13 @@ export default function LinksPage() {
               icon={
                 <span
                   className={cn(
-                    "size-1.5 rounded-full",
+                    "size-2.5 rounded-[3px]",
                     status === "ACTIVE" && "bg-live",
                     status === "INACTIVE" && "bg-muted-foreground/50",
                     status === "EXPIRED" && "bg-amber-500",
-                    status === "BLOCKED" && "bg-destructive"
+                    status === "BLOCKED" && "bg-destructive",
+                    status === "SCHEDULED" &&
+                      "border border-muted-foreground/50"
                   )}
                 />
               }
@@ -763,7 +869,39 @@ export default function LinksPage() {
               }}
             />
           )}
-          {activeFilterCount + (q ? 1 : 0) >= 2 && (
+          {tagFilter.map((id) => {
+            const tag = knownTags.data?.items.find((t) => t.id === id)
+            return (
+              <FilterChip
+                key={id}
+                label={
+                  tagsMatch === "all" && tagFilter.length > 1
+                    ? "Tags (all)"
+                    : "Tags"
+                }
+                icon={
+                  tag ? (
+                    <TagGlyph
+                      color={tag.color}
+                      icon={tag.icon}
+                      className="size-3"
+                    />
+                  ) : (
+                    <Tag className="size-3 text-muted-foreground" />
+                  )
+                }
+                value={tag?.name ?? id}
+                onClear={() => {
+                  const next = tagFilter.filter((v) => v !== id)
+                  setTagFilter(next.length ? next : null)
+                  if (next.length < 2) setTagsMatch(null)
+                  setPage(null)
+                }}
+              />
+            )
+          })}
+          {activeFilterCount + (q ? 1 : 0) + (tagFilter.length ? 1 : 0) >=
+            2 && (
             <button
               type="button"
               onClick={() => {
@@ -772,6 +910,8 @@ export default function LinksPage() {
                 setStatus(null)
                 setProtectedOnly(null)
                 setLimitedOnly(null)
+                setTagFilter(null)
+                setTagsMatch(null)
                 setPage(null)
               }}
               className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
@@ -787,7 +927,7 @@ export default function LinksPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-border/60 border-b bg-muted text-left text-muted-foreground dark:bg-muted/40">
-              <th className="label-mono relative h-9 w-full px-4 font-medium text-[10px]">
+              <th className="label-mono relative h-10 w-full px-4 font-medium">
                 {/* Same swap grammar as rows: label at rest, select-all on
                       header hover or while a selection exists. */}
                 <span
@@ -815,28 +955,33 @@ export default function LinksPage() {
                   />
                 </span>
               </th>
-              <th className="label-mono hidden h-9 px-3 font-medium text-[10px] sm:table-cell">
+              {showTags && (
+                <th className="label-mono hidden h-10 px-3 font-medium lg:table-cell">
+                  Tags
+                </th>
+              )}
+              <th className="label-mono hidden h-10 px-3 font-medium sm:table-cell">
                 Status
               </th>
-              <th className="label-mono h-9 px-3 font-medium text-[10px]">
+              <th className="label-mono h-10 px-3 font-medium">
                 <span className="flex justify-end">
                   {sortHeader("total_clicks", "Clicks")}
                 </span>
               </th>
-              <th className="label-mono hidden h-9 whitespace-nowrap px-3 font-medium text-[10px] md:table-cell">
+              <th className="label-mono hidden h-10 whitespace-nowrap px-3 font-medium md:table-cell">
                 {sortHeader("last_click", "Last click")}
               </th>
-              <th className="label-mono hidden h-9 whitespace-nowrap px-3 font-medium text-[10px] lg:table-cell">
+              <th className="label-mono hidden h-10 whitespace-nowrap px-3 font-medium lg:table-cell">
                 {sortHeader("created_at", "Created")}
               </th>
-              <th className="h-9 w-10 px-2" />
+              <th className="h-10 w-10 px-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
             {urls.isPending &&
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="px-4 py-3" colSpan={6}>
+                  <td className="px-4 py-3" colSpan={showTags ? 7 : 6}>
                     <div className="flex items-center gap-3">
                       <Skeleton className="size-9 rounded-lg" />
                       <div className="flex-1 space-y-1.5">
@@ -850,15 +995,15 @@ export default function LinksPage() {
 
             {!urls.isPending && !items.length && (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={showTags ? 7 : 6}>
                   <div className="pattern-dots m-4 flex h-48 flex-col items-center justify-center gap-3 rounded-lg">
                     <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
-                      {q || activeFilterCount
+                      {q || activeFilterCount || tagFilter.length
                         ? "Nothing matches these filters"
                         : "No links yet"}
                     </span>
-                    {!q && !activeFilterCount && (
-                      <Button size="sm" onClick={() => openLinkComposer()}>
+                    {!q && !activeFilterCount && !tagFilter.length && (
+                      <Button onClick={() => openLinkComposer()}>
                         <Plus data-icon="inline-start" />
                         Create your first link
                       </Button>
@@ -875,6 +1020,12 @@ export default function LinksPage() {
                 onOpen={() => setSelected(linkSheetParam(link))}
                 rowSelected={selectedIds.has(link.id)}
                 onToggleSelect={() => toggleId(link.id)}
+                showTags={showTags}
+                onTagClick={(tag) => {
+                  if (!tagFilter.includes(tag))
+                    setTagFilter([...tagFilter, tag])
+                  setPage(null)
+                }}
               />
             ))}
           </tbody>
@@ -933,7 +1084,6 @@ export default function LinksPage() {
               </span>
               <Button
                 variant="outline"
-                size="sm"
                 className="shrink-0 max-sm:px-2.5"
                 aria-label="Activate selected"
                 disabled={bulk.isPending}
@@ -946,7 +1096,6 @@ export default function LinksPage() {
               </Button>
               <Button
                 variant="outline"
-                size="sm"
                 className="shrink-0 max-sm:px-2.5"
                 aria-label="Deactivate selected"
                 disabled={bulk.isPending}
@@ -961,7 +1110,6 @@ export default function LinksPage() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    size="sm"
                     className="shrink-0 px-2.5"
                     aria-label="More bulk actions"
                     disabled={bulk.isPending}
@@ -977,6 +1125,10 @@ export default function LinksPage() {
                   <DropdownMenuItem onSelect={() => setMoveOpen(true)}>
                     <Globe />
                     Move to domain…
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setTagsOpen(true)}>
+                    <Tag />
+                    Edit tags…
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setExpiryOpen(true)}>
                     <Timer />
@@ -994,7 +1146,6 @@ export default function LinksPage() {
               </DropdownMenu>
               <Button
                 variant="destructive"
-                size="sm"
                 className="shrink-0 max-sm:px-2.5"
                 aria-label="Delete selected"
                 disabled={bulk.isPending}
@@ -1009,7 +1160,7 @@ export default function LinksPage() {
               />
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="icon"
                 className="rounded-full"
                 aria-label="Clear selection"
                 onClick={clearSelection}
@@ -1053,7 +1204,7 @@ export default function LinksPage() {
               placeholder="delete"
               spellCheck={false}
               autoComplete="off"
-              className="h-9 font-mono text-xs"
+              className="font-mono text-xs"
             />
           </div>
           <AlertDialogFooter>
@@ -1113,7 +1264,6 @@ export default function LinksPage() {
           </div>
           <DialogFooter>
             <Button
-              size="sm"
               disabled={!moveTarget || bulk.isPending}
               onClick={() =>
                 bulk.mutate({
@@ -1126,6 +1276,53 @@ export default function LinksPage() {
               {bulk.isPending
                 ? "Moving…"
                 : `Move ${selectedIds.size} link${selectedIds.size === 1 ? "" : "s"}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk: edit tags on the selection */}
+      <Dialog
+        open={tagsOpen}
+        onOpenChange={(v) => {
+          setTagsOpen(v)
+          if (!v) setBulkTagIds(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              Tags on {selectedIds.size} link
+              {selectedIds.size === 1 ? "" : "s"}
+            </DialogTitle>
+            <DialogDescription>
+              Ticked tags go on every selected link, unticked ones come off. A
+              dash means only some of them carry it; leave it to keep that.
+            </DialogDescription>
+          </DialogHeader>
+          <TagPicker
+            selected={bulkTagIds ?? bulkTagState.all}
+            mixed={bulkTagState.some}
+            onChange={setBulkTagIds}
+            placeholder="Choose tags"
+          />
+          <DialogFooter>
+            <Button
+              disabled={
+                (!bulkTagDiff.add.length && !bulkTagDiff.remove.length) ||
+                bulk.isPending
+              }
+              onClick={() =>
+                bulk.mutate({
+                  ids: [...selectedIds],
+                  action: "TAGS",
+                  tags: bulkTagDiff,
+                })
+              }
+            >
+              {bulk.isPending
+                ? "Saving…"
+                : `Apply to ${selectedIds.size} link${selectedIds.size === 1 ? "" : "s"}`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1159,7 +1356,6 @@ export default function LinksPage() {
           <DialogFooter>
             <Button
               variant="ghost"
-              size="sm"
               disabled={bulk.isPending}
               onClick={() =>
                 bulk.mutate({
@@ -1172,7 +1368,6 @@ export default function LinksPage() {
               Remove expiry
             </Button>
             <Button
-              size="sm"
               disabled={!bulkExpiry || bulk.isPending}
               onClick={() =>
                 bulk.mutate({
@@ -1208,12 +1403,17 @@ function LinkRow({
   onOpen,
   rowSelected,
   onToggleSelect,
+  onTagClick,
+  showTags,
 }: {
   link: UrlListItem
   onOpen: () => void
   rowSelected: boolean
   onToggleSelect: () => void
+  onTagClick: (id: string) => void
+  showTags: boolean
 }) {
+  const tags = link.tags ?? []
   return (
     <tr
       onClick={onOpen}
@@ -1294,6 +1494,12 @@ function LinkRow({
                 label="Visitors need a password to reach the destination."
               />
             )}
+            {link.status === "SCHEDULED" && (
+              <PropIcon
+                icon={CalendarClock}
+                label="Not live until a set moment."
+              />
+            )}
             {link.expire_after != null && (
               <PropIcon
                 icon={Timer}
@@ -1327,8 +1533,17 @@ function LinkRow({
           </span>
         </div>
       </td>
+      {showTags && (
+        <td className="hidden max-w-56 whitespace-nowrap px-3 py-2.5 lg:table-cell">
+          <TagList tags={tags} limit={2} onTagClick={onTagClick} />
+        </td>
+      )}
       <td className="hidden whitespace-nowrap px-3 py-2.5 sm:table-cell">
-        <StatusPill status={link.status} />
+        {link.status === "SCHEDULED" && link.starts_at != null ? (
+          <ScheduledState startsAt={link.starts_at} />
+        ) : (
+          <StatusPill status={link.status} />
+        )}
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 text-right">
         <span className="font-medium font-mono text-foreground text-sm tabular-nums">

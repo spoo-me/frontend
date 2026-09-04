@@ -281,7 +281,6 @@ function DeliverySheet({
 
               {delivery.status === "failed" && (
                 <Button
-                  size="sm"
                   variant="outline"
                   disabled={retry.isPending}
                   onClick={() => retry.mutate(delivery)}
@@ -443,11 +442,7 @@ export default function WebhookDetailPage() {
           <div className="ml-auto flex items-center gap-2 max-sm:ml-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={sendTest.isPending}
-                >
+                <Button variant="outline" disabled={sendTest.isPending}>
                   {sendTest.isPending ? (
                     <LoaderCircle
                       data-icon="inline-start"
@@ -473,7 +468,6 @@ export default function WebhookDetailPage() {
             </DropdownMenu>
             {ep.status !== "disabled" && (
               <Button
-                size="sm"
                 variant="outline"
                 disabled={setStatus.isPending}
                 onClick={() =>
@@ -518,7 +512,6 @@ export default function WebhookDetailPage() {
               </div>
               {ep.disabled_reason !== "secret_unreadable" && (
                 <Button
-                  size="sm"
                   disabled={setStatus.isPending}
                   onClick={() => setStatus.mutate("active")}
                 >
@@ -616,12 +609,7 @@ export default function WebhookDetailPage() {
             icon={Webhook}
             title="Endpoint"
             action={
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7"
-                onClick={() => setEditOpen(true)}
-              >
+              <Button variant="outline" onClick={() => setEditOpen(true)}>
                 <Pencil data-icon="inline-start" />
                 Edit
               </Button>
@@ -651,10 +639,10 @@ export default function WebhookDetailPage() {
                       {ep.signing_secret_prefix}…
                     </span>
                     <Button
-                      size="icon-sm"
+                      size="icon-xs"
                       variant="ghost"
                       aria-label="Reveal secret"
-                      className="size-6 text-muted-foreground/60"
+                      className="text-muted-foreground/60"
                       disabled={reveal.isPending}
                       onClick={() => reveal.mutate()}
                     >
@@ -711,11 +699,7 @@ export default function WebhookDetailPage() {
                 Deliveries stop immediately and the secret stops working.
               </div>
             </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setConfirmOpen(true)}
-            >
+            <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
               Delete endpoint
             </Button>
           </Panel>

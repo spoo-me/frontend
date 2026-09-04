@@ -8,8 +8,14 @@ export type StatsDimension =
   | "city"
   | "referrer"
   | "short_code"
+  /** Filter only, never a group_by: the server resolves tag ids to the
+      owner's link ids before matching clicks. */
+  | "tag_id"
   /** v1 legacy only: known-bot hits on the public stats payload. */
   | "bots"
+
+/** Dimensions clicks can be bucketed by; `tag_id` is filter-only. */
+export type StatsGroupBy = Exclude<StatsDimension, "tag_id">
 
 export type TimeBucket = {
   bucket: string
@@ -48,7 +54,7 @@ export type StatsResponse = {
 export type StatsParams = {
   startDate?: Date
   endDate?: Date
-  groupBy: StatsDimension[]
+  groupBy: StatsGroupBy[]
   /** Slice the account aggregate to these links (filters JSON key url_id). */
   urlIds?: string[]
   /** Alias-based slice (filters JSON key short_code). Still needed: the
