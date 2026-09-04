@@ -294,6 +294,7 @@ export type UiAction =
   | "links_filtered"
   | "tag_saved"
   | "links_sorted"
+  | "composer_opened"
   | "composer_tab_opened"
   | "shortener_options_opened"
   | "chart_expanded"

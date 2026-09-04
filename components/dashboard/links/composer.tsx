@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { motion } from "motion/react"
 import {
+  CalendarClock,
   Check,
   ChevronDown,
   CircleAlert,
@@ -173,6 +174,10 @@ export function LinkComposer() {
   // only) — the submit-time link_created booleans can't tell a considered
   // default from an option nobody touched.
   const optionUse = useCreateOptionTracker("composer")
+  // Denominator for composer_tab_opened: one event per open, however opened.
+  React.useEffect(() => {
+    if (open) trackUiAction("composer_opened")
+  }, [open])
 
   // Backend-gated capabilities: hidden features simply don't exist here.
   const showGeo = useFeature("geo_targeting") === "enabled"
@@ -183,6 +188,7 @@ export function LinkComposer() {
   const showTargeting = showGeo || showVariants
   const tabOrder = [
     "basic",
+    "lifetime",
     "security",
     ...(showTargeting ? ["targeting"] : []),
     ...(showMeta ? ["metadata"] : []),
@@ -437,7 +443,7 @@ export function LinkComposer() {
         err instanceof SpooApiError &&
         err.field === "expired_redirect_url"
       ) {
-        setTab("basic")
+        setTab("lifetime")
         setServerFallbackError(
           err.message === "URL is blocked"
             ? "That fallback is blocked on spoo.me."
@@ -529,8 +535,13 @@ export function LinkComposer() {
     normalized !== longUrl.trim() &&
     looksLikeUrl(longUrl)
 
-  const basicSet =
-    expiry !== "" || maxClicks !== "" || fallbackUrl !== "" || tagIds.length > 0
+  const basicSet = tagIds.length > 0
+  const lifetimeSet =
+    startsAt !== "" ||
+    preStartUrl !== "" ||
+    expiry !== "" ||
+    maxClicks !== "" ||
+    fallbackUrl !== ""
   const securitySet = password !== "" || blockBots || privateStats
   const targetingSet = geoCount > 0 || variantPayload.length > 0
 
@@ -686,7 +697,7 @@ export function LinkComposer() {
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit()
           // Figma/Notion grammar: mod+1..4 jumps between the dialog's tabs.
-          if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "4") {
+          if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "5") {
             e.preventDefault()
             const target = tabOrder[Number(e.key) - 1]
             if (target) setTab(target)
@@ -710,6 +721,7 @@ export function LinkComposer() {
         >
           <TabsList className="w-full">
             {tabTrigger("basic", Link2, "Basic", basicSet)}
+            {tabTrigger("lifetime", CalendarClock, "Lifetime", lifetimeSet)}
             {tabTrigger("security", ShieldCheck, "Security", securitySet)}
             {showTargeting &&
               tabTrigger("targeting", Crosshair, "Targeting", targetingSet)}
@@ -886,20 +898,12 @@ export function LinkComposer() {
                   </div>
                 </Field>
 
-                {showScheduling ? (
-                  <>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      {goesLiveField}
-                      {tagsField}
-                    </div>
-                    {expiresField}
-                  </>
-                ) : (
-                  <>
-                    {expiresField}
-                    {tagsField}
-                  </>
-                )}
+                {tagsField}
+              </TabsContent>
+
+              <TabsContent value="lifetime" className="space-y-5">
+                {showScheduling && goesLiveField}
+                {expiresField}
               </TabsContent>
 
               <TabsContent value="security" className="space-y-5">
