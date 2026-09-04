@@ -22,6 +22,8 @@ export type PublicLinkFacts = {
       preview's destination: the page never reveals more than the
       redirect would. Owner sessions still get it. */
   long_url: string | null
+  /** Where an expired link still sends visitors; only while `status` is "expired". */
+  expired_redirect_url?: string | null
   created_at: string | null
   status: "active" | "inactive" | "expired" | "blocked" | "scheduled"
   max_clicks: number | null

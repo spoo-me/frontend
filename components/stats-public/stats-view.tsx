@@ -156,6 +156,11 @@ export function PublicStatsView({
               {displayUrl(link.long_url)}
             </p>
           )}
+          {link.status === "expired" && link.expired_redirect_url && (
+            <p className="mt-1.5 max-w-xl truncate text-muted-foreground text-sm">
+              visitors now go to {displayUrl(link.expired_redirect_url)}
+            </p>
+          )}
           <p className="mt-2 font-mono text-[11px] text-muted-foreground/70 tabular-nums">
             created {formatDate(link.created_at)}
             {link.status !== "active" && (

@@ -38,6 +38,9 @@ export type PublicPreview = {
   password_protected: boolean
   destination: PreviewDestination | null
   geo_destinations: PreviewGeoDestination[] | null
+  /** Where an expired link still sends visitors; set only while `status`
+      is "expired" and the owner set a fallback. */
+  expired_destination: PreviewDestination | null
 }
 
 /**

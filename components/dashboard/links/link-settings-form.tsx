@@ -23,7 +23,13 @@ import {
   type UpdateUrlInput,
   type UrlListItem,
 } from "@/lib/api"
-import { normalizeUrl, urlProblem } from "@/lib/validation"
+import { displayUrl } from "@/lib/format"
+import {
+  CLICK_CAP_PROBLEM,
+  CLICK_CAP_RE,
+  normalizeUrl,
+  urlProblem,
+} from "@/lib/validation"
 import { countGraphemes } from "@/lib/emoji-alias"
 import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
 import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
@@ -41,8 +47,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
+import { UrlInput } from "@/components/dashboard/links/url-input"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
-import { PreStartUrlControl } from "@/components/dashboard/links/pre-start-url-control"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { EmojiPicker } from "@/components/dashboard/links/emoji-picker"
 import { PasswordInput } from "@/components/dashboard/password-input"
@@ -75,6 +81,7 @@ import {
   type GeoRuleDraft,
   type MetaDraft,
   type VariantDraft,
+  SectionLabel,
 } from "@/components/dashboard/links/link-feature-editors"
 
 /**
@@ -208,6 +215,16 @@ function describeChanges(
       from: link.max_clicks != null ? String(link.max_clicks) : "unlimited",
       to: patch.max_clicks != null ? String(patch.max_clicks) : "unlimited",
     })
+  if (patch.expired_redirect_url !== undefined)
+    rows.push({
+      field: "After expiry",
+      from: link.expired_redirect_url
+        ? displayUrl(link.expired_redirect_url)
+        : "ended page",
+      to: patch.expired_redirect_url
+        ? displayUrl(patch.expired_redirect_url)
+        : "ended page",
+    })
   if (patch.block_bots !== undefined)
     rows.push({
       field: "Block bots",
@@ -281,16 +298,10 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      {labelHint ? (
-        <span className="mb-2.5 flex items-center gap-1.5">
-          <Label className="font-medium text-foreground text-xs">{label}</Label>
-          {labelHint}
-        </span>
-      ) : (
-        <Label className="mb-2.5 font-medium text-foreground text-xs">
-          {label}
-        </Label>
-      )}
+      <span className="mb-2.5 flex min-h-5 items-center gap-1.5">
+        <Label className="font-medium text-foreground text-xs">{label}</Label>
+        {labelHint}
+      </span>
       {children}
       {error ? (
         <p className="text-destructive text-xs">{error}</p>
@@ -341,6 +352,9 @@ export function LinkSettingsForm({
   const [preStartUrl, setPreStartUrl] = React.useState(link.pre_start_url ?? "")
   const [maxClicks, setMaxClicks] = React.useState(
     link.max_clicks != null ? String(link.max_clicks) : ""
+  )
+  const [fallbackUrl, setFallbackUrl] = React.useState(
+    link.expired_redirect_url ?? ""
   )
   const [blockBots, setBlockBots] = React.useState(Boolean(link.block_bots))
   const [privateStats, setPrivateStats] = React.useState(
@@ -430,6 +444,10 @@ export function LinkSettingsForm({
     url: string
     message: string
   } | null>(null)
+  const [serverFallbackError, setServerFallbackError] = React.useState<{
+    url: string
+    message: string
+  } | null>(null)
   const aliasServerMsg =
     serverAliasError &&
     serverAliasError.alias === alias &&
@@ -476,6 +494,14 @@ export function LinkSettingsForm({
   const maxClicksVal = maxClicks === "" ? null : Number(maxClicks)
   if (maxClicksVal !== (link.max_clicks ?? null))
     patch.max_clicks = maxClicksVal
+  const capSet = CLICK_CAP_RE.test(maxClicks.trim())
+  const maxClicksProblem =
+    maxClicks.trim() !== "" && !capSet ? CLICK_CAP_PROBLEM : null
+  // Same rule as pre_start_url: nothing to end the link, no fallback on the wire.
+  const fallbackActive = (expiry !== "" || capSet) && fallbackUrl.trim() !== ""
+  const fallbackVal = fallbackActive ? normalizeUrl(fallbackUrl) : null
+  if (fallbackVal !== (link.expired_redirect_url ?? null))
+    patch.expired_redirect_url = fallbackVal
   if (blockBots !== Boolean(link.block_bots)) patch.block_bots = blockBots
   if (privateStats !== Boolean(link.private_stats))
     patch.private_stats = privateStats
@@ -522,6 +548,13 @@ export function LinkSettingsForm({
             ? serverUrlError.message
             : null))
 
+  const fallbackProblem = fallbackActive
+    ? (urlProblem(fallbackUrl) ??
+      (serverFallbackError?.url === normalizeUrl(fallbackUrl)
+        ? serverFallbackError.message
+        : null))
+    : null
+
   const save = useMutation({
     mutationFn: () => updateUrl(link.id, patch),
     onSuccess: (next) => {
@@ -562,6 +595,16 @@ export function LinkSettingsForm({
         setServerAliasError({ alias, domain, message: err.message })
         return
       }
+      if (err instanceof SpooApiError && err.field === "expired_redirect_url") {
+        setServerFallbackError({
+          url: normalizeUrl(fallbackUrl),
+          message:
+            err.message === "URL is blocked"
+              ? "That fallback is blocked on spoo.me."
+              : err.message,
+        })
+        return
+      }
       toast.error(err instanceof Error ? err.message : "Couldn't save changes")
     },
   })
@@ -584,6 +627,8 @@ export function LinkSettingsForm({
     }
     if (variantTotal(variants) > 100) return "A/B split exceeds 100%."
     if (geoRulesProblem(geoRules)) return "Fix the geo rules to save."
+    if (maxClicksProblem) return "Fix the click limit to save."
+    if (fallbackProblem) return "Fix the fallback URL to save."
     if (metaProblem) return "Fix the link preview to save."
     if (startsAt && preStartUrl.trim() && urlProblem(preStartUrl))
       return "Fix the pre-start URL to save."
@@ -650,11 +695,13 @@ export function LinkSettingsForm({
           or clear the limit later to bring it back.
         </InfoHint>
       }
+      error={maxClicksProblem}
     >
       <div className="flex items-center gap-1.5">
         <Input
           type="number"
           min={1}
+          step={1}
           value={maxClicks}
           onChange={(e) => setMaxClicks(e.target.value)}
           placeholder="Unlimited"
@@ -673,6 +720,40 @@ export function LinkSettingsForm({
         )}
       </div>
     </Field>
+  )
+  const afterExpiryField = (
+    <Velvet feature="expired_fallback">
+      <Field
+        label="After expiry"
+        labelHint={
+          <InfoHint label="Where visitors land after expiry">
+            Anyone who opens the link once it has ended, by date or by click
+            count, is sent here. Blank shows an ended page.
+          </InfoHint>
+        }
+        error={fallbackProblem}
+      >
+        <div className="flex items-center gap-1.5">
+          <UrlInput
+            value={fallbackUrl}
+            onChange={(e) => setFallbackUrl(e.target.value)}
+            placeholder="Ended page"
+            disabled={expiry === "" && maxClicks === ""}
+          />
+          {fallbackUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Remove fallback URL"
+              onClick={() => setFallbackUrl("")}
+            >
+              <X />
+            </Button>
+          )}
+        </div>
+      </Field>
+    </Velvet>
   )
   const tagsField = (
     <Field
@@ -693,10 +774,9 @@ export function LinkSettingsForm({
       labelHint={
         <InfoHint label="How scheduling works">
           The link is hidden until this moment, in your timezone. Early visitors
-          see a not-yet-live page, or the address you set beside the date.
+          see a not-yet-live page, or the address you set under Until then.
         </InfoHint>
       }
-      error={startsAt && preStartUrl.trim() ? urlProblem(preStartUrl) : null}
     >
       <div className="flex items-center gap-1.5">
         <DateTimeField
@@ -706,11 +786,6 @@ export function LinkSettingsForm({
           defaultTime="09:00"
           maxDate={expiryDate ?? undefined}
           className="min-w-0 flex-1"
-        />
-        <PreStartUrlControl
-          enabled={startsAt !== ""}
-          value={preStartUrl}
-          onChange={setPreStartUrl}
         />
         {startsAt && (
           <Button
@@ -725,6 +800,59 @@ export function LinkSettingsForm({
         )}
       </div>
     </Field>
+  )
+  const untilThenField = (
+    <Field
+      label="Until then"
+      labelHint={
+        <InfoHint label="Where early visitors land">
+          Anyone who opens the link before it goes live is sent here. Blank
+          shows a not-yet-live page.
+        </InfoHint>
+      }
+      error={startsAt && preStartUrl.trim() ? urlProblem(preStartUrl) : null}
+    >
+      <div className="flex items-center gap-1.5">
+        <UrlInput
+          value={preStartUrl}
+          onChange={(e) => setPreStartUrl(e.target.value)}
+          placeholder="Not-yet-live page"
+          disabled={startsAt === ""}
+        />
+        {preStartUrl && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove early-visitor URL"
+            onClick={() => setPreStartUrl("")}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
+    </Field>
+  )
+  const lifetimeBlock = (
+    <div className="space-y-5">
+      {showScheduling && (
+        <div className="space-y-3">
+          <SectionLabel>Starts</SectionLabel>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {goesLiveField}
+            {untilThenField}
+          </div>
+        </div>
+      )}
+      <div className="space-y-3">
+        {showScheduling && <SectionLabel>Ends</SectionLabel>}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {expiresField}
+          {maxClicksField}
+        </div>
+        {afterExpiryField}
+      </div>
+    </div>
   )
 
   return (
@@ -776,50 +904,51 @@ export function LinkSettingsForm({
           }
         >
           <div className="flex items-center gap-1.5">
-            {showDomains ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/60"
-                  >
-                    {domain}
-                    <ChevronDown className="size-3 text-muted-foreground" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {domains.map((d) => (
-                    <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
-                      <span className="font-mono text-xs">{d}</span>
-                      {d === domain && <Check className="ml-auto size-3.5" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <span className="flex h-9 shrink-0 items-center rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs">
-                {domain}
-              </span>
-            )}
-            <span className="font-mono text-muted-foreground text-xs">/</span>
-            <div className="relative flex-1">
-              <Input
-                value={alias}
-                onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
-                spellCheck={false}
-                className="pr-8 font-mono text-xs"
-              />
-              <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-                {aliasVerdict.state === "checking" && (
-                  <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
-                )}
-                {aliasVerdict.state === "available" && (
-                  <Check className="size-3.5 text-live" />
-                )}
-                {(aliasVerdict.state === "problem" || aliasServerMsg) && (
-                  <CircleAlert className="size-3.5 text-destructive" />
-                )}
-              </span>
+            <div className="flex h-9 min-w-0 flex-1 items-stretch rounded-lg border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+              {showDomains ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex shrink-0 items-center gap-1 rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs outline-none transition-colors duration-150 hover:bg-accent/60 focus-visible:bg-accent/60"
+                    >
+                      {domain}
+                      <ChevronDown className="size-3 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {domains.map((d) => (
+                      <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
+                        <span className="font-mono text-xs">{d}</span>
+                        {d === domain && <Check className="ml-auto size-3.5" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span className="flex shrink-0 items-center rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs">
+                  {domain}
+                </span>
+              )}
+              <div className="relative min-w-0 flex-1">
+                <Input
+                  value={alias}
+                  onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
+                  spellCheck={false}
+                  className="h-full rounded-none border-0 pr-8 font-mono text-xs shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent dark:shadow-none"
+                />
+                <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
+                  {aliasVerdict.state === "checking" && (
+                    <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
+                  )}
+                  {aliasVerdict.state === "available" && (
+                    <Check className="size-3.5 text-live" />
+                  )}
+                  {(aliasVerdict.state === "problem" || aliasServerMsg) && (
+                    <CircleAlert className="size-3.5 text-destructive" />
+                  )}
+                </span>
+              </div>
             </div>
             <Button
               type="button"
@@ -949,26 +1078,8 @@ export function LinkSettingsForm({
           )}
         </Field>
 
-        {showScheduling ? (
-          <>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {goesLiveField}
-              {expiresField}
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {maxClicksField}
-              {tagsField}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {expiresField}
-              {maxClicksField}
-            </div>
-            {tagsField}
-          </>
-        )}
+        {tagsField}
+        {lifetimeBlock}
 
         <div className="divide-y divide-border/60 rounded-xl border border-border/60">
           <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">

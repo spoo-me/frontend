@@ -19,6 +19,7 @@ export type FeatureName =
   | "custom_meta_tags"
   | "ab_testing"
   | "webhooks"
+  | "expired_fallback"
   | "link_scheduling"
 
 export type FeatureMap = Partial<Record<FeatureName, FeatureState>> &

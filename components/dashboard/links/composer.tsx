@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { motion } from "motion/react"
 import {
+  CalendarClock,
   Check,
   ChevronDown,
   CircleAlert,
@@ -35,8 +36,11 @@ import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 import { useAcceptedEmoji, useGenerateEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
+import { cn } from "@/lib/utils"
+import { CLICK_CAP_PROBLEM, CLICK_CAP_RE } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { UrlInput } from "@/components/dashboard/links/url-input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
@@ -54,7 +58,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
-import { PreStartUrlControl } from "@/components/dashboard/links/pre-start-url-control"
 import { PasswordInput } from "@/components/dashboard/password-input"
 import { Kbd } from "@/components/dashboard/kbd"
 import { InfoHint } from "@/components/dashboard/info-hint"
@@ -91,6 +94,12 @@ import {
 import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 
 const OPEN_EVENT = "spoo:new-link"
+
+// Inactive panels stay mounted (measurable) but out of the way. Opacity and
+// visibility transition together: the outgoing panel fades before it goes
+// hidden, the incoming one fades in on top, in step with the height glide.
+const INACTIVE_PANEL =
+  "transition-[opacity,visibility] duration-150 ease-out motion-reduce:transition-none data-[state=inactive]:pointer-events-none data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-3 data-[state=inactive]:opacity-0"
 
 export function openLinkComposer(opts?: { domain?: string; longUrl?: string }) {
   window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: opts }))
@@ -138,16 +147,10 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      {labelHint ? (
-        <span className="mb-2.5 flex items-center gap-1.5">
-          <Label className="font-medium text-foreground text-xs">{label}</Label>
-          {labelHint}
-        </span>
-      ) : (
-        <Label className="mb-2.5 font-medium text-foreground text-xs">
-          {label}
-        </Label>
-      )}
+      <span className="mb-2.5 flex min-h-5 items-center gap-1.5">
+        <Label className="font-medium text-foreground text-xs">{label}</Label>
+        {labelHint}
+      </span>
       {children}
       {error ? (
         <p className="text-destructive text-xs">{error}</p>
@@ -168,16 +171,25 @@ export function LinkComposer() {
   // only) — the submit-time link_created booleans can't tell a considered
   // default from an option nobody touched.
   const optionUse = useCreateOptionTracker("composer")
+  // Denominator for composer_tab_opened: one event per open, however opened.
+  React.useEffect(() => {
+    if (open) trackUiAction("composer_opened")
+  }, [open])
 
   // Backend-gated capabilities: hidden features simply don't exist here.
   const showGeo = useFeature("geo_targeting") === "enabled"
   const showScheduling = useFeature("link_scheduling") === "enabled"
+  const showFallback = useFeature("expired_fallback") === "enabled"
+  // Expiry and the click cap alone do not earn a tab; they sit on Basic
+  // until scheduling or the fallback gives the lifetime story more to say.
+  const showLifetime = showScheduling || showFallback
   const showVariants = useFeature("ab_testing") === "enabled"
   const showMeta = useFeature("custom_meta_tags") === "enabled"
   const showDomains = useFeature("custom_domains") === "enabled"
   const showTargeting = showGeo || showVariants
   const tabOrder = [
     "basic",
+    ...(showLifetime ? ["lifetime"] : []),
     "security",
     ...(showTargeting ? ["targeting"] : []),
     ...(showMeta ? ["metadata"] : []),
@@ -197,6 +209,7 @@ export function LinkComposer() {
   const [startsAt, setStartsAt] = React.useState("")
   const [preStartUrl, setPreStartUrl] = React.useState("")
   const [maxClicks, setMaxClicks] = React.useState("")
+  const [fallbackUrl, setFallbackUrl] = React.useState("")
   // One draft row ready to fill: an empty section behind an add-button is
   // a click tax; incomplete drafts never travel.
   const [geoRules, setGeoRules] = React.useState<GeoRuleDraft[]>([
@@ -219,6 +232,11 @@ export function LinkComposer() {
   // client-side) render inline like every other URL problem — keyed to the
   // URL they rejected, so fresh input clears them.
   const [serverUrlError, setServerUrlError] = React.useState<{
+    url: string
+    message: string
+  } | null>(null)
+  // Keyed to the URL it rejected, so fresh input clears it (see serverUrlError).
+  const [serverFallbackError, setServerFallbackError] = React.useState<{
     url: string
     message: string
   } | null>(null)
@@ -289,6 +307,8 @@ export function LinkComposer() {
     setStartsAt("")
     setPreStartUrl("")
     setMaxClicks("")
+    setFallbackUrl("")
+    setServerFallbackError(null)
     setGeoRules([{ country: "", url: "" }])
     setVariants([{ url: "", weight: "" }])
     setMeta(emptyMetaDraft())
@@ -303,17 +323,69 @@ export function LinkComposer() {
 
   // Animated tab height: measure the active panel, glide the container.
   const panelRef = React.useRef<HTMLDivElement>(null)
+  // The portal mounts its children a commit after `open` flips, so the
+  // observer keys on the panel element itself, not on `open`.
+  const [panelNode, setPanelNode] = React.useState<HTMLDivElement | null>(null)
+  const attachPanel = React.useCallback((el: HTMLDivElement | null) => {
+    panelRef.current = el
+    setPanelNode(el)
+  }, [])
   const [panelH, setPanelH] = React.useState<number | undefined>(undefined)
+
+  // The dialog is pinned where it would sit if centred at its TALLEST tab:
+  // every panel stays mounted (invisible) so the tallest can be measured,
+  // shorter tabs end early, and the tab strip never moves between tabs.
+  const dialogRef = React.useRef<HTMLDivElement>(null)
+  const frameRef = React.useRef<HTMLDivElement>(null)
+  const panelEls = React.useRef(new Map<string, HTMLDivElement>())
+  const panelRefs = React.useMemo(() => {
+    const make = (name: string) => (el: HTMLDivElement | null) => {
+      if (el) panelEls.current.set(name, el)
+      else panelEls.current.delete(name)
+    }
+    return {
+      basic: make("basic"),
+      lifetime: make("lifetime"),
+      security: make("security"),
+      targeting: make("targeting"),
+      metadata: make("metadata"),
+    }
+  }, [])
+  const [pinTop, setPinTop] = React.useState<number | null>(null)
+  const repin = React.useCallback(() => {
+    const dialog = dialogRef.current
+    const frame = frameRef.current
+    const panel = panelRef.current
+    if (!dialog || !frame || !panel) return
+    let tallest = 0
+    let active = 0
+    for (const el of panelEls.current.values()) {
+      tallest = Math.max(tallest, el.offsetHeight)
+      if (el.dataset.state === "active") active = el.offsetHeight
+    }
+    const chrome = dialog.offsetHeight - frame.offsetHeight
+    const padding = panel.offsetHeight - active
+    const total = chrome + padding + tallest
+    setPinTop(Math.max(16, Math.round((window.innerHeight - total) / 2)))
+  }, [])
   React.useEffect(() => {
-    if (!open) return
-    const el = panelRef.current
-    if (!el) return
+    if (!panelNode) {
+      setPinTop(null)
+      setPanelH(undefined)
+      return
+    }
+    const el = panelNode
     const ro = new ResizeObserver(([entry]) => {
       setPanelH(entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height)
+      repin()
     })
     ro.observe(el)
-    return () => ro.disconnect()
-  }, [open])
+    window.addEventListener("resize", repin)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener("resize", repin)
+    }
+  }, [panelNode, repin])
 
   // Active custom domains join the alias control (integrated, ref SPEC §5).
   const domains = useQuery({
@@ -372,6 +444,18 @@ export function LinkComposer() {
   const geoPayload = completeGeoRules(geoRules)
   const geoCount = Object.keys(geoPayload).length
   const geoProblem = geoRulesProblem(geoRules)
+  // Mirrors the DTO: max_clicks is a positive integer or nothing.
+  const capSet = CLICK_CAP_RE.test(maxClicks.trim())
+  const maxClicksProblem =
+    maxClicks.trim() !== "" && !capSet ? CLICK_CAP_PROBLEM : null
+  // Same rule as preStartProblem: only means something once the link can end.
+  const fallbackActive = (expiry !== "" || capSet) && fallbackUrl.trim() !== ""
+  const fallbackProblem = fallbackActive
+    ? (urlProblem(fallbackUrl) ??
+      (serverFallbackError?.url === normalizeUrl(fallbackUrl)
+        ? serverFallbackError.message
+        : null))
+    : null
   const variantPayload = completeVariants(variants)
   // Uncustomized = inherit the destination's live tags: the (display-only)
   // prefill never travels and never blocks submit.
@@ -416,6 +500,18 @@ export function LinkComposer() {
               ? "That destination is blocked on spoo.me."
               : err.message,
         })
+      } else if (
+        err instanceof SpooApiError &&
+        err.field === "expired_redirect_url"
+      ) {
+        setTab("lifetime")
+        setServerFallbackError({
+          url: normalizeUrl(fallbackUrl),
+          message:
+            err.message === "URL is blocked"
+              ? "That fallback is blocked on spoo.me."
+              : err.message,
+        })
       } else {
         toast.error(
           err instanceof Error ? err.message : "Couldn't create the link"
@@ -445,6 +541,8 @@ export function LinkComposer() {
     !create.isPending &&
     weights <= 100 &&
     !geoProblem &&
+    !maxClicksProblem &&
+    !fallbackProblem &&
     !metaProblem &&
     !preStartProblem &&
     !orderProblem &&
@@ -473,6 +571,9 @@ export function LinkComposer() {
         ? { pre_start_url: normalizeUrl(preStartUrl) }
         : {}),
       ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
+      ...(fallbackActive
+        ? { expired_redirect_url: normalizeUrl(fallbackUrl) }
+        : {}),
       ...(blockBots ? { block_bots: true } : {}),
       ...(privateStats ? { private_stats: true } : {}),
       ...(geoCount ? { geo_rules: geoPayload } : {}),
@@ -498,7 +599,10 @@ export function LinkComposer() {
     normalized !== longUrl.trim() &&
     looksLikeUrl(longUrl)
 
-  const basicSet = expiry !== "" || maxClicks !== "" || tagIds.length > 0
+  const endsSet = expiry !== "" || maxClicks !== ""
+  const basicSet = tagIds.length > 0 || (!showLifetime && endsSet)
+  const lifetimeSet =
+    startsAt !== "" || preStartUrl !== "" || endsSet || fallbackUrl !== ""
   const securitySet = password !== "" || blockBots || privateStats
   const targetingSet = geoCount > 0 || variantPayload.length > 0
 
@@ -578,10 +682,12 @@ export function LinkComposer() {
           or clear the limit later to bring it back.
         </InfoHint>
       }
+      error={maxClicksProblem}
     >
       <Input
         type="number"
         min={1}
+        step={1}
         value={maxClicks}
         onChange={(e) => {
           optionUse.note("max_clicks", e.target.value !== "")
@@ -591,6 +697,30 @@ export function LinkComposer() {
         className="font-mono text-xs"
       />
     </Field>
+  )
+  const afterExpiryField = (
+    <Velvet feature="expired_fallback">
+      <Field
+        label="After expiry"
+        labelHint={
+          <InfoHint label="Where visitors land after expiry">
+            Anyone who opens the link once it has ended, by date or by click
+            count, is sent here. Blank shows an ended page.
+          </InfoHint>
+        }
+        error={fallbackProblem}
+      >
+        <UrlInput
+          value={fallbackUrl}
+          onChange={(e) => {
+            optionUse.note("expired_redirect_url", e.target.value !== "")
+            setFallbackUrl(e.target.value)
+          }}
+          placeholder="Ended page"
+          disabled={expiry === "" && maxClicks === ""}
+        />
+      </Field>
+    </Velvet>
   )
   const tagsField = (
     <Field
@@ -617,30 +747,69 @@ export function LinkComposer() {
       labelHint={
         <InfoHint label="How scheduling works">
           The link is hidden until this moment, in your timezone. Early visitors
-          see a not-yet-live page, or the address you set beside the date.
+          see a not-yet-live page, or the address you set under Until then.
         </InfoHint>
       }
-      error={startPassed ?? preStartProblem}
+      error={startPassed}
     >
-      <div className="flex items-center gap-1.5">
-        <DateTimeField
-          value={startsAt}
-          onChange={(v) => {
-            optionUse.note("starts_at", v !== "")
-            setStartsAt(v)
-          }}
-          placeholder="Now"
-          defaultTime="09:00"
-          maxDate={expiryDate ?? undefined}
-          className="min-w-0 flex-1"
-        />
-        <PreStartUrlControl
-          enabled={startsAt !== ""}
-          value={preStartUrl}
-          onChange={setPreStartUrl}
-        />
-      </div>
+      <DateTimeField
+        value={startsAt}
+        onChange={(v) => {
+          optionUse.note("starts_at", v !== "")
+          setStartsAt(v)
+        }}
+        placeholder="Now"
+        defaultTime="09:00"
+        maxDate={expiryDate ?? undefined}
+        className="w-full"
+      />
     </Field>
+  )
+  const untilThenField = (
+    <Field
+      label="Until then"
+      labelHint={
+        <InfoHint label="Where early visitors land">
+          Anyone who opens the link before it goes live is sent here. Blank
+          shows a not-yet-live page.
+        </InfoHint>
+      }
+      error={preStartProblem}
+    >
+      <UrlInput
+        value={preStartUrl}
+        onChange={(e) => setPreStartUrl(e.target.value)}
+        placeholder="Not-yet-live page"
+        disabled={startsAt === ""}
+      />
+    </Field>
+  )
+  // Two groups, one grammar each: the date that flips the state, then where
+  // visitors land while the link is in it.
+  // Starts above Ends: the panel reads as the link's timeline, top to bottom.
+  const endsPair = (
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      {expirationField}
+      {maxClicksField}
+    </div>
+  )
+  const lifetimePanel = (
+    <div className="space-y-5">
+      {showScheduling && (
+        <div className="space-y-3">
+          <SectionLabel>Starts</SectionLabel>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {goesLiveField}
+            {untilThenField}
+          </div>
+        </div>
+      )}
+      <div className="space-y-3">
+        {showScheduling && <SectionLabel>Ends</SectionLabel>}
+        {endsPair}
+        {afterExpiryField}
+      </div>
+    </div>
   )
 
   return (
@@ -652,11 +821,13 @@ export function LinkComposer() {
       }}
     >
       <DialogContent
-        className="sm:max-w-2xl"
+        ref={dialogRef}
+        style={pinTop === null ? undefined : { top: pinTop }}
+        className={cn("sm:max-w-2xl", pinTop !== null && "translate-y-0")}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit()
           // Figma/Notion grammar: mod+1..4 jumps between the dialog's tabs.
-          if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "4") {
+          if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "5") {
             e.preventDefault()
             const target = tabOrder[Number(e.key) - 1]
             if (target) setTab(target)
@@ -680,6 +851,8 @@ export function LinkComposer() {
         >
           <TabsList className="w-full">
             {tabTrigger("basic", Link2, "Basic", basicSet)}
+            {showLifetime &&
+              tabTrigger("lifetime", CalendarClock, "Lifetime", lifetimeSet)}
             {tabTrigger("security", ShieldCheck, "Security", securitySet)}
             {showTargeting &&
               tabTrigger("targeting", Crosshair, "Targeting", targetingSet)}
@@ -690,11 +863,17 @@ export function LinkComposer() {
           {/* Each tab sizes to its content; the height glides between
               tabs (response to a click, not a shift). */}
           <div
+            ref={frameRef}
             style={{ height: panelH }}
             className="-mx-1 overflow-hidden px-1 transition-[height] duration-200 ease-out"
           >
-            <div ref={panelRef} className="min-h-[392px] pt-3 pb-1">
-              <TabsContent value="basic" className="space-y-5">
+            <div ref={attachPanel} className="relative pt-3 pb-1">
+              <TabsContent
+                value="basic"
+                forceMount
+                ref={panelRefs.basic}
+                className={cn("space-y-5", INACTIVE_PANEL)}
+              >
                 <Field
                   label="Destination"
                   error={destProblem}
@@ -735,81 +914,84 @@ export function LinkComposer() {
                   hint={aliasHint}
                 >
                   <div className="flex items-center gap-1.5">
-                    {showDomains ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label="Choose a domain"
-                            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                    {/* One address, one border: domain segment, slash, alias. */}
+                    <div className="flex h-9 min-w-0 flex-1 items-stretch rounded-lg border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                      {showDomains ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Choose a domain"
+                              className="flex shrink-0 items-center gap-1.5 rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs outline-none transition-colors duration-150 hover:bg-accent/40 focus-visible:bg-accent/40"
+                            >
+                              {domain}
+                              <ChevronDown className="size-3.5 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="start"
+                            className="min-w-44"
                           >
-                            {domain}
-                            <ChevronDown className="size-3.5 text-muted-foreground" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="min-w-44">
-                          {activeDomains.map((d) => (
+                            {activeDomains.map((d) => (
+                              <DropdownMenuItem
+                                key={d}
+                                onSelect={() => {
+                                  optionUse.note("domain", d !== "spoo.me")
+                                  setDomain(d)
+                                }}
+                              >
+                                <span className="font-mono text-xs">{d}</span>
+                                {d === domain && (
+                                  <Check className="ml-auto size-3.5" />
+                                )}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              key={d}
                               onSelect={() => {
-                                optionUse.note("domain", d !== "spoo.me")
-                                setDomain(d)
+                                setOpen(false)
+                                router.push("/dashboard/domains")
                               }}
                             >
-                              <span className="font-mono text-xs">{d}</span>
-                              {d === domain && (
-                                <Check className="ml-auto size-3.5" />
-                              )}
+                              <Plus className="size-3.5" />
+                              <span className="text-xs">Connect a domain</span>
                             </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              setOpen(false)
-                              router.push("/dashboard/domains")
-                            }}
-                          >
-                            <Plus className="size-3.5" />
-                            <span className="text-xs">Connect a domain</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <span className="flex h-9 shrink-0 items-center rounded-lg border border-input px-2.5 font-mono text-foreground text-xs dark:bg-input/30">
-                        {domain}
-                      </span>
-                    )}
-                    <span className="font-mono text-muted-foreground text-xs">
-                      /
-                    </span>
-                    <div className="relative flex-1">
-                      <Input
-                        value={alias}
-                        onChange={(e) => {
-                          const v = e.target.value.replace(/\s+/g, "")
-                          optionUse.note("alias", v !== "")
-                          setAlias(v)
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") submit()
-                        }}
-                        placeholder="custom-alias"
-                        spellCheck={false}
-                        autoComplete="off"
-                        className="pr-8 font-mono text-xs"
-                      />
-                      <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-                        {aliasVerdict.state === "checking" && (
-                          <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
-                        )}
-                        {aliasVerdict.state === "available" && (
-                          <Check className="size-3.5 text-live" />
-                        )}
-                        {(aliasVerdict.state === "problem" ||
-                          aliasServerMsg) && (
-                          <CircleAlert className="size-3.5 text-destructive" />
-                        )}
-                      </span>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="flex shrink-0 items-center rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs">
+                          {domain}
+                        </span>
+                      )}
+                      <div className="relative min-w-0 flex-1">
+                        <Input
+                          value={alias}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\s+/g, "")
+                            optionUse.note("alias", v !== "")
+                            setAlias(v)
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") submit()
+                          }}
+                          placeholder="custom-alias"
+                          spellCheck={false}
+                          autoComplete="off"
+                          className="h-full rounded-none border-0 pr-8 font-mono text-xs shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent dark:shadow-none"
+                        />
+                        <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
+                          {aliasVerdict.state === "checking" && (
+                            <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
+                          )}
+                          {aliasVerdict.state === "available" && (
+                            <Check className="size-3.5 text-live" />
+                          )}
+                          {(aliasVerdict.state === "problem" ||
+                            aliasServerMsg) && (
+                            <CircleAlert className="size-3.5 text-destructive" />
+                          )}
+                        </span>
+                      </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -856,29 +1038,27 @@ export function LinkComposer() {
                   </div>
                 </Field>
 
-                {showScheduling ? (
-                  <>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      {goesLiveField}
-                      {expirationField}
-                    </div>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      {maxClicksField}
-                      {tagsField}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      {expirationField}
-                      {maxClicksField}
-                    </div>
-                    {tagsField}
-                  </>
-                )}
+                {!showLifetime && endsPair}
+                {tagsField}
               </TabsContent>
 
-              <TabsContent value="security" className="space-y-5">
+              {showLifetime && (
+                <TabsContent
+                  value="lifetime"
+                  forceMount
+                  ref={panelRefs.lifetime}
+                  className={cn("space-y-5", INACTIVE_PANEL)}
+                >
+                  {lifetimePanel}
+                </TabsContent>
+              )}
+
+              <TabsContent
+                value="security"
+                forceMount
+                ref={panelRefs.security}
+                className={cn("space-y-5", INACTIVE_PANEL)}
+              >
                 <Field
                   label="Password"
                   hint="Visitors will need this to reach the destination."
@@ -898,7 +1078,7 @@ export function LinkComposer() {
                       }}
                       visible={passwordVisible}
                       onVisibleChange={setPasswordVisible}
-                      placeholder="None"
+                      placeholder="No password"
                     />
                     <Button
                       type="button"
@@ -965,7 +1145,12 @@ export function LinkComposer() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="targeting" className="space-y-5">
+              <TabsContent
+                value="targeting"
+                forceMount
+                ref={panelRefs.targeting}
+                className={cn("space-y-5", INACTIVE_PANEL)}
+              >
                 <Velvet feature="geo_targeting">
                   <GeoRulesEditor
                     rules={geoRules}
@@ -994,7 +1179,12 @@ export function LinkComposer() {
                 </Velvet>
               </TabsContent>
 
-              <TabsContent value="metadata" className="space-y-2">
+              <TabsContent
+                value="metadata"
+                forceMount
+                ref={panelRefs.metadata}
+                className={cn("space-y-2", INACTIVE_PANEL)}
+              >
                 {/* Fixed-height header row: the live-dot status and reset
                     action swap in place, zero layout shift between mirrored
                     and customized states. */}
@@ -1048,7 +1238,7 @@ export function LinkComposer() {
           </div>
         </Tabs>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 pt-4">
           <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>

@@ -22,6 +22,7 @@ import {
   Bot,
   CalendarClock,
   CalendarDays,
+  CornerDownRight,
   Globe,
   ChevronLeft,
   ChevronRight,
@@ -1509,6 +1510,12 @@ function LinkRow({
               <PropIcon
                 icon={Gauge}
                 label="Deactivates after a set number of clicks."
+              />
+            )}
+            {link.expired_redirect_url && (
+              <PropIcon
+                icon={CornerDownRight}
+                label={`After expiry, visitors go to ${displayUrl(link.expired_redirect_url)}.`}
               />
             )}
             {link.private_stats && (

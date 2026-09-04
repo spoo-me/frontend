@@ -197,3 +197,8 @@ export function urlProblem(value: string): string | null {
   if (selfReferential(v)) return "Short links can't point back at spoo.me."
   return urlFormatProblem(v)
 }
+
+/** Mirrors the DTO's max_clicks (a positive integer): the number input's
+    `min` stops the spinner, not the keyboard. */
+export const CLICK_CAP_RE = /^[1-9]\d*$/
+export const CLICK_CAP_PROBLEM = "Enter a whole number of clicks, 1 or more."
