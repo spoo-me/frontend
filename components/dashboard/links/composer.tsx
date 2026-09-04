@@ -95,9 +95,11 @@ import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 
 const OPEN_EVENT = "spoo:new-link"
 
-// Mounted but out of the way: still measurable, never focusable or seen.
+// Inactive panels stay mounted (measurable) but out of the way. Opacity and
+// visibility transition together: the outgoing panel fades before it goes
+// hidden, the incoming one fades in on top, in step with the height glide.
 const INACTIVE_PANEL =
-  "data-[state=inactive]:pointer-events-none data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-3"
+  "transition-[opacity,visibility] duration-150 ease-out motion-reduce:transition-none data-[state=inactive]:pointer-events-none data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-3 data-[state=inactive]:opacity-0"
 
 export function openLinkComposer(opts?: { domain?: string; longUrl?: string }) {
   window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: opts }))
@@ -1233,7 +1235,7 @@ export function LinkComposer() {
           </div>
         </Tabs>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 pt-2">
           <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
