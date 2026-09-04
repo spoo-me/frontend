@@ -281,7 +281,18 @@ export function buildLinks(): MockLink[] {
           : alias === "invite"
             ? "https://acme.dev/waitlist"
             : null,
-      ab_variants: null,
+      // "swag" splits traffic across two shop pages so the per-variant
+      // panel on the link page has something to show.
+      ab_variants:
+        alias === "swag"
+          ? [
+              {
+                url: "https://shop.spoo.me/collections/stickers?v=b",
+                weight: 40,
+              },
+              { url: "https://shop.spoo.me/collections/tees", weight: 30 },
+            ]
+          : null,
       tag_ids: (SEED_TAGS[alias] ?? []).map((n) => tagIdByName.get(n)!),
       // "launch" carries a custom social card — the meta editor and the
       // unfurl previews have something real to round-trip out of the box.
@@ -589,7 +600,11 @@ export const DIMENSIONS = {
   os: OSES,
 } as const
 
-export type StatsDimension = keyof typeof DIMENSIONS | "short_code" | "time"
+export type StatsDimension =
+  | keyof typeof DIMENSIONS
+  | "short_code"
+  | "time"
+  | "variant"
 
 /** Diurnal shape (UTC-ish): quiet nights, evening peak. */
 const HOUR_SHAPE = [
@@ -737,8 +752,34 @@ export function generateStats(links: MockLink[], q: StatsQuery) {
         }))
     )
 
+  if (q.groupBy.includes("variant")) {
+    // Rows follow the link's configured split with a little drift, so the
+    // panel shows a configured share next to an observed one that differs.
+    const link = links.find(
+      (l) => q.shortCodes?.includes(l.alias) && l.ab_variants?.length
+    )
+    const variants = link?.ab_variants ?? []
+    const claimed = variants.reduce((a, v) => a + v.weight, 0)
+    const slots = [
+      ...variants.map((v, i) => [String(i), v.weight] as const),
+      ["(default)", 100 - claimed] as const,
+    ]
+    emit(
+      "variant",
+      slots
+        .map(([value, weight], i) => {
+          const drift = 0.9 + mulberry32(SEED ^ (i * 17))() * 0.2
+          const clicks = Math.round((weight / 100) * total * drift)
+          const rate = 0.6 + mulberry32(SEED ^ (i * 71))() * 0.2
+          return { value, clicks, unique_clicks: Math.round(clicks * rate) }
+        })
+        .filter((r) => r.clicks > 0)
+        .sort((a, b) => b.clicks - a.clicks)
+    )
+  }
+
   for (const dim of q.groupBy) {
-    if (dim === "time" || dim === "short_code") continue
+    if (dim === "time" || dim === "short_code" || dim === "variant") continue
     const table = DIMENSIONS[dim]
     if (!table) continue
     // A filtered dimension's own breakdown contains only the selected

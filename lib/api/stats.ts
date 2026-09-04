@@ -11,6 +11,8 @@ export type StatsDimension =
   /** Filter only, never a group_by: the server resolves tag ids to the
       owner's link ids before matching clicks. */
   | "tag_id"
+  /** A/B variant index as a string ("0", "1", ...); "(default)" is long_url. */
+  | "variant"
   /** v1 legacy only: known-bot hits on the public stats payload. */
   | "bots"
 
