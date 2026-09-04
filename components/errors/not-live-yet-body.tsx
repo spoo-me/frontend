@@ -1,41 +1,19 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
-import { getPublicPreview } from "@/lib/api/public-preview"
+import { useScheduledStart } from "@/hooks/use-scheduled-start"
 import { formatGoLive } from "@/components/dashboard/links/scheduled-state"
-
-function aliasFrom(from?: string): string | null {
-  if (!from) return null
-  const segments = from.split("?")[0].split("/").filter(Boolean)
-  return segments.length === 1 ? segments[0] : null
-}
 
 /**
  * A scheduled link visited before its start. The status is a 404 (nothing
- * is reachable yet), but the link exists, so the page says when it opens:
- * the public preview carries `starts_at` while the link is scheduled, and
- * the time renders in the visitor's own timezone. If the lookup fails the
- * page still stands on its own.
+ * is reachable yet), but the link exists, so the page says when it opens
+ * in the visitor's own timezone; the shell's watermark counts down to it.
+ * If the lookup fails the page still stands on its own.
  */
 export function NotLiveYetBody({ from }: { from?: string }) {
-  const alias = aliasFrom(from)
-  const [startsAt, setStartsAt] = React.useState<number | null>(null)
-
-  React.useEffect(() => {
-    if (!alias) return
-    let cancelled = false
-    getPublicPreview(alias)
-      .then((p) => {
-        if (!cancelled && p.status === "scheduled") setStartsAt(p.starts_at)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [alias])
+  const { startsAt } = useScheduledStart(from)
 
   return (
     <div className="max-w-xl">

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { ErrorShell } from "@/components/errors/error-shell"
 import { NotFoundBody } from "@/components/errors/not-found-body"
 import { NotLiveYetBody } from "@/components/errors/not-live-yet-body"
+import { NotLiveCountdown } from "@/components/errors/not-live-countdown"
 import {
   BlockedBody,
   GoneBody,
@@ -82,7 +83,13 @@ export default async function ErrorPage({ params, searchParams }: Params) {
   const view = resolveView(status, code)
 
   return (
-    <ErrorShell status={status} fisher={view === "404"}>
+    <ErrorShell
+      status={status}
+      fisher={view === "404"}
+      watermark={
+        view === "scheduled" ? <NotLiveCountdown from={from} /> : undefined
+      }
+    >
       {view === "404" ? (
         <NotFoundBody from={from} />
       ) : view === "scheduled" ? (
