@@ -54,6 +54,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
+import { ClickCapInput } from "@/components/dashboard/links/click-cap-input"
 import {
   AFTER_EXPIRY_COPY,
   FallbackUrlControl,
@@ -576,19 +577,19 @@ export function LinkComposer() {
 
   // The two time bookends sit side by side when scheduling is on; the
   // pre-start URL hides behind a gear on the start input.
-  const expirationField = (
+  const expiresField = (
     <Field
       label="Expiration"
       labelHint={
         <InfoHint label="How expiry works">
-          After this moment, in your timezone, the link shows an ended page
-          instead of redirecting. Extend or clear it later to bring the link
-          back.
+          The link ends at this moment, in your timezone, or once total clicks
+          reach the cap, whichever comes first. Visitors then see an ended page.
+          Extend or clear either to bring the link back.
         </InfoHint>
       }
       error={orderProblem ?? fallbackProblem}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <DateTimeField
           value={expiry}
           onChange={(v) => {
@@ -597,7 +598,14 @@ export function LinkComposer() {
           }}
           placeholder="Never"
           minDate={startDate ?? undefined}
-          className="min-w-0 flex-1"
+          className="min-w-[12rem] flex-1"
+        />
+        <ClickCapInput
+          value={maxClicks}
+          onChange={(v) => {
+            optionUse.note("max_clicks", v !== "")
+            setMaxClicks(v)
+          }}
         />
         <Velvet feature="expired_fallback">
           <FallbackUrlControl
@@ -613,29 +621,6 @@ export function LinkComposer() {
           />
         </Velvet>
       </div>
-    </Field>
-  )
-  const maxClicksField = (
-    <Field
-      label="Max clicks"
-      labelHint={
-        <InfoHint label="How click limits work">
-          Once total clicks reach this number the link stops redirecting. Raise
-          or clear the limit later to bring it back.
-        </InfoHint>
-      }
-    >
-      <Input
-        type="number"
-        min={1}
-        value={maxClicks}
-        onChange={(e) => {
-          optionUse.note("max_clicks", e.target.value !== "")
-          setMaxClicks(e.target.value)
-        }}
-        placeholder="Unlimited"
-        className="font-mono text-xs"
-      />
     </Field>
   )
   const tagsField = (
@@ -907,19 +892,13 @@ export function LinkComposer() {
                   <>
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                       {goesLiveField}
-                      {expirationField}
-                    </div>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      {maxClicksField}
                       {tagsField}
                     </div>
+                    {expiresField}
                   </>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      {expirationField}
-                      {maxClicksField}
-                    </div>
+                    {expiresField}
                     {tagsField}
                   </>
                 )}

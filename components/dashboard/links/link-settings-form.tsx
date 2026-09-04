@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
+import { ClickCapInput } from "@/components/dashboard/links/click-cap-input"
 import {
   AFTER_EXPIRY_COPY,
   FallbackUrlControl,
@@ -652,21 +653,44 @@ export function LinkSettingsForm({
       label="Expires"
       labelHint={
         <InfoHint label="How expiry works">
-          After this moment, in your timezone, the link shows an ended page
-          instead of redirecting. Extend or clear it later to bring the link
-          back.
+          The link ends at this moment, in your timezone, or once total clicks
+          reach the cap, whichever comes first. Visitors then see an ended page.
+          Extend or clear either to bring the link back.
         </InfoHint>
       }
       error={orderProblem ?? fallbackProblem}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <DateTimeField
           value={expiry}
           onChange={setExpiry}
           placeholder="Never"
           minDate={startDate ?? undefined}
-          className="min-w-0 flex-1"
+          className="min-w-[12rem] flex-1"
         />
+        {expiry && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove expiry"
+            onClick={() => setExpiry("")}
+          >
+            <X />
+          </Button>
+        )}
+        <ClickCapInput value={maxClicks} onChange={setMaxClicks} />
+        {maxClicks && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove click limit"
+            onClick={() => setMaxClicks("")}
+          >
+            <X />
+          </Button>
+        )}
         <Velvet feature="expired_fallback">
           <FallbackUrlControl
             copy={AFTER_EXPIRY_COPY}
@@ -679,50 +703,6 @@ export function LinkSettingsForm({
             }}
           />
         </Velvet>
-        {expiry && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Remove expiry"
-            onClick={() => setExpiry("")}
-          >
-            <X />
-          </Button>
-        )}
-      </div>
-    </Field>
-  )
-  const maxClicksField = (
-    <Field
-      label="Max clicks"
-      labelHint={
-        <InfoHint label="How click limits work">
-          Once total clicks reach this number the link stops redirecting. Raise
-          or clear the limit later to bring it back.
-        </InfoHint>
-      }
-    >
-      <div className="flex items-center gap-1.5">
-        <Input
-          type="number"
-          min={1}
-          value={maxClicks}
-          onChange={(e) => setMaxClicks(e.target.value)}
-          placeholder="Unlimited"
-          className="font-mono text-xs"
-        />
-        {maxClicks && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Remove click limit"
-            onClick={() => setMaxClicks("")}
-          >
-            <X />
-          </Button>
-        )}
       </div>
     </Field>
   )
@@ -1006,19 +986,13 @@ export function LinkSettingsForm({
           <>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               {goesLiveField}
-              {expiresField}
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {maxClicksField}
               {tagsField}
             </div>
+            {expiresField}
           </>
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {expiresField}
-              {maxClicksField}
-            </div>
+            {expiresField}
             {tagsField}
           </>
         )}
