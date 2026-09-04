@@ -904,50 +904,51 @@ export function LinkSettingsForm({
           }
         >
           <div className="flex items-center gap-1.5">
-            {showDomains ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex h-9 shrink-0 items-center gap-1 rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/60"
-                  >
-                    {domain}
-                    <ChevronDown className="size-3 text-muted-foreground" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {domains.map((d) => (
-                    <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
-                      <span className="font-mono text-xs">{d}</span>
-                      {d === domain && <Check className="ml-auto size-3.5" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <span className="flex h-9 shrink-0 items-center rounded-lg border border-border/60 bg-muted/40 px-2.5 font-mono text-foreground text-xs">
-                {domain}
-              </span>
-            )}
-            <span className="font-mono text-muted-foreground text-xs">/</span>
-            <div className="relative flex-1">
-              <Input
-                value={alias}
-                onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
-                spellCheck={false}
-                className="pr-8 font-mono text-xs"
-              />
-              <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-                {aliasVerdict.state === "checking" && (
-                  <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
-                )}
-                {aliasVerdict.state === "available" && (
-                  <Check className="size-3.5 text-live" />
-                )}
-                {(aliasVerdict.state === "problem" || aliasServerMsg) && (
-                  <CircleAlert className="size-3.5 text-destructive" />
-                )}
-              </span>
+            <div className="flex h-9 min-w-0 flex-1 items-stretch rounded-lg border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+              {showDomains ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex shrink-0 items-center gap-1 rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs outline-none transition-colors duration-150 hover:bg-accent/60 focus-visible:bg-accent/60"
+                    >
+                      {domain}
+                      <ChevronDown className="size-3 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {domains.map((d) => (
+                      <DropdownMenuItem key={d} onSelect={() => setDomain(d)}>
+                        <span className="font-mono text-xs">{d}</span>
+                        {d === domain && <Check className="ml-auto size-3.5" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span className="flex shrink-0 items-center rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs">
+                  {domain}
+                </span>
+              )}
+              <div className="relative min-w-0 flex-1">
+                <Input
+                  value={alias}
+                  onChange={(e) => setAlias(e.target.value.replace(/\s+/g, ""))}
+                  spellCheck={false}
+                  className="h-full rounded-none border-0 pr-8 font-mono text-xs shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent dark:shadow-none"
+                />
+                <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
+                  {aliasVerdict.state === "checking" && (
+                    <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
+                  )}
+                  {aliasVerdict.state === "available" && (
+                    <Check className="size-3.5 text-live" />
+                  )}
+                  {(aliasVerdict.state === "problem" || aliasServerMsg) && (
+                    <CircleAlert className="size-3.5 text-destructive" />
+                  )}
+                </span>
+              </div>
             </div>
             <Button
               type="button"

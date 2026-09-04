@@ -914,81 +914,84 @@ export function LinkComposer() {
                   hint={aliasHint}
                 >
                   <div className="flex items-center gap-1.5">
-                    {showDomains ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label="Choose a domain"
-                            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-input px-2.5 font-mono text-foreground text-xs transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                    {/* One address, one border: domain segment, slash, alias. */}
+                    <div className="flex h-9 min-w-0 flex-1 items-stretch rounded-lg border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                      {showDomains ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Choose a domain"
+                              className="flex shrink-0 items-center gap-1.5 rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs outline-none transition-colors duration-150 hover:bg-accent/40 focus-visible:bg-accent/40"
+                            >
+                              {domain}
+                              <ChevronDown className="size-3.5 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="start"
+                            className="min-w-44"
                           >
-                            {domain}
-                            <ChevronDown className="size-3.5 text-muted-foreground" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="min-w-44">
-                          {activeDomains.map((d) => (
+                            {activeDomains.map((d) => (
+                              <DropdownMenuItem
+                                key={d}
+                                onSelect={() => {
+                                  optionUse.note("domain", d !== "spoo.me")
+                                  setDomain(d)
+                                }}
+                              >
+                                <span className="font-mono text-xs">{d}</span>
+                                {d === domain && (
+                                  <Check className="ml-auto size-3.5" />
+                                )}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              key={d}
                               onSelect={() => {
-                                optionUse.note("domain", d !== "spoo.me")
-                                setDomain(d)
+                                setOpen(false)
+                                router.push("/dashboard/domains")
                               }}
                             >
-                              <span className="font-mono text-xs">{d}</span>
-                              {d === domain && (
-                                <Check className="ml-auto size-3.5" />
-                              )}
+                              <Plus className="size-3.5" />
+                              <span className="text-xs">Connect a domain</span>
                             </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              setOpen(false)
-                              router.push("/dashboard/domains")
-                            }}
-                          >
-                            <Plus className="size-3.5" />
-                            <span className="text-xs">Connect a domain</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <span className="flex h-9 shrink-0 items-center rounded-lg border border-input px-2.5 font-mono text-foreground text-xs dark:bg-input/30">
-                        {domain}
-                      </span>
-                    )}
-                    <span className="font-mono text-muted-foreground text-xs">
-                      /
-                    </span>
-                    <div className="relative flex-1">
-                      <Input
-                        value={alias}
-                        onChange={(e) => {
-                          const v = e.target.value.replace(/\s+/g, "")
-                          optionUse.note("alias", v !== "")
-                          setAlias(v)
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") submit()
-                        }}
-                        placeholder="custom-alias"
-                        spellCheck={false}
-                        autoComplete="off"
-                        className="pr-8 font-mono text-xs"
-                      />
-                      <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
-                        {aliasVerdict.state === "checking" && (
-                          <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
-                        )}
-                        {aliasVerdict.state === "available" && (
-                          <Check className="size-3.5 text-live" />
-                        )}
-                        {(aliasVerdict.state === "problem" ||
-                          aliasServerMsg) && (
-                          <CircleAlert className="size-3.5 text-destructive" />
-                        )}
-                      </span>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="flex shrink-0 items-center rounded-l-[7px] border-input border-r bg-muted/40 px-2.5 font-mono text-foreground text-xs">
+                          {domain}
+                        </span>
+                      )}
+                      <div className="relative min-w-0 flex-1">
+                        <Input
+                          value={alias}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\s+/g, "")
+                            optionUse.note("alias", v !== "")
+                            setAlias(v)
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") submit()
+                          }}
+                          placeholder="custom-alias"
+                          spellCheck={false}
+                          autoComplete="off"
+                          className="h-full rounded-none border-0 pr-8 font-mono text-xs shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent dark:shadow-none"
+                        />
+                        <span className="absolute top-1/2 right-2.5 -translate-y-1/2">
+                          {aliasVerdict.state === "checking" && (
+                            <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
+                          )}
+                          {aliasVerdict.state === "available" && (
+                            <Check className="size-3.5 text-live" />
+                          )}
+                          {(aliasVerdict.state === "problem" ||
+                            aliasServerMsg) && (
+                            <CircleAlert className="size-3.5 text-destructive" />
+                          )}
+                        </span>
+                      </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
