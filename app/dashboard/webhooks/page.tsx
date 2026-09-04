@@ -24,6 +24,7 @@ import {
 import { formatWhen } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useFeatureGuard } from "@/hooks/use-features"
+import { LimitCounter, Limited } from "@/components/plan/limited"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -61,8 +62,10 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
-  const invalidate = () =>
+  const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["webhooks"] })
+    queryClient.invalidateQueries({ queryKey: ["entitlements"] })
+  }
 
   const sendTest = useMutation({
     mutationFn: () => sendTestWebhook(endpoint.id),
@@ -216,9 +219,9 @@ function EndpointRow({ endpoint }: { endpoint: WebhookEndpoint }) {
 
 export default function WebhooksPage() {
   const router = useRouter()
-  const webhooksEnabled = useFeatureGuard("webhooks", () =>
-    router.replace("/dashboard")
-  )
+  const webhooksEnabled =
+    useFeatureGuard("webhooks", () => router.replace("/dashboard")) ===
+    "enabled"
   const [createOpen, setCreateOpen] = React.useState(false)
 
   const webhooks = useQuery({
@@ -230,9 +233,14 @@ export default function WebhooksPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <span className="label-mono text-muted-foreground/60">Webhooks</span>
+          <span className="flex items-center gap-3">
+            <span className="label-mono text-muted-foreground/60">
+              Webhooks
+            </span>
+            <LimitCounter limit="webhook_endpoints_max" />
+          </span>
           <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
             Endpoints
           </h1>
@@ -240,10 +248,13 @@ export default function WebhooksPage() {
             Signed event deliveries for your account&apos;s events.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Limited
+          limit="webhook_endpoints_max"
+          onAdd={() => setCreateOpen(true)}
+        >
           <Plus data-icon="inline-start" />
           New endpoint
-        </Button>
+        </Limited>
       </div>
 
       <Panel className="mt-6">

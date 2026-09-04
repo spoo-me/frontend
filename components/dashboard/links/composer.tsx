@@ -35,7 +35,11 @@ import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
 import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 import { useAcceptedEmoji, useGenerateEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
+import { useProGate } from "@/hooks/use-pro-gate"
+import { stashDraft, takeComposerDraft } from "@/lib/entitlements/draft-stash"
 import { Velvet } from "@/components/shared/velvet"
+import { FeatureMark, ProMark } from "@/components/plan/pro-mark"
+import { UpsellDialog } from "@/components/plan/upsell-dialog"
 import { cn } from "@/lib/utils"
 import { CLICK_CAP_PROBLEM, CLICK_CAP_RE } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
@@ -94,6 +98,14 @@ import {
 import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 
 const OPEN_EVENT = "spoo:new-link"
+const STATE_EVENT = "spoo:composer-open"
+
+/** Subscribe to the composer opening and closing; returns the unsubscribe. */
+export function onLinkComposerOpen(cb: (open: boolean) => void) {
+  const handler = (e: Event) => cb((e as CustomEvent<boolean>).detail)
+  window.addEventListener(STATE_EVENT, handler)
+  return () => window.removeEventListener(STATE_EVENT, handler)
+}
 
 // Inactive panels stay mounted (measurable) but out of the way. Opacity and
 // visibility transition together: the outgoing panel fades before it goes
@@ -101,7 +113,35 @@ const OPEN_EVENT = "spoo:new-link"
 const INACTIVE_PANEL =
   "transition-[opacity,visibility] duration-150 ease-out motion-reduce:transition-none data-[state=inactive]:pointer-events-none data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-3 data-[state=inactive]:opacity-0"
 
-export function openLinkComposer(opts?: { domain?: string; longUrl?: string }) {
+/** Every field of the form, minus the password, so a draft can be parked
+    while the user goes to pay and put back exactly. */
+export type ComposerDraft = {
+  tab: string
+  longUrl: string
+  alias: string
+  domain: string
+  expiry: string
+  startsAt: string
+  preStartUrl: string
+  maxClicks: string
+  fallbackUrl: string
+  geoRules: GeoRuleDraft[]
+  variants: VariantDraft[]
+  meta: MetaDraft
+  metaCustomized: boolean
+  blockBots: boolean
+  privateStats: boolean
+  tagIds: string[]
+}
+
+type ComposerPreset = {
+  domain?: string
+  longUrl?: string
+  tab?: string
+  draft?: ComposerDraft
+}
+
+export function openLinkComposer(opts?: ComposerPreset) {
   window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: opts }))
 }
 
@@ -174,17 +214,21 @@ export function LinkComposer() {
   // Denominator for composer_tab_opened: one event per open, however opened.
   React.useEffect(() => {
     if (open) trackUiAction("composer_opened")
+    window.dispatchEvent(new CustomEvent(STATE_EVENT, { detail: open }))
   }, [open])
 
-  // Backend-gated capabilities: hidden features simply don't exist here.
-  const showGeo = useFeature("geo_targeting") === "enabled"
-  const showScheduling = useFeature("link_scheduling") === "enabled"
-  const showFallback = useFeature("expired_fallback") === "enabled"
+  // Backend-gated capabilities: hidden features simply don't exist here;
+  // locked ones keep their place and render as the upsell.
+  const showGeo = useFeature("geo_targeting") !== "hidden"
+  const showScheduling = useFeature("link_scheduling") !== "hidden"
+  const showFallback = useFeature("expired_fallback") !== "hidden"
   // Expiry and the click cap alone do not earn a tab; they sit on Basic
   // until scheduling or the fallback gives the lifetime story more to say.
   const showLifetime = showScheduling || showFallback
-  const showVariants = useFeature("ab_testing") === "enabled"
-  const showMeta = useFeature("custom_meta_tags") === "enabled"
+  const showVariants = useFeature("ab_variants") !== "hidden"
+  const metaState = useFeature("custom_meta_tags")
+  const showMeta = metaState !== "hidden"
+  const metaEnabled = metaState === "enabled"
   const showDomains = useFeature("custom_domains") === "enabled"
   const showTargeting = showGeo || showVariants
   const tabOrder = [
@@ -260,7 +304,8 @@ export function LinkComposer() {
   const destMeta = useQuery({
     queryKey: ["url-metadata", metaFetchUrl],
     queryFn: () => fetchUrlMetadata(metaFetchUrl!),
-    enabled: open && activeTab === "metadata" && Boolean(metaFetchUrl),
+    enabled:
+      open && metaEnabled && activeTab === "metadata" && Boolean(metaFetchUrl),
     staleTime: 10 * 60_000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -276,13 +321,13 @@ export function LinkComposer() {
   React.useEffect(() => {
     const onOpen = (e: Event) => {
       // reset() ran on close, so a preset here can't leak between opens.
-      const preset = (
-        e as CustomEvent<{ domain?: string; longUrl?: string } | undefined>
-      ).detail
+      const preset = (e as CustomEvent<ComposerPreset | undefined>).detail
+      if (preset?.draft) applyDraft(preset.draft)
       if (preset?.longUrl) setLongUrl(preset.longUrl)
+      if (preset?.tab) setTab(preset.tab)
       if (preset?.domain) {
         setDomain(preset.domain)
-      } else {
+      } else if (!preset?.draft) {
         // Context default: any entry point (topbar, N, palette) used while
         // standing on a live domain's page starts the link on that domain.
         const id = pathname.match(/^\/dashboard\/domains\/([^/]+)$/)?.[1]
@@ -320,6 +365,50 @@ export function LinkComposer() {
     setServerUrlError(null)
     optionUse.reset()
   }
+
+  const currentDraft = (): ComposerDraft => ({
+    tab: activeTab,
+    longUrl,
+    alias,
+    domain,
+    expiry,
+    startsAt,
+    preStartUrl,
+    maxClicks,
+    fallbackUrl,
+    geoRules,
+    variants,
+    meta,
+    metaCustomized,
+    blockBots,
+    privateStats,
+    tagIds,
+  })
+  function applyDraft(d: ComposerDraft) {
+    setTab(d.tab)
+    setLongUrl(d.longUrl)
+    setAlias(d.alias)
+    setDomain(d.domain)
+    setExpiry(d.expiry)
+    setStartsAt(d.startsAt)
+    setPreStartUrl(d.preStartUrl)
+    setMaxClicks(d.maxClicks)
+    setFallbackUrl(d.fallbackUrl)
+    setGeoRules(d.geoRules)
+    setVariants(d.variants)
+    setMeta(d.meta)
+    setMetaCustomized(d.metaCustomized)
+    setBlockBots(d.blockBots)
+    setPrivateStats(d.privateStats)
+    setTagIds(d.tagIds)
+  }
+  // Back from checkout: the draft parked by the upsell reopens the composer.
+  // The shell also wraps /upgrade, so only a dashboard page may take it.
+  React.useEffect(() => {
+    if (!pathname.startsWith("/dashboard")) return
+    const parked = takeComposerDraft()
+    if (parked) openLinkComposer({ draft: parked })
+  }, [pathname])
 
   // Animated tab height: measure the active panel, glide the container.
   const panelRef = React.useRef<HTMLDivElement>(null)
@@ -554,7 +643,20 @@ export function LinkComposer() {
       // backend re-validates on create.
       aliasVerdict.state === "unknown")
 
+  const { blocked } = useProGate([
+    ...(geoCount ? (["geo_targeting"] as const) : []),
+    ...(variantPayload.length ? (["ab_variants"] as const) : []),
+    ...(metaPayload ? (["custom_meta_tags"] as const) : []),
+    ...(startsAt ? (["link_scheduling"] as const) : []),
+    ...(fallbackActive ? (["expired_fallback"] as const) : []),
+  ])
+  const [upsellOpen, setUpsellOpen] = React.useState(false)
+
   const submit = () => {
+    if (blocked.length) {
+      setUpsellOpen(true)
+      return
+    }
     if (!canCreate) return
     create.mutate({
       long_url: normalizeUrl(longUrl),
@@ -703,10 +805,13 @@ export function LinkComposer() {
       <Field
         label="After expiry"
         labelHint={
-          <InfoHint label="Where visitors land after expiry">
-            Anyone who opens the link once it has ended, by date or by click
-            count, is sent here. Blank shows an ended page.
-          </InfoHint>
+          <>
+            <FeatureMark feature="expired_fallback" />
+            <InfoHint label="Where visitors land after expiry">
+              Anyone who opens the link once it has ended, by date or by click
+              count, is sent here. Blank shows an ended page.
+            </InfoHint>
+          </>
         }
         error={fallbackProblem}
       >
@@ -796,13 +901,18 @@ export function LinkComposer() {
   const lifetimePanel = (
     <div className="space-y-5">
       {showScheduling && (
-        <div className="space-y-3">
-          <SectionLabel>Starts</SectionLabel>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            {goesLiveField}
-            {untilThenField}
+        <Velvet feature="link_scheduling">
+          <div className="space-y-3">
+            <span className="flex items-center gap-1.5">
+              <SectionLabel>Starts</SectionLabel>
+              <FeatureMark feature="link_scheduling" />
+            </span>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {goesLiveField}
+              {untilThenField}
+            </div>
           </div>
-        </div>
+        </Velvet>
       )}
       <div className="space-y-3">
         {showScheduling && <SectionLabel>Ends</SectionLabel>}
@@ -1165,7 +1275,7 @@ export function LinkComposer() {
                     }}
                   />
                 </Velvet>
-                <Velvet feature="ab_testing">
+                <Velvet feature="ab_variants">
                   <VariantsEditor
                     variants={variants}
                     onChange={(v) => {
@@ -1185,54 +1295,57 @@ export function LinkComposer() {
                 ref={panelRefs.metadata}
                 className={cn("space-y-2", INACTIVE_PANEL)}
               >
-                {/* Fixed-height header row: the live-dot status and reset
+                <Velvet feature="custom_meta_tags">
+                  {/* Fixed-height header row: the live-dot status and reset
                     action swap in place, zero layout shift between mirrored
                     and customized states. */}
-                <div className="flex h-7 items-center justify-between">
-                  <div className="flex items-baseline gap-3">
-                    <span className="flex items-center gap-1.5">
-                      <SectionLabel>Meta tags</SectionLabel>
-                      <InfoHint label="What meta tags do">
-                        The social card crawlers see when this link is shared;
-                        overrides the destination&apos;s own card.
-                      </InfoHint>
-                    </span>
-                    {metaMirroring && (
-                      <span className="label-mono text-[10px] text-muted-foreground/40">
-                        fetched from destination
+                  <div className="flex h-7 items-center justify-between">
+                    <div className="flex items-baseline gap-3">
+                      <span className="flex items-center gap-1.5">
+                        <SectionLabel>Meta tags</SectionLabel>
+                        <FeatureMark feature="custom_meta_tags" />
+                        <InfoHint label="What meta tags do">
+                          The social card crawlers see when this link is shared;
+                          overrides the destination&apos;s own card.
+                        </InfoHint>
                       </span>
+                      {metaMirroring && (
+                        <span className="label-mono text-[10px] text-muted-foreground/40">
+                          fetched from destination
+                        </span>
+                      )}
+                    </div>
+                    {metaCustomized && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          optionUse.note("meta_tags", false)
+                          setMetaCustomized(false)
+                        }}
+                        className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+                      >
+                        Reset to destination
+                      </button>
                     )}
                   </div>
-                  {metaCustomized && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        optionUse.note("meta_tags", false)
-                        setMetaCustomized(false)
-                      }}
-                      className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
-                    >
-                      Reset to destination
-                    </button>
-                  )}
-                </div>
-                <MetaTagsEditor
-                  value={displayedMeta}
-                  onChange={(v) => {
-                    // Any manual edit — typing, clearing, a color pick —
-                    // flips customized; auto-fill goes through setMeta only.
-                    optionUse.note("meta_tags", Boolean(metaTagsOf(v)))
-                    setMeta(v)
-                    setMetaCustomized(true)
-                  }}
-                  domain={domain}
-                  alias={alias}
-                  preview="side"
-                  loading={!metaCustomized && destMeta.isFetching}
-                  notice={metaNotice}
-                  problem={metaProblem}
-                  source={metaCustomized ? metaSource : undefined}
-                />
+                  <MetaTagsEditor
+                    value={displayedMeta}
+                    onChange={(v) => {
+                      // Any manual edit — typing, clearing, a color pick —
+                      // flips customized; auto-fill goes through setMeta only.
+                      optionUse.note("meta_tags", Boolean(metaTagsOf(v)))
+                      setMeta(v)
+                      setMetaCustomized(true)
+                    }}
+                    domain={domain}
+                    alias={alias}
+                    preview="side"
+                    loading={!metaCustomized && destMeta.isFetching}
+                    notice={metaNotice}
+                    problem={metaProblem}
+                    source={metaCustomized ? metaSource : undefined}
+                  />
+                </Velvet>
               </TabsContent>
             </div>
           </div>
@@ -1242,16 +1355,31 @@ export function LinkComposer() {
           <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button disabled={!canCreate} onClick={submit}>
-            {create.isPending && (
-              <LoaderCircle className="size-3.5 animate-spin" />
-            )}
-            Create link
-            <Kbd className="ml-1 border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80">
-              <CornerDownLeft className="size-2.5" />
-            </Kbd>
-          </Button>
+          {blocked.length ? (
+            <Button onClick={submit}>
+              Create with Pro
+              <ProMark onPrimary />
+            </Button>
+          ) : (
+            <Button disabled={!canCreate} onClick={submit}>
+              {create.isPending && (
+                <LoaderCircle className="size-3.5 animate-spin" />
+              )}
+              Create link
+              <Kbd className="ml-1 border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80">
+                <CornerDownLeft className="size-2.5" />
+              </Kbd>
+            </Button>
+          )}
         </div>
+        <UpsellDialog
+          trigger={{ kind: "features", features: blocked }}
+          open={upsellOpen}
+          onOpenChange={setUpsellOpen}
+          onBeforeCheckout={() =>
+            stashDraft({ kind: "composer", draft: currentDraft() })
+          }
+        />
       </DialogContent>
     </Dialog>
   )

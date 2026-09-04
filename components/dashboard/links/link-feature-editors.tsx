@@ -53,6 +53,7 @@ import {
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Segmented } from "@/components/dashboard/segmented"
+import { FeatureMark } from "@/components/plan/pro-mark"
 
 /**
  * The planned-capability editors (geo targeting, A/B testing, custom meta
@@ -522,6 +523,7 @@ export function GeoRulesEditor({
     <div className="space-y-2">
       <span className="flex items-center gap-1.5">
         <SectionLabel>Geo targeting</SectionLabel>
+        <FeatureMark feature="geo_targeting" />
         <InfoHint label="How geo targeting works">
           Matches the visitor&apos;s country at redirect time. One rule per
           country, up to 50; everyone else follows the destination.
@@ -601,6 +603,7 @@ export function VariantsEditor({
     <div className="space-y-2">
       <span className="flex items-center gap-1.5">
         <SectionLabel>A/B testing</SectionLabel>
+        <FeatureMark feature="ab_variants" />
         <InfoHint label="How A/B testing works">
           Each weight is the percentage of visitors sent to that variant. The
           destination keeps whatever the weights leave over.
