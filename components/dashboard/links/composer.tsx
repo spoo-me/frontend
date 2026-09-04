@@ -54,9 +54,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
-import { ClickCapInput } from "@/components/dashboard/links/click-cap-input"
 import {
-  AFTER_EXPIRY_COPY,
   FallbackUrlControl,
   PRE_START_COPY,
 } from "@/components/dashboard/links/fallback-url-control"
@@ -383,10 +381,7 @@ export function LinkComposer() {
   const geoPayload = completeGeoRules(geoRules)
   const geoCount = Object.keys(geoPayload).length
   const geoProblem = geoRulesProblem(geoRules)
-  // Only means something once the link can expire; mirrors preStartProblem.
-  const fallbackActive =
-    (expiry !== "" || maxClicks !== "") && fallbackUrl.trim()
-  const fallbackProblem = fallbackActive
+  const fallbackProblem = fallbackUrl.trim()
     ? (urlProblem(fallbackUrl) ?? serverFallbackError)
     : null
   const variantPayload = completeVariants(variants)
@@ -501,7 +496,7 @@ export function LinkComposer() {
         ? { pre_start_url: normalizeUrl(preStartUrl) }
         : {}),
       ...(maxClicks ? { max_clicks: Number(maxClicks) } : {}),
-      ...(fallbackActive
+      ...(fallbackUrl.trim()
         ? { expired_redirect_url: normalizeUrl(fallbackUrl) }
         : {}),
       ...(blockBots ? { block_bots: true } : {}),
@@ -577,51 +572,86 @@ export function LinkComposer() {
 
   // The two time bookends sit side by side when scheduling is on; the
   // pre-start URL hides behind a gear on the start input.
-  const expiresField = (
+  const expirationField = (
     <Field
       label="Expiration"
       labelHint={
         <InfoHint label="How expiry works">
-          The link ends at this moment, in your timezone, or once total clicks
-          reach the cap, whichever comes first. Visitors then see an ended page.
-          Extend or clear either to bring the link back.
+          After this moment, in your timezone, the link shows an ended page
+          instead of redirecting. Extend or clear it later to bring the link
+          back.
         </InfoHint>
       }
-      error={orderProblem ?? fallbackProblem}
+      error={orderProblem}
     >
-      <div className="flex flex-wrap items-center gap-1.5">
-        <DateTimeField
-          value={expiry}
-          onChange={(v) => {
-            optionUse.note("expiry", v !== "")
-            setExpiry(v)
-          }}
-          placeholder="Never"
-          minDate={startDate ?? undefined}
-          className="min-w-[12rem] flex-1"
-        />
-        <ClickCapInput
-          value={maxClicks}
-          onChange={(v) => {
-            optionUse.note("max_clicks", v !== "")
-            setMaxClicks(v)
-          }}
-        />
-        <Velvet feature="expired_fallback">
-          <FallbackUrlControl
-            copy={AFTER_EXPIRY_COPY}
-            enabled={expiry !== "" || maxClicks !== ""}
-            value={fallbackUrl}
-            serverError={serverFallbackError}
-            onChange={(v) => {
-              optionUse.note("expired_redirect_url", v !== "")
-              setServerFallbackError(null)
-              setFallbackUrl(v)
-            }}
-          />
-        </Velvet>
-      </div>
+      <DateTimeField
+        value={expiry}
+        onChange={(v) => {
+          optionUse.note("expiry", v !== "")
+          setExpiry(v)
+        }}
+        placeholder="Never"
+        minDate={startDate ?? undefined}
+        className="w-full"
+      />
     </Field>
+  )
+  const maxClicksField = (
+    <Field
+      label="Max clicks"
+      labelHint={
+        <InfoHint label="How click limits work">
+          Once total clicks reach this number the link stops redirecting. Raise
+          or clear the limit later to bring it back.
+        </InfoHint>
+      }
+    >
+      <Input
+        type="number"
+        min={1}
+        value={maxClicks}
+        onChange={(e) => {
+          optionUse.note("max_clicks", e.target.value !== "")
+          setMaxClicks(e.target.value)
+        }}
+        placeholder="Unlimited"
+        className="font-mono text-xs"
+      />
+    </Field>
+  )
+  const afterExpiryField = (
+    <Velvet feature="expired_fallback">
+      <Field
+        label="After expiry"
+        hint="Where visitors land once the link has ended, by date or by click count. Blank shows an ended page."
+        error={fallbackProblem}
+      >
+        <Input
+          type="url"
+          inputMode="url"
+          value={fallbackUrl}
+          onChange={(e) => {
+            optionUse.note("expired_redirect_url", e.target.value !== "")
+            setServerFallbackError(null)
+            setFallbackUrl(e.target.value)
+          }}
+          placeholder="Ended page"
+          spellCheck={false}
+          className="font-mono text-xs"
+        />
+      </Field>
+    </Velvet>
+  )
+  // Date, click cap and the after-expiry URL are one decision: how the link
+  // ends. Tighter spacing inside the block than around it says so.
+  const lifetimeBlock = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {expirationField}
+        {maxClicksField}
+      </div>
+      {afterExpiryField}
+    </div>
   )
   const tagsField = (
     <Field
@@ -894,11 +924,11 @@ export function LinkComposer() {
                       {goesLiveField}
                       {tagsField}
                     </div>
-                    {expiresField}
+                    {lifetimeBlock}
                   </>
                 ) : (
                   <>
-                    {expiresField}
+                    {lifetimeBlock}
                     {tagsField}
                   </>
                 )}
