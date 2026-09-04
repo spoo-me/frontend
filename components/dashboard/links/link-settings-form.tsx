@@ -589,6 +589,8 @@ export function LinkSettingsForm({
       return "Fix the pre-start URL to save."
     if (startsAt && expiry && new Date(expiry) <= new Date(startsAt))
       return "Expiration must be after the go-live time."
+    if (patch.starts_at && patch.starts_at * 1000 <= Date.now())
+      return "The go-live time has already passed."
     return null
   })()
 

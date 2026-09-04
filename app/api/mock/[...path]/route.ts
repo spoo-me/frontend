@@ -1500,9 +1500,14 @@ async function handle(req: NextRequest, path: string[]) {
       if (meta.ok !== null && !s.verified)
         return fail(403, "forbidden", "meta_tags requires a verified account")
       const startsAt =
-        typeof body.starts_at === "number" ? body.starts_at : null
+        typeof body.starts_at === "number" && Number.isFinite(body.starts_at)
+          ? body.starts_at
+          : null
       const expireAfter =
-        typeof body.expire_after === "number" ? body.expire_after : null
+        typeof body.expire_after === "number" &&
+        Number.isFinite(body.expire_after)
+          ? body.expire_after
+          : null
       if (startsAt !== null && startsAt <= Math.floor(Date.now() / 1000))
         return fail(
           400,
@@ -2081,31 +2086,45 @@ async function handle(req: NextRequest, path: string[]) {
           body.max_clicks === null || body.max_clicks === 0
             ? null
             : Number(body.max_clicks)
-      if ("expire_after" in body)
-        link.expire_after =
-          body.expire_after === null ? null : Number(body.expire_after)
-      if ("starts_at" in body) {
-        const starts = body.starts_at === null ? null : Number(body.starts_at)
-        if (starts !== null && starts <= Math.floor(Date.now() / 1000))
+      // Stage the scheduling pair and validate before touching the link, so
+      // a rejected request leaves it exactly as it was.
+      const nextExpire =
+        "expire_after" in body
+          ? body.expire_after === null
+            ? null
+            : Number(body.expire_after)
+          : link.expire_after
+      const nextStart =
+        "starts_at" in body
+          ? body.starts_at === null
+            ? null
+            : Number(body.starts_at)
+          : link.starts_at
+      if (nextStart !== null && !Number.isFinite(nextStart))
+        return fail(
+          422,
+          "validation_error",
+          "Invalid starts_at format",
+          "starts_at"
+        )
+      if ("starts_at" in body && nextStart !== null) {
+        if (nextStart <= Math.floor(Date.now() / 1000))
           return fail(
             400,
             "validation_error",
             "starts_at must be in the future",
             "starts_at"
           )
-        if (
-          starts !== null &&
-          link.expire_after !== null &&
-          starts >= link.expire_after
-        )
+        if (nextExpire !== null && nextStart >= nextExpire)
           return fail(
             400,
             "validation_error",
             "starts_at must be before expire_after",
             "starts_at"
           )
-        link.starts_at = starts
       }
+      if ("expire_after" in body) link.expire_after = nextExpire
+      if ("starts_at" in body) link.starts_at = nextStart
       if ("pre_start_url" in body)
         link.pre_start_url =
           body.pre_start_url === null || body.pre_start_url === ""

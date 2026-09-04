@@ -434,6 +434,11 @@ export function LinkComposer() {
     startDate && expiryDate && expiryDate <= startDate
       ? "Expiration must be after the go-live time."
       : null
+  // The form can outlive the moment it was set for; the API would 400 it.
+  const startPassed =
+    startDate && startDate.getTime() <= Date.now()
+      ? "The go-live time has already passed."
+      : null
   const canCreate =
     longUrl.trim() !== "" &&
     !urlProblem(longUrl) &&
@@ -443,6 +448,7 @@ export function LinkComposer() {
     !metaProblem &&
     !preStartProblem &&
     !orderProblem &&
+    !startPassed &&
     (alias === "" ||
       aliasVerdict.state === "available" ||
       aliasVerdict.state === "checking" ||
@@ -614,7 +620,7 @@ export function LinkComposer() {
           see a not-yet-live page, or the address you set beside the date.
         </InfoHint>
       }
-      error={preStartProblem}
+      error={startPassed ?? preStartProblem}
     >
       <div className="flex items-center gap-1.5">
         <DateTimeField

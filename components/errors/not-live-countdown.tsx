@@ -15,6 +15,9 @@ export function NotLiveCountdown({ from }: { from?: string }) {
   const { startsAt, shortUrl, settled } = useScheduledStart(from)
   const [now, setNow] = React.useState(() => Date.now())
   const sent = React.useRef(false)
+  // A fast client clock reaches zero before the server does; handing off
+  // then lands back here and loops. Only cross-to-zero during this mount counts.
+  const sawPositive = React.useRef(false)
 
   React.useEffect(() => {
     if (startsAt === null) return
@@ -23,9 +26,11 @@ export function NotLiveCountdown({ from }: { from?: string }) {
   }, [startsAt])
 
   const remaining = startsAt === null ? null : startsAt * 1000 - now
+  if (remaining !== null && remaining > 0) sawPositive.current = true
 
   React.useEffect(() => {
     if (remaining === null || remaining > 0 || sent.current || !shortUrl) return
+    if (!sawPositive.current) return
     sent.current = true
     window.location.replace(shortUrl)
   }, [remaining, shortUrl])

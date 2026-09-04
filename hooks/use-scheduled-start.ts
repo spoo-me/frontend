@@ -41,22 +41,34 @@ function lookup(alias: string): Promise<ScheduledStart> {
 }
 
 /** The not-yet-live page's one fact: when the link opens, and where. */
+const LOADING: ScheduledStart = {
+  startsAt: null,
+  shortUrl: null,
+  settled: false,
+}
+const NOTHING: ScheduledStart = {
+  startsAt: null,
+  shortUrl: null,
+  settled: true,
+}
+
 export function useScheduledStart(from?: string): ScheduledStart {
   const alias = aliasFrom(from)
-  const [state, setState] = React.useState<ScheduledStart>({
-    startsAt: null,
-    shortUrl: null,
-    settled: alias === null,
-  })
+  const [result, setResult] = React.useState<{
+    alias: string
+    state: ScheduledStart
+  } | null>(null)
   React.useEffect(() => {
     if (!alias) return
     let cancelled = false
-    lookup(alias).then((s) => {
-      if (!cancelled) setState(s)
+    lookup(alias).then((state) => {
+      if (!cancelled) setResult({ alias, state })
     })
     return () => {
       cancelled = true
     }
   }, [alias])
-  return state
+  if (alias === null) return NOTHING
+  // A result for a previous alias is not this alias's answer.
+  return result?.alias === alias ? result.state : LOADING
 }
