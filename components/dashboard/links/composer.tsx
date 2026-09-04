@@ -321,6 +321,13 @@ export function LinkComposer() {
 
   // Animated tab height: measure the active panel, glide the container.
   const panelRef = React.useRef<HTMLDivElement>(null)
+  // The portal mounts its children a commit after `open` flips, so the
+  // observer keys on the panel element itself, not on `open`.
+  const [panelNode, setPanelNode] = React.useState<HTMLDivElement | null>(null)
+  const attachPanel = React.useCallback((el: HTMLDivElement | null) => {
+    panelRef.current = el
+    setPanelNode(el)
+  }, [])
   const [panelH, setPanelH] = React.useState<number | undefined>(undefined)
 
   // The dialog is pinned where it would sit if centred at its TALLEST tab:
@@ -360,12 +367,12 @@ export function LinkComposer() {
     setPinTop(Math.max(16, Math.round((window.innerHeight - total) / 2)))
   }, [])
   React.useEffect(() => {
-    if (!open) {
+    if (!panelNode) {
       setPinTop(null)
+      setPanelH(undefined)
       return
     }
-    const el = panelRef.current
-    if (!el) return
+    const el = panelNode
     const ro = new ResizeObserver(([entry]) => {
       setPanelH(entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height)
       repin()
@@ -376,7 +383,7 @@ export function LinkComposer() {
       ro.disconnect()
       window.removeEventListener("resize", repin)
     }
-  }, [open, repin])
+  }, [panelNode, repin])
 
   // Active custom domains join the alias control (integrated, ref SPEC §5).
   const domains = useQuery({
@@ -858,7 +865,7 @@ export function LinkComposer() {
             style={{ height: panelH }}
             className="-mx-1 overflow-hidden px-1 transition-[height] duration-200 ease-out"
           >
-            <div ref={panelRef} className="relative pt-3 pb-1">
+            <div ref={attachPanel} className="relative pt-3 pb-1">
               <TabsContent
                 value="basic"
                 forceMount
