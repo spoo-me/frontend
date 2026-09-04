@@ -242,14 +242,28 @@ function slug() {
   return Math.random().toString(36).slice(2, 7)
 }
 
+/** The backend derives SCHEDULED from a future starts_at on an ACTIVE
+    link; the stored status never changes. Mirror that here. */
+function effectiveStatus(l: MockLink): MockLink["status"] | "SCHEDULED" {
+  if (
+    l.status === "ACTIVE" &&
+    l.starts_at !== null &&
+    l.starts_at > Math.floor(Date.now() / 1000)
+  )
+    return "SCHEDULED"
+  return l.status
+}
+
 function linkItem(l: MockLink) {
   return {
     id: l.id,
     alias: l.alias,
     long_url: l.long_url,
-    status: l.status,
+    status: effectiveStatus(l),
     created_at: l.created_at,
     expire_after: l.expire_after,
+    starts_at: l.starts_at,
+    pre_start_url: l.pre_start_url,
     max_clicks: l.max_clicks,
     private_stats: l.private_stats,
     block_bots: l.block_bots,
@@ -1485,6 +1499,29 @@ async function handle(req: NextRequest, path: string[]) {
       // the field rides a shared endpoint, nothing to hide). PR #231.
       if (meta.ok !== null && !s.verified)
         return fail(403, "forbidden", "meta_tags requires a verified account")
+      const startsAt =
+        typeof body.starts_at === "number" && Number.isFinite(body.starts_at)
+          ? body.starts_at
+          : null
+      const expireAfter =
+        typeof body.expire_after === "number" &&
+        Number.isFinite(body.expire_after)
+          ? body.expire_after
+          : null
+      if (startsAt !== null && startsAt <= Math.floor(Date.now() / 1000))
+        return fail(
+          400,
+          "validation_error",
+          "starts_at must be in the future",
+          "starts_at"
+        )
+      if (startsAt !== null && expireAfter !== null && startsAt >= expireAfter)
+        return fail(
+          400,
+          "validation_error",
+          "starts_at must be before expire_after",
+          "starts_at"
+        )
       const link: MockLink = {
         id: `url_${slug()}`,
         alias,
@@ -1492,8 +1529,12 @@ async function handle(req: NextRequest, path: string[]) {
         domain,
         status: "ACTIVE",
         created_at: new Date().toISOString(),
-        expire_after:
-          typeof body.expire_after === "number" ? body.expire_after : null,
+        expire_after: expireAfter,
+        starts_at: startsAt,
+        pre_start_url:
+          typeof body.pre_start_url === "string" && body.pre_start_url
+            ? String(body.pre_start_url)
+            : null,
         max_clicks:
           typeof body.max_clicks === "number" ? body.max_clicks : null,
         password_set:
@@ -1564,7 +1605,9 @@ async function handle(req: NextRequest, path: string[]) {
           }
           if (f.status)
             items = items.filter(
-              (l) => l.status.toLowerCase() === String(f.status).toLowerCase()
+              (l) =>
+                effectiveStatus(l).toLowerCase() ===
+                String(f.status).toLowerCase()
             )
           if (typeof f.passwordSet === "boolean")
             items = items.filter((l) => l.password_set === f.passwordSet)
@@ -2043,9 +2086,50 @@ async function handle(req: NextRequest, path: string[]) {
           body.max_clicks === null || body.max_clicks === 0
             ? null
             : Number(body.max_clicks)
-      if ("expire_after" in body)
-        link.expire_after =
-          body.expire_after === null ? null : Number(body.expire_after)
+      // Stage the scheduling pair and validate before touching the link, so
+      // a rejected request leaves it exactly as it was.
+      const nextExpire =
+        "expire_after" in body
+          ? body.expire_after === null
+            ? null
+            : Number(body.expire_after)
+          : link.expire_after
+      const nextStart =
+        "starts_at" in body
+          ? body.starts_at === null
+            ? null
+            : Number(body.starts_at)
+          : link.starts_at
+      if (nextStart !== null && !Number.isFinite(nextStart))
+        return fail(
+          422,
+          "validation_error",
+          "Invalid starts_at format",
+          "starts_at"
+        )
+      if ("starts_at" in body && nextStart !== null) {
+        if (nextStart <= Math.floor(Date.now() / 1000))
+          return fail(
+            400,
+            "validation_error",
+            "starts_at must be in the future",
+            "starts_at"
+          )
+        if (nextExpire !== null && nextStart >= nextExpire)
+          return fail(
+            400,
+            "validation_error",
+            "starts_at must be before expire_after",
+            "starts_at"
+          )
+      }
+      if ("expire_after" in body) link.expire_after = nextExpire
+      if ("starts_at" in body) link.starts_at = nextStart
+      if ("pre_start_url" in body)
+        link.pre_start_url =
+          body.pre_start_url === null || body.pre_start_url === ""
+            ? null
+            : String(body.pre_start_url)
       if ("private_stats" in body)
         link.private_stats = Boolean(body.private_stats)
       if ("block_bots" in body) link.block_bots = Boolean(body.block_bots)
@@ -2403,6 +2487,7 @@ async function handle(req: NextRequest, path: string[]) {
         custom_meta_tags: "enabled",
         ab_testing: "enabled",
         webhooks: "enabled",
+        link_scheduling: "enabled",
       },
     })
   }

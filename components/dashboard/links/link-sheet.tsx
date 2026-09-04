@@ -11,6 +11,7 @@ import { linkDetailPath } from "@/lib/link-detail"
 import { formatCount, formatWhen } from "@/lib/format"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { StatusPill } from "@/components/dashboard/status-pill"
+import { ScheduledState } from "@/components/dashboard/links/scheduled-state"
 import { useFeature } from "@/hooks/use-features"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import {
@@ -91,7 +92,11 @@ export function LinkSheet({
                   trackAs="copy_short_link"
                 />
                 <span className="ml-auto flex items-center gap-1">
-                  <StatusPill status={link.status} />
+                  {link.status === "SCHEDULED" && link.starts_at != null ? (
+                    <ScheduledState startsAt={link.starts_at} />
+                  ) : (
+                    <StatusPill status={link.status} />
+                  )}
                   <LinkActions
                     link={link}
                     onDeleted={() => onOpenChange(false)}

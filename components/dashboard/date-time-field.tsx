@@ -32,10 +32,12 @@ function toLocal(d: Date) {
 }
 
 function formatDisplay(d: Date) {
+  // Year only when it is not this one, same rule as formatWhen.
+  const sameYear = d.getFullYear() === new Date().getFullYear()
   return d.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
-    year: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -50,6 +52,8 @@ export function DateTimeField({
   placeholder = "Pick date and time",
   defaultTime = "23:59",
   defaultOpen = false,
+  minDate,
+  maxDate,
   className,
 }: {
   value: string
@@ -59,6 +63,10 @@ export function DateTimeField({
   defaultTime?: string
   /** Open the picker as soon as the field mounts (e.g. after "Custom"). */
   defaultOpen?: boolean
+  /** Earliest pickable day; defaults to today. */
+  minDate?: Date
+  /** Latest pickable day. */
+  maxDate?: Date
   className?: string
 }) {
   const [open, setOpen] = React.useState(defaultOpen)
@@ -92,7 +100,7 @@ export function DateTimeField({
           className={cn(
             // Mirrors the Input recipe so "Never" reads as an editable field,
             // not a disabled button.
-            "flex h-9 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 font-mono text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
+            "flex h-9 min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border border-input bg-transparent px-2.5 font-mono text-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
             date ? "text-foreground" : "text-muted-foreground",
             className
           )}
@@ -108,8 +116,11 @@ export function DateTimeField({
         <Calendar
           mode="single"
           selected={date ?? undefined}
-          defaultMonth={date ?? undefined}
-          disabled={{ before: new Date() }}
+          defaultMonth={date ?? minDate ?? undefined}
+          disabled={[
+            { before: minDate ?? new Date() },
+            ...(maxDate ? [{ after: maxDate }] : []),
+          ]}
           onSelect={(day) => {
             if (!day) return
             const m = rawTime.match(TIME_RE) ?? defaultTime.match(TIME_RE)!

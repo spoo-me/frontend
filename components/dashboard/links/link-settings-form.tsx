@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { DateTimeField } from "@/components/dashboard/date-time-field"
+import { PreStartUrlControl } from "@/components/dashboard/links/pre-start-url-control"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { EmojiPicker } from "@/components/dashboard/links/emoji-picker"
 import { PasswordInput } from "@/components/dashboard/password-input"
@@ -189,6 +190,18 @@ function describeChanges(
       from: link.expire_after ? formatWhen(link.expire_after) : "never",
       to: patch.expire_after ? formatWhen(patch.expire_after) : "never",
     })
+  if (patch.starts_at !== undefined)
+    rows.push({
+      field: "Goes live",
+      from: link.starts_at ? formatWhen(link.starts_at) : "now",
+      to: patch.starts_at ? formatWhen(patch.starts_at) : "now",
+    })
+  if (patch.pre_start_url !== undefined)
+    rows.push({
+      field: "Early visitors",
+      from: link.pre_start_url ?? "not-yet-live page",
+      to: patch.pre_start_url ?? "not-yet-live page",
+    })
   if (patch.max_clicks !== undefined)
     rows.push({
       field: "Max clicks",
@@ -306,6 +319,7 @@ export function LinkSettingsForm({
   const [longUrl, setLongUrl] = React.useState(link.long_url ?? "")
   const [alias, setAlias] = React.useState(link.alias ?? "")
   const showMeta = useFeature("custom_meta_tags") === "enabled"
+  const showScheduling = useFeature("link_scheduling") === "enabled"
   const showDomains = useFeature("custom_domains") === "enabled"
   const [domain, setDomain] = React.useState(link.domain ?? "spoo.me")
 
@@ -321,6 +335,10 @@ export function LinkSettingsForm({
       ? toLocalInputValue(new Date(link.expire_after * 1000))
       : ""
   )
+  const [startsAt, setStartsAt] = React.useState(
+    link.starts_at ? toLocalInputValue(new Date(link.starts_at * 1000)) : ""
+  )
+  const [preStartUrl, setPreStartUrl] = React.useState(link.pre_start_url ?? "")
   const [maxClicks, setMaxClicks] = React.useState(
     link.max_clicks != null ? String(link.max_clicks) : ""
   )
@@ -442,6 +460,19 @@ export function LinkSettingsForm({
     patch.expire_after = expiry
       ? Math.floor(new Date(expiry).getTime() / 1000)
       : null
+  const linkStartLocal = link.starts_at
+    ? toLocalInputValue(new Date(link.starts_at * 1000))
+    : ""
+  if (startsAt !== linkStartLocal)
+    patch.starts_at = startsAt
+      ? Math.floor(new Date(startsAt).getTime() / 1000)
+      : null
+  // The fallback only means something with a start time; clearing the
+  // start clears it too so the row never carries a dead URL.
+  const preStartWire =
+    startsAt && preStartUrl.trim() ? normalizeUrl(preStartUrl) : null
+  if (preStartWire !== (link.pre_start_url ?? null))
+    patch.pre_start_url = preStartWire
   const maxClicksVal = maxClicks === "" ? null : Number(maxClicks)
   if (maxClicksVal !== (link.max_clicks ?? null))
     patch.max_clicks = maxClicksVal
@@ -554,6 +585,12 @@ export function LinkSettingsForm({
     if (variantTotal(variants) > 100) return "A/B split exceeds 100%."
     if (geoRulesProblem(geoRules)) return "Fix the geo rules to save."
     if (metaProblem) return "Fix the link preview to save."
+    if (startsAt && preStartUrl.trim() && urlProblem(preStartUrl))
+      return "Fix the pre-start URL to save."
+    if (startsAt && expiry && new Date(expiry) <= new Date(startsAt))
+      return "Expiration must be after the go-live time."
+    if (patch.starts_at && patch.starts_at * 1000 <= Date.now())
+      return "The go-live time has already passed."
     return null
   })()
 
@@ -561,6 +598,134 @@ export function LinkSettingsForm({
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const changes = describeChanges(link, patch, tagNameOf)
+
+  // Same bookend layout as the composer; the pre-start URL lives behind
+  // the gear on the start input.
+  const startDate = startsAt ? new Date(startsAt) : null
+  const expiryDate = expiry ? new Date(expiry) : null
+  const orderProblem =
+    startDate && expiryDate && expiryDate <= startDate
+      ? "Expiration must be after the go-live time."
+      : null
+  const expiresField = (
+    <Field
+      label="Expires"
+      labelHint={
+        <InfoHint label="How expiry works">
+          After this moment, in your timezone, the link shows an ended page
+          instead of redirecting. Extend or clear it later to bring the link
+          back.
+        </InfoHint>
+      }
+      error={orderProblem}
+    >
+      <div className="flex items-center gap-1.5">
+        <DateTimeField
+          value={expiry}
+          onChange={setExpiry}
+          placeholder="Never"
+          minDate={startDate ?? undefined}
+          className="min-w-0 flex-1"
+        />
+        {expiry && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove expiry"
+            onClick={() => setExpiry("")}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
+    </Field>
+  )
+  const maxClicksField = (
+    <Field
+      label="Max clicks"
+      labelHint={
+        <InfoHint label="How click limits work">
+          Once total clicks reach this number the link stops redirecting. Raise
+          or clear the limit later to bring it back.
+        </InfoHint>
+      }
+    >
+      <div className="flex items-center gap-1.5">
+        <Input
+          type="number"
+          min={1}
+          value={maxClicks}
+          onChange={(e) => setMaxClicks(e.target.value)}
+          placeholder="Unlimited"
+          className="font-mono text-xs"
+        />
+        {maxClicks && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove click limit"
+            onClick={() => setMaxClicks("")}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
+    </Field>
+  )
+  const tagsField = (
+    <Field
+      label="Tags"
+      labelHint={
+        <InfoHint label="How tags work">
+          Pick from your tags or make a new one right here. Tags group links in
+          the list and its filters.
+        </InfoHint>
+      }
+    >
+      <TagPicker selected={tagIds} onChange={setTagIds} />
+    </Field>
+  )
+  const goesLiveField = (
+    <Field
+      label="Goes live"
+      labelHint={
+        <InfoHint label="How scheduling works">
+          The link is hidden until this moment, in your timezone. Early visitors
+          see a not-yet-live page, or the address you set beside the date.
+        </InfoHint>
+      }
+      error={startsAt && preStartUrl.trim() ? urlProblem(preStartUrl) : null}
+    >
+      <div className="flex items-center gap-1.5">
+        <DateTimeField
+          value={startsAt}
+          onChange={setStartsAt}
+          placeholder="Now"
+          defaultTime="09:00"
+          maxDate={expiryDate ?? undefined}
+          className="min-w-0 flex-1"
+        />
+        <PreStartUrlControl
+          enabled={startsAt !== ""}
+          value={preStartUrl}
+          onChange={setPreStartUrl}
+        />
+        {startsAt && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Make the link live now"
+            onClick={() => setStartsAt("")}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
+    </Field>
+  )
 
   return (
     <div
@@ -784,65 +949,26 @@ export function LinkSettingsForm({
           )}
         </Field>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Field
-            label="Expires"
-            hint="The link stops redirecting after this moment."
-          >
-            <div className="flex items-center gap-1.5">
-              <DateTimeField
-                value={expiry}
-                onChange={setExpiry}
-                placeholder="Never"
-                className="min-w-0 flex-1"
-              />
-              {expiry && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Remove expiry"
-                  onClick={() => setExpiry("")}
-                >
-                  <X />
-                </Button>
-              )}
+        {showScheduling ? (
+          <>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {goesLiveField}
+              {expiresField}
             </div>
-          </Field>
-          <Field
-            label="Max clicks"
-            hint="The link deactivates after this many clicks."
-          >
-            <div className="flex items-center gap-1.5">
-              <Input
-                type="number"
-                min={1}
-                value={maxClicks}
-                onChange={(e) => setMaxClicks(e.target.value)}
-                placeholder="Unlimited"
-                className="font-mono text-xs"
-              />
-              {maxClicks && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Remove click limit"
-                  onClick={() => setMaxClicks("")}
-                >
-                  <X />
-                </Button>
-              )}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {maxClicksField}
+              {tagsField}
             </div>
-          </Field>
-        </div>
-
-        <Field
-          label="Tags"
-          hint="Pick from your tags or make a new one right here."
-        >
-          <TagPicker selected={tagIds} onChange={setTagIds} />
-        </Field>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {expiresField}
+              {maxClicksField}
+            </div>
+            {tagsField}
+          </>
+        )}
 
         <div className="divide-y divide-border/60 rounded-xl border border-border/60">
           <label className="flex cursor-pointer items-center justify-between px-3.5 py-3">

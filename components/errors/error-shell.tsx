@@ -16,11 +16,14 @@ import { FishermanGlyph } from "@/components/errors/fisherman"
 export function ErrorShell({
   status,
   fisher,
+  watermark,
   children,
 }: {
   status: string
   /** 404-only: the fisherman-as-glyph scene with the sunken line. */
   fisher?: boolean
+  /** Replaces the status numeral in the watermark slot (same faded ink). */
+  watermark?: React.ReactNode
   children: React.ReactNode
 }) {
   if (!fisher) {
@@ -35,12 +38,14 @@ export function ErrorShell({
               aria-hidden
               className="pointer-events-none absolute inset-0 flex select-none items-center justify-center overflow-hidden"
             >
-              <span
-                className="whitespace-nowrap font-semibold text-foreground/[0.04] leading-none tracking-[-0.06em]"
-                style={{ fontSize: "clamp(12rem, 32vw, 26rem)" }}
-              >
-                {status}
-              </span>
+              {watermark ?? (
+                <span
+                  className="whitespace-nowrap font-semibold text-foreground/[0.04] leading-none tracking-[-0.06em]"
+                  style={{ fontSize: "clamp(12rem, 32vw, 26rem)" }}
+                >
+                  {status}
+                </span>
+              )}
             </div>
             <div className="relative mx-auto w-full max-w-3xl">{children}</div>
           </div>

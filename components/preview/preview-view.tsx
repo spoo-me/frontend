@@ -2,7 +2,14 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Clock, Globe2, Lock, Pause, ShieldAlert } from "lucide-react"
+import {
+  CalendarClock,
+  Clock,
+  Globe2,
+  Lock,
+  Pause,
+  ShieldAlert,
+} from "lucide-react"
 
 import type {
   PreviewDestination,
@@ -43,6 +50,11 @@ const STATUS_META: Record<
     title: "spoo.me blocked this link",
     body: "It violated our policies and no longer redirects.",
     danger: true,
+  },
+  scheduled: {
+    icon: CalendarClock,
+    title: "This link isn't live yet",
+    body: "The owner set a start time; it doesn't redirect until then.",
   },
 }
 

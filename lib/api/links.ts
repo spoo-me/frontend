@@ -17,7 +17,14 @@ export type ShortUrl = {
   claim_token?: string | null
 }
 
-export type UrlStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "BLOCKED"
+/** SCHEDULED is derived server-side from a future `starts_at`; it is never
+    stored, and the row shows it as quiet mono text rather than a pill. */
+export type UrlStatus =
+  | "ACTIVE"
+  | "INACTIVE"
+  | "EXPIRED"
+  | "BLOCKED"
+  | "SCHEDULED"
 
 /**
  * Per-country destination overrides (backend PR #230). The wire is a FLAT
@@ -78,6 +85,11 @@ export type UrlListItem = {
   status: UrlStatus | null
   created_at: string | null
   expire_after: number | null
+  /** Go-live time (unix seconds); null when live now. Flag-gated
+      (link_scheduling); older backends omit both fields. */
+  starts_at?: number | null
+  /** Where visitors go before `starts_at`; null for the not-yet-live page. */
+  pre_start_url?: string | null
   max_clicks: number | null
   private_stats: boolean | null
   block_bots: boolean | null
@@ -298,6 +310,11 @@ export type ShortenInput = {
   password?: string
   max_clicks?: number
   expire_after?: number
+  /** Go-live time (unix seconds). Flag-gated (link_scheduling): 403 when off,
+      401 for anonymous callers. Must be before expire_after. */
+  starts_at?: number
+  /** Visitors land here before starts_at; omitted = not-yet-live page. */
+  pre_start_url?: string
   domain?: string
   block_bots?: boolean
   private_stats?: boolean
@@ -399,6 +416,9 @@ export type UpdateUrlInput = Partial<{
   block_bots: boolean
   max_clicks: number | null
   expire_after: number | null
+  /** null makes the link live now (clearing is never gated). */
+  starts_at: number | null
+  pre_start_url: string | null
   private_stats: boolean
   status: "ACTIVE" | "INACTIVE"
   domain: string | null
