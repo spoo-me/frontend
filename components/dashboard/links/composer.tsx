@@ -38,6 +38,7 @@ import { useFeature } from "@/hooks/use-features"
 import { Velvet } from "@/components/shared/velvet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { UrlInput } from "@/components/dashboard/links/url-input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
@@ -138,16 +139,10 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      {labelHint ? (
-        <span className="mb-2.5 flex items-center gap-1.5">
-          <Label className="font-medium text-foreground text-xs">{label}</Label>
-          {labelHint}
-        </span>
-      ) : (
-        <Label className="mb-2.5 font-medium text-foreground text-xs">
-          {label}
-        </Label>
-      )}
+      <span className="mb-2.5 flex min-h-5 items-center gap-1.5">
+        <Label className="font-medium text-foreground text-xs">{label}</Label>
+        {labelHint}
+      </span>
       {children}
       {error ? (
         <p className="text-destructive text-xs">{error}</p>
@@ -633,12 +628,15 @@ export function LinkComposer() {
     <Velvet feature="expired_fallback">
       <Field
         label="After expiry"
-        hint="Where visitors land once the link has ended, by date or by click count. Blank shows an ended page."
+        labelHint={
+          <InfoHint label="Where visitors land after expiry">
+            Anyone who opens the link once it has ended, by date or by click
+            count, is sent here. Blank shows an ended page.
+          </InfoHint>
+        }
         error={fallbackProblem}
       >
-        <Input
-          type="url"
-          inputMode="url"
+        <UrlInput
           value={fallbackUrl}
           onChange={(e) => {
             optionUse.note("expired_redirect_url", e.target.value !== "")
@@ -646,9 +644,7 @@ export function LinkComposer() {
             setFallbackUrl(e.target.value)
           }}
           placeholder="Ended page"
-          spellCheck={false}
           disabled={expiry === "" && maxClicks === ""}
-          className="font-mono text-xs"
         />
       </Field>
     </Velvet>
@@ -699,25 +695,28 @@ export function LinkComposer() {
   const untilThenField = (
     <Field
       label="Until then"
-      hint="Where early visitors land. Blank shows a not-yet-live page."
+      labelHint={
+        <InfoHint label="Where early visitors land">
+          Anyone who opens the link before it goes live is sent here. Blank
+          shows a not-yet-live page.
+        </InfoHint>
+      }
       error={preStartProblem}
     >
-      <Input
-        type="url"
-        inputMode="url"
+      <UrlInput
         value={preStartUrl}
         onChange={(e) => setPreStartUrl(e.target.value)}
         placeholder="Not-yet-live page"
-        spellCheck={false}
         disabled={startsAt === ""}
-        className="font-mono text-xs"
       />
     </Field>
   )
   // Two groups, one grammar each: the date that flips the state, then where
   // visitors land while the link is in it.
+  // Ends before Starts: killing a link on a date or after N clicks is what
+  // people come here for; scheduling a go-live is the rarer case.
   const lifetimePanel = (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {showScheduling && (
         <div className="space-y-3">
           <SectionLabel>Starts</SectionLabel>
@@ -789,7 +788,7 @@ export function LinkComposer() {
             style={{ height: panelH }}
             className="-mx-1 overflow-hidden px-1 transition-[height] duration-200 ease-out"
           >
-            <div ref={panelRef} className="min-h-[392px] pt-3 pb-1">
+            <div ref={panelRef} className="pt-3 pb-1">
               <TabsContent value="basic" className="space-y-5">
                 <Field
                   label="Destination"
@@ -979,7 +978,7 @@ export function LinkComposer() {
                       }}
                       visible={passwordVisible}
                       onVisibleChange={setPasswordVisible}
-                      placeholder="None"
+                      placeholder="No password"
                     />
                     <Button
                       type="button"
