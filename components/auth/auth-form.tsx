@@ -15,6 +15,7 @@ import { VerifyPanel } from "@/components/auth/verify-panel"
 import { trackLoggedIn, trackSignedUp } from "@/lib/analytics"
 import { login, register, restoreAccount, SpooApiError } from "@/lib/api"
 import { PASSWORD_RULES, passwordSatisfies, safeNext } from "@/lib/validation"
+import { planFromSearch, stashSignupPlan } from "@/lib/signup-plan"
 
 type Mode = "login" | "signup"
 
@@ -111,6 +112,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
     readNextQS,
     () => ""
   )
+
+  // /pricing sends "Start Pro" here with ?plan=pro; onboarding consumes it.
+  React.useEffect(() => {
+    if (mode === "signup")
+      stashSignupPlan(planFromSearch(window.location.search))
+  }, [mode])
 
   // An active session has no business on the auth forms: route it by
   // account state. Suspended while the OTP panel owns the pane (a fresh

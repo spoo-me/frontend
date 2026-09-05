@@ -388,6 +388,15 @@ export function trackPricingViewed(surface: "pricing" | "upgrade") {
   capture("pricing_viewed", { surface })
 }
 
+/** No backend waitlist yet: the event is the list. */
+export function trackWaitlistJoined(props: {
+  plan: "business"
+  email: string
+  note: string
+}) {
+  capture("waitlist_joined", props)
+}
+
 export function trackPlanCtaClicked(plan: "pro", cadence: "monthly" | "year") {
   capture("plan_cta_clicked", { plan, cadence })
 }
