@@ -27,6 +27,7 @@ import {
   shorten,
   SpooApiError,
   type CustomDomain,
+  type FeatureName,
   type ShortenInput,
 } from "@/lib/api"
 import { urlProblem } from "@/lib/validation"
@@ -35,7 +36,11 @@ import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
 import { useCreateOptionTracker } from "@/hooks/use-create-option-tracker"
 import { useAcceptedEmoji, useGenerateEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
+import { useProGate } from "@/hooks/use-pro-gate"
+import { stashDraft, takeComposerDraft } from "@/lib/entitlements/draft-stash"
 import { Velvet } from "@/components/shared/velvet"
+import { FeatureMark, ProMark } from "@/components/plan/pro-mark"
+import { UpsellDialog } from "@/components/plan/upsell-dialog"
 import { cn } from "@/lib/utils"
 import { CLICK_CAP_PROBLEM, CLICK_CAP_RE } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
@@ -94,14 +99,50 @@ import {
 import { TagPicker } from "@/components/dashboard/tags/tag-picker"
 
 const OPEN_EVENT = "spoo:new-link"
+const STATE_EVENT = "spoo:composer-open"
+
+/** Subscribe to the composer opening and closing; returns the unsubscribe. */
+export function onLinkComposerOpen(cb: (open: boolean) => void) {
+  const handler = (e: Event) => cb((e as CustomEvent<boolean>).detail)
+  window.addEventListener(STATE_EVENT, handler)
+  return () => window.removeEventListener(STATE_EVENT, handler)
+}
 
 // Inactive panels stay mounted (measurable) but out of the way. Opacity and
 // visibility transition together: the outgoing panel fades before it goes
 // hidden, the incoming one fades in on top, in step with the height glide.
 const INACTIVE_PANEL =
-  "transition-[opacity,visibility] duration-150 ease-out motion-reduce:transition-none data-[state=inactive]:pointer-events-none data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-3 data-[state=inactive]:opacity-0"
+  "transition-[opacity,visibility] duration-150 ease-out motion-reduce:transition-none data-[state=inactive]:pointer-events-none data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-x-0 data-[state=inactive]:top-5 data-[state=inactive]:opacity-0"
 
-export function openLinkComposer(opts?: { domain?: string; longUrl?: string }) {
+/** Every field of the form, minus the password, so a draft can be parked
+    while the user goes to pay and put back exactly. */
+export type ComposerDraft = {
+  tab: string
+  longUrl: string
+  alias: string
+  domain: string
+  expiry: string
+  startsAt: string
+  preStartUrl: string
+  maxClicks: string
+  fallbackUrl: string
+  geoRules: GeoRuleDraft[]
+  variants: VariantDraft[]
+  meta: MetaDraft
+  metaCustomized: boolean
+  blockBots: boolean
+  privateStats: boolean
+  tagIds: string[]
+}
+
+type ComposerPreset = {
+  domain?: string
+  longUrl?: string
+  tab?: string
+  draft?: ComposerDraft
+}
+
+export function openLinkComposer(opts?: ComposerPreset) {
   window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: opts }))
 }
 
@@ -148,14 +189,14 @@ function Field({
   return (
     <div className="space-y-2">
       <span className="mb-2.5 flex min-h-5 items-center gap-1.5">
-        <Label className="font-medium text-foreground text-xs">{label}</Label>
+        <Label className="font-medium text-foreground text-sm">{label}</Label>
         {labelHint}
       </span>
       {children}
       {error ? (
-        <p className="text-destructive text-xs">{error}</p>
+        <p className="text-[13px] text-destructive">{error}</p>
       ) : (
-        hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>
+        hint && <p className="text-[13px] text-muted-foreground/70">{hint}</p>
       )}
     </div>
   )
@@ -174,17 +215,21 @@ export function LinkComposer() {
   // Denominator for composer_tab_opened: one event per open, however opened.
   React.useEffect(() => {
     if (open) trackUiAction("composer_opened")
+    window.dispatchEvent(new CustomEvent(STATE_EVENT, { detail: open }))
   }, [open])
 
-  // Backend-gated capabilities: hidden features simply don't exist here.
-  const showGeo = useFeature("geo_targeting") === "enabled"
-  const showScheduling = useFeature("link_scheduling") === "enabled"
-  const showFallback = useFeature("expired_fallback") === "enabled"
+  // Backend-gated capabilities: hidden features simply don't exist here;
+  // locked ones keep their place and render as the upsell.
+  const showGeo = useFeature("geo_targeting") !== "hidden"
+  const showScheduling = useFeature("link_scheduling") !== "hidden"
+  const showFallback = useFeature("expired_fallback") !== "hidden"
   // Expiry and the click cap alone do not earn a tab; they sit on Basic
   // until scheduling or the fallback gives the lifetime story more to say.
   const showLifetime = showScheduling || showFallback
-  const showVariants = useFeature("ab_testing") === "enabled"
-  const showMeta = useFeature("custom_meta_tags") === "enabled"
+  const showVariants = useFeature("ab_variants") !== "hidden"
+  const metaState = useFeature("custom_meta_tags")
+  const showMeta = metaState !== "hidden"
+  const metaEnabled = metaState === "enabled"
   const showDomains = useFeature("custom_domains") === "enabled"
   const showTargeting = showGeo || showVariants
   const tabOrder = [
@@ -260,7 +305,8 @@ export function LinkComposer() {
   const destMeta = useQuery({
     queryKey: ["url-metadata", metaFetchUrl],
     queryFn: () => fetchUrlMetadata(metaFetchUrl!),
-    enabled: open && activeTab === "metadata" && Boolean(metaFetchUrl),
+    enabled:
+      open && metaEnabled && activeTab === "metadata" && Boolean(metaFetchUrl),
     staleTime: 10 * 60_000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -276,13 +322,13 @@ export function LinkComposer() {
   React.useEffect(() => {
     const onOpen = (e: Event) => {
       // reset() ran on close, so a preset here can't leak between opens.
-      const preset = (
-        e as CustomEvent<{ domain?: string; longUrl?: string } | undefined>
-      ).detail
+      const preset = (e as CustomEvent<ComposerPreset | undefined>).detail
+      if (preset?.draft) applyDraft(preset.draft)
       if (preset?.longUrl) setLongUrl(preset.longUrl)
+      if (preset?.tab) setTab(preset.tab)
       if (preset?.domain) {
         setDomain(preset.domain)
-      } else {
+      } else if (!preset?.draft) {
         // Context default: any entry point (topbar, N, palette) used while
         // standing on a live domain's page starts the link on that domain.
         const id = pathname.match(/^\/dashboard\/domains\/([^/]+)$/)?.[1]
@@ -320,6 +366,50 @@ export function LinkComposer() {
     setServerUrlError(null)
     optionUse.reset()
   }
+
+  const currentDraft = (): ComposerDraft => ({
+    tab: activeTab,
+    longUrl,
+    alias,
+    domain,
+    expiry,
+    startsAt,
+    preStartUrl,
+    maxClicks,
+    fallbackUrl,
+    geoRules,
+    variants,
+    meta,
+    metaCustomized,
+    blockBots,
+    privateStats,
+    tagIds,
+  })
+  function applyDraft(d: ComposerDraft) {
+    setTab(d.tab)
+    setLongUrl(d.longUrl)
+    setAlias(d.alias)
+    setDomain(d.domain)
+    setExpiry(d.expiry)
+    setStartsAt(d.startsAt)
+    setPreStartUrl(d.preStartUrl)
+    setMaxClicks(d.maxClicks)
+    setFallbackUrl(d.fallbackUrl)
+    setGeoRules(d.geoRules)
+    setVariants(d.variants)
+    setMeta(d.meta)
+    setMetaCustomized(d.metaCustomized)
+    setBlockBots(d.blockBots)
+    setPrivateStats(d.privateStats)
+    setTagIds(d.tagIds)
+  }
+  // Back from checkout: the draft parked by the upsell reopens the composer.
+  // The shell also wraps /upgrade, so only a dashboard page may take it.
+  React.useEffect(() => {
+    if (!pathname.startsWith("/dashboard")) return
+    const parked = takeComposerDraft()
+    if (parked) openLinkComposer({ draft: parked })
+  }, [pathname])
 
   // Animated tab height: measure the active panel, glide the container.
   const panelRef = React.useRef<HTMLDivElement>(null)
@@ -554,7 +644,20 @@ export function LinkComposer() {
       // backend re-validates on create.
       aliasVerdict.state === "unknown")
 
+  const { blocked } = useProGate([
+    ...(geoCount ? (["geo_targeting"] as const) : []),
+    ...(variantPayload.length ? (["ab_variants"] as const) : []),
+    ...(metaPayload ? (["custom_meta_tags"] as const) : []),
+    ...(startsAt ? (["link_scheduling"] as const) : []),
+    ...(fallbackActive ? (["expired_fallback"] as const) : []),
+  ])
+  const [upsellOpen, setUpsellOpen] = React.useState(false)
+
   const submit = () => {
+    if (blocked.length) {
+      setUpsellOpen(true)
+      return
+    }
     if (!canCreate) return
     create.mutate({
       long_url: normalizeUrl(longUrl),
@@ -630,7 +733,7 @@ export function LinkComposer() {
   ) => (
     <TabsTrigger
       value={value}
-      className="data-active:bg-transparent data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-transparent"
+      className="text-[15px] data-active:bg-transparent data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-transparent"
     >
       {activeTab === value && (
         <motion.span
@@ -699,28 +802,26 @@ export function LinkComposer() {
     </Field>
   )
   const afterExpiryField = (
-    <Velvet feature="expired_fallback">
-      <Field
-        label="After expiry"
-        labelHint={
-          <InfoHint label="Where visitors land after expiry">
-            Anyone who opens the link once it has ended, by date or by click
-            count, is sent here. Blank shows an ended page.
-          </InfoHint>
-        }
-        error={fallbackProblem}
-      >
-        <UrlInput
-          value={fallbackUrl}
-          onChange={(e) => {
-            optionUse.note("expired_redirect_url", e.target.value !== "")
-            setFallbackUrl(e.target.value)
-          }}
-          placeholder="Ended page"
-          disabled={expiry === "" && maxClicks === ""}
-        />
-      </Field>
-    </Velvet>
+    <Field
+      label="After expiry"
+      labelHint={
+        <InfoHint label="Where visitors land after expiry">
+          Anyone who opens the link once it has ended, by date or by click
+          count, is sent here. Blank shows an ended page.
+        </InfoHint>
+      }
+      error={fallbackProblem}
+    >
+      <UrlInput
+        value={fallbackUrl}
+        onChange={(e) => {
+          optionUse.note("expired_redirect_url", e.target.value !== "")
+          setFallbackUrl(e.target.value)
+        }}
+        placeholder="Ended page"
+        disabled={expiry === "" && maxClicks === ""}
+      />
+    </Field>
   )
   const tagsField = (
     <Field
@@ -788,27 +889,44 @@ export function LinkComposer() {
   // visitors land while the link is in it.
   // Starts above Ends: the panel reads as the link's timeline, top to bottom.
   const endsPair = (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {expirationField}
       {maxClicksField}
     </div>
   )
+  // One grammar per zone: mono label, the Pro mark beside it when the zone
+  // is paid, then the two-column grid.
+  const zone = (label: string, feature?: FeatureName) => (
+    <span className="flex items-center gap-1.5">
+      <SectionLabel>{label}</SectionLabel>
+      {feature && <FeatureMark feature={feature} />}
+    </span>
+  )
   const lifetimePanel = (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {showScheduling && (
-        <div className="space-y-3">
-          <SectionLabel>Starts</SectionLabel>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            {goesLiveField}
-            {untilThenField}
+        <Velvet feature="link_scheduling">
+          <div className="space-y-3">
+            {zone("Starts", "link_scheduling")}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {goesLiveField}
+              {untilThenField}
+            </div>
           </div>
-        </div>
+        </Velvet>
       )}
       <div className="space-y-3">
-        {showScheduling && <SectionLabel>Ends</SectionLabel>}
+        {zone("Ends")}
         {endsPair}
-        {afterExpiryField}
       </div>
+      <Velvet feature="expired_fallback">
+        <div className="space-y-3">
+          {zone("After the end", "expired_fallback")}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {afterExpiryField}
+          </div>
+        </div>
+      </Velvet>
     </div>
   )
 
@@ -823,7 +941,10 @@ export function LinkComposer() {
       <DialogContent
         ref={dialogRef}
         style={pinTop === null ? undefined : { top: pinTop }}
-        className={cn("sm:max-w-2xl", pinTop !== null && "translate-y-0")}
+        className={cn(
+          "gap-5 p-6 sm:max-w-[min(900px,calc(100%-2rem))]",
+          pinTop !== null && "translate-y-0"
+        )}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit()
           // Figma/Notion grammar: mod+1..4 jumps between the dialog's tabs.
@@ -835,7 +956,7 @@ export function LinkComposer() {
         }}
       >
         <DialogHeader>
-          <DialogTitle>New link</DialogTitle>
+          <DialogTitle className="text-xl">New link</DialogTitle>
           <DialogDescription>
             Everything except the destination is optional.
           </DialogDescription>
@@ -849,7 +970,7 @@ export function LinkComposer() {
             setTab(t)
           }}
         >
-          <TabsList className="w-full">
+          <TabsList className="w-full p-1 group-data-horizontal/tabs:h-11">
             {tabTrigger("basic", Link2, "Basic", basicSet)}
             {showLifetime &&
               tabTrigger("lifetime", CalendarClock, "Lifetime", lifetimeSet)}
@@ -867,12 +988,12 @@ export function LinkComposer() {
             style={{ height: panelH }}
             className="-mx-1 overflow-hidden px-1 transition-[height] duration-200 ease-out"
           >
-            <div ref={attachPanel} className="relative pt-3 pb-1">
+            <div ref={attachPanel} className="relative pt-5 pb-1">
               <TabsContent
                 value="basic"
                 forceMount
                 ref={panelRefs.basic}
-                className={cn("space-y-5", INACTIVE_PANEL)}
+                className={cn("space-y-6", INACTIVE_PANEL)}
               >
                 <Field
                   label="Destination"
@@ -896,8 +1017,8 @@ export function LinkComposer() {
                     spellCheck={false}
                     autoComplete="off"
                     autoFocus
-                    rows={3}
-                    className="min-h-20 resize-none font-mono text-xs leading-relaxed"
+                    rows={4}
+                    className="min-h-28 resize-none font-mono text-[13px] leading-relaxed"
                   />
                 </Field>
 
@@ -1047,7 +1168,7 @@ export function LinkComposer() {
                   value="lifetime"
                   forceMount
                   ref={panelRefs.lifetime}
-                  className={cn("space-y-5", INACTIVE_PANEL)}
+                  className={cn("space-y-6", INACTIVE_PANEL)}
                 >
                   {lifetimePanel}
                 </TabsContent>
@@ -1057,7 +1178,7 @@ export function LinkComposer() {
                 value="security"
                 forceMount
                 ref={panelRefs.security}
-                className={cn("space-y-5", INACTIVE_PANEL)}
+                className={cn("space-y-6", INACTIVE_PANEL)}
               >
                 <Field
                   label="Password"
@@ -1149,7 +1270,7 @@ export function LinkComposer() {
                 value="targeting"
                 forceMount
                 ref={panelRefs.targeting}
-                className={cn("space-y-5", INACTIVE_PANEL)}
+                className={cn("space-y-6", INACTIVE_PANEL)}
               >
                 <Velvet feature="geo_targeting">
                   <GeoRulesEditor
@@ -1165,7 +1286,7 @@ export function LinkComposer() {
                     }}
                   />
                 </Velvet>
-                <Velvet feature="ab_testing">
+                <Velvet feature="ab_variants">
                   <VariantsEditor
                     variants={variants}
                     onChange={(v) => {
@@ -1185,54 +1306,57 @@ export function LinkComposer() {
                 ref={panelRefs.metadata}
                 className={cn("space-y-2", INACTIVE_PANEL)}
               >
-                {/* Fixed-height header row: the live-dot status and reset
+                <Velvet feature="custom_meta_tags">
+                  {/* Fixed-height header row: the live-dot status and reset
                     action swap in place, zero layout shift between mirrored
                     and customized states. */}
-                <div className="flex h-7 items-center justify-between">
-                  <div className="flex items-baseline gap-3">
-                    <span className="flex items-center gap-1.5">
-                      <SectionLabel>Meta tags</SectionLabel>
-                      <InfoHint label="What meta tags do">
-                        The social card crawlers see when this link is shared;
-                        overrides the destination&apos;s own card.
-                      </InfoHint>
-                    </span>
-                    {metaMirroring && (
-                      <span className="label-mono text-[10px] text-muted-foreground/40">
-                        fetched from destination
+                  <div className="flex h-7 items-center justify-between">
+                    <div className="flex items-baseline gap-3">
+                      <span className="flex items-center gap-1.5">
+                        <SectionLabel>Meta tags</SectionLabel>
+                        <FeatureMark feature="custom_meta_tags" />
+                        <InfoHint label="What meta tags do">
+                          The social card crawlers see when this link is shared;
+                          overrides the destination&apos;s own card.
+                        </InfoHint>
                       </span>
+                      {metaMirroring && (
+                        <span className="label-mono text-[10px] text-muted-foreground/40">
+                          fetched from destination
+                        </span>
+                      )}
+                    </div>
+                    {metaCustomized && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          optionUse.note("meta_tags", false)
+                          setMetaCustomized(false)
+                        }}
+                        className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+                      >
+                        Reset to destination
+                      </button>
                     )}
                   </div>
-                  {metaCustomized && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        optionUse.note("meta_tags", false)
-                        setMetaCustomized(false)
-                      }}
-                      className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
-                    >
-                      Reset to destination
-                    </button>
-                  )}
-                </div>
-                <MetaTagsEditor
-                  value={displayedMeta}
-                  onChange={(v) => {
-                    // Any manual edit — typing, clearing, a color pick —
-                    // flips customized; auto-fill goes through setMeta only.
-                    optionUse.note("meta_tags", Boolean(metaTagsOf(v)))
-                    setMeta(v)
-                    setMetaCustomized(true)
-                  }}
-                  domain={domain}
-                  alias={alias}
-                  preview="side"
-                  loading={!metaCustomized && destMeta.isFetching}
-                  notice={metaNotice}
-                  problem={metaProblem}
-                  source={metaCustomized ? metaSource : undefined}
-                />
+                  <MetaTagsEditor
+                    value={displayedMeta}
+                    onChange={(v) => {
+                      // Any manual edit — typing, clearing, a color pick —
+                      // flips customized; auto-fill goes through setMeta only.
+                      optionUse.note("meta_tags", Boolean(metaTagsOf(v)))
+                      setMeta(v)
+                      setMetaCustomized(true)
+                    }}
+                    domain={domain}
+                    alias={alias}
+                    preview="side"
+                    loading={!metaCustomized && destMeta.isFetching}
+                    notice={metaNotice}
+                    problem={metaProblem}
+                    source={metaCustomized ? metaSource : undefined}
+                  />
+                </Velvet>
               </TabsContent>
             </div>
           </div>
@@ -1242,16 +1366,31 @@ export function LinkComposer() {
           <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button disabled={!canCreate} onClick={submit}>
-            {create.isPending && (
-              <LoaderCircle className="size-3.5 animate-spin" />
-            )}
-            Create link
-            <Kbd className="ml-1 border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80">
-              <CornerDownLeft className="size-2.5" />
-            </Kbd>
-          </Button>
+          {blocked.length ? (
+            <Button onClick={submit}>
+              Create with Pro
+              <ProMark onPrimary />
+            </Button>
+          ) : (
+            <Button disabled={!canCreate} onClick={submit}>
+              {create.isPending && (
+                <LoaderCircle className="size-3.5 animate-spin" />
+              )}
+              Create link
+              <Kbd className="ml-1 border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground/80">
+                <CornerDownLeft className="size-2.5" />
+              </Kbd>
+            </Button>
+          )}
         </div>
+        <UpsellDialog
+          trigger={{ kind: "features", features: blocked }}
+          open={upsellOpen}
+          onOpenChange={setUpsellOpen}
+          onBeforeCheckout={() =>
+            stashDraft({ kind: "composer", draft: currentDraft() })
+          }
+        />
       </DialogContent>
     </Dialog>
   )

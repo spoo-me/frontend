@@ -20,6 +20,7 @@ import {
   sameTagIds,
   updateUrl,
   SpooApiError,
+  type FeatureName,
   type UpdateUrlInput,
   type UrlListItem,
 } from "@/lib/api"
@@ -34,7 +35,11 @@ import { countGraphemes } from "@/lib/emoji-alias"
 import { emojiPolicyHint, useAliasCheck } from "@/hooks/use-alias-check"
 import { useAcceptedEmoji } from "@/hooks/use-emoji-set"
 import { useFeature } from "@/hooks/use-features"
+import { useProGate } from "@/hooks/use-pro-gate"
+import { stashDraft, takeLinkDraft } from "@/lib/entitlements/draft-stash"
 import { Velvet } from "@/components/shared/velvet"
+import { FeatureMark, ProMark } from "@/components/plan/pro-mark"
+import { UpsellDialog } from "@/components/plan/upsell-dialog"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -281,6 +286,54 @@ function describeChanges(
   return rows
 }
 
+/** The editable state of the form, minus the password, so a draft can be
+    parked while the user goes to pay and put back exactly. */
+export type LinkDraft = {
+  longUrl: string
+  alias: string
+  domain: string
+  expiry: string
+  startsAt: string
+  preStartUrl: string
+  maxClicks: string
+  fallbackUrl: string
+  blockBots: boolean
+  privateStats: boolean
+  geoRules: GeoRuleDraft[]
+  variants: VariantDraft[]
+  meta: MetaDraft
+  metaCustomized: boolean
+  tagIds: string[]
+}
+
+function draftOfLink(link: UrlListItem): LinkDraft {
+  return {
+    longUrl: link.long_url ?? "",
+    alias: link.alias ?? "",
+    domain: link.domain ?? "spoo.me",
+    expiry: link.expire_after
+      ? toLocalInputValue(new Date(link.expire_after * 1000))
+      : "",
+    startsAt: link.starts_at
+      ? toLocalInputValue(new Date(link.starts_at * 1000))
+      : "",
+    preStartUrl: link.pre_start_url ?? "",
+    maxClicks: link.max_clicks != null ? String(link.max_clicks) : "",
+    fallbackUrl: link.expired_redirect_url ?? "",
+    blockBots: Boolean(link.block_bots),
+    privateStats: Boolean(link.private_stats),
+    geoRules: geoDraftsOf(link.geo_rules),
+    variants: (link.ab_variants ?? []).map((v) => ({
+      url: v.url,
+      weight: String(v.weight),
+    })),
+    meta: metaDraftOf(link.meta_tags),
+    // Customized = this link freezes its own tags (meta_tags set on the wire).
+    metaCustomized: Boolean(link.meta_tags),
+    tagIds: (link.tags ?? []).map((t) => t.id),
+  }
+}
+
 function Field({
   label,
   hint,
@@ -299,14 +352,14 @@ function Field({
   return (
     <div className="space-y-2">
       <span className="mb-2.5 flex min-h-5 items-center gap-1.5">
-        <Label className="font-medium text-foreground text-xs">{label}</Label>
+        <Label className="font-medium text-foreground text-sm">{label}</Label>
         {labelHint}
       </span>
       {children}
       {error ? (
-        <p className="text-destructive text-xs">{error}</p>
+        <p className="text-[13px] text-destructive">{error}</p>
       ) : (
-        hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>
+        hint && <p className="text-[13px] text-muted-foreground/70">{hint}</p>
       )}
     </div>
   )
@@ -327,12 +380,18 @@ export function LinkSettingsForm({
 }) {
   const queryClient = useQueryClient()
 
-  const [longUrl, setLongUrl] = React.useState(link.long_url ?? "")
-  const [alias, setAlias] = React.useState(link.alias ?? "")
-  const showMeta = useFeature("custom_meta_tags") === "enabled"
-  const showScheduling = useFeature("link_scheduling") === "enabled"
+  // Back from checkout, the draft parked by the upsell wins over the link.
+  const [init] = React.useState(
+    () => takeLinkDraft(link.id) ?? draftOfLink(link)
+  )
+  const [longUrl, setLongUrl] = React.useState(init.longUrl)
+  const [alias, setAlias] = React.useState(init.alias)
+  const metaState = useFeature("custom_meta_tags")
+  const showMeta = metaState !== "hidden"
+  const metaEnabled = metaState === "enabled"
+  const showScheduling = useFeature("link_scheduling") !== "hidden"
   const showDomains = useFeature("custom_domains") === "enabled"
-  const [domain, setDomain] = React.useState(link.domain ?? "spoo.me")
+  const [domain, setDomain] = React.useState(init.domain)
 
   // Password tri-state: keep (untouched) | set new value | remove.
   const [passwordMode, setPasswordMode] = React.useState<
@@ -341,39 +400,18 @@ export function LinkSettingsForm({
   const [newPassword, setNewPassword] = React.useState("")
   const [passwordVisible, setPasswordVisible] = React.useState(false)
 
-  const [expiry, setExpiry] = React.useState(
-    link.expire_after
-      ? toLocalInputValue(new Date(link.expire_after * 1000))
-      : ""
-  )
-  const [startsAt, setStartsAt] = React.useState(
-    link.starts_at ? toLocalInputValue(new Date(link.starts_at * 1000)) : ""
-  )
-  const [preStartUrl, setPreStartUrl] = React.useState(link.pre_start_url ?? "")
-  const [maxClicks, setMaxClicks] = React.useState(
-    link.max_clicks != null ? String(link.max_clicks) : ""
-  )
-  const [fallbackUrl, setFallbackUrl] = React.useState(
-    link.expired_redirect_url ?? ""
-  )
-  const [blockBots, setBlockBots] = React.useState(Boolean(link.block_bots))
-  const [privateStats, setPrivateStats] = React.useState(
-    Boolean(link.private_stats)
-  )
+  const [expiry, setExpiry] = React.useState(init.expiry)
+  const [startsAt, setStartsAt] = React.useState(init.startsAt)
+  const [preStartUrl, setPreStartUrl] = React.useState(init.preStartUrl)
+  const [maxClicks, setMaxClicks] = React.useState(init.maxClicks)
+  const [fallbackUrl, setFallbackUrl] = React.useState(init.fallbackUrl)
+  const [blockBots, setBlockBots] = React.useState(init.blockBots)
+  const [privateStats, setPrivateStats] = React.useState(init.privateStats)
 
-  const [geoRules, setGeoRules] = React.useState<GeoRuleDraft[]>(
-    geoDraftsOf(link.geo_rules)
-  )
-  const [variants, setVariants] = React.useState<VariantDraft[]>(
-    (link.ab_variants ?? []).map((v) => ({
-      url: v.url,
-      weight: String(v.weight),
-    }))
-  )
-  const [meta, setMeta] = React.useState<MetaDraft>(metaDraftOf(link.meta_tags))
-  const [tagIds, setTagIds] = React.useState<string[]>(
-    (link.tags ?? []).map((t) => t.id)
-  )
+  const [geoRules, setGeoRules] = React.useState(init.geoRules)
+  const [variants, setVariants] = React.useState(init.variants)
+  const [meta, setMeta] = React.useState(init.meta)
+  const [tagIds, setTagIds] = React.useState(init.tagIds)
   const knownTags = useTags()
   const tagNameOf = (id: string) =>
     knownTags.data?.items.find((t) => t.id === id)?.name ??
@@ -385,7 +423,7 @@ export function LinkSettingsForm({
   // form never PATCHes). A customized link is hard-frozen: no fetch, no
   // overwrite. "Reset to destination" flips back and PATCHes null on save.
   const [metaCustomized, setMetaCustomized] = React.useState(
-    Boolean(link.meta_tags)
+    init.metaCustomized
   )
 
   // Destination-tag mirror (GET /api/v1/metadata): only for accounts with
@@ -405,7 +443,7 @@ export function LinkSettingsForm({
   const destMeta = useQuery({
     queryKey: ["url-metadata", metaFetchUrl],
     queryFn: () => fetchUrlMetadata(metaFetchUrl!),
-    enabled: showMeta && !metaCustomized && Boolean(metaFetchUrl),
+    enabled: metaEnabled && !metaCustomized && Boolean(metaFetchUrl),
     staleTime: 10 * 60_000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -641,6 +679,35 @@ export function LinkSettingsForm({
 
   const canSave = dirty && !save.isPending && saveBlocker === null
 
+  // Only values the patch adds count; clearing a Pro field is always allowed.
+  const { blocked } = useProGate([
+    ...(patch.geo_rules ? (["geo_targeting"] as const) : []),
+    ...(patch.ab_variants ? (["ab_variants"] as const) : []),
+    ...(patch.meta_tags ? (["custom_meta_tags"] as const) : []),
+    ...(patch.starts_at || patch.pre_start_url
+      ? (["link_scheduling"] as const)
+      : []),
+    ...(patch.expired_redirect_url ? (["expired_fallback"] as const) : []),
+  ])
+  const [upsellOpen, setUpsellOpen] = React.useState(false)
+  const currentDraft = (): LinkDraft => ({
+    longUrl,
+    alias,
+    domain,
+    expiry,
+    startsAt,
+    preStartUrl,
+    maxClicks,
+    fallbackUrl,
+    blockBots,
+    privateStats,
+    geoRules,
+    variants,
+    meta,
+    metaCustomized,
+    tagIds,
+  })
+
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const changes = describeChanges(link, patch, tagNameOf)
 
@@ -722,38 +789,36 @@ export function LinkSettingsForm({
     </Field>
   )
   const afterExpiryField = (
-    <Velvet feature="expired_fallback">
-      <Field
-        label="After expiry"
-        labelHint={
-          <InfoHint label="Where visitors land after expiry">
-            Anyone who opens the link once it has ended, by date or by click
-            count, is sent here. Blank shows an ended page.
-          </InfoHint>
-        }
-        error={fallbackProblem}
-      >
-        <div className="flex items-center gap-1.5">
-          <UrlInput
-            value={fallbackUrl}
-            onChange={(e) => setFallbackUrl(e.target.value)}
-            placeholder="Ended page"
-            disabled={expiry === "" && maxClicks === ""}
-          />
-          {fallbackUrl && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Remove fallback URL"
-              onClick={() => setFallbackUrl("")}
-            >
-              <X />
-            </Button>
-          )}
-        </div>
-      </Field>
-    </Velvet>
+    <Field
+      label="After expiry"
+      labelHint={
+        <InfoHint label="Where visitors land after expiry">
+          Anyone who opens the link once it has ended, by date or by click
+          count, is sent here. Blank shows an ended page.
+        </InfoHint>
+      }
+      error={fallbackProblem}
+    >
+      <div className="flex items-center gap-1.5">
+        <UrlInput
+          value={fallbackUrl}
+          onChange={(e) => setFallbackUrl(e.target.value)}
+          placeholder="Ended page"
+          disabled={expiry === "" && maxClicks === ""}
+        />
+        {fallbackUrl && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove fallback URL"
+            onClick={() => setFallbackUrl("")}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
+    </Field>
   )
   const tagsField = (
     <Field
@@ -833,25 +898,42 @@ export function LinkSettingsForm({
       </div>
     </Field>
   )
+  // One grammar per zone: mono label, the Pro mark beside it when the zone
+  // is paid, then the two-column grid.
+  const zone = (label: string, feature?: FeatureName) => (
+    <span className="flex items-center gap-1.5">
+      <SectionLabel>{label}</SectionLabel>
+      {feature && <FeatureMark feature={feature} />}
+    </span>
+  )
   const lifetimeBlock = (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {showScheduling && (
-        <div className="space-y-3">
-          <SectionLabel>Starts</SectionLabel>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            {goesLiveField}
-            {untilThenField}
+        <Velvet feature="link_scheduling">
+          <div className="space-y-3">
+            {zone("Starts", "link_scheduling")}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {goesLiveField}
+              {untilThenField}
+            </div>
           </div>
-        </div>
+        </Velvet>
       )}
       <div className="space-y-3">
-        {showScheduling && <SectionLabel>Ends</SectionLabel>}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {zone("Ends")}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {expiresField}
           {maxClicksField}
         </div>
-        {afterExpiryField}
       </div>
+      <Velvet feature="expired_fallback">
+        <div className="space-y-3">
+          {zone("After the end", "expired_fallback")}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {afterExpiryField}
+          </div>
+        </div>
+      </Velvet>
     </div>
   )
 
@@ -860,10 +942,10 @@ export function LinkSettingsForm({
       className={
         layout === "wide"
           ? "grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start lg:gap-x-10"
-          : "space-y-5"
+          : "space-y-6"
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
         <Field
           label="Destination"
           error={destProblem}
@@ -1112,64 +1194,65 @@ export function LinkSettingsForm({
           <GeoRulesEditor rules={geoRules} onChange={setGeoRules} />
         </Velvet>
 
-        <Velvet feature="ab_testing">
+        <Velvet feature="ab_variants">
           <VariantsEditor variants={variants} onChange={setVariants} />
         </Velvet>
 
         {showMeta && (
-          <div className="space-y-3">
-            {/* Fixed-height header row: the live-dot status and reset action
+          <Velvet feature="custom_meta_tags">
+            <div className="space-y-3">
+              {/* Fixed-height header row: the live-dot status and reset action
             swap in place, zero layout shift either way. */}
-            <div className="flex h-7 items-center justify-between">
-              <div className="flex items-baseline gap-3">
-                <span className="flex items-center gap-1.5">
-                  <div className="label-mono text-[10px] text-muted-foreground/60">
-                    Meta tags
-                  </div>
-                  <InfoHint label="What meta tags do">
-                    The social card crawlers see when this link is shared;
-                    overrides the destination&apos;s own card.
-                  </InfoHint>
-                </span>
-                {metaMirroring && (
+              <div className="flex h-7 items-center justify-between">
+                <div className="flex items-baseline gap-3">
                   <span className="flex items-center gap-1.5">
-                    <span className="label-mono text-[10px] text-muted-foreground/40">
-                      fetched from destination
-                    </span>
-                    <InfoHint label="About fetched meta tags">
-                      These preview tags are read live from the destination
-                      until you customize them.
+                    <SectionLabel>Meta tags</SectionLabel>
+                    <FeatureMark feature="custom_meta_tags" />
+                    <InfoHint label="What meta tags do">
+                      The social card crawlers see when this link is shared;
+                      overrides the destination&apos;s own card.
                     </InfoHint>
                   </span>
+                  {metaMirroring && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="label-mono text-[10px] text-muted-foreground/40">
+                        fetched from destination
+                      </span>
+                      <InfoHint label="About fetched meta tags">
+                        These preview tags are read live from the destination
+                        until you customize them.
+                      </InfoHint>
+                    </span>
+                  )}
+                </div>
+                {metaCustomized && (
+                  <button
+                    type="button"
+                    onClick={() => setMetaCustomized(false)}
+                    className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+                  >
+                    Reset to destination
+                  </button>
                 )}
               </div>
-              {metaCustomized && (
-                <button
-                  type="button"
-                  onClick={() => setMetaCustomized(false)}
-                  className="text-muted-foreground text-xs underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
-                >
-                  Reset to destination
-                </button>
-              )}
+              <MetaTagsEditor
+                value={displayedMeta}
+                onChange={(v) => {
+                  // Any manual edit — typing, clearing, a color pick — flips
+                  // customized; the mirror effect goes through setMeta only.
+                  setMeta(v)
+                  setMetaCustomized(true)
+                }}
+                domain={domain}
+                alias={alias}
+                preview="below"
+                loading={!metaCustomized && destMeta.isFetching}
+                notice={metaNotice}
+                problem={metaProblem}
+                source={metaCustomized ? metaSource : undefined}
+              />
             </div>
-            <MetaTagsEditor
-              value={displayedMeta}
-              onChange={(v) => {
-                // Any manual edit — typing, clearing, a color pick — flips
-                // customized; the mirror effect goes through setMeta only.
-                setMeta(v)
-                setMetaCustomized(true)
-              }}
-              domain={domain}
-              alias={alias}
-              preview="below"
-              loading={!metaCustomized && destMeta.isFetching}
-              notice={metaNotice}
-              problem={metaProblem}
-              source={metaCustomized ? metaSource : undefined}
-            />
-          </div>
+          </Velvet>
         )}
       </div>
 
@@ -1188,10 +1271,26 @@ export function LinkSettingsForm({
         >
           {save.isPending ? "Saving…" : (saveBlocker ?? "Unsaved changes")}
         </span>
-        <Button disabled={!canSave} onClick={() => setConfirmOpen(true)}>
-          Save changes
-        </Button>
+        {blocked.length ? (
+          <Button onClick={() => setUpsellOpen(true)}>
+            Save with Pro
+            <ProMark onPrimary />
+          </Button>
+        ) : (
+          <Button disabled={!canSave} onClick={() => setConfirmOpen(true)}>
+            Save changes
+          </Button>
+        )}
       </div>
+
+      <UpsellDialog
+        trigger={{ kind: "features", features: blocked }}
+        open={upsellOpen}
+        onOpenChange={setUpsellOpen}
+        onBeforeCheckout={() =>
+          stashDraft({ kind: "link", id: link.id, draft: currentDraft() })
+        }
+      />
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent className="data-[size=default]:sm:max-w-[27rem]">

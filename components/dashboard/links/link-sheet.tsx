@@ -62,7 +62,7 @@ export function LinkSheet({
           for the settings form. */}
       <SheetContent
         side="right"
-        className="gap-0 overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-lg"
+        className="gap-0 overflow-y-auto p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[900px]"
       >
         {!link ? (
           <>
