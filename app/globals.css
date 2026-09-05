@@ -517,3 +517,106 @@
     transform: translateY(5px);
   }
 }
+
+/* Pro mark: the one dashboard element that carries the brand as a gradient.
+   Dark keeps the fill a step deeper than --brand so white text stays AA. */
+.pro-mark {
+  --pm-ink: color-mix(in oklab, var(--brand) 94%, black);
+  --pm-glint: var(--brand);
+  color: #fff;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.22);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--pm-ink) 90%, white) 0%,
+    var(--pm-ink) 55%,
+    color-mix(in oklab, var(--pm-ink) 92%, black) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.26),
+    inset 0 -1px 0 rgb(0 0 0 / 0.12);
+}
+.dark .pro-mark {
+  --pm-ink: color-mix(in oklab, var(--brand) 84%, black);
+  --pm-glint: color-mix(in oklab, var(--brand) 55%, white);
+}
+.pro-mark-sheen::after {
+  content: "";
+  position: absolute;
+  inset: -2px 0;
+  width: 55%;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.38) 50%,
+    transparent 80%
+  );
+  transform: translateX(-140%);
+  animation: pro-sheen 5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes pro-sheen {
+  0% {
+    transform: translateX(-140%);
+  }
+  30%,
+  100% {
+    transform: translateX(260%);
+  }
+}
+.pro-mark-star {
+  position: absolute;
+  color: var(--pm-glint);
+  animation: pro-twinkle 2.8s ease-in-out infinite;
+}
+.pro-mark-star-1 {
+  top: -5px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+}
+.pro-mark-star-2 {
+  bottom: -3px;
+  left: -3px;
+  width: 5px;
+  height: 5px;
+  animation-duration: 3.6s;
+  animation-delay: -1.3s;
+}
+.pro-mark-star-3 {
+  top: 30%;
+  left: -4px;
+  width: 3px;
+  height: 3px;
+  animation-duration: 2.2s;
+  animation-delay: -0.6s;
+}
+.pro-mark-glyph {
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.22));
+  animation: pro-glyph-twinkle 3.2s ease-in-out -0.9s infinite;
+}
+@keyframes pro-glyph-twinkle {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes pro-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pro-mark-sheen {
+    display: none;
+  }
+  .pro-mark-star,
+  .pro-mark-glyph {
+    animation: none;
+  }
+}
