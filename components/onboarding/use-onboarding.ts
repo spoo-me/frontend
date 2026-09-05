@@ -15,6 +15,7 @@ import {
   type OnboardingStep,
 } from "@/lib/onboarding"
 import { completeOnboarding, putOnboardingState } from "@/lib/api"
+import { takeSignupPlan } from "@/lib/signup-plan"
 import { useAuth } from "@/components/auth/auth-context"
 
 /**
@@ -63,7 +64,11 @@ export function useOnboarding() {
     })
     // The session must learn onboarded_at BEFORE the dashboard renders.
     await refresh().catch(() => {})
-    router.push("/dashboard")
+    router.push(
+      takeSignupPlan() === "pro"
+        ? "/upgrade?from=plan&return=/dashboard"
+        : "/dashboard"
+    )
     return true
   }, [router, refresh])
 
