@@ -53,6 +53,7 @@ import {
 import { DimensionIcon, dimensionLabel } from "@/components/dashboard/dim-icon"
 import { InfoHint } from "@/components/dashboard/info-hint"
 import { Segmented } from "@/components/dashboard/segmented"
+import { FeatureMark } from "@/components/plan/pro-mark"
 
 /**
  * The planned-capability editors (geo targeting, A/B testing, custom meta
@@ -352,21 +353,17 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <Label className="mb-2.5 font-medium text-foreground text-xs">
+      <Label className="mb-2.5 font-medium text-foreground text-sm">
         {label}
       </Label>
       {children}
-      {hint && <p className="text-muted-foreground/70 text-xs">{hint}</p>}
+      {hint && <p className="text-[13px] text-muted-foreground/70">{hint}</p>}
     </div>
   )
 }
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="label-mono text-[10px] text-muted-foreground/60">
-      {children}
-    </div>
-  )
+  return <div className="label-mono text-muted-foreground/60">{children}</div>
 }
 
 /** In-input restore affordance: copies the destination's fetched value
@@ -522,6 +519,7 @@ export function GeoRulesEditor({
     <div className="space-y-2">
       <span className="flex items-center gap-1.5">
         <SectionLabel>Geo targeting</SectionLabel>
+        <FeatureMark feature="geo_targeting" />
         <InfoHint label="How geo targeting works">
           Matches the visitor&apos;s country at redirect time. One rule per
           country, up to 50; everyone else follows the destination.
@@ -529,7 +527,7 @@ export function GeoRulesEditor({
       </span>
       <p
         className={cn(
-          "text-xs",
+          "text-[13px]",
           problem ? "text-destructive" : "text-muted-foreground/70"
         )}
       >
@@ -601,6 +599,7 @@ export function VariantsEditor({
     <div className="space-y-2">
       <span className="flex items-center gap-1.5">
         <SectionLabel>A/B testing</SectionLabel>
+        <FeatureMark feature="ab_variants" />
         <InfoHint label="How A/B testing works">
           Each weight is the percentage of visitors sent to that variant. The
           destination keeps whatever the weights leave over.
@@ -608,7 +607,7 @@ export function VariantsEditor({
       </span>
       <p
         className={cn(
-          "text-xs",
+          "text-[13px]",
           total > 100 ? "text-destructive" : "text-muted-foreground/70"
         )}
       >
@@ -844,157 +843,161 @@ export function MetaTagsEditor({
           )}
         </div>
       </Field>
-      <Field
-        label="Social image"
-        hint="Paste an https:// URL or upload a png, jpeg, or webp. 1200×630 works everywhere."
-      >
-        <div className="flex items-center gap-1.5">
-          {imageUploaded ? (
-            /* A raw data URI is unreadable garbage in a text input — show
-               a quiet chip instead. Same h-9 as the input: zero shift. */
-            <span className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-input px-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-              <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground text-xs">
-                uploaded image ·{" "}
-                {Math.max(1, Math.round(dataUriBytes(imageValue) / 1024))}
-                KB
-              </span>
-              <button
-                type="button"
-                aria-label="Remove the uploaded image"
-                onClick={() => patch({ image: "" })}
-                className="shrink-0 text-muted-foreground transition-colors duration-150 hover:text-foreground"
-              >
-                <X className="size-3.5" />
-              </button>
-            </span>
-          ) : (
-            <div className="relative min-w-0 flex-1">
-              <Input
-                value={value.image}
-                onChange={(e) => patch({ image: e.target.value })}
-                placeholder="https://example.com/og.png"
-                spellCheck={false}
-                className={cn(
-                  "font-mono text-xs",
-                  restorable("image") && "pr-8"
-                )}
-              />
-              {restorable("image") && (
-                <RestoreBtn
-                  label="image"
-                  onClick={() => patch({ image: source!.image })}
-                />
-              )}
-            </div>
-          )}
-          {/* Typing a URL and uploading are alternatives; last action wins. */}
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="shrink-0"
-            aria-label="Upload an image"
-            onClick={() => fileRef.current?.click()}
-          >
-            <Upload />
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) pickFile(f)
-              // allow re-picking the same file after a remove
-              e.target.value = ""
-            }}
-          />
-        </div>
-      </Field>
-      <Field
-        label="Theme color"
-        hint="Tints the embed accent on Discord (theme-color)."
-      >
-        <div
-          className="flex items-center gap-1.5"
-          onFocus={() => setPreviewOn("discord")}
+      {/* Image and color share a row: both are short controls with a
+          long hint, and stacked they pushed the preview rail off-screen. */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <Field
+          label="Social image"
+          hint="Paste an https:// URL or upload a png, jpeg, or webp. 1200×630 works everywhere."
         >
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                aria-label="Pick a theme color"
-                onClick={() => setPreviewOn("discord")}
-                className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-input transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-                style={
-                  colorValid ? { backgroundColor: value.color } : undefined
-                }
-              >
-                {!colorValid && (
-                  <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                    <Pipette className="size-3.5" strokeWidth={1.75} />
-                  </span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              className="w-56 p-3"
-              onOpenAutoFocus={(e) => e.preventDefault()}
-            >
-              <div className="[&_.react-colorful]:h-44 [&_.react-colorful]:w-full [&_.react-colorful__hue]:mt-3 [&_.react-colorful__hue]:h-3 [&_.react-colorful__hue]:rounded-full [&_.react-colorful__pointer]:size-4 [&_.react-colorful__pointer]:border-2 [&_.react-colorful__saturation]:rounded-lg [&_.react-colorful__saturation]:border-0">
-                <HexColorPicker
-                  color={colorValid ? value.color : "#8b5cf6"}
-                  onChange={(c) => patch({ color: c })}
+          <div className="flex items-center gap-1.5">
+            {imageUploaded ? (
+              /* A raw data URI is unreadable garbage in a text input — show
+               a quiet chip instead. Same h-9 as the input: zero shift. */
+              <span className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-input px-3 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground text-xs">
+                  uploaded image ·{" "}
+                  {Math.max(1, Math.round(dataUriBytes(imageValue) / 1024))}
+                  KB
+                </span>
+                <button
+                  type="button"
+                  aria-label="Remove the uploaded image"
+                  onClick={() => patch({ image: "" })}
+                  className="shrink-0 text-muted-foreground transition-colors duration-150 hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </span>
+            ) : (
+              <div className="relative min-w-0 flex-1">
+                <Input
+                  value={value.image}
+                  onChange={(e) => patch({ image: e.target.value })}
+                  placeholder="https://example.com/og.png"
+                  spellCheck={false}
+                  className={cn(
+                    "font-mono text-xs",
+                    restorable("image") && "pr-8"
+                  )}
                 />
-              </div>
-              <p className="mt-2.5 text-center font-mono text-[11px] text-muted-foreground tabular-nums">
-                {(colorValid ? value.color : "#8b5cf6").toUpperCase()}
-              </p>
-            </PopoverContent>
-          </Popover>
-          <Input
-            value={value.color}
-            onChange={(e) => {
-              const v = e.target.value.trim()
-              patch({ color: v && !v.startsWith("#") ? `#${v}` : v })
-            }}
-            placeholder="None"
-            spellCheck={false}
-            className="w-36 font-mono text-xs"
-          />
-          <span className="flex items-center gap-1">
-            {COLOR_PRESETS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                aria-label={`Use ${c}`}
-                onClick={() => {
-                  patch({ color: c })
-                  setPreviewOn("discord")
-                }}
-                className={cn(
-                  "size-4 rounded-full border border-black/10 transition-transform duration-150 hover:scale-110 dark:border-white/20",
-                  value.color === c && "ring-2 ring-ring ring-offset-1"
+                {restorable("image") && (
+                  <RestoreBtn
+                    label="image"
+                    onClick={() => patch({ image: source!.image })}
+                  />
                 )}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </span>
-          {value.color && (
+              </div>
+            )}
+            {/* Typing a URL and uploading are alternatives; last action wins. */}
             <Button
               type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Clear theme color"
-              onClick={() => patch({ color: "" })}
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              aria-label="Upload an image"
+              onClick={() => fileRef.current?.click()}
             >
-              <X />
+              <Upload />
             </Button>
-          )}
-        </div>
-      </Field>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) pickFile(f)
+                // allow re-picking the same file after a remove
+                e.target.value = ""
+              }}
+            />
+          </div>
+        </Field>
+        <Field
+          label="Theme color"
+          hint="Tints the embed accent on Discord (theme-color)."
+        >
+          <div
+            className="flex items-center gap-1.5"
+            onFocus={() => setPreviewOn("discord")}
+          >
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Pick a theme color"
+                  onClick={() => setPreviewOn("discord")}
+                  className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-input transition-colors duration-150 hover:bg-accent/40 dark:bg-input/30 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                  style={
+                    colorValid ? { backgroundColor: value.color } : undefined
+                  }
+                >
+                  {!colorValid && (
+                    <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                      <Pipette className="size-3.5" strokeWidth={1.75} />
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-56 p-3"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                <div className="[&_.react-colorful]:h-44 [&_.react-colorful]:w-full [&_.react-colorful__hue]:mt-3 [&_.react-colorful__hue]:h-3 [&_.react-colorful__hue]:rounded-full [&_.react-colorful__pointer]:size-4 [&_.react-colorful__pointer]:border-2 [&_.react-colorful__saturation]:rounded-lg [&_.react-colorful__saturation]:border-0">
+                  <HexColorPicker
+                    color={colorValid ? value.color : "#8b5cf6"}
+                    onChange={(c) => patch({ color: c })}
+                  />
+                </div>
+                <p className="mt-2.5 text-center font-mono text-[11px] text-muted-foreground tabular-nums">
+                  {(colorValid ? value.color : "#8b5cf6").toUpperCase()}
+                </p>
+              </PopoverContent>
+            </Popover>
+            <Input
+              value={value.color}
+              onChange={(e) => {
+                const v = e.target.value.trim()
+                patch({ color: v && !v.startsWith("#") ? `#${v}` : v })
+              }}
+              placeholder="None"
+              spellCheck={false}
+              className="min-w-0 flex-1 font-mono text-xs"
+            />
+            <span className="flex items-center gap-1">
+              {COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={`Use ${c}`}
+                  onClick={() => {
+                    patch({ color: c })
+                    setPreviewOn("discord")
+                  }}
+                  className={cn(
+                    "size-4 rounded-full border border-black/10 transition-transform duration-150 hover:scale-110 dark:border-white/20",
+                    value.color === c && "ring-2 ring-ring ring-offset-1"
+                  )}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </span>
+            {value.color && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Clear theme color"
+                onClick={() => patch({ color: "" })}
+              >
+                <X />
+              </Button>
+            )}
+          </div>
+        </Field>
+      </div>
     </div>
   )
 

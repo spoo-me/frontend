@@ -215,9 +215,9 @@ function Enter({ i, children }: { i: number; children: React.ReactNode }) {
 export default function DomainDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const domainsEnabled = useFeatureGuard("custom_domains", () =>
-    router.replace("/dashboard")
-  )
+  const domainsEnabled =
+    useFeatureGuard("custom_domains", () => router.replace("/dashboard")) ===
+    "enabled"
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [cascade, setCascade] = React.useState(false)
@@ -231,6 +231,7 @@ export default function DomainDetailPage() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["domains"] })
+    queryClient.invalidateQueries({ queryKey: ["entitlements"] })
   }
 
   const verify = useMutation({

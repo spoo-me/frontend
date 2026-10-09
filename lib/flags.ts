@@ -25,6 +25,16 @@ export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY
 export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING === "1"
 
 /**
+ * Paddle.js client-side token and environment for the checkout overlay on
+ * /upgrade/checkout. Unset means the page cannot open a checkout (mock mode,
+ * self-hosters); the server-side keys live in the backend deployment only.
+ */
+export const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
+const paddleEnv = process.env.NEXT_PUBLIC_PADDLE_ENV
+export const PADDLE_ENV: "sandbox" | "production" | undefined =
+  paddleEnv === "sandbox" || paddleEnv === "production" ? paddleEnv : undefined
+
+/**
  * hCaptcha sitekey for the public intake forms (/contact, /report).
  * Mirrors the backend's configured/unconfigured semantics: unset (mock
  * mode, self-hosters without hcaptcha_* settings) means the captcha step

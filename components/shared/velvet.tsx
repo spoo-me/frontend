@@ -1,27 +1,21 @@
 "use client"
 
-import * as React from "react"
+import type * as React from "react"
 
 import type { FeatureName } from "@/lib/api"
-import { useFeature } from "@/hooks/use-features"
+import { useFeature } from "@/hooks/use-entitlements"
 
 /**
- * The velvet rope: renders children only for accounts whose backend says
- * the feature is enabled — hidden accounts see nothing, as if the feature
- * never existed. `locked` is the future upsell slot: unused until paid
- * plans ship and the backend starts emitting the state.
+ * The velvet rope. Hidden accounts see nothing, as if the feature never
+ * existed. Everyone else gets the real, working control; the plan is
+ * enforced at the write (useProGate), never by dimming.
  */
 export function Velvet({
   feature,
-  locked = null,
   children,
 }: {
   feature: FeatureName
-  locked?: React.ReactNode
   children: React.ReactNode
 }) {
-  const state = useFeature(feature)
-  if (state === "enabled") return <>{children}</>
-  if (state === "locked") return <>{locked}</>
-  return null
+  return useFeature(feature) === "hidden" ? null : <>{children}</>
 }

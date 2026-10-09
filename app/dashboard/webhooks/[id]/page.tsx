@@ -150,6 +150,7 @@ function DeliverySheet({
         queryKey: ["webhooks", webhookId, "deliveries"],
       })
       queryClient.invalidateQueries({ queryKey: ["webhooks"] })
+      queryClient.invalidateQueries({ queryKey: ["entitlements"] })
       if (next.status === "success") toast.success("Delivered")
       else
         toast.error("Still failing", {
@@ -305,9 +306,9 @@ function DeliverySheet({
 export default function WebhookDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const webhooksEnabled = useFeatureGuard("webhooks", () =>
-    router.replace("/dashboard")
-  )
+  const webhooksEnabled =
+    useFeatureGuard("webhooks", () => router.replace("/dashboard")) ===
+    "enabled"
   const queryClient = useQueryClient()
   const [editOpen, setEditOpen] = React.useState(false)
   const [confirmOpen, setConfirmOpen] = React.useState(false)
@@ -346,6 +347,7 @@ export default function WebhookDetailPage() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["webhooks"] })
+    queryClient.invalidateQueries({ queryKey: ["entitlements"] })
   }
 
   const sendTest = useMutation({

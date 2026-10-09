@@ -12,8 +12,11 @@ export type AuthUser = {
   email_verified: boolean
   /** When onboarding was completed; null = never. */
   onboarded_at?: string | null
+  /** When the Pro tour was seen; null = never. Set by POST /me/pro-onboarding. */
+  pro_onboarded_at: string | null
+  /** Effective plan name, carried for clients; features and limits come from /me/entitlements. */
+  plan: "free" | "pro" | "selfhost"
   user_name: string | null
-  plan: string
   password_set: boolean
   auth_providers: AuthProvider[]
   pfp: { url: string; source: string } | null

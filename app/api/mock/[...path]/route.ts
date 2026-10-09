@@ -3,6 +3,11 @@ import path from "node:path"
 import { NextRequest, NextResponse } from "next/server"
 import { getAlpha2Codes } from "i18n-iso-countries"
 
+import {
+  FEATURE_KEYS,
+  LIMIT_KEYS,
+  MOCK_PLAN_DEFAULTS,
+} from "@/lib/entitlements/keys"
 import { LONG_URL_MAX_LENGTH, validDestinationUrl } from "@/lib/validation"
 import { handlePublicStats } from "./public"
 import { handlePublicPreview } from "./public-preview"
@@ -42,6 +47,83 @@ import { TAG_ICON_KEYS } from "@/lib/api/tags"
 
 const MOCK = process.env.SPOO_MOCK === "1"
 
+type MockPlan = "free" | "pro" | "grace" | "past_due" | "cancel_at_period_end"
+
+const PLAN_STATUS: Record<MockPlan, string | null> = {
+  free: null,
+  pro: "active",
+  grace: "grace",
+  past_due: "past_due",
+  cancel_at_period_end: "cancel_at_period_end",
+}
+
+function isMockPlan(x: string | null): x is MockPlan {
+  return x !== null && x in PLAN_STATUS
+}
+
+function entitlementsBody(s: MockState) {
+  const pro = s.plan !== "free"
+  const defaults = MOCK_PLAN_DEFAULTS[pro ? "pro" : "free"]
+  const features = Object.fromEntries(
+    FEATURE_KEYS.map((k) => {
+      // Rolled out in the mock: everything but the surfaces that have no
+      // page yet, which stay hidden exactly like production does today.
+      const rolledOut = !["domain_polish", "viral_full_tracking"].includes(k)
+      if (!rolledOut) return [k, "hidden"]
+      return [k, defaults.features[k] ? "enabled" : "locked"]
+    })
+  )
+  const used: Record<string, number | null> = {
+    custom_domains_max: s.domains.length,
+    webhook_endpoints_max: s.webhooks.length,
+    api_keys_max: s.keys.length,
+    analytics_window_days: null,
+    api_rate_multiplier: null,
+    bulk_batch_max: null,
+  }
+  const limits = Object.fromEntries(
+    LIMIT_KEYS.map((k) => [k, { max: defaults.limits[k], used: used[k] }])
+  )
+  const until =
+    s.plan === "free"
+      ? null
+      : new Date(Date.now() + 12 * 86_400_000).toISOString()
+  return {
+    version: s.entitlementsVersion,
+    plan: {
+      name: pro ? "pro" : "free",
+      status: PLAN_STATUS[s.plan],
+      until,
+      founding: pro,
+      renews: s.plan === "pro",
+    },
+    features,
+    limits,
+    over_limit: {},
+  }
+}
+
+function plansBody() {
+  return {
+    plans: (["free", "pro"] as const).map((name) => ({
+      name,
+      features: MOCK_PLAN_DEFAULTS[name].features,
+      limits: MOCK_PLAN_DEFAULTS[name].limits,
+    })),
+    prices: {
+      monthly: { amount: 15, currency: "USD" },
+      year: { amount: 144, currency: "USD" },
+    },
+    founding: {
+      monthly: { amount: 9, currency: "USD" },
+      year: { amount: 90, currency: "USD" },
+      seats_total: 100,
+      seats_left: 37,
+      until: new Date(Date.now() + 61 * 86_400_000).toISOString(),
+    },
+  }
+}
+
 type MockState = {
   email: string
   userName: string | null
@@ -64,6 +146,10 @@ type MockState = {
   onboardedAt: string | null
   /** ISO purge deadline while a deletion is scheduled; null = active. */
   pendingDeletion: string | null
+  /** Plan state served by /me/entitlements; ?plan= on reset picks one. */
+  plan: MockPlan
+  entitlementsVersion: number
+  proOnboardedAt: string | null
   links: MockLink[]
   tags: MockTag[]
   domains: MockDomain[]
@@ -100,6 +186,9 @@ const initial = (): MockState => ({
   verified: true,
   passwordSet: true,
   pendingDeletion: null,
+  plan: "free",
+  entitlementsVersion: 0,
+  proOnboardedAt: null,
   providers: [
     {
       provider: "github",
@@ -144,7 +233,13 @@ const SYSTEM_HOSTS = new Set(["spoo.me", "www.spoo.me", "beta.spoo.me"])
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 function json(body: unknown, init?: ResponseInit) {
-  return NextResponse.json(body, init)
+  const res = NextResponse.json(body, init)
+  // Every authenticated production response carries the owner's version;
+  // the mock stamps it everywhere so the fetch layer's invalidation runs.
+  const s = g.__spooMock
+  if (s)
+    res.headers.set("X-Entitlements-Version", String(s.entitlementsVersion))
+  return res
 }
 
 function fail(status: number, code: string, error: string, field?: string) {
@@ -245,8 +340,9 @@ function user() {
     email: s.email,
     email_verified: s.verified,
     user_name: s.userName,
-    plan: "free",
+    plan: s.plan === "free" ? "free" : "pro",
     onboarded_at: s.onboardedAt,
+    pro_onboarded_at: s.proOnboardedAt,
     password_set: s.passwordSet,
     auth_providers: s.providers.map((p) => ({
       provider: p.provider,
@@ -1130,6 +1226,8 @@ async function handle(req: NextRequest, path: string[]) {
       // Exercises the gate ordering in app/onboarding/layout.tsx: this state
       // must land on /onboarding/verify, not bounce between the gates.
       const mode = params.get("mode")
+      const planParam = params.get("plan")
+      const plan: MockPlan = isMockPlan(planParam) ? planParam : "free"
       const fresh = mode === "fresh"
       const ONBOARDED_AT = "2026-05-14T00:12:18+00:00"
       g.__spooMock = fresh
@@ -1153,8 +1251,12 @@ async function handle(req: NextRequest, path: string[]) {
               onboardedAt: ONBOARDED_AT,
             }
           : initial()
+      g.__spooMock.plan = plan
+      g.__spooMock.proOnboardedAt =
+        params.get("toured") === "1" ? new Date().toISOString() : null
       return json({
         success: true,
+        plan,
         note: fresh
           ? "mock reset (fresh account)"
           : mode === "unverified"
@@ -2520,23 +2622,45 @@ async function handle(req: NextRequest, path: string[]) {
 
   /* ---------- per-user page layouts (sparse overrides; absent = default) ---------- */
   /* ---------- feature availability: the walkthrough shows everything ---------- */
+  if (path[0] === "v1" && path[1] === "me" && path[2] === "entitlements") {
+    return json(entitlementsBody(s))
+  }
+  if (path[0] === "v1" && path[1] === "me" && path[2] === "features") {
+    return json({ features: entitlementsBody(s).features })
+  }
   if (
     path[0] === "v1" &&
     path[1] === "me" &&
-    path[2] === "features" &&
-    req.method === "GET"
+    path[2] === "pro-onboarding" &&
+    req.method === "POST"
   ) {
-    return json({
-      features: {
-        custom_domains: "enabled",
-        geo_targeting: "enabled",
-        custom_meta_tags: "enabled",
-        ab_testing: "enabled",
-        webhooks: "enabled",
-        expired_fallback: "enabled",
-        link_scheduling: "enabled",
-      },
-    })
+    if (s.plan === "free") return json({ error: "forbidden" }, { status: 403 })
+    s.proOnboardedAt ??= new Date().toISOString()
+    return new NextResponse(null, { status: 204 })
+  }
+  if (path[0] === "v1" && path[1] === "plans") {
+    return json(plansBody())
+  }
+  if (path[0] === "v1" && path[1] === "billing" && path[2] === "checkout") {
+    const cadence = body.cadence === "year" ? "year" : "monthly"
+    const returnTo =
+      typeof body.return === "string" ? body.return : "/dashboard"
+    // The mock has no Paddle: "paying" flips the plan a moment after the
+    // return page starts polling, so the flow is walkable end to end.
+    setTimeout(() => {
+      const cur = g.__spooMock
+      if (!cur) return
+      cur.plan = "pro"
+      cur.entitlementsVersion += 1
+    }, 3000)
+    const params = new URLSearchParams({ return: returnTo, cadence })
+    if (typeof body.from === "string") params.set("from", body.from)
+    return json({ url: `/upgrade/return?${params.toString()}` })
+  }
+  if (path[0] === "v1" && path[1] === "billing" && path[2] === "portal") {
+    if (s.plan === "free")
+      return fail(404, "not_found", "no billing account for this user")
+    return json({ url: "/dashboard/settings?portal=mock" })
   }
 
   if (

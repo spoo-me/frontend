@@ -29,7 +29,7 @@ import {
   type AuthUser,
   type OAuthProviderName,
 } from "@/lib/api"
-import { PRICING_ENABLED } from "@/lib/flags"
+import { PlanRow } from "@/components/plan/plan-row"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/format"
 import { SESSION_KEY, useAuth } from "@/components/auth/auth-context"
@@ -829,13 +829,9 @@ export default function SettingsPage() {
               </Tooltip>
             )}
           </Row>
-          {PRICING_ENABLED && (
-            <Row label="Plan" description="What this account is on.">
-              <span className="font-mono text-[11px] text-muted-foreground uppercase">
-                {user.plan ?? "free"}
-              </span>
-            </Row>
-          )}
+          <Row label="Plan" description="What this account is on.">
+            <PlanRow />
+          </Row>
         </Section>
 
         <Section title="Preferences" description="Defaults for this browser.">

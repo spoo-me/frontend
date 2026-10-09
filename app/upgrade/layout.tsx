@@ -4,7 +4,8 @@ import type * as React from "react"
 
 import { DashboardShell } from "@/components/dashboard/shell"
 
-export default function DashboardLayout({
+/** The upgrade pages live inside the signed-in shell: same gate, same chrome. */
+export default function UpgradeLayout({
   children,
 }: {
   children: React.ReactNode

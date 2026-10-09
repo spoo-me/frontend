@@ -5,7 +5,10 @@ import { CalendarDays, Check } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
+import { useLimit } from "@/hooks/use-entitlements"
 import { Button } from "@/components/ui/button"
+import { ProMark } from "@/components/plan/pro-mark"
+import { UpsellDialog } from "@/components/plan/upsell-dialog"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import {
@@ -25,7 +28,9 @@ import {
 /**
  * The ref-27 (Cloudflare) time-range control: three modalities editing one
  * draft — parse box / calendar + presets / start-end inputs — committed by
- * Apply. Trigger shows the humanized applied value.
+ * Apply. Trigger shows the humanized applied value. Ranges that start before
+ * the plan's analytics window are never clamped quietly: they carry the Pro
+ * mark and open the upsell instead of applying.
  */
 
 /**
@@ -87,11 +92,21 @@ export function TimeRangePicker({
   placeholder?: string
 }) {
   const [open, setOpen] = React.useState(false)
+  const [upsellOpen, setUpsellOpen] = React.useState(false)
   // Null draft = nothing selected yet; the popover must not pretend a range
   // is active when the applied value is "all time".
   const [draft, setDraft] = React.useState<TimeRange | null>(value)
   const [expr, setExpr] = React.useState("")
   const parsed = expr ? parseExpression(expr) : null
+
+  // The plan window; 0 means the plan is not known yet, so nothing is marked.
+  const windowDays = useLimit("analytics_window_days")
+  const now = Date.now()
+  const windowStart =
+    windowDays.unlimited || windowDays.max === 0
+      ? null
+      : new Date(now - windowDays.max * 86_400_000)
+  const beforeWindow = (d: Date) => windowStart !== null && d < windowStart
 
   React.useEffect(() => {
     if (open) {
@@ -102,8 +117,13 @@ export function TimeRangePicker({
 
   const effective = parsed ?? draft
 
+  const gated = effective !== null && beforeWindow(effective.from)
   const apply = () => {
     if (!effective) return
+    if (gated) {
+      setUpsellOpen(true)
+      return
+    }
     onApply(effective)
     setOpen(false)
   }
@@ -182,8 +202,32 @@ export function TimeRangePicker({
                 }}
                 selected={calendarRange}
                 defaultMonth={effective?.from}
+                modifiers={{ pro: windowStart ? { before: windowStart } : [] }}
+                modifiersClassNames={{ pro: "text-muted-foreground/60" }}
+                components={{
+                  // `day` is pulled out so only DOM props reach the button.
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  DayButton: ({ day, modifiers, children, ...rest }) => (
+                    <button {...rest}>
+                      {modifiers.pro ? (
+                        <span className="flex flex-col items-center gap-px">
+                          <span className="text-xs leading-none">
+                            {children}
+                          </span>
+                          <ProMark size="xs" />
+                        </span>
+                      ) : (
+                        children
+                      )}
+                    </button>
+                  ),
+                }}
                 onSelect={(r) => {
                   if (!r?.from) return
+                  if (beforeWindow(r.from)) {
+                    setUpsellOpen(true)
+                    return
+                  }
                   const to = r.to ?? r.from
                   setExpr("")
                   setDraft({
@@ -202,11 +246,16 @@ export function TimeRangePicker({
           <div className="shrink-0 p-1.5 max-sm:flex max-sm:flex-wrap max-sm:gap-1 max-sm:p-2 sm:w-40">
             {PRESETS.map((p) => {
               const active = effective?.preset === p.token
+              const pro = beforeWindow(p.from(new Date(now)))
               return (
                 <button
                   key={p.token}
                   type="button"
                   onClick={() => {
+                    if (pro) {
+                      setUpsellOpen(true)
+                      return
+                    }
                     setExpr("")
                     setDraft(presetRange(p.token)!)
                   }}
@@ -218,7 +267,7 @@ export function TimeRangePicker({
                   )}
                 >
                   {p.label}
-                  {active && <Check className="size-3.5" />}
+                  {pro ? <ProMark /> : active && <Check className="size-3.5" />}
                 </button>
               )
             })}
@@ -267,9 +316,15 @@ export function TimeRangePicker({
               disabled={!effective || effective.from >= effective.to}
             >
               Apply
+              {gated && <ProMark onPrimary />}
             </Button>
           </span>
         </div>
+        <UpsellDialog
+          trigger={{ kind: "limit", limit: "analytics_window_days" }}
+          open={upsellOpen}
+          onOpenChange={setUpsellOpen}
+        />
       </PopoverContent>
     </Popover>
   )

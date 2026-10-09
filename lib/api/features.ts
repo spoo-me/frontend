@@ -1,32 +1,31 @@
-import { authedFetch, parse } from "./client"
-
 /**
- * Per-account feature availability (GET /api/v1/me/features) — the read
- * side of backend feature gating. The backend enforces the same gates on
- * its write endpoints; this only tells the UI what to render.
- *
- * `locked` is reserved: the backend emits it once paid plans exist, and
- * gated surfaces switch from invisible to upgrade-gated with no frontend
- * change beyond providing the locked rendering.
+ * The feature vocabulary shared by the entitlements client, the plan
+ * components and the copy table. Keys are the backend catalog's keys; the
+ * backend may send more (ignore them) or fewer (missing = hidden).
  */
 export type FeatureState = "enabled" | "locked" | "hidden"
 
-/** The gated features this frontend knows how to render. The backend may
-    send more (ignore them) or fewer (missing = hidden). */
 export type FeatureName =
-  | "custom_domains"
   | "geo_targeting"
   | "custom_meta_tags"
-  | "ab_testing"
-  | "webhooks"
+  | "ab_variants"
   | "expired_fallback"
   | "link_scheduling"
+  | "custom_domains"
+  | "domain_polish"
+  | "qr_custom_logo"
+  | "live_click_stream"
+  | "analytics_extra_views"
+  | "viral_full_tracking"
+  | "webhooks"
+
+export type LimitName =
+  | "custom_domains_max"
+  | "webhook_endpoints_max"
+  | "api_keys_max"
+  | "analytics_window_days"
+  | "api_rate_multiplier"
+  | "bulk_batch_max"
 
 export type FeatureMap = Partial<Record<FeatureName, FeatureState>> &
   Record<string, FeatureState>
-
-export function getMyFeatures() {
-  return authedFetch("/api/v1/me/features", { method: "GET" }).then((r) =>
-    parse<{ features: FeatureMap }>(r)
-  )
-}
