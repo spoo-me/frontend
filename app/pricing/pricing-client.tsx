@@ -423,6 +423,19 @@ const faqGroups = [
         a: "Yes. Upgrades apply immediately with prorated billing; downgrades and cancellations take effect at the end of the current cycle. No lock-in.",
       },
       {
+        q: "What is the refund policy?",
+        a: (
+          <>
+            Full refund within 14 days of your first payment, no questions
+            asked. Details are in the{" "}
+            <Link href="/refund" className="text-foreground underline">
+              refund policy
+            </Link>
+            .
+          </>
+        ),
+      },
+      {
         q: "Do you offer discounts for open-source projects or students?",
         a: "We do. Reach out from the contact page with a link to your project or institution and we'll set you up.",
       },
@@ -469,7 +482,7 @@ export function PricingFaq() {
   )
 }
 
-function FaqItem({ q, a }: { q: string; a: string }) {
+function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
   const [open, setOpen] = React.useState(false)
   return (
     <div className="py-4">
