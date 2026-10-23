@@ -24,13 +24,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Panel } from "@/components/dashboard/section"
+import { LimitCounter, Limited } from "@/components/plan/limited"
 import { StatusPill } from "@/components/dashboard/status-pill"
 
 export default function DomainsPage() {
   const router = useRouter()
-  const domainsEnabled = useFeatureGuard("custom_domains", () =>
+  const domainsState = useFeatureGuard("custom_domains", () =>
     router.replace("/dashboard")
   )
+  const domainsEnabled = domainsState === "enabled"
   const queryClient = useQueryClient()
   const [addOpen, setAddOpen] = React.useState(false)
   const [fqdn, setFqdn] = React.useState("")
@@ -47,6 +49,7 @@ export default function DomainsPage() {
     onSuccess: (dom) => {
       trackDomainAdded()
       queryClient.invalidateQueries({ queryKey: ["domains"] })
+      queryClient.invalidateQueries({ queryKey: ["entitlements"] })
       setAddOpen(false)
       setFqdn("")
       toast.success("Domain registered", { description: dom.fqdn })
@@ -65,9 +68,12 @@ export default function DomainsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <span className="label-mono text-muted-foreground/60">Domains</span>
+          <span className="flex items-center gap-3">
+            <span className="label-mono text-muted-foreground/60">Domains</span>
+            <LimitCounter limit="custom_domains_max" />
+          </span>
           <h1 className="mt-2 font-semibold text-foreground text-xl tracking-tight">
             Custom domains
           </h1>
@@ -75,14 +81,18 @@ export default function DomainsPage() {
             Serve short links from your own domain, with per-domain routing.
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)}>
+        <Limited
+          limit="custom_domains_max"
+          feature="custom_domains"
+          onAdd={() => setAddOpen(true)}
+        >
           <Plus data-icon="inline-start" />
           Add domain
-        </Button>
+        </Limited>
       </div>
 
       <Panel className="mt-6">
-        {domains.isPending ? (
+        {domainsEnabled && domains.isPending ? (
           <div className="space-y-3 p-4">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
@@ -92,10 +102,14 @@ export default function DomainsPage() {
             <span className="rounded-lg border border-border border-dashed px-3 py-1.5 font-mono text-[11px] text-muted-foreground/70">
               No custom domains yet
             </span>
-            <Button onClick={() => setAddOpen(true)}>
+            <Limited
+              limit="custom_domains_max"
+              feature="custom_domains"
+              onAdd={() => setAddOpen(true)}
+            >
               <Plus data-icon="inline-start" />
               Add your first domain
-            </Button>
+            </Limited>
           </div>
         ) : (
           <ul className="divide-y divide-border/60">

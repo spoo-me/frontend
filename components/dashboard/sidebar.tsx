@@ -34,16 +34,21 @@ import {
 } from "@/components/dashboard/nav"
 import { openDashboardCommandMenu } from "@/components/dashboard/command-menu"
 import { useFeatures } from "@/hooks/use-features"
+import { ProMark } from "@/components/plan/pro-mark"
 
 const COLLAPSE_KEY = "spoo:sidebar-collapsed"
 
 function NavRow({
   item,
   collapsed,
+  locked = false,
   onNavigate,
 }: {
   item: DashboardNavItem
   collapsed: boolean
+  /** The plan does not include this surface: the row leads to the real
+      page as usual and carries the Pro mark. */
+  locked?: boolean
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
@@ -53,7 +58,9 @@ function NavRow({
       href={item.href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      aria-label={collapsed ? item.title : undefined}
+      aria-label={
+        collapsed ? (locked ? `${item.title} (Pro)` : item.title) : undefined
+      }
       className={cn(
         "relative flex h-10 items-center gap-2.5 rounded-lg font-medium text-sm transition-colors duration-150",
         collapsed ? "justify-center px-0" : "px-2.5",
@@ -75,7 +82,8 @@ function NavRow({
         />
       )}
       <item.icon className="relative size-4 shrink-0" strokeWidth={1.75} />
-      {!collapsed && <span className="relative">{item.title}</span>}
+      {!collapsed && <span className="relative flex-1">{item.title}</span>}
+      {!collapsed && locked && <ProMark className="relative" />}
     </Link>
   )
 }
@@ -254,11 +262,11 @@ export function SidebarContent({
 
       <nav aria-label="Dashboard" className="mt-6">
         {dashboardNav.map((group, i) => {
-          const items = group.items.filter(
-            (item) =>
-              (!item.flag || dashboardFlags[item.flag]) &&
-              (!item.feature || features?.[item.feature] === "enabled")
-          )
+          const items = group.items.filter((item) => {
+            if (item.flag && !dashboardFlags[item.flag]) return false
+            const state = item.feature ? features?.[item.feature] : "enabled"
+            return state === "enabled" || state === "locked"
+          })
           if (!items.length) return null
           return (
             <div key={group.label}>
@@ -273,6 +281,10 @@ export function SidebarContent({
                   <NavRow
                     key={item.href}
                     item={item}
+                    locked={
+                      item.feature !== undefined &&
+                      features?.[item.feature] === "locked"
+                    }
                     collapsed={collapsed}
                     onNavigate={onNavigate}
                   />

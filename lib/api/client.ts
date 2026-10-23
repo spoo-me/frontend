@@ -83,6 +83,30 @@ export function apiFetch(
   return fetch(path, { ...init, headers })
 }
 
+/**
+ * Every authenticated backend response carries X-Entitlements-Version.
+ * Subscribers (the entitlements query) compare it with the version they
+ * hold and refetch when it moved, so an override, a lapse or a payment lands
+ * on the next request without a push channel.
+ */
+type VersionListener = (version: number) => void
+const versionListeners = new Set<VersionListener>()
+
+export function onEntitlementsVersion(listener: VersionListener): () => void {
+  versionListeners.add(listener)
+  return () => {
+    versionListeners.delete(listener)
+  }
+}
+
+export function noteEntitlementsVersion(res: Response): void {
+  const raw = res.headers.get("X-Entitlements-Version")
+  if (raw === null) return
+  const version = Number(raw)
+  if (!Number.isInteger(version)) return
+  for (const listener of versionListeners) listener(version)
+}
+
 /** Single-flight refresh: all concurrent 401 handlers share one attempt. */
 let refreshInFlight: Promise<boolean> | null = null
 
@@ -117,8 +141,13 @@ export async function authedFetch(
           String(b?.code ?? "").toLowerCase() === "email_not_verified"
       )
       .catch(() => false))
-  if (res.status !== 401 && !claimStale) return res
+  if (res.status !== 401 && !claimStale) {
+    noteEntitlementsVersion(res)
+    return res
+  }
   const refreshed = await refreshSession()
   if (!refreshed) return res
-  return apiFetch(path, init)
+  const retried = await apiFetch(path, init)
+  noteEntitlementsVersion(retried)
+  return retried
 }

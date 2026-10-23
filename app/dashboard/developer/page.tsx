@@ -24,6 +24,7 @@ import {
 import { formatWhen } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Limited } from "@/components/plan/limited"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -72,6 +73,7 @@ function KeyRow({ apiKey }: { apiKey: ApiKey }) {
     onSuccess: (_, revoke) => {
       trackApiKeyDeleted(revoke ? "revoke" : "delete")
       queryClient.invalidateQueries({ queryKey: ["keys"] })
+      queryClient.invalidateQueries({ queryKey: ["entitlements"] })
       toast.success(revoke ? "Key revoked" : "Key deleted")
     },
     onError: (e) =>
@@ -217,6 +219,7 @@ export default function DeveloperPage() {
     onSuccess: (created) => {
       trackApiKeyCreated({ scopes, hasExpiry: !!expiresAt }, "developer")
       queryClient.invalidateQueries({ queryKey: ["keys"] })
+      queryClient.invalidateQueries({ queryKey: ["entitlements"] })
       setNewToken(created.token)
       resetForm()
     },
@@ -238,10 +241,10 @@ export default function DeveloperPage() {
             Scoped keys for the spoo.me API. Keys are shown once, at creation.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Limited limit="api_keys_max" onAdd={() => setCreateOpen(true)}>
           <Plus data-icon="inline-start" />
           New key
-        </Button>
+        </Limited>
       </div>
 
       <Panel className="mt-6">
