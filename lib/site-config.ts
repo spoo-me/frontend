@@ -286,5 +286,7 @@ export const footerLinks = {
     { label: "Report abuse", href: "/report" },
     { label: "Privacy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
+    { label: "Refund policy", href: "/refund" },
+    { label: "Acceptable use", href: "/acceptable-use" },
   ],
 } as const

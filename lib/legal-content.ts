@@ -782,4 +782,193 @@ export const legalDocs: LegalDoc[] = [
 
 <p>Your continued use of spoo.me after changes take effect constitutes acceptance of the updated terms.</p>`,
   },
+  {
+    slug: "refund",
+    title: "Refund Policy",
+    lastUpdated: "2026-09-XX",
+    description:
+      "How refunds, cancellations, and downgrades work for spoo.me Pro.",
+    toc: [
+      {
+        id: "who-charges-your-card",
+        title: "Who charges your card",
+      },
+      {
+        id: "what-pro-costs",
+        title: "What Pro costs",
+      },
+      {
+        id: "14-days-no-questions",
+        title: "14 days, no questions",
+      },
+      {
+        id: "after-14-days",
+        title: "After 14 days",
+      },
+      {
+        id: "switching-plans",
+        title: "Switching plans",
+      },
+      {
+        id: "failed-payments",
+        title: "Failed payments",
+      },
+      {
+        id: "going-back-to-free",
+        title: "Going back to Free",
+      },
+      {
+        id: "your-rights",
+        title: "Your rights",
+      },
+      {
+        id: "changes-to-this-policy",
+        title: "Changes to this policy",
+      },
+      {
+        id: "contact",
+        title: "Contact",
+      },
+    ],
+    html: `<p>Effective 2026-09-XX.</p>
+
+<p>This policy covers payments for spoo.me Pro. It is short on purpose. If anything is unclear, email <a href="mailto:support@spoo.me">support@spoo.me</a> and a person will answer.</p>
+<h2 id="who-charges-your-card">Who charges your card</h2>
+<p>Paddle is our Merchant of Record. Paddle is the seller on your receipt, collects the payment, and handles any sales tax or VAT owed where you live. Paddle also issues refunds on our behalf. The charge on your bank statement shows Paddle's name next to spoo.me.</p>
+
+<p>Prices on our pricing page are before tax. Paddle adds any tax at checkout based on your location.</p>
+<h2 id="what-pro-costs">What Pro costs</h2>
+<ul>
+    <li><strong>Pro monthly:</strong> $15 a month. It renews every month until you cancel.</li>
+    <li><strong>Pro annual:</strong> $144, paid once for 12 months. It does not renew. We remind you before the year ends, and you buy another year if you want to keep Pro.</li>
+    <li><strong>Founding price:</strong> early subscribers pay $9 a month or $90 a year. Everything on this page applies to them the same way.</li>
+</ul>
+<h2 id="14-days-no-questions">14 days, no questions</h2>
+<p>You can get a full refund within 14 days of your first payment, on both the monthly and the annual plan. You do not need to give a reason.</p>
+
+<p>To ask for one, email <a href="mailto:support@spoo.me">support@spoo.me</a> from the address on your account with "Refund" in the subject. We ask Paddle to refund the charge, and Paddle sends the money back to the payment method you used. Banks usually show it within 5 to 10 business days.</p>
+
+<p>Your plan goes back to Free as soon as the refund is issued. Nothing is deleted. Your links keep redirecting, your click data stays, and your account stays. Pro-only features turn off, as described under <a href="#going-back-to-free">Going back to Free</a>.</p>
+
+<p>The 14 days count from your first payment. Monthly renewals are not refundable, but you can cancel before a renewal and you will not be charged again.</p>
+<h2 id="after-14-days">After 14 days</h2>
+<p><strong>Monthly.</strong> Cancel any time from Billing in your dashboard or by emailing us. Pro stays on until the end of the month you already paid for, then your account goes to Free. There are no further charges. We do not refund the remaining days of a month.</p>
+
+<p><strong>Annual.</strong> The prepaid year is non-refundable after the first 14 days. Pro stays on until the 12 months end, plus a 14-day grace window so you have time to buy another year. Because the year does not renew, there is nothing to cancel and no surprise charge.</p>
+<h2 id="switching-plans">Switching plans</h2>
+<p>To move from monthly to annual, buy the annual plan. Your monthly subscription ends at the close of the period you already paid for, and the annual plan starts from its purchase date. We do not prorate.</p>
+<h2 id="failed-payments">Failed payments</h2>
+<p>If a monthly renewal fails, Paddle retries the card for a few days and emails you. If the payment still cannot be collected, the subscription ends and your account goes to Free under the same rules as below.</p>
+<h2 id="going-back-to-free">Going back to Free</h2>
+<p>Whether Pro ends through a refund, a cancellation, or a year running out, the same things happen:</p>
+
+<ul>
+    <li>Nothing is deleted. Your links, click data, QR codes, and settings stay in your account.</li>
+    <li>Links on spoo.me keep redirecting.</li>
+    <li>Pro-only features turn off. Free plan limits apply to anything new you create.</li>
+    <li>Custom domains are a Pro feature. Links on your custom domains stop resolving after the grace window. We keep your domain settings and those links for 90 days. If you come back to Pro within that time, everything resolves again without any setup. After 90 days we may remove the domain configuration.</li>
+</ul>
+<h2 id="your-rights">Your rights</h2>
+<p>This policy is part of our <a href="/terms">Terms of Service</a> and follows the same governing law, the laws of the Netherlands. If you live in the EU, nothing here affects your rights under the consumer protection laws of your country of residence.</p>
+<h2 id="changes-to-this-policy">Changes to this policy</h2>
+<p>We may update this policy. When we do, we change the effective date at the top, and we email paying subscribers about changes that affect them.</p>
+<h2 id="contact">Contact</h2>
+<p>Questions about a charge or a refund go to <a href="mailto:support@spoo.me">support@spoo.me</a>. Put "Refund" in the subject and we will find your payment faster.</p>
+
+<p>Support Team, spoo.me</p>`,
+  },
+  {
+    slug: "acceptable-use",
+    title: "Acceptable Use Policy",
+    lastUpdated: "2026-09-XX",
+    description:
+      "What you may not do with spoo.me links, domains, and accounts.",
+    toc: [
+      {
+        id: "links-you-may-not-create",
+        title: "Links you may not create",
+      },
+      {
+        id: "every-destination-is-checked",
+        title: "Every destination is checked",
+      },
+      {
+        id: "your-account",
+        title: "Your account",
+      },
+      {
+        id: "paid-plans",
+        title: "Paid plans",
+      },
+      {
+        id: "what-we-do-about-it",
+        title: "What we do about it",
+      },
+      {
+        id: "reporting-abuse",
+        title: "Reporting abuse",
+      },
+      {
+        id: "governing-law",
+        title: "Governing law",
+      },
+      {
+        id: "changes-to-this-policy",
+        title: "Changes to this policy",
+      },
+      {
+        id: "contact",
+        title: "Contact",
+      },
+    ],
+    html: `<p>Effective 2026-09-XX.</p>
+
+<p>This policy says what you may not do with spoo.me. It applies to every link, custom domain, API key, connected app, and account, free or paid. It is part of our <a href="/terms">Terms of Service</a>. If you break it, we may block your links, slow your account down, or close it.</p>
+<h2 id="links-you-may-not-create">Links you may not create</h2>
+<p>Do not shorten, share, or promote links that:</p>
+
+<ul>
+    <li>lead to phishing, malware, or pages built to deceive, such as fake login pages, fake stores, or fake virus warnings</li>
+    <li>are used for spam, unsolicited bulk messaging, or other commercial abuse</li>
+    <li>point to illegal content, or break the laws that apply to you or to the people you send there</li>
+    <li>infringe copyright, trademarks, or other rights of others</li>
+    <li>harass, threaten, or defame a person</li>
+    <li>exist to get past filters such as Google Safe Browsing, Spamhaus, PhishTank, or similar, including by creating fresh links faster than they can be flagged</li>
+</ul>
+<h2 id="every-destination-is-checked">Every destination is checked</h2>
+<p>We screen every destination when a link is created and again over its lifetime. That includes the destination for each country when you set geo rules, every variant of a link, links behind a password, and links on custom domains.</p>
+
+<p>Screening uses our own rules plus outside sources. We may block, remove, or report a link on our own judgement, even if no outside blocklist has flagged it yet. A blocked link shows a notice instead of redirecting.</p>
+<h2 id="your-account">Your account</h2>
+<ul>
+    <li>Keep your login and API keys to yourself. Do not share them.</li>
+    <li>Do not create extra accounts to get around a limit or a ban.</li>
+    <li>Do not try to get into other accounts or into our systems.</li>
+    <li>Do not scrape, overload, probe, or otherwise interfere with the service.</li>
+    <li>Do not work around rate limits or security measures.</li>
+    <li>Use the API for your own projects. Do not resell or redistribute API access.</li>
+</ul>
+<h2 id="paid-plans">Paid plans</h2>
+<p><strong>No reselling.</strong> Pro is for you and your own projects or business. Do not sell access to your account, offer spoo.me link creation as a paid service of your own, or sublicense the API. If you want to build a product on top of spoo.me, email us first.</p>
+
+<p><strong>Unlimited links, in good faith.</strong> There is no cap on how many links you create for real use. Automated use that looks like abuse, such as link farms, creating and discarding links at machine speed, or using us as a load-testing target, may be throttled. Throttling slows down creating new links. It never stops your existing legitimate links from redirecting.</p>
+
+<p><strong>Custom domains you own.</strong> You may only connect a domain you own or are authorised to manage, and we verify that through DNS. Do not connect a domain that impersonates a brand, a person, or a service you do not represent. If a domain stops being yours, links on it stop and we may remove it.</p>
+
+<p><strong>Screening still applies.</strong> Paying for Pro does not exempt any destination, geo rule, or variant from the checks above.</p>
+<h2 id="what-we-do-about-it">What we do about it</h2>
+<p>Depending on how serious it is, we may warn you, throttle your account, block the links involved, or suspend or close the account. When people are being harmed, we act first and tell you afterwards. Where the law requires it or the harm is serious, we report to the relevant authorities and blocklists.</p>
+
+<p>If you think we got it wrong, email <a href="mailto:support@spoo.me">support@spoo.me</a> with the link and we will look again.</p>
+<h2 id="reporting-abuse">Reporting abuse</h2>
+<p>If you find a spoo.me link that breaks this policy, report it at <a href="/report">spoo.me/report</a> or email <a href="mailto:support@spoo.me">support@spoo.me</a>. Reports are handled ahead of everything else.</p>
+<h2 id="governing-law">Governing law</h2>
+<p>This policy is part of our <a href="/terms">Terms of Service</a> and follows the same governing law, the laws of the Netherlands. If you live in the EU, nothing here affects your rights under the consumer protection laws of your country of residence.</p>
+<h2 id="changes-to-this-policy">Changes to this policy</h2>
+<p>We may update this policy. When we do, we change the effective date at the top, and we notify registered users of changes that matter.</p>
+<h2 id="contact">Contact</h2>
+<p>Questions about this policy go to <a href="mailto:support@spoo.me">support@spoo.me</a>.</p>
+
+<p>Support Team, spoo.me</p>`,
+  },
 ]
